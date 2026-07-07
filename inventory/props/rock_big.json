@@ -1,0 +1,184 @@
+{
+  "format": 1,
+  "id": "rock_big",
+  "name": "Big Rock",
+  "category": "prop",
+  "behavior": "static",
+  "tags": ["stone", "scenery"],
+  "notes": "Low-poly boulder cluster — faceted low-segment spheres, flat shading. oneOf silhouette; moss cap and companion pebble by chance.",
+  "materials": {
+    "stone": { "material": "cliff_rocks_07", "uvRot": 15, "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "br_main": { "inherit": "stone" },
+    "br_small": { "inherit": "stone" },
+    "bs_a": { "inherit": "stone" },
+    "bs_c": { "inherit": "stone" },
+    "sp_tip": { "inherit": "stone" },
+    "sp_side": { "inherit": "stone" },
+    "stone_dark": { "flat": true, "inherit": "stone" },
+    "br_side": { "inherit": "stone" },
+    "bs_b": { "flat": true, "inherit": "stone" },
+    "sp_base": { "inherit": "stone" },
+    "companion": { "inherit": "stone" },
+    "moss": { "material": "grass_01", "flat": true }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "boulder_round": {
+          "children": {
+            "br_main": {
+              "shape": "sphere",
+              "radius": 0.8,
+              "segments": 7,
+              "segmentsY": 6,
+              "pos": [0, 0.55, 0],
+              "scale": [1, 0.82, 0.94],
+              "material": "br_main",
+              "sub": 1,
+              "seed": 886868864,
+              "craft": 0.68
+            },
+            "br_side": {
+              "shape": "sphere",
+              "radius": 0.45,
+              "segments": 6,
+              "segmentsY": 5,
+              "pos": [0.68, 0.3, 0.18],
+              "rot": [0, 40, 0],
+              "scale": [1, 0.78, 1],
+              "material": "br_side",
+              "sub": 1,
+              "craft": 0.87
+            },
+            "br_small": {
+              "shape": "sphere",
+              "radius": 0.28,
+              "segments": 5,
+              "segmentsY": 5,
+              "pos": [-0.7, 0.18, -0.12],
+              "material": "br_small",
+              "chance": 0.7,
+              "sub": 1,
+              "seed": 874047877,
+              "craft": 0.57
+            }
+          }
+        },
+        "boulder_slabs": {
+          "children": {
+            "bs_a": {
+              "shape": "sphere",
+              "radius": 0.75,
+              "segments": 5,
+              "segmentsY": 5,
+              "pos": [0, 0.45, 0],
+              "rot": [8, 25, -6],
+              "scale": [1.15, 0.65, 0.95],
+              "material": "bs_a",
+              "sub": 1,
+              "seed": 841718363,
+              "craft": 0.87
+            },
+            "bs_b": {
+              "shape": "sphere",
+              "radius": 0.55,
+              "segments": 5,
+              "segmentsY": 5,
+              "pos": [0.2, 1, -0.08],
+              "rot": [-6, 60, 8],
+              "scale": [1.05, 0.6, 0.85],
+              "material": "bs_b",
+              "sub": 1,
+              "craft": 0.87
+            },
+            "bs_c": {
+              "shape": "sphere",
+              "radius": 0.34,
+              "segments": 5,
+              "segmentsY": 5,
+              "pos": [-0.62, 0.22, 0.35],
+              "rot": [12, 10, 0],
+              "scale": [1, 0.7, 0.9],
+              "material": "bs_c",
+              "sub": 1,
+              "seed": 641076052,
+              "craft": 0.87
+            }
+          }
+        },
+        "boulder_spire": {
+          "children": {
+            "sp_base": {
+              "shape": "sphere",
+              "radius": 0.66,
+              "segments": 6,
+              "segmentsY": 5,
+              "pos": [0, 0.4, 0],
+              "scale": [1, 0.68, 0.9],
+              "material": "sp_base",
+              "sub": 1,
+              "craft": 0.87
+            },
+            "sp_tip": {
+              "shape": "sphere",
+              "radius": 0.45,
+              "segments": 5,
+              "segmentsY": 5,
+              "pos": [0.06, 1.05, 0],
+              "rot": [5, 40, -8],
+              "scale": [0.85, 1.35, 0.8],
+              "material": "sp_tip",
+              "sub": 1,
+              "seed": 633211575,
+              "craft": 0.87
+            },
+            "sp_side": {
+              "shape": "sphere",
+              "radius": 0.3,
+              "segments": 5,
+              "segmentsY": 5,
+              "pos": [-0.6, 0.2, 0.14],
+              "material": "sp_side",
+              "chance": 0.6,
+              "sub": 1,
+              "seed": 411410139,
+              "craft": 0.87
+            }
+          }
+        },
+        "moss_cap": {
+          "shape": "sphere",
+          "radius": 0.45,
+          "segments": 7,
+          "pos": [0.04, 0.98, 0.02],
+          "scale": [1, 0.35, 0.92],
+          "material": "moss",
+          "chance": 0.45,
+          "craft": 0.87,
+          "seed": 986080957,
+          "sub": 1
+        },
+        "companion": {
+          "shape": "sphere",
+          "radius": 0.16,
+          "segments": 5,
+          "pos": [0.95, 0.1, 0.4],
+          "scale": [1, 0.7, 0.9],
+          "material": "companion",
+          "chance": 0.5,
+          "sub": 1,
+          "craft": 0.87
+        }
+      }
+    }
+  },
+  "physics": { "body": "fixed", "collider": "auto" },
+  "variants": {
+    "scale": [0.8, 1.35],
+    "yawJitter": 180,
+    "tiltJitter": 2,
+    "tintJitter": 0.07,
+    "oneOf": { "silhouette": ["boulder_round", "boulder_slabs", "boulder_spire"] },
+    "seeds": [574395975, 557618356, 607951213, 591173594, 507285499, 490507880]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "wooden_wall_01",
+  "name": "Wooden Wall 01",
+  "category": "wooden_wall",
+  "maps": {
+    "color": "PBR/wooden_wall_01/wooden_wall_01_basecolor_1k.png",
+    "normal": "PBR/wooden_wall_01/wooden_wall_01_normal_gl_1k.png",
+    "roughness": "PBR/wooden_wall_01/wooden_wall_01_roughness_1k.png",
+    "height": "PBR/wooden_wall_01/wooden_wall_01_height_1k.png",
+    "ao": "PBR/wooden_wall_01/wooden_wall_01_ambientocclusion_1k.png",
+    "metallic": "PBR/wooden_wall_01/wooden_wall_01_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

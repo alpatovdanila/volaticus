@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "rusted_metal_paint_02",
+  "name": "Rusted Metal Paint 02",
+  "category": "rusted_metal_paint",
+  "maps": {
+    "color": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_basecolor_1k.png",
+    "normal": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_normal_gl_1k.png",
+    "roughness": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_roughness_1k.png",
+    "height": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_height_1k.png",
+    "ao": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_ambientocclusion_1k.png",
+    "metallic": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

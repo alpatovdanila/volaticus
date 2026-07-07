@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "plaster_wall_03",
+  "name": "Plaster Wall 03",
+  "category": "plaster_wall",
+  "maps": {
+    "color": "PBR/plaster_wall_03/plaster_wall_03_basecolor_1k.png",
+    "normal": "PBR/plaster_wall_03/plaster_wall_03_normal_gl_1k.png",
+    "roughness": "PBR/plaster_wall_03/plaster_wall_03_roughness_1k.png",
+    "height": "PBR/plaster_wall_03/plaster_wall_03_height_1k.png",
+    "ao": "PBR/plaster_wall_03/plaster_wall_03_ambientocclusion_1k.png",
+    "metallic": "PBR/plaster_wall_03/plaster_wall_03_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "id": "rock_small",
+  "name": "Small Rock",
+  "category": "prop",
+  "behavior": "dynamic",
+  "tags": ["stone", "carryable"],
+  "notes": "Pickable low-poly pebble — faceted low-segment spheres, flat shading. oneOf picks the shape.",
+  "materials": {
+    "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25 },
+    "pebble_round": { "inherit": "stone" },
+    "pebble_flat": { "inherit": "stone" },
+    "stone_dark": { "material": "cliff_rocks_06", "flat": true, "uvScale": 2 }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "pebble_round": {
+          "shape": "sphere",
+          "radius": 0.17,
+          "segments": 7,
+          "pos": [0, 0.12, 0],
+          "scale": [1, 0.75, 0.92],
+          "material": "pebble_round",
+          "craft": 0.5
+        },
+        "pebble_angular": {
+          "shape": "sphere",
+          "radius": 0.17,
+          "segments": 5,
+          "pos": [0, 0.12, 0],
+          "rot": [15, 30, 10],
+          "scale": [1.05, 0.8, 0.9],
+          "material": "stone_dark",
+          "craft": 0.5
+        },
+        "pebble_flat": {
+          "shape": "sphere",
+          "radius": 0.19,
+          "segments": 6,
+          "pos": [0, 0.09, 0],
+          "rot": [0, 20, 4],
+          "scale": [1.1, 0.5, 0.95],
+          "material": "pebble_flat",
+          "craft": 0.5
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "dynamic",
+    "collider": { "shape": "sphere", "radius": 0.15, "offset": [0, 0.12, 0] },
+    "mass": 3,
+    "friction": 0.8
+  },
+  "props": { "carryable": true, "throwDamage": 1 },
+  "variants": {
+    "scale": [0.8, 1.2],
+    "yawJitter": 180,
+    "tintJitter": 0.08,
+    "oneOf": { "shape": ["pebble_round", "pebble_angular", "pebble_flat"] },
+    "seeds": [380558898, 397336517, 347003660, 363781279, 313448422, 330226041]
+  },
+  "events": { "landed": { "effect": "poof" } }
+}

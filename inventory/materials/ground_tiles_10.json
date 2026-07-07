@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "ground_tiles_10",
+  "name": "Ground Tiles 10",
+  "category": "ground_tiles",
+  "maps": {
+    "color": "PBR/ground_tiles_10/ground_tiles_10_baseColor_1k.png",
+    "normal": "PBR/ground_tiles_10/ground_tiles_10_normal_gl_1k.png",
+    "roughness": "PBR/ground_tiles_10/ground_tiles_10_roughness_1k.png",
+    "height": "PBR/ground_tiles_10/ground_tiles_10_height_1k.png",
+    "ao": "PBR/ground_tiles_10/ground_tiles_10_ambientOcclusion_1k.png",
+    "metallic": "PBR/ground_tiles_10/ground_tiles_10_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

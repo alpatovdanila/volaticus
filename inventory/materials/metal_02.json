@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "metal_02",
+  "name": "Metal 02",
+  "category": "metal",
+  "maps": {
+    "color": "PBR/metal_02/metal_02_color_1k.png",
+    "normal": "PBR/metal_02/metal_02_normal_1k.png",
+    "roughness": "PBR/metal_02/metal_02_roughness_1k.png",
+    "height": "PBR/metal_02/metal_02_height_1k.png",
+    "ao": "PBR/metal_02/metal_02_ambient_occlusion_1k.png",
+    "metallic": "PBR/metal_02/metal_02_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

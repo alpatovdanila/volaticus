@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "wooden_roof_tiles_08",
+  "name": "Wooden Roof Tiles 08",
+  "category": "wooden_roof_tiles",
+  "maps": {
+    "color": "PBR/wooden_roof_tiles_08/wooden_roof_tiles_08_basecolor_1k.png",
+    "normal": "PBR/wooden_roof_tiles_08/wooden_roof_tiles_08_normal_gl_1k.png",
+    "roughness": "PBR/wooden_roof_tiles_08/wooden_roof_tiles_08_roughness_1k.png",
+    "height": "PBR/wooden_roof_tiles_08/wooden_roof_tiles_08_height_1k.png",
+    "ao": "PBR/wooden_roof_tiles_08/wooden_roof_tiles_08_ambientocclusion_1k.png",
+    "metallic": "PBR/wooden_roof_tiles_08/wooden_roof_tiles_08_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

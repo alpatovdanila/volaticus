@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "roof_tiles_09",
+  "name": "Roof Tiles 09",
+  "category": "roof_tiles",
+  "maps": {
+    "color": "PBR/roof_tiles_09/roof_tiles_09_basecolor_1k.png",
+    "normal": "PBR/roof_tiles_09/roof_tiles_09_normal_gl_1k.png",
+    "roughness": "PBR/roof_tiles_09/roof_tiles_09_roughness_1k.png",
+    "height": "PBR/roof_tiles_09/roof_tiles_09_height_1k.png",
+    "ao": "PBR/roof_tiles_09/roof_tiles_09_ambientocclusion_1k.png",
+    "metallic": "PBR/roof_tiles_09/roof_tiles_09_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "wood_planks_03",
+  "name": "Wood Planks 03",
+  "category": "wood_planks",
+  "maps": {
+    "color": "PBR/wood_planks_03/wood_planks_03_color_1k.png",
+    "normal": "PBR/wood_planks_03/wood_planks_03_normal_gl_1k.png",
+    "roughness": "PBR/wood_planks_03/wood_planks_03_roughness_1k.png",
+    "height": "PBR/wood_planks_03/wood_planks_03_height_1k.png",
+    "ao": "PBR/wood_planks_03/wood_planks_03_ambient_occlusion_1k.png",
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

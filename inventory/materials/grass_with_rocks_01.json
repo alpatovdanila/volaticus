@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "grass_with_rocks_01",
+  "name": "Grass With Rocks 01",
+  "category": "grass_with_rocks",
+  "maps": {
+    "color": "PBR/grass_with_rocks_01/grass_with_rocks_01_color_1k.png",
+    "normal": "PBR/grass_with_rocks_01/grass_with_rocks_01_normal_gl_1k.png",
+    "roughness": "PBR/grass_with_rocks_01/grass_with_rocks_01_roughness_1k.png",
+    "height": "PBR/grass_with_rocks_01/grass_with_rocks_01_height_1k.png",
+    "ao": "PBR/grass_with_rocks_01/grass_with_rocks_01_ambientocclusion_1k.png",
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

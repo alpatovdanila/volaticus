@@ -1,0 +1,36 @@
+{
+  "format": 1,
+  "id": "fuse_sparks",
+  "name": "Fuse sparks",
+  "notes": "Tiny bright sparks spitting off a burning fuse tip (boomba alert/running/fusing). Offset tuned to boomba's fuse tip relative to its bbox center.",
+  "particles": [
+    {
+      "count": 6,
+      "geometry": "cube",
+      "size": [0.015, 0.035],
+      "speed": [0.5, 1.5],
+      "dir": "up",
+      "offset": [0, 0.42, 0],
+      "gravity": -3.5,
+      "drag": 0.6,
+      "life": [0.12, 0.3],
+      "colors": ["#ffe066", "#ffb02e", "#fff6c9", "#ff7b1c"],
+      "spin": 14,
+      "fade": true
+    },
+    {
+      "count": 2,
+      "geometry": "cube",
+      "size": [0.01, 0.02],
+      "speed": [1.2, 2.2],
+      "dir": "sphere",
+      "offset": [0, 0.42, 0],
+      "gravity": -2,
+      "drag": 0.4,
+      "life": [0.2, 0.4],
+      "colors": ["#fff6c9", "#ffd94a"],
+      "spin": 20,
+      "fade": true
+    }
+  ]
+}

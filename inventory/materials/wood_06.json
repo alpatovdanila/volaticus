@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "wood_06",
+  "name": "Wood 06",
+  "category": "wood",
+  "maps": {
+    "color": "PBR/wood_06/wood_06_baseColor_1k.jpg",
+    "normal": "PBR/wood_06/wood_06_normal_gl_1k.jpg",
+    "roughness": "PBR/wood_06/wood_06_roughness_1k.jpg",
+    "height": "PBR/wood_06/wood_06_height_1k.png",
+    "ao": "PBR/wood_06/wood_06_ambientOcclusion_1k.jpg",
+    "metallic": "PBR/wood_06/wood_06_metallic_1k.jpg",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

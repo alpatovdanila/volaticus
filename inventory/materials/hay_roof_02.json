@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "hay_roof_02",
+  "name": "Hay Roof 02",
+  "category": "hay_roof",
+  "maps": {
+    "color": "PBR/hay_roof_02/hay_roof_02_basecolor_1k.png",
+    "normal": "PBR/hay_roof_02/hay_roof_02_normal_gl_1k.png",
+    "roughness": "PBR/hay_roof_02/hay_roof_02_roughness_1k.png",
+    "height": "PBR/hay_roof_02/hay_roof_02_height_1k.png",
+    "ao": "PBR/hay_roof_02/hay_roof_02_ambientocclusion_1k.png",
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

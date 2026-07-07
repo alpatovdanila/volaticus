@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "plaster_wall_04",
+  "name": "Plaster Wall 04",
+  "category": "plaster_wall",
+  "maps": {
+    "color": "PBR/plaster_wall_04/plaster_wall_02_basecolor_1k.png",
+    "normal": "PBR/plaster_wall_04/plaster_wall_02_normal_gl_1k.png",
+    "roughness": "PBR/plaster_wall_04/plaster_wall_02_roughness_1k.png",
+    "height": null,
+    "ao": null,
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

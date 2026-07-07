@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "metal_lockers_01",
+  "name": "Metal Lockers 01",
+  "category": "metal_lockers",
+  "maps": {
+    "color": "PBR/metal_lockers_01/metal_lockers_01_basecolor_1k.png",
+    "normal": "PBR/metal_lockers_01/metal_lockers_01_normal_gl_1k.png",
+    "roughness": "PBR/metal_lockers_01/metal_lockers_01_roughness_1k.png",
+    "height": "PBR/metal_lockers_01/metal_lockers_01_height_1k.png",
+    "ao": "PBR/metal_lockers_01/metal_lockers_01_ambientocclusion_1k.png",
+    "metallic": "PBR/metal_lockers_01/metal_lockers_01_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

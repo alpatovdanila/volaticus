@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "concrete_wall_08",
+  "name": "Concrete Wall 08",
+  "category": "concrete_wall",
+  "maps": {
+    "color": "PBR/concrete_wall_08/concrete_wall_08_basecolor_1k.png",
+    "normal": "PBR/concrete_wall_08/concrete_wall_08_normal_gl_1k.png",
+    "roughness": "PBR/concrete_wall_08/concrete_wall_08_roughness_1k.png",
+    "height": "PBR/concrete_wall_08/concrete_wall_08_height_1k.png",
+    "ao": "PBR/concrete_wall_08/concrete_wall_08_ambientocclusion_1k.png",
+    "metallic": "PBR/concrete_wall_08/concrete_wall_08_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

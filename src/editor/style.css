@@ -1,0 +1,828 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #16181d;
+  --panel: #1e2128;
+  --panel2: #23262e;
+  --border: #2e323c;
+  --text: #cfd3dc;
+  --dim: #8a8f9c;
+  --accent: #f0a03c;
+}
+html, body { height: 100%; }
+body {
+  font: 13px/1.45 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.spacer { flex: 1; }
+/* #25: icon-forward toolbar buttons — icon glyph + compact label */
+.tb-btn { display: inline-flex; align-items: center; gap: 7px; }
+.tb-ic { font-size: 13px; line-height: 1; color: var(--dim); }
+.tb-btn:hover .tb-ic, .tb-btn.active .tb-ic { color: var(--accent); }
+.pack-label .tb-ic { color: var(--dim); }
+button {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+button:hover { border-color: var(--accent); color: #fff; }
+button:disabled { opacity: 0.4; cursor: default; }
+#btn-save { background: var(--accent); color: #1a1408; font-weight: 700; border-color: transparent; }
+#btn-save:disabled { background: var(--panel2); color: var(--dim); }
+.pack-label { display: inline-flex; align-items: center; gap: 7px; color: var(--dim); font-size: 12px; }
+.pack-label select { margin: 0 0 0 4px; }
+
+/* #31: light-control popover (anchored under the 💡 topbar button) */
+#light-wrap { position: relative; display: inline-flex; }
+#light-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  width: 250px;
+  padding: 10px 12px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+#light-pop[hidden] { display: none; }
+.light-row { display: flex; align-items: center; gap: 8px; }
+.light-row label { width: 58px; flex: none; color: var(--dim); font-size: 12px; }
+.light-row input[type='range'] { flex: 1; min-width: 0; accent-color: var(--accent); }
+/* selects must flex-shrink (min-width:0) or a long HDRI name sizes the <select>
+   to its widest option and overflows the fixed-width popover. */
+.light-sel {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+  padding: 2px 4px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.light-val { width: 34px; flex: none; text-align: right; font-size: 11px; color: var(--text); font-variant-numeric: tabular-nums; }
+#lt-reset { margin-top: 3px; font-size: 12px; padding: 4px 10px; align-self: flex-end; }
+
+#main { flex: 1; display: flex; min-height: 0; }
+
+#left {
+  width: 250px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+#left input, #right input, select {
+  margin: 8px;
+  padding: 6px 9px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+#left input:focus, #right input:focus { border-color: var(--accent); }
+#item-list { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+.list-section {
+  padding: 10px 12px 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+}
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px 5px 18px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.list-item:hover { background: var(--panel2); }
+.list-item.selected { background: var(--panel2); border-left-color: var(--accent); color: #fff; }
+.list-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.issue-dot { color: #e5534b; font-size: 10px; }
+
+#center { flex: 1; position: relative; min-width: 0; background: #2a2e36; }
+#canvas-wrap, #canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#overlay-top {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+#overlay-top select { margin: 0; background: rgba(20, 23, 28, 0.85); }
+#overlay-top button { background: rgba(20, 23, 28, 0.85); }
+#overlay-top .btn-event { border-color: rgba(240, 160, 60, 0.5); }
+#overlay-top .btn-modifier { border-color: rgba(120, 190, 255, 0.4); }
+#overlay-top .btn-modifier.active { border-color: var(--accent); color: var(--accent); }
+#overlay-top .chk {
+  background: rgba(20, 23, 28, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+#overlay-bottom {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  background: rgba(20, 23, 28, 0.85);
+  border-radius: 6px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  pointer-events: none;
+  min-height: 1.4em;
+}
+#overlay-bottom:empty { display: none; }
+/* #26: bottom status line — selected-entity title + tris count together */
+#overlay-status {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  background: rgba(20, 23, 28, 0.85);
+  border-radius: 6px;
+  pointer-events: none;
+  max-width: calc(100% - 20px);
+}
+#overlay-status:not(:has(#sel-title:not(:empty))):not(:has(#overlay-stats:not(:empty))) { display: none; }
+#sel-title {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#sel-title:empty { display: none; }
+#overlay-stats {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+#overlay-stats:empty { display: none; }
+/* divider between title and tris count when both present */
+#sel-title:not(:empty) + #overlay-stats:not(:empty) {
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+#perf-hud {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 5px 9px;
+  background: rgba(20, 23, 28, 0.82);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dim);
+  white-space: pre;
+  pointer-events: none;
+  user-select: none;
+}
+#perf-hud:empty { display: none; }
+#perf-hud b { color: var(--text); font-weight: 600; }
+#btn-wire.active { border-color: var(--accent); color: var(--accent); }
+#valid-bar {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 12px;
+  background: rgba(160, 40, 40, 0.92);
+  color: #ffe;
+  font-size: 12px;
+  z-index: 5;
+}
+
+/* #right is now ONLY the Model parts column; the Materials picker moved to its
+   own #mat-col to the right of it (#1). */
+#right {
+  width: 340px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+#right h3, #mat-col h3 {
+  padding: 10px 12px 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  font-weight: 600;
+}
+#slots-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#slot-chips { flex: 1; overflow-y: auto; padding: 6px 8px 10px; }
+/* #2: bigger, TOP-aligned material preview inside the chip (align-items:flex-start
+   so the thumbnail pins to the top; the meta column fills the rest). */
+.slot-chip {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  background: var(--panel2);
+}
+.slot-chip:hover { border-color: var(--dim); }
+.slot-chip.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+/* #23 (beyond #2): even bigger material preview, still top-aligned in the chip. */
+.slot-thumb {
+  width: 84px;
+  height: 84px;
+  flex: none;
+  border-radius: 5px;
+  overflow: hidden;
+  isolation: isolate; /* multiply blends only against the thumb's tint background */
+  background: #fff;
+  align-self: flex-start; /* #2: top-aligned within the chip */
+}
+.slot-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  mix-blend-mode: multiply; /* thumbnail = texture × tint, i.e. the resulting color */
+}
+.slot-meta { flex: 1; min-width: 0; }
+.slot-name { font-weight: 700; color: #fff; }
+/* item 34: name row = collapse toggle (group parents) + name + group badge */
+.slot-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.slot-name-row .slot-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grp-toggle {
+  flex: none;
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--dim);
+}
+.grp-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.grp-badge {
+  flex: none;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border: 1px solid rgba(120, 190, 255, 0.4);
+  border-radius: 4px;
+  color: #78beff;
+}
+.grp-count { flex: none; font-size: 10px; color: var(--dim); }
+/* item 34: inherited (non-overridden) values render dimmed/ghost */
+.slot-chip .ghosted { opacity: 0.5; }
+.slot-chip .ghosted select, .slot-select.ghosted { font-style: italic; }
+/* item 34: ↺ reset beside an overridden control — deletes the override key */
+.ovr-reset {
+  flex: none;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 17px;
+  border-radius: 4px;
+  color: var(--accent);
+  border-color: rgba(240, 160, 60, 0.55);
+  background: transparent;
+}
+.ovr-reset:hover { background: var(--accent); color: #1a1408; }
+/* item 34: material override reset — ↺ pinned on the thumbnail corner */
+.slot-thumb { position: relative; }
+.thumb-reset {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  z-index: 1;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 18px;
+  border-radius: 4px;
+  color: var(--accent);
+  border: 1px solid rgba(240, 160, 60, 0.55);
+  background: rgba(20, 23, 28, 0.85);
+  mix-blend-mode: normal; /* don't multiply with the tint backdrop */
+}
+.thumb-reset:hover { background: var(--accent); color: #1a1408; }
+/* #22 (refines #3): the material name never appears as a text line and is NOT
+   revealed on chip hover — it shows ONLY as the native tooltip when hovering the
+   preview image itself (.slot-thumb[title]). No .slot-hovername element. */
+.slot-tex { font-size: 11px; color: var(--dim); font-family: Consolas, monospace; }
+.slot-controls { display: flex; gap: 4px; margin-top: 3px; flex-wrap: wrap; align-items: center; }
+.slot-select {
+  margin: 0;
+  padding: 1px 4px;
+  font-size: 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+}
+/* #4 vs #13: chip projection override inert (node authors uvProject) — dim it */
+.slot-select-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+.fx-chip img { background: repeating-conic-gradient(#2a2e36 0 25%, #1c1f24 0 50%) 0 0 / 12px 12px; }
+.fx-chip .slot-name { color: var(--accent); }
+.fx-inherit { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--dim); cursor: pointer; }
+.fx-inherit input { accent-color: var(--accent); }
+.slot-slider { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--dim); }
+/* margin/padding 0 kills the global input padding that insets range tracks */
+.slot-slider input { width: 58px; accent-color: var(--accent); height: 12px; margin: 0; padding: 0; }
+.chk-cutout { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--dim); cursor: pointer; }
+.chk-cutout input { accent-color: var(--accent); margin: 0; padding: 0; width: auto; }
+.slot-tint { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--dim); cursor: pointer; }
+/* our own swatch square — the native color-input chrome is unreadably small */
+.tint-swatch { width: 22px; height: 22px; flex: none; border: 1px solid var(--border); border-radius: 4px; }
+.tint-swatch.none { position: relative; }
+.tint-swatch.none::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 46%, #c33 46%, #c33 54%, transparent 54%);
+}
+.slot-tint input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+.btn-regen { padding: 1px 7px; font-size: 12px; }
+.btn-regen:disabled { opacity: 0.4; cursor: default; }
+
+/* #24: inline craft controls — a vertical stack inside the chip, below the
+   apply-options row. A subtle divider separates it from the placement options.
+   Zeroed margins/paddings on the slider let the thumb reach both track ends. */
+.slot-gen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.slot-gen .gen-row { display: flex; align-items: center; gap: 8px; }
+.slot-gen .gen-label { font-size: 11px; color: var(--dim); flex: none; }
+/* craft slider: min-width 0 lets it shrink so the number input always fits inside
+   the chip instead of being pushed out; it fills the remaining row width. */
+.slot-gen input[type='range'] { flex: 1; min-width: 0; margin: 0; padding: 0; height: 14px; accent-color: var(--accent); }
+.slot-gen input[type='number'] {
+  width: 48px;
+  flex: none;
+  margin: 0;
+  padding: 3px 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  outline: none;
+}
+.slot-gen input[type='number']:focus { border-color: var(--accent); }
+.slot-gen select { margin: 0; }
+/* #14: right-click context menu on a chip's material preview */
+.chip-menu {
+  position: fixed;
+  z-index: 70;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+.chip-menu-item {
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+.chip-menu-item:hover { background: var(--accent); color: #1a1408; }
+
+/* #1: Materials picker is now its OWN column (#mat-col), immediately right of
+   the Model-parts column. Full-height searchable, category-grouped grid. */
+/* width fits exactly two big thumbnails + the grid gutters/padding, so there is
+   no dead space on the right of the 2-wide grid (thumbs sized to match below). */
+#mat-col {
+  width: 260px;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+#mat-col[hidden] { display: none; }
+#mat-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+/* search on top, category dropdown stacked BELOW it (was side-by-side) */
+#mat-panel .tex-controls { display: flex; flex-direction: column; gap: 0; align-items: stretch; }
+/* #20: style the main-studio material-search input to match the app's inputs. */
+#tex-search {
+  flex: 1;
+  margin: 8px;
+  padding: 6px 9px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+#tex-search:focus { border-color: var(--accent); }
+/* category dropdown sits under the search, full width of the column */
+#tex-folder { margin: 0 8px 4px; max-width: none; }
+/* item 36: persistent "hide MC textures" filter under search/category */
+.chk-hidemc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 10px 6px;
+  font-size: 11px;
+  color: var(--dim);
+  cursor: pointer;
+  user-select: none;
+}
+.chk-hidemc input { accent-color: var(--accent); margin: 0; padding: 0; width: auto; }
+.chk-hidemc:hover { color: var(--text); }
+/* 2 BIG thumbnails per row — a fixed 2-column grid so the tiles fill the column
+   width with no dead gutter on the right. */
+/* Two-wide tile flow via flex-wrap, NOT css grid: this grid context (flex
+   child + overflow scroll + lazy images) kept collapsing rows to min-height —
+   it defeated aspect-ratio, the ::before padding hack AND a loaded in-flow
+   image. flex-wrap is the layout the picker shipped with for weeks and sizes
+   rows from real content every time. */
+#tex-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  align-content: flex-start;
+}
+.tex-tile {
+  width: calc(50% - 4px); /* 2 per row (gap 8px) */
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+  position: relative;
+}
+/* Square tiles the PRIMITIVE way: an in-flow img at width:100% renders at the
+   texture's intrinsic ratio (all catalog maps are square). Both aspect-ratio
+   and the ::before padding hack collapsed to thin strips here — the grid's
+   auto-row sizing pass ignores them (user-reproduced at ~1200 materials) —
+   but real in-flow image height cannot be ignored. min-height covers the
+   pre-load moment for lazy thumbnails. */
+.tex-tile:hover { border-color: var(--accent); }
+.tex-tile.current { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+/* #38: "Show in picker" flash-highlight on the revealed tile */
+@keyframes tile-flash {
+  0%, 100% { box-shadow: 0 0 0 2px transparent; }
+  25%, 75% { box-shadow: 0 0 0 3px var(--accent); }
+}
+.tex-tile.flash { border-color: var(--accent); animation: tile-flash 0.6s ease 3; }
+.tex-tile { min-height: 48px; }
+.tex-tile img {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: auto;
+}
+/* material-id caption on hover — the picker tiles are catalog materials now */
+.tex-tile .mat-cap {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 2px 4px;
+  background: rgba(10, 12, 16, 0.82);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.tex-tile:hover .mat-cap { opacity: 1; }
+/* the trailing "N materials" info line spans the full row width */
+#tex-grid > .hint { width: 100%; padding: 4px 4px 0; }
+
+/* ------------------------------------------------------------------------
+   Material Manager OVERLAY / modal (#7). A dim backdrop over the entity editor
+   (which stays mounted underneath), a centered panel with: left catalog list,
+   center dedicated preview canvas (skybox + fixed light + auto-rotate), right
+   tuning panel. Opened by #btn-materials or a chip's Edit-material; closed by
+   the ✕ button or Esc. */
+#mat-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#mat-modal[hidden] { display: none; }
+#mat-modal-backdrop { position: absolute; inset: 0; background: rgba(8, 10, 14, 0.62); backdrop-filter: blur(2px); }
+#mat-modal-panel {
+  position: relative;
+  /* #18: near-fullscreen — margins ≤ ~30px on every side */
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+}
+#mat-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+}
+#mat-modal-head .mm-title { font-weight: 700; letter-spacing: 1px; color: var(--accent); font-size: 13px; }
+#mat-modal-head .mm-actions { display: flex; gap: 6px; }
+#mat-modal-head .mm-actions button { padding: 4px 10px; font-size: 12px; }
+#mgr-delete:hover { border-color: #e5534b; color: #ff8a80; }
+/* the resolution preset now lives in the overlay head (moved out of the topbar) */
+#mat-modal-head .pack-label { font-size: 12px; }
+#mat-modal-head .pack-label select { margin: 0 0 0 4px; }
+/* material overlay's OWN save button + saved/unsaved indicator (separate dirty
+   state from the entity's topbar Save). */
+#mgr-dirty {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 2px 4px;
+}
+#mgr-dirty.dirty { color: var(--accent); }
+#mgr-dirty.clean { color: #63b76b; }
+#mgr-dirty:empty { display: none; }
+#mgr-save { background: var(--accent); color: #1a1408; font-weight: 700; border-color: transparent; padding: 4px 14px; }
+#mgr-save:disabled { background: var(--panel2); color: var(--dim); }
+#mat-modal-head .mm-close { padding: 4px 11px; font-size: 14px; line-height: 1; }
+#mat-modal-body { flex: 1; display: flex; min-height: 0; }
+#mgr-center { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #2a2e36; position: relative; }
+#mgr-canvas { flex: 1; min-height: 0; position: relative; }
+#mgr-canvas canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* overlay while the selected material's GL textures decode (avoids a black mesh) */
+#mgr-loading {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 40px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  color: var(--dim); font-size: 13px; background: rgba(42, 46, 54, 0.4);
+  pointer-events: none; z-index: 5;
+}
+#mgr-loading[hidden] { display: none; }
+/* CSS ring spinner — small (list rows) + large (preview overlay) */
+.mgr-spinner {
+  flex: none; width: 12px; height: 12px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: mgr-spin 0.7s linear infinite;
+}
+.mgr-spinner-lg { width: 22px; height: 22px; border-width: 3px; }
+@keyframes mgr-spin { to { transform: rotate(360deg); } }
+.mgr-item-loading .mgr-item-name { color: var(--dim); }
+.mgr-item .mgr-spinner { margin-left: 6px; }
+#mgr-preview-bar {
+  padding: 6px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--panel2);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+#mgr-preview-bar .chk { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text); cursor: pointer; }
+#mgr-preview-bar .chk input { accent-color: var(--accent); margin: 0; padding: 0; width: auto; }
+/* cloned Light control sits at the far right; its popover opens UPWARD (the bar is
+   at the bottom of the preview). Rows reuse the shared .light-row/.light-sel/.light-val. */
+#mgr-light-wrap { position: relative; display: inline-flex; margin-left: auto; }
+#mgr-light-pop {
+  position: absolute; bottom: calc(100% + 6px); right: 0; z-index: 60;
+  width: 250px; padding: 10px 12px;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex; flex-direction: column; gap: 7px;
+}
+#mgr-light-pop[hidden] { display: none; }
+#mgr-lt-reset { margin-top: 3px; font-size: 12px; padding: 4px 10px; align-self: flex-end; }
+#mgr-left {
+  width: 240px;
+  flex: none;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column; /* #21: search input on top, list BELOW it */
+}
+/* #20: style the manager material-search input to match the app's inputs. */
+#mgr-search {
+  margin: 8px;
+  padding: 6px 9px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+#mgr-search:focus { border-color: var(--accent); }
+#mgr-list { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+.mgr-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 12px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.mgr-item:hover { background: var(--panel2); }
+.mgr-item.selected { background: var(--panel2); border-left-color: var(--accent); color: #fff; }
+.mgr-item img {
+  width: 26px; height: 26px; flex: none;
+  border-radius: 4px; object-fit: cover; background: #000;
+}
+.mgr-item-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#mgr-right {
+  width: 320px;
+  flex: none;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+#mgr-right h3 {
+  padding: 10px 12px 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  font-weight: 600;
+}
+#mgr-title { color: var(--accent) !important; text-transform: none !important; letter-spacing: 0 !important; font-size: 14px !important; }
+#mgr-tuning { flex: 1; overflow-y: auto; padding: 6px 12px 16px; }
+.tune-row { display: flex; align-items: center; gap: 8px; margin: 9px 0; }
+.tune-row > label { flex: none; width: 92px; font-size: 11px; color: var(--dim); display: flex; align-items: center; gap: 4px; }
+/* #9: small hint marker; the explanation lives in the title tooltip (whole row) */
+.tune-hint {
+  flex: none;
+  width: 13px; height: 13px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 9px;
+  line-height: 12px;
+  text-align: center;
+  color: var(--dim);
+  cursor: help;
+}
+.tune-hint:hover { border-color: var(--accent); color: var(--accent); }
+/* "▦" badge marking a scalar that a texture map backs (roughness/metalness). */
+.tune-map-badge {
+  flex: none;
+  margin-left: 4px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.8;
+  cursor: help;
+}
+.tune-row input[type='range'] { flex: 1; margin: 0; padding: 0; height: 14px; accent-color: var(--accent); }
+.tune-row .tune-val { flex: none; width: 40px; text-align: right; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text); }
+.tune-row.chk { gap: 6px; }
+.tune-row.chk input { accent-color: var(--accent); margin: 0; padding: 0; width: auto; }
+.tune-row.chk label { width: auto; color: var(--text); }
+.tune-tint { display: flex; align-items: center; gap: 8px; }
+.tune-tint .tint-swatch { width: 22px; height: 22px; }
+.tune-tint input[type='color'] { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+.tune-tint button { padding: 2px 8px; font-size: 11px; }
+.tune-sep { border-top: 1px solid var(--border); margin: 12px 0 4px; padding-top: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); }
+.tune-disabled { opacity: 0.4; }
+.hint { color: var(--dim); padding: 8px 12px; font-size: 12px; width: 100%; }
+
+/* #27: alpha-mask row — thumbnail + pick/clear buttons in the tuning panel */
+.alpha-thumb {
+  flex: none;
+  width: 26px; height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background:
+    repeating-conic-gradient(#5a5f6a 0% 25%, #3a3e46 0% 50%) 50% / 10px 10px; /* checker = "shows through" */
+}
+.alpha-thumb.none { background: var(--bg); }
+.alpha-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.alpha-pick, .alpha-row button { padding: 2px 8px; font-size: 11px; }
+.tune-row .alpha-pick { flex: 1; }
+
+/* #27: the resource-texture picker popup for the alpha mask */
+.tex-picker {
+  position: fixed;
+  z-index: 260;
+  width: 300px;
+  max-height: 340px;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tex-picker-search {
+  margin: 8px;
+  padding: 6px 9px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+.tex-picker-search:focus { border-color: var(--accent); }
+.tex-upload {
+  margin: 0 8px 6px;
+  padding: 6px 9px;
+  background: var(--panel2);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--dim);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.tex-upload:hover { border-color: var(--accent); color: var(--text); }
+.tex-picker-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 8px 8px;
+  align-content: flex-start;
+}
+
+/* #17: preview-shape selector field in the preview bar */
+.mgr-pv-field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+#mgr-preview-bar #mgr-shape { margin: 0; padding: 3px 6px; }
+
+.toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  background: var(--panel2);
+  border: 1px solid var(--accent);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: all 0.25s;
+  z-index: 100;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+::-webkit-scrollbar-track { background: transparent; }

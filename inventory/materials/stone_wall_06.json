@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "stone_wall_06",
+  "name": "Stone Wall 06",
+  "category": "stone_wall",
+  "maps": {
+    "color": "PBR/stone_wall_06/stone_wall_06_basecolor_1k.png",
+    "normal": "PBR/stone_wall_06/stone_wall_06_normal_gl_1k.png",
+    "roughness": "PBR/stone_wall_06/stone_wall_06_roughness_1k.png",
+    "height": "PBR/stone_wall_06/stone_wall_06_height_1k.png",
+    "ao": "PBR/stone_wall_06/stone_wall_06_ambientocclusion_1k.png",
+    "metallic": "PBR/stone_wall_06/stone_wall_06_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

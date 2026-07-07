@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "ground_with_roots_01",
+  "name": "Ground With Roots 01",
+  "category": "ground_with_roots",
+  "maps": {
+    "color": "PBR/ground_with_roots_01/ground_with_roots_01_color_1k.png",
+    "normal": "PBR/ground_with_roots_01/ground_with_roots_01_normal_gl_1k.png",
+    "roughness": "PBR/ground_with_roots_01/ground_with_roots_01_roughness_1k.png",
+    "height": "PBR/ground_with_roots_01/ground_with_roots_01_height_1k.png",
+    "ao": "PBR/ground_with_roots_01/ground_with_roots_01_ambient_occlusion_1k.png",
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

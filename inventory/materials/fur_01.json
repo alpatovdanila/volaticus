@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "fur_01",
+  "name": "Fur 01",
+  "category": "fur",
+  "maps": {
+    "color": "PBR/fur_01/fur_01_basecolor_1k.png",
+    "normal": "PBR/fur_01/fur_01_normal_gl_1k.png",
+    "roughness": "PBR/fur_01/fur_01_roughness_1k.png",
+    "height": "PBR/fur_01/fur_01_height_1k.png",
+    "ao": "PBR/fur_01/fur_01_ambient_occlusion_1k.png",
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

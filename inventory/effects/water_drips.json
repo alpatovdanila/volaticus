@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "id": "water_drips",
+  "name": "Water drips",
+  "notes": "After-fountain droplets raining back down around the vent.",
+  "particles": [
+    { "count": 10, "size": [0.04, 0.09], "offset": [0, 1.9, 0], "speed": [0.4, 1.3], "dir": "ring", "gravity": -9.5, "life": [0.5, 0.75], "colors": ["#9fd4ff", "#c8e8ff"], "spin": 4 }
+  ]
+}

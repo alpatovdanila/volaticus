@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VOLATICUS — inventory editor</title>
+  </head>
+  <body>
+    <!-- #25: icon-forward toolbar — brand block removed; #sel-title moved to the
+         bottom of the viewport (#26). -->
+    <div id="topbar">
+      <button id="btn-materials" class="tb-btn" title="material manager: tune the PBR catalog materials"><span class="tb-ic">◆</span> Materials</button>
+      <button id="btn-wire" class="tb-btn" title="toggle wireframe on the current build"><span class="tb-ic">▦</span> Wireframe</button>
+      <button id="btn-lineup" class="tb-btn" title="all entities in one scene, real scale"><span class="tb-ic">▤</span> Lineup</button>
+      <!-- Pure-HDRI light controls — the environment map is the only light
+           source; sliders drive its yaw and lighting strength. -->
+      <div id="light-wrap">
+        <button id="btn-lights" class="tb-btn" title="HDRI lighting: environment rotation + intensity (no real light sources)"><span class="tb-ic">💡</span> Light</button>
+        <div id="light-pop" hidden>
+          <div class="light-row"><label title="which HDRI lights the scene">hdri</label><select id="lt-hdri" class="light-sel"></select></div>
+          <div class="light-row"><label title="display tone mapping — none = WYSIWYG (clips >1), ACES/AgX = filmic HDR (shifts colors). Not per-texture; a single output transform.">tonemap</label><select id="lt-tonemap" class="light-sel"><option value="none">none (WYSIWYG)</option><option value="aces">ACES filmic</option><option value="agx">AgX</option></select></div>
+          <div class="light-row"><label title="HDRI environment rotation — yaw in degrees (spins the sky and its lighting together)">rotation</label><input id="lt-rotation" type="range" min="0" max="360" step="1" /><span class="light-val" id="lt-rotation-val"></span></div>
+          <div class="light-row"><label title="HDRI lighting intensity (scene.environmentIntensity)">intensity</label><input id="lt-intensity" type="range" min="0" max="3" step="0.05" /><span class="light-val" id="lt-intensity-val"></span></div>
+          <div class="light-row"><label title="global emissive — adds each surface's own flat color back as self-illumination, lifting dark / occluded areas toward the WYSIWYG color. 0 = pure HDRI lighting.">emissive</label><input id="lt-emissive" type="range" min="0" max="1" step="0.02" /><span class="light-val" id="lt-emissive-val"></span></div>
+          <div class="light-row"><label title="hide the HDRI photo background (flat backdrop) while KEEPING its lighting — so low-poly models don't sit inside a photo">hide sky</label><input id="lt-hidebg" type="checkbox" /></div>
+          <button id="lt-reset" title="restore the default HDRI lighting">reset defaults</button>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <button id="btn-save" disabled>Save (Ctrl+S)</button>
+    </div>
+    <div id="main">
+      <div id="left">
+        <input id="search" placeholder="search items…" />
+        <div id="item-list"></div>
+      </div>
+      <div id="center">
+        <div id="valid-bar"></div>
+        <div id="canvas-wrap"></div>
+        <div id="overlay-top"></div>
+        <div id="overlay-bottom"></div>
+        <!-- #26: selected-entity title + tris count together as a bottom status line -->
+        <div id="overlay-status">
+          <span id="sel-title"></span>
+          <span id="overlay-stats"></span>
+        </div>
+        <!-- perf HUD (bottom-left): draw calls + CPU render time. Draw calls are
+             the direct metric for the mesh-merge work; fps is throttle-capped in
+             the editor so CPU ms is the signal to watch. -->
+        <div id="perf-hud" title="draw calls · triangles / CPU submit ms · GPU frame ms / fps (capped ~66 by the editor loop) · eng = uncapped engine fps = 1000 / real frame cost"></div>
+      </div>
+      <div id="right">
+        <div id="slots-panel">
+          <h3>Model parts</h3>
+          <div id="slot-chips"></div>
+        </div>
+      </div>
+      <!-- Materials picker: its own column, immediately right of Model parts (#1) -->
+      <div id="mat-col">
+        <div id="mat-panel">
+          <h3>Materials</h3>
+          <div class="tex-controls">
+            <input id="tex-search" placeholder="search materials…" />
+            <select id="tex-folder"></select>
+            <!-- item 36: persisted filter — hides all mc_* materials from the grid + categories -->
+            <label class="chk-hidemc" title="hide the imported minecraft (mc_*) materials from the grid and the category list"><input type="checkbox" id="tex-hidemc" /> hide MC textures</label>
+          </div>
+          <div id="tex-grid"></div>
+        </div>
+      </div>
+    </div>
+    <!-- #7: Material Manager as an OVERLAY / modal. The entity editor stays
+         mounted underneath (dim backdrop). Its own preview canvas (#mgr-canvas)
+         carries the skybox + fixed light + auto-rotation, isolated from the
+         entity viewport. Close via the ✕ button or Esc. -->
+    <div id="mat-modal" hidden>
+      <div id="mat-modal-backdrop"></div>
+      <div id="mat-modal-panel">
+        <div id="mat-modal-head">
+          <span class="mm-title">Material Manager</span>
+          <div class="mm-actions">
+            <button id="mgr-new" title="create a new material by duplicating the selected one">＋ New</button>
+            <button id="mgr-clone" title="duplicate the selected material into a new file">⧉ Duplicate</button>
+            <button id="mgr-delete" title="delete the selected material file">🗑 Delete</button>
+          </div>
+          <div class="spacer"></div>
+          <span id="mgr-dirty" class="mm-dirty" title="unsaved material changes">●&nbsp;unsaved</span>
+          <button id="mgr-save" title="save this material's JSON (Ctrl+S)" disabled>Save</button>
+          <button id="mgr-close" class="mm-close" title="close (Esc)">✕</button>
+        </div>
+        <div id="mat-modal-body">
+          <div id="mgr-left">
+            <input id="mgr-search" placeholder="search materials…" />
+            <div id="mgr-list"></div>
+          </div>
+          <div id="mgr-center">
+            <div id="mgr-canvas"></div>
+            <!-- overlay shown while the selected material's textures are still
+                 decoding — otherwise the preview mesh is briefly black (#loading). -->
+            <div id="mgr-loading" hidden><span class="mgr-spinner mgr-spinner-lg"></span><span>loading textures…</span></div>
+            <div id="mgr-preview-bar">
+              <!-- #17: single preview shape selector (ball default) -->
+              <label class="mgr-pv-field">shape <select id="mgr-shape" title="preview shape"></select></label>
+              <label class="chk"><input type="checkbox" id="mgr-autorotate" checked /> auto-rotate</label>
+              <!-- PREVIEW-ONLY tiling + projection: a viewing aid for inspecting the
+                   material at different densities/projections. NOT saved to the
+                   material (stored with the other preview prefs). -->
+              <label class="mgr-pv-field" title="PREVIEW-ONLY tiling density (repeats over the preview shape). A viewing aid — never saved to the material.">tile <input type="range" id="mgr-uvscale" min="0.25" max="8" step="0.25" value="1" /><span id="mgr-uvscale-val">1</span></label>
+              <label class="mgr-pv-field" title="PREVIEW-ONLY UV projection for the preview shape — never saved to the material.">proj <select id="mgr-uvproject"></select></label>
+              <!-- Cloned global-lighting control: the preview now uses the SAME HDRI
+                   lighting as the main editor. This button edits the shared LightParams,
+                   so it updates BOTH the preview and the main viewport. Opens upward. -->
+              <div id="mgr-light-wrap">
+                <button id="mgr-btn-lights" class="tb-btn" title="HDRI lighting (shared with the main editor): environment rotation + intensity + tonemap. Applies to both views."><span class="tb-ic">💡</span> Light</button>
+                <div id="mgr-light-pop" hidden>
+                  <div class="light-row"><label title="which HDRI lights the scene">hdri</label><select id="mgr-lt-hdri" class="light-sel"></select></div>
+                  <div class="light-row"><label title="display tone mapping — none = WYSIWYG (clips >1), ACES/AgX = filmic HDR (shifts colors).">tonemap</label><select id="mgr-lt-tonemap" class="light-sel"><option value="none">none (WYSIWYG)</option><option value="aces">ACES filmic</option><option value="agx">AgX</option></select></div>
+                  <div class="light-row"><label title="HDRI environment rotation — yaw in degrees">rotation</label><input id="mgr-lt-rotation" type="range" min="0" max="360" step="1" /><span class="light-val" id="mgr-lt-rotation-val"></span></div>
+                  <div class="light-row"><label title="HDRI lighting intensity">intensity</label><input id="mgr-lt-intensity" type="range" min="0" max="3" step="0.05" /><span class="light-val" id="mgr-lt-intensity-val"></span></div>
+                  <div class="light-row"><label title="global emissive — adds each surface's own flat color back as self-illumination">emissive</label><input id="mgr-lt-emissive" type="range" min="0" max="1" step="0.02" /><span class="light-val" id="mgr-lt-emissive-val"></span></div>
+                  <div class="light-row"><label title="hide the HDRI photo background while KEEPING its lighting">hide sky</label><input id="mgr-lt-hidebg" type="checkbox" /></div>
+                  <button id="mgr-lt-reset" title="restore the default HDRI lighting">reset defaults</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="mgr-right">
+            <h3 id="mgr-title">Material</h3>
+            <div id="mgr-tuning"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/editor/main.ts"></script>
+  </body>
+</html>

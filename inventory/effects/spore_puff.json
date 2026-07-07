@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "spore_puff",
+  "name": "Spore puff",
+  "notes": "Greenish spore cloud — bouncy mushroom impacts. Offset lifts the spawn from the bbox center to the cap's top surface.",
+  "particles": [
+    {
+      "count": 5,
+      "flipbook": { "pattern": "particle/generic_#.png", "frames": 8 },
+      "size": [0.25, 0.4],
+      "grow": 1.5,
+      "speed": [0.8, 1.5],
+      "dir": "up",
+      "gravity": 0.4,
+      "drag": 1,
+      "life": [0.5, 0.8],
+      "colors": ["#cfe8b0", "#a8cf88"],
+      "spin": 1.5,
+      "offset": [0, 0.6, 0]
+    },
+    {
+      "count": 8,
+      "size": [0.03, 0.06],
+      "speed": [1.2, 2.4],
+      "dir": "sphere",
+      "gravity": -2.5,
+      "life": [0.4, 0.7],
+      "colors": ["#a8cf88", "#7fae5f"],
+      "spin": 8,
+      "offset": [0, 0.6, 0]
+    }
+  ]
+}

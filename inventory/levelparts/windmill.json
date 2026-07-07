@@ -1,0 +1,273 @@
+{
+  "format": 1,
+  "id": "windmill",
+  "name": "Windmill",
+  "category": "levelpart",
+  "behavior": "static",
+  "tags": ["village", "building", "landmark"],
+  "notes": "Bellwether Vale windmill (v1 makeWindmill port): tapered plaster tower with three wood bands, coral tiled cap, dark door + glowing window, and a 4-blade rotor on the 'blades' node at hub height 8.6m, offset 2.1m forward. Blades spin via looping 'spin' anim at ~0.55 rad/s (360deg / 11.42s). Collider is the tower cylinder only - blades sweep freely. Doorstep by chance.",
+  "materials": {
+    "plaster": { "material": "concrete_ground_01", "tint": "#f2e8d3", "flat": true },
+    "tower": { "inherit": "plaster" },
+    "wood": { "material": "wood_planks_14", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "band_1": { "inherit": "wood" },
+    "band_2": { "inherit": "wood" },
+    "band_3": { "inherit": "wood" },
+    "lintel": { "inherit": "wood" },
+    "wood_dark": { "material": "wood_planks_20", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "door": { "inherit": "wood_dark" },
+    "win_frame": { "inherit": "wood_dark" },
+    "finial": { "inherit": "wood_dark" },
+    "axle_beam": { "inherit": "wood_dark" },
+    "hub": { "inherit": "wood_dark" },
+    "spar_0": { "inherit": "wood_dark" },
+    "spar_1": { "inherit": "wood_dark" },
+    "spar_2": { "inherit": "wood_dark" },
+    "spar_3": { "inherit": "wood_dark" },
+    "roof": { "material": "roof_tiles_10", "flat": true, "uvScale": 0.5, "uvProject": "box" },
+    "cap": { "inherit": "roof" },
+    "canvas": { "material": "plaster_wall_01", "tint": "#f7efd9", "flat": true, "uvScale": 0.5, "uvProject": "box" },
+    "sail_0": { "inherit": "canvas" },
+    "sail_1": { "inherit": "canvas" },
+    "sail_2": { "inherit": "canvas" },
+    "sail_3": { "inherit": "canvas" },
+    "trim": { "material": "plaster_wall_01", "tint": "#e86a5c", "flat": true, "uvScale": 0.5, "uvProject": "box" },
+    "tip_0": { "inherit": "trim" },
+    "tip_1": { "inherit": "trim" },
+    "tip_2": { "inherit": "trim" },
+    "tip_3": { "inherit": "trim" },
+    "pane": { "material": "concrete_wall_01", "emissive": 0.6, "uvMode": "stretch" },
+    "win_pane": { "inherit": "pane" },
+    "stone": { "material": "stone_bricks_wall_03", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "doorstep": { "inherit": "stone" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "tower": {
+          "shape": "cylinder",
+          "radiusTop": 1.6,
+          "radiusBottom": 2.6,
+          "height": 9,
+          "segments": 14,
+          "pos": [0, 4.5, 0],
+          "material": "tower",
+          "craft": 0.9
+        },
+        "band_1": {
+          "shape": "ring",
+          "radius": 2.44,
+          "height": 0.18,
+          "thickness": 0.07,
+          "segments": 14,
+          "pos": [0, 2.2, 0],
+          "material": "band_1",
+          "craft": 0.75
+        },
+        "band_2": {
+          "shape": "ring",
+          "radius": 2.17,
+          "height": 0.18,
+          "thickness": 0.07,
+          "segments": 14,
+          "pos": [0, 4.6, 0],
+          "material": "band_2",
+          "craft": 0.75
+        },
+        "band_3": {
+          "shape": "ring",
+          "radius": 1.9,
+          "height": 0.18,
+          "thickness": 0.07,
+          "segments": 14,
+          "pos": [0, 7, 0],
+          "material": "band_3",
+          "craft": 0.75
+        },
+        "cap": {
+          "shape": "cylinder",
+          "radiusTop": 0.3,
+          "radiusBottom": 1.75,
+          "height": 1.6,
+          "segments": 14,
+          "pos": [0, 9.7, 0],
+          "material": "cap",
+          "craft": 0.78
+        },
+        "finial": {
+          "shape": "post",
+          "radius": 0.07,
+          "height": 0.35,
+          "segments": 6,
+          "pos": [0, 10.62, 0],
+          "material": "finial",
+          "craft": 0.7
+        },
+        "door": {
+          "shape": "box",
+          "size": [0.9, 1.5, 0.14],
+          "pos": [0, 0.75, 2.48],
+          "material": "door",
+          "craft": 0.85
+        },
+        "lintel": {
+          "shape": "plank",
+          "size": [1.08, 0.14, 0.16],
+          "pos": [0, 1.57, 2.44],
+          "material": "lintel",
+          "craft": 0.8
+        },
+        "doorstep": {
+          "shape": "box",
+          "size": [1.15, 0.16, 0.55],
+          "pos": [0, 0.08, 2.78],
+          "material": "doorstep",
+          "chance": 0.75,
+          "craft": 0.7
+        },
+        "win_frame": {
+          "shape": "box",
+          "size": [0.56, 0.56, 0.12],
+          "pos": [0, 5.4, 1.98],
+          "material": "win_frame",
+          "craft": 0.85
+        },
+        "win_pane": { "shape": "box", "size": [0.42, 0.42, 0.12], "pos": [0, 5.4, 2.02], "material": "win_pane" },
+        "axle_beam": {
+          "shape": "cylinder",
+          "radius": 0.13,
+          "height": 0.75,
+          "segments": 8,
+          "pos": [0, 8.6, 1.7],
+          "rot": [90, 0, 0],
+          "material": "axle_beam"
+        },
+        "blades": {
+          "pos": [0, 8.6, 2.1],
+          "children": {
+            "hub": { "shape": "sphere", "radius": 0.36, "segments": 10, "material": "hub", "craft": 0.8 },
+            "arm_0": {
+              "children": {
+                "spar_0": {
+                  "shape": "plank",
+                  "size": [0.13, 4.45, 0.13],
+                  "pos": [0, 2.22, 0],
+                  "material": "spar_0",
+                  "craft": 0.8
+                },
+                "sail_0": {
+                  "shape": "plank",
+                  "size": [1, 3.5, 0.05],
+                  "pos": [0.6, 2.55, 0],
+                  "material": "sail_0",
+                  "craft": 0.75
+                },
+                "tip_0": {
+                  "shape": "plank",
+                  "size": [1, 0.4, 0.07],
+                  "pos": [0.6, 4.35, 0],
+                  "material": "tip_0",
+                  "craft": 0.75
+                }
+              }
+            },
+            "arm_1": {
+              "rot": [0, 0, 90],
+              "children": {
+                "spar_1": {
+                  "shape": "plank",
+                  "size": [0.13, 4.45, 0.13],
+                  "pos": [0, 2.22, 0],
+                  "material": "spar_1",
+                  "craft": 0.8
+                },
+                "sail_1": {
+                  "shape": "plank",
+                  "size": [1, 3.5, 0.05],
+                  "pos": [0.6, 2.55, 0],
+                  "material": "sail_1",
+                  "craft": 0.75
+                },
+                "tip_1": {
+                  "shape": "plank",
+                  "size": [1, 0.4, 0.07],
+                  "pos": [0.6, 4.35, 0],
+                  "material": "tip_1",
+                  "craft": 0.75
+                }
+              }
+            },
+            "arm_2": {
+              "rot": [0, 0, 180],
+              "children": {
+                "spar_2": {
+                  "shape": "plank",
+                  "size": [0.13, 4.45, 0.13],
+                  "pos": [0, 2.22, 0],
+                  "material": "spar_2",
+                  "craft": 0.8
+                },
+                "sail_2": {
+                  "shape": "plank",
+                  "size": [1, 3.5, 0.05],
+                  "pos": [0.6, 2.55, 0],
+                  "material": "sail_2",
+                  "craft": 0.75
+                },
+                "tip_2": {
+                  "shape": "plank",
+                  "size": [1, 0.4, 0.07],
+                  "pos": [0.6, 4.35, 0],
+                  "material": "tip_2",
+                  "craft": 0.75
+                }
+              }
+            },
+            "arm_3": {
+              "rot": [0, 0, 270],
+              "children": {
+                "spar_3": {
+                  "shape": "plank",
+                  "size": [0.13, 4.45, 0.13],
+                  "pos": [0, 2.22, 0],
+                  "material": "spar_3",
+                  "craft": 0.8
+                },
+                "sail_3": {
+                  "shape": "plank",
+                  "size": [1, 3.5, 0.05],
+                  "pos": [0.6, 2.55, 0],
+                  "material": "sail_3",
+                  "craft": 0.75
+                },
+                "tip_3": {
+                  "shape": "plank",
+                  "size": [1, 0.4, 0.07],
+                  "pos": [0.6, 4.35, 0],
+                  "material": "tip_3",
+                  "craft": 0.75
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "fixed", "collider": { "shape": "cylinder", "radius": 2.35, "height": 9, "offset": [0, 4.5, 0] } },
+  "variants": {
+    "scale": [0.97, 1.05],
+    "tintJitter": 0.04,
+    "seeds": [734920154, 118273645, 902184337, 415092886, 663728191, 287451903]
+  },
+  "states": { "initial": "idle", "idle": { "anim": "spin" } },
+  "anims": {
+    "spin": {
+      "loop": true,
+      "duration": 11.42,
+      "tracks": [
+        { "node": "blades", "prop": "rot.z", "ease": "linear", "keys": [[0, 0], [11.42, 360]] }
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "stone_bricks_wall_05",
+  "name": "Stone Bricks Wall 05",
+  "category": "stone_bricks_wall",
+  "maps": {
+    "color": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_color_1k.png",
+    "normal": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_normal_gl_1k.png",
+    "roughness": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_roughness_1k.png",
+    "height": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_height_1k.png",
+    "ao": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_ambient_occlusion_1k.png",
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

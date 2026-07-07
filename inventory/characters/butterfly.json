@@ -1,0 +1,183 @@
+{
+  "format": 1,
+  "id": "butterfly",
+  "name": "Butterfly",
+  "category": "character",
+  "behavior": "character",
+  "tags": ["neutral", "flyer", "ambient"],
+  "notes": "Neutral wanderer. oneOf picks wing color (orange/blue/pink). Flies with fast flapping; rest folds the wings slowly on the ground.",
+  "materials": {
+    "body": { "material": "plaster_wall_01", "tint": "#3a3230", "uvMode": "stretch", "flat": true },
+    "body_2": { "inherit": "body" },
+    "head": { "inherit": "body" },
+    "antenna_l": { "inherit": "body" },
+    "antenna_r": { "inherit": "body" },
+    "wing_orange": { "material": "plaster_wall_01", "tint": "#e8873c", "uvMode": "stretch", "flat": true },
+    "wo_l": { "inherit": "wing_orange" },
+    "wo_r": { "inherit": "wing_orange" },
+    "wing_blue": { "material": "plaster_wall_01", "tint": "#5b8fd6", "uvMode": "stretch", "flat": true },
+    "wb_l": { "inherit": "wing_blue" },
+    "wb_r": { "inherit": "wing_blue" },
+    "wing_pink": { "material": "plaster_wall_01", "tint": "#d67bb0", "uvMode": "stretch", "flat": true },
+    "wp_l": { "inherit": "wing_pink" },
+    "wp_r": { "inherit": "wing_pink" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "bug": {
+          "pos": [0, 0.85, 0],
+          "children": {
+            "body": {
+              "shape": "capsule",
+              "radius": 0.022,
+              "height": 0.09,
+              "pos": [0, 0, 0],
+              "rot": [90, 0, 0],
+              "material": "body_2"
+            },
+            "head": { "shape": "sphere", "radius": 0.026, "segments": 6, "pos": [0, 0.005, 0.07], "material": "head" },
+            "antenna_l": {
+              "shape": "box",
+              "size": [0.006, 0.05, 0.006],
+              "pos": [-0.015, 0.04, 0.09],
+              "rot": [25, 0, 18],
+              "material": "antenna_l"
+            },
+            "antenna_r": {
+              "shape": "box",
+              "size": [0.006, 0.05, 0.006],
+              "pos": [0.015, 0.04, 0.09],
+              "rot": [25, 0, -18],
+              "material": "antenna_r"
+            },
+            "wings_orange": {
+              "children": {
+                "wo_l": {
+                  "shape": "box",
+                  "size": [0.17, 0.006, 0.13],
+                  "pos": [-0.095, 0.01, -0.01],
+                  "pivot": [0.085, 0, 0],
+                  "material": "wo_l"
+                },
+                "wo_r": {
+                  "shape": "box",
+                  "size": [0.17, 0.006, 0.13],
+                  "pos": [0.095, 0.01, -0.01],
+                  "pivot": [-0.085, 0, 0],
+                  "material": "wo_r"
+                }
+              }
+            },
+            "wings_blue": {
+              "children": {
+                "wb_l": {
+                  "shape": "box",
+                  "size": [0.17, 0.006, 0.13],
+                  "pos": [-0.095, 0.01, -0.01],
+                  "pivot": [0.085, 0, 0],
+                  "material": "wb_l"
+                },
+                "wb_r": {
+                  "shape": "box",
+                  "size": [0.17, 0.006, 0.13],
+                  "pos": [0.095, 0.01, -0.01],
+                  "pivot": [-0.085, 0, 0],
+                  "material": "wb_r"
+                }
+              }
+            },
+            "wings_pink": {
+              "children": {
+                "wp_l": {
+                  "shape": "box",
+                  "size": [0.17, 0.006, 0.13],
+                  "pos": [-0.095, 0.01, -0.01],
+                  "pivot": [0.085, 0, 0],
+                  "material": "wp_l"
+                },
+                "wp_r": {
+                  "shape": "box",
+                  "size": [0.17, 0.006, 0.13],
+                  "pos": [0.095, 0.01, -0.01],
+                  "pivot": [-0.085, 0, 0],
+                  "material": "wp_r"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "kinematicCharacter", "collider": { "shape": "sphere", "radius": 0.12, "offset": [0, 0.85, 0] } },
+  "props": { "health": 1, "flySpeed": 0.8, "wanderRadius": 3 },
+  "states": { "initial": "fly", "fly": { "anim": "flutter" }, "rest": { "anim": "fold" } },
+  "anims": {
+    "flutter": {
+      "loop": true,
+      "duration": 1.8,
+      "tracks": [
+        { "node": "bug", "prop": "pos.y", "ease": "sine", "keys": [[0, -0.06], [0.9, 0.06], [1.8, -0.06]] },
+        { "node": "bug", "prop": "rot.z", "ease": "sine", "keys": [[0, 6], [0.9, -6], [1.8, 6]] },
+        {
+          "node": "wo_l",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 55], [0.09, -35], [0.18, 55], [0.27, -35], [0.36, 55], [0.45, -35], [0.54, 55], [0.63, -35], [0.72, 55], [0.81, -35], [0.9, 55], [0.99, -35], [1.08, 55], [1.17, -35], [1.26, 55], [1.35, -35], [1.44, 55], [1.53, -35], [1.62, 55], [1.71, -35], [1.8, 55]]
+        },
+        {
+          "node": "wo_r",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, -55], [0.09, 35], [0.18, -55], [0.27, 35], [0.36, -55], [0.45, 35], [0.54, -55], [0.63, 35], [0.72, -55], [0.81, 35], [0.9, -55], [0.99, 35], [1.08, -55], [1.17, 35], [1.26, -55], [1.35, 35], [1.44, -55], [1.53, 35], [1.62, -55], [1.71, 35], [1.8, -55]]
+        },
+        {
+          "node": "wb_l",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 55], [0.09, -35], [0.18, 55], [0.27, -35], [0.36, 55], [0.45, -35], [0.54, 55], [0.63, -35], [0.72, 55], [0.81, -35], [0.9, 55], [0.99, -35], [1.08, 55], [1.17, -35], [1.26, 55], [1.35, -35], [1.44, 55], [1.53, -35], [1.62, 55], [1.71, -35], [1.8, 55]]
+        },
+        {
+          "node": "wb_r",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, -55], [0.09, 35], [0.18, -55], [0.27, 35], [0.36, -55], [0.45, 35], [0.54, -55], [0.63, 35], [0.72, -55], [0.81, 35], [0.9, -55], [0.99, 35], [1.08, -55], [1.17, 35], [1.26, -55], [1.35, 35], [1.44, -55], [1.53, 35], [1.62, -55], [1.71, 35], [1.8, -55]]
+        },
+        {
+          "node": "wp_l",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 55], [0.09, -35], [0.18, 55], [0.27, -35], [0.36, 55], [0.45, -35], [0.54, 55], [0.63, -35], [0.72, 55], [0.81, -35], [0.9, 55], [0.99, -35], [1.08, 55], [1.17, -35], [1.26, 55], [1.35, -35], [1.44, 55], [1.53, -35], [1.62, 55], [1.71, -35], [1.8, 55]]
+        },
+        {
+          "node": "wp_r",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, -55], [0.09, 35], [0.18, -55], [0.27, 35], [0.36, -55], [0.45, 35], [0.54, -55], [0.63, 35], [0.72, -55], [0.81, 35], [0.9, -55], [0.99, 35], [1.08, -55], [1.17, 35], [1.26, -55], [1.35, 35], [1.44, -55], [1.53, 35], [1.62, -55], [1.71, 35], [1.8, -55]]
+        }
+      ]
+    },
+    "fold": {
+      "loop": true,
+      "duration": 2.6,
+      "tracks": [
+        { "node": "bug", "prop": "pos.y", "keys": [[0, -0.81]] },
+        { "node": "wo_l", "prop": "rot.z", "ease": "sine", "keys": [[0, -80], [1.3, -62], [2.6, -80]] },
+        { "node": "wo_r", "prop": "rot.z", "ease": "sine", "keys": [[0, 80], [1.3, 62], [2.6, 80]] },
+        { "node": "wb_l", "prop": "rot.z", "ease": "sine", "keys": [[0, -80], [1.3, -62], [2.6, -80]] },
+        { "node": "wb_r", "prop": "rot.z", "ease": "sine", "keys": [[0, 80], [1.3, 62], [2.6, 80]] },
+        { "node": "wp_l", "prop": "rot.z", "ease": "sine", "keys": [[0, -80], [1.3, -62], [2.6, -80]] },
+        { "node": "wp_r", "prop": "rot.z", "ease": "sine", "keys": [[0, 80], [1.3, 62], [2.6, 80]] }
+      ]
+    }
+  },
+  "variants": {
+    "scale": [0.8, 1.25],
+    "yawJitter": 180,
+    "tintJitter": 0.06,
+    "oneOf": { "wings": ["wings_orange", "wings_blue", "wings_pink"] },
+    "seeds": [746976254, 763753873, 713421016, 730198635, 814086730, 830864349]
+  },
+  "events": { "died": { "effect": "poof", "despawn": true } }
+}

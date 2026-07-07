@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "industrial_wall_8",
+  "name": "Industrial Wall 8",
+  "category": "industrial_wall",
+  "maps": {
+    "color": "PBR/industrial_wall_8/industrial_wall_8_baseColor_1k.png",
+    "normal": "PBR/industrial_wall_8/industrial_wall_8_normal_gl_1k.png",
+    "roughness": "PBR/industrial_wall_8/industrial_wall_8_roughness_1k.png",
+    "height": "PBR/industrial_wall_8/industrial_wall_8_height_1k.png",
+    "ao": "PBR/industrial_wall_8/industrial_wall_8_ambientOcclusion_1k.png",
+    "metallic": "PBR/industrial_wall_8/industrial_wall_8_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

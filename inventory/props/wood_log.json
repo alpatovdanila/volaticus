@@ -1,0 +1,100 @@
+{
+  "format": 1,
+  "id": "wood_log",
+  "name": "Wood Log",
+  "category": "prop",
+  "behavior": "static",
+  "tags": ["wood", "nature"],
+  "notes": "Fallen log lying on its side. oneOf picks the dressing: plain / mushrooms / mossy top. Branch stub by chance.",
+  "materials": {
+    "bark": { "material": "bark_05", "uvScale": 2 },
+    "trunk": { "inherit": "bark", "uvScale": 0.25 },
+    "stub": { "inherit": "bark" },
+    "rings": { "material": "concrete_wall_01" },
+    "trunk_top": { "inherit": "rings", "uvScale": 0.25, "uvProject": "none" },
+    "trunk_bottom": { "inherit": "rings" },
+    "moss": { "material": "moss_ground_01", "tint": "#439004", "uvScale": 2 },
+    "moss_a": { "inherit": "moss" },
+    "moss_b": { "inherit": "moss" },
+    "shroom": { "material": "concrete_wall_01", "uvMode": "stretch" },
+    "shroom_a": { "inherit": "shroom" },
+    "shroom_b": { "inherit": "shroom" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "trunk": {
+          "shape": "post",
+          "radius": 0.24,
+          "height": 1.5,
+          "pos": [0, 0.24, 0],
+          "rot": [0, 0, 90],
+          "material": { "side": "trunk", "top": "trunk_top", "bottom": "trunk_bottom" },
+          "craft": 0.91
+        },
+        "stub": {
+          "shape": "post",
+          "radius": 0.07,
+          "height": 0.3,
+          "pos": [0.35, 0.5, 0.05],
+          "rot": [0, 0, -20],
+          "material": "stub",
+          "chance": 0.6,
+          "craft": 0.8
+        },
+        "log_plain": {},
+        "log_shrooms": {
+          "children": {
+            "shroom_a": {
+              "shape": "cross",
+              "size": [0.22, 0.22],
+              "pos": [-0.3, 0.58, 0],
+              "rot": [0, 25, 0],
+              "material": "shroom_a"
+            },
+            "shroom_b": {
+              "shape": "cross",
+              "size": [0.16, 0.16],
+              "pos": [-0.05, 0.55, 0.1],
+              "rot": [0, 60, 0],
+              "material": "shroom_b",
+              "chance": 0.7
+            }
+          }
+        },
+        "log_mossy": {
+          "children": {
+            "moss_a": {
+              "shape": "box",
+              "size": [0.6, 0.07, 0.4],
+              "pos": [-0.2, 0.45, 0],
+              "rot": [0, 6, 4],
+              "material": "moss_a",
+              "sub": 2,
+              "craft": 0.41
+            },
+            "moss_b": {
+              "shape": "box",
+              "size": [0.35, 0.06, 0.34],
+              "pos": [0.35, 0.44, 0.03],
+              "rot": [0, -12, -3],
+              "material": "moss_b",
+              "chance": 0.7,
+              "sub": 2,
+              "craft": 0.4
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [1.5, 0.48, 0.48], "offset": [0, 0.24, 0] } },
+  "variants": {
+    "scale": [0.85, 1.25],
+    "yawJitter": 180,
+    "tiltJitter": 1,
+    "tintJitter": 0.06,
+    "oneOf": { "dressing": ["log_plain", "log_shrooms", "log_mossy"] },
+    "seeds": [122910979, 106133360, 156466217, 139688598, 190021455, 173243836]
+  }
+}

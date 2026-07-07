@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "id": "standing_stone",
+  "name": "Standing Stone",
+  "category": "prop",
+  "behavior": "static",
+  "tags": ["stone", "nature"],
+  "notes": "Tilted menhir (v1 makeStandingStone) — a single tapered five-sided monolith ~3 m with a slight lean. Moss-tinted top face rides on its own moss_top slot (repoint or retint it to go bare). Chance foot pebble. variants.scale 0.85-1.15 covers the v1 2.5-3.5 m range.",
+  "materials": {
+    "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
+    "menhir_side": { "inherit": "stone" },
+    "menhir_bottom": { "inherit": "stone" },
+    "moss_top": { "material": "grass_01", "flat": true, "uvScale": 0.25 },
+    "foot_pebble": { "inherit": "stone", "material": "cliff_rocks_06" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "menhir": {
+          "shape": "cylinder",
+          "radiusBottom": 0.5,
+          "radiusTop": 0.33,
+          "height": 3,
+          "segments": 5,
+          "pos": [0, 1.5, 0],
+          "rot": [0, 0, 4],
+          "rotJitter": [2, 30, 3],
+          "material": { "side": "menhir_side", "top": "moss_top", "bottom": "menhir_bottom" },
+          "sub": 2,
+          "craft": 0.58
+        },
+        "foot_pebble": {
+          "shape": "sphere",
+          "radius": 0.2,
+          "segments": 5,
+          "segmentsY": 5,
+          "pos": [0.55, 0.12, 0.2],
+          "scale": [1, 0.7, 0.9],
+          "material": "foot_pebble",
+          "chance": 0.5,
+          "sub": 1,
+          "craft": 0.6
+        }
+      }
+    }
+  },
+  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [0.95, 3, 0.85], "offset": [0, 1.5, 0] } },
+  "variants": {
+    "scale": [0.85, 1.15],
+    "yawJitter": 180,
+    "tiltJitter": 2,
+    "tintJitter": 0.07,
+    "seeds": [145873201, 129095582, 178428439, 195206058, 95762344, 112539963]
+  }
+}

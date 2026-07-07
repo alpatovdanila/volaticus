@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "bricks_wall_07",
+  "name": "Bricks Wall 07",
+  "category": "bricks_wall",
+  "maps": {
+    "color": "PBR/bricks_wall_07/bricks_wall_07_baseColor_1k.png",
+    "normal": "PBR/bricks_wall_07/bricks_wall_07_normal_gl_1k.png",
+    "roughness": "PBR/bricks_wall_07/bricks_wall_07_roughness_1k.png",
+    "height": "PBR/bricks_wall_07/bricks_wall_07_height_1k.png",
+    "ao": "PBR/bricks_wall_07/bricks_wall_07_ambientOcclusion_1k.png",
+    "metallic": "PBR/bricks_wall_07/bricks_wall_07_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

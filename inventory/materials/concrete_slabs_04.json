@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "concrete_slabs_04",
+  "name": "Concrete Slabs 04",
+  "category": "concrete_slabs",
+  "maps": {
+    "color": "PBR/concrete_slabs_04/concrete_slabs_04_basecolor_1k.png",
+    "normal": "PBR/concrete_slabs_04/concrete_slabs_04_normal_gl_1k.png",
+    "roughness": "PBR/concrete_slabs_04/concrete_slabs_04_roughness_1k.png",
+    "height": "PBR/concrete_slabs_04/concrete_slabs_04_height_1k.png",
+    "ao": "PBR/concrete_slabs_04/concrete_slabs_04_ambientocclusion_1k.png",
+    "metallic": null,
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

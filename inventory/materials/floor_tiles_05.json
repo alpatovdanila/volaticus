@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "floor_tiles_05",
+  "name": "Floor Tiles 05",
+  "category": "floor_tiles",
+  "maps": {
+    "color": "PBR/floor_tiles_05/floor_tiles__05_baseColor_1k.png",
+    "normal": "PBR/floor_tiles_05/floor_tiles__05_normal_gl_1k.png",
+    "roughness": "PBR/floor_tiles_05/floor_tiles__05_roughness_1k.png",
+    "height": "PBR/floor_tiles_05/floor_tiles__05_height_1k.png",
+    "ao": "PBR/floor_tiles_05/floor_tiles__05_ambientOcclusion_1k.png",
+    "metallic": "PBR/floor_tiles_05/floor_tiles__05_metallic_1k.png",
+    "emissive": null
+  },
+  "tuning": {
+    "tint": null,
+    "roughness": 1,
+    "metalness": 0,
+    "normalScale": 1,
+    "aoIntensity": 1,
+    "emissive": 0,
+    "opacity": 1,
+    "cutout": false,
+    "doubleSided": false,
+    "flat": false
+  }
+}

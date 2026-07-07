@@ -1,0 +1,132 @@
+{
+  "format": 1,
+  "id": "stone_pile",
+  "name": "Stone Pile",
+  "category": "prop",
+  "behavior": "static",
+  "tags": ["stone", "nature"],
+  "notes": "Cairn of rounded rocks (v1 makeStonePile) — four squashed boulders always, three more by chance (4-7 total, ~1.5 m mound), plus a chance moss blob tucked in the top. Low cylinder collider — scenery bump, not a platform.",
+  "materials": {
+    "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
+    "stone_dark": { "inherit": "stone", "material": "cliff_rocks_06" },
+    "rock_a": { "inherit": "stone" },
+    "rock_b": { "inherit": "stone_dark" },
+    "rock_c": { "inherit": "stone" },
+    "rock_d": { "inherit": "stone_dark" },
+    "rock_e": { "inherit": "stone" },
+    "rock_top": { "inherit": "stone_dark" },
+    "rock_f": { "inherit": "stone" },
+    "moss_blob": { "material": "grass_01", "flat": true, "uvScale": 0.25 }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "rock_a": {
+          "shape": "sphere",
+          "radius": 0.5,
+          "segments": 7,
+          "segmentsY": 6,
+          "pos": [0.05, 0.3, 0.02],
+          "scale": [1, 0.7, 0.95],
+          "material": "rock_a",
+          "sub": 1,
+          "craft": 0.62
+        },
+        "rock_b": {
+          "shape": "sphere",
+          "radius": 0.38,
+          "segments": 6,
+          "segmentsY": 5,
+          "pos": [-0.45, 0.22, 0.25],
+          "rot": [0, 35, 0],
+          "scale": [1.05, 0.68, 0.9],
+          "material": "rock_b",
+          "sub": 1,
+          "craft": 0.6
+        },
+        "rock_c": {
+          "shape": "sphere",
+          "radius": 0.34,
+          "segments": 6,
+          "segmentsY": 5,
+          "pos": [0.5, 0.2, -0.3],
+          "rot": [0, -20, 0],
+          "scale": [1, 0.72, 1],
+          "material": "rock_c",
+          "sub": 1,
+          "craft": 0.58
+        },
+        "rock_d": {
+          "shape": "sphere",
+          "radius": 0.28,
+          "segments": 5,
+          "segmentsY": 5,
+          "pos": [-0.15, 0.18, -0.48],
+          "scale": [1, 0.75, 0.9],
+          "material": "rock_d",
+          "sub": 1,
+          "craft": 0.6
+        },
+        "rock_e": {
+          "shape": "sphere",
+          "radius": 0.26,
+          "segments": 5,
+          "segmentsY": 5,
+          "pos": [0.42, 0.16, 0.42],
+          "scale": [1.1, 0.65, 1],
+          "material": "rock_e",
+          "chance": 0.75,
+          "sub": 1,
+          "craft": 0.6
+        },
+        "rock_top": {
+          "shape": "sphere",
+          "radius": 0.28,
+          "segments": 6,
+          "segmentsY": 5,
+          "pos": [-0.05, 0.55, 0.05],
+          "rot": [0, 50, 0],
+          "scale": [1, 0.75, 0.9],
+          "material": "rock_top",
+          "chance": 0.6,
+          "sub": 1,
+          "craft": 0.62
+        },
+        "rock_f": {
+          "shape": "sphere",
+          "radius": 0.2,
+          "segments": 5,
+          "segmentsY": 5,
+          "pos": [-0.55, 0.12, -0.15],
+          "scale": [1, 0.7, 0.95],
+          "material": "rock_f",
+          "chance": 0.45,
+          "sub": 1,
+          "craft": 0.6
+        },
+        "moss_blob": {
+          "shape": "sphere",
+          "radius": 0.22,
+          "segments": 6,
+          "pos": [0.12, 0.52, 0.12],
+          "scale": [1, 0.45, 0.9],
+          "material": "moss_blob",
+          "chance": 0.4,
+          "sub": 2,
+          "craft": 0.7
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "fixed",
+    "collider": { "shape": "cylinder", "radius": 0.8, "height": 0.6, "offset": [0, 0.3, 0] }
+  },
+  "variants": {
+    "scale": [0.85, 1.2],
+    "yawJitter": 180,
+    "tiltJitter": 2,
+    "tintJitter": 0.08,
+    "seeds": [415778329, 399000710, 448333567, 465111186, 365667472, 382445091]
+  }
+}

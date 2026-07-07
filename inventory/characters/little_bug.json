@@ -1,0 +1,183 @@
+{
+  "format": 1,
+  "id": "little_bug",
+  "name": "Little Bug",
+  "category": "character",
+  "behavior": "character",
+  "tags": ["neutral", "ambient", "crawler"],
+  "notes": "Tiny neutral crawler. oneOf picks the shell: ladybug (red + dots), blue shine beetle, or green beetle.",
+  "materials": {
+    "dark": { "material": "plaster_wall_01", "tint": "#2e2a28", "uvMode": "stretch", "flat": true },
+    "spot_a": { "inherit": "dark" },
+    "spot_b": { "inherit": "dark" },
+    "spot_c": { "inherit": "dark" },
+    "head": { "inherit": "dark" },
+    "leg_fl": { "inherit": "dark" },
+    "leg_fr": { "inherit": "dark" },
+    "leg_bl": { "inherit": "dark" },
+    "leg_br": { "inherit": "dark" },
+    "shell_lady": { "material": "plaster_wall_01", "tint": "#c9412f", "uvMode": "stretch", "flat": true },
+    "shell_blue": { "material": "plaster_wall_01", "tint": "#4a6fa8", "uvMode": "stretch", "flat": true },
+    "shell_green": { "material": "plaster_wall_01", "tint": "#5f9b45", "uvMode": "stretch", "flat": true }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "bug": {
+          "pos": [0, 0.055, 0],
+          "children": {
+            "shell_a": {
+              "shape": "sphere",
+              "radius": 0.075,
+              "segments": 7,
+              "pos": [0, 0, -0.01],
+              "scale": [1, 0.62, 1.2],
+              "material": "shell_lady",
+              "children": {
+                "spot_a": {
+                  "shape": "sphere",
+                  "radius": 0.018,
+                  "segments": 5,
+                  "pos": [0.035, 0.04, 0.02],
+                  "scale": [1, 0.4, 1],
+                  "material": "spot_a"
+                },
+                "spot_b": {
+                  "shape": "sphere",
+                  "radius": 0.016,
+                  "segments": 5,
+                  "pos": [-0.03, 0.042, -0.03],
+                  "scale": [1, 0.4, 1],
+                  "material": "spot_b"
+                },
+                "spot_c": {
+                  "shape": "sphere",
+                  "radius": 0.014,
+                  "segments": 5,
+                  "pos": [0.01, 0.045, -0.055],
+                  "scale": [1, 0.4, 1],
+                  "material": "spot_c",
+                  "chance": 0.7
+                }
+              }
+            },
+            "shell_b": {
+              "shape": "sphere",
+              "radius": 0.075,
+              "segments": 7,
+              "pos": [0, 0, -0.01],
+              "scale": [1, 0.6, 1.25],
+              "material": "shell_blue"
+            },
+            "shell_c": {
+              "shape": "sphere",
+              "radius": 0.072,
+              "segments": 7,
+              "pos": [0, 0, -0.01],
+              "scale": [1.05, 0.58, 1.2],
+              "material": "shell_green"
+            },
+            "head": {
+              "shape": "sphere",
+              "radius": 0.038,
+              "segments": 6,
+              "pos": [0, -0.008, 0.085],
+              "material": "head"
+            },
+            "leg_fl": {
+              "shape": "box",
+              "size": [0.05, 0.012, 0.012],
+              "pos": [-0.075, -0.034, 0.035],
+              "rot": [0, 20, 24],
+              "material": "leg_fl"
+            },
+            "leg_fr": {
+              "shape": "box",
+              "size": [0.05, 0.012, 0.012],
+              "pos": [0.075, -0.034, 0.035],
+              "rot": [0, -20, -24],
+              "material": "leg_fr"
+            },
+            "leg_bl": {
+              "shape": "box",
+              "size": [0.05, 0.012, 0.012],
+              "pos": [-0.075, -0.034, -0.045],
+              "rot": [0, -20, 24],
+              "material": "leg_bl"
+            },
+            "leg_br": {
+              "shape": "box",
+              "size": [0.05, 0.012, 0.012],
+              "pos": [0.075, -0.034, -0.045],
+              "rot": [0, 20, -24],
+              "material": "leg_br"
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "kinematicCharacter", "collider": { "shape": "sphere", "radius": 0.09, "offset": [0, 0.07, 0] } },
+  "props": { "health": 1, "walkSpeed": 0.3, "wanderRadius": 2 },
+  "states": { "initial": "walk", "walk": { "anim": "scuttle" }, "idle": { "anim": "rest" } },
+  "anims": {
+    "scuttle": {
+      "loop": true,
+      "duration": 0.5,
+      "tracks": [
+        {
+          "node": "bug",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 3], [0.125, -3], [0.25, 3], [0.375, -3], [0.5, 3]]
+        },
+        {
+          "node": "bug",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [[0, 0.004], [0.125, 0], [0.25, 0.004], [0.375, 0], [0.5, 0.004]]
+        },
+        {
+          "node": "leg_fl",
+          "prop": "rot.y",
+          "ease": "sine",
+          "keys": [[0, 14], [0.125, -14], [0.25, 14], [0.375, -14], [0.5, 14]]
+        },
+        {
+          "node": "leg_br",
+          "prop": "rot.y",
+          "ease": "sine",
+          "keys": [[0, 14], [0.125, -14], [0.25, 14], [0.375, -14], [0.5, 14]]
+        },
+        {
+          "node": "leg_fr",
+          "prop": "rot.y",
+          "ease": "sine",
+          "keys": [[0, -14], [0.125, 14], [0.25, -14], [0.375, 14], [0.5, -14]]
+        },
+        {
+          "node": "leg_bl",
+          "prop": "rot.y",
+          "ease": "sine",
+          "keys": [[0, -14], [0.125, 14], [0.25, -14], [0.375, 14], [0.5, -14]]
+        }
+      ]
+    },
+    "rest": {
+      "loop": true,
+      "duration": 2.4,
+      "tracks": [
+        { "node": "bug", "prop": "scale", "ease": "sine", "keys": [[0, 1], [1.2, 1.05], [2.4, 1]] },
+        { "node": "head", "prop": "rot.y", "ease": "sine", "keys": [[0, 12], [1.2, -12], [2.4, 12]] }
+      ]
+    }
+  },
+  "variants": {
+    "scale": [0.75, 1.4],
+    "yawJitter": 180,
+    "tintJitter": 0.07,
+    "oneOf": { "shell": ["shell_a", "shell_b", "shell_c"] },
+    "seeds": [190565434, 207343053, 157010196, 173787815, 123454958, 140232577]
+  },
+  "events": { "died": { "effect": "poof", "despawn": true } }
+}

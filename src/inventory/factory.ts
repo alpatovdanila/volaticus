@@ -648,9 +648,42 @@ function composeNodeMatrix(node: NodeDef, rot: readonly number[], parentMatrix: 
   return new THREE.Matrix4().multiplyMatrices(parentMatrix, outer.matrix).multiply(inner.matrix)
 }
 
+// doubleWall bake: duplicate every triangle with REVERSED winding + flipped normals,
+// so the surface is real geometry on BOTH sides. Group-aware — each group's count
+// doubles in place (materialIndex preserved), so the per-face material mapping and UV
+// metering at load are untouched. Lets an open/thin part read two-sided under a
+// SINGLE-SIDED material (which then merges). ~2× the part's triangles (cheap).
+function foldBackfaces(geo: THREE.BufferGeometry): THREE.BufferGeometry {
+  const src = geo.index ? geo.toNonIndexed() : geo
+  const pos = src.getAttribute('position') as THREE.BufferAttribute
+  const nrm = src.getAttribute('normal') as THREE.BufferAttribute | null
+  const uv = src.getAttribute('uv') as THREE.BufferAttribute | null
+  const vertCount = pos.count
+  const srcGroups = src.groups.length ? src.groups : [{ start: 0, count: vertCount, materialIndex: 0 }]
+  const outPos: number[] = [], outNrm: number[] = [], outUv: number[] = []
+  const out = new THREE.BufferGeometry()
+  const push = (i: number, flip: boolean) => {
+    outPos.push(pos.getX(i), pos.getY(i), pos.getZ(i))
+    if (nrm) outNrm.push(flip ? -nrm.getX(i) : nrm.getX(i), flip ? -nrm.getY(i) : nrm.getY(i), flip ? -nrm.getZ(i) : nrm.getZ(i))
+    if (uv) outUv.push(uv.getX(i), uv.getY(i))
+  }
+  for (const g of srcGroups) {
+    const count = g.count === Infinity ? vertCount - g.start : g.count
+    const start = outPos.length / 3
+    for (let i = g.start; i < g.start + count; i++) push(i, false) // originals
+    for (let t = g.start; t < g.start + count; t += 3) { push(t, true); push(t + 2, true); push(t + 1, true) } // reversed
+    out.addGroup(start, count * 2, g.materialIndex ?? 0)
+  }
+  out.setAttribute('position', new THREE.Float32BufferAttribute(outPos, 3))
+  if (outNrm.length) out.setAttribute('normal', new THREE.Float32BufferAttribute(outNrm, 3))
+  if (outUv.length) out.setAttribute('uv', new THREE.Float32BufferAttribute(outUv, 2))
+  if (src !== geo) src.dispose()
+  return out
+}
+
 // BAKE one node's geometry (STUDIO/tool only): generate → subdivide → craft
-// jitter (entity-space, seeded per variant) → UVs-to-meters → serialize. Returns
-// null for a mesh whose FBX isn't preloaded.
+// jitter (entity-space, seeded per variant) → UVs-to-meters → doubleWall fold →
+// serialize. Returns null for a mesh whose FBX isn't preloaded.
 function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: number): BakedNodeGeom | null {
   if (node.shape === 'mesh') {
     const g = getMeshGeometry(node.mesh!)
@@ -670,6 +703,11 @@ function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: numb
   const craft = node.craft ?? (generated ? 0.5 : undefined)
   if (craft !== undefined) applyCraftJitter(geo, craft, matrix, jitterSeed)
   bakeUvsToMeters(geo, built.faces, node)
+  if (node.doubleWall) {
+    const folded = foldBackfaces(geo)
+    geo.dispose()
+    geo = folded
+  }
   return extractGeom(geo)
 }
 

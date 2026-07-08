@@ -97,7 +97,13 @@ Rules and semantics:
       "segmentsY": 7,             // sphere ONLY: vertical row count (default segments/2). Bump when a
                                   // squashed boulder/cap shows a pronounced equator line — adds loops
                                   // in the vertical direction without densifying the radial facets
-      "open": true,               // cylinder without end caps (hollow shells; pair with doubleSided material)
+      "open": true,               // cylinder without end caps (hollow shells)
+      "doubleWall": true,         // BAKE back-faces in as real geometry (duplicate tris, reversed winding +
+                                  // flipped normals) so an open/thin surface reads from BOTH sides under a
+                                  // SINGLE-SIDED material — which then MERGES with the part's other single-
+                                  // sided same-material parts (one fewer draw). ~2× the part's tris (cheap:
+                                  // the GPU is idle, draws are the cost). Use INSTEAD of a doubleSided slot,
+                                  // not with it. For open shells (barrel body) this trades a draw for triangles.
       "tube": 0.05,               // torus ring thickness (torus lies flat, axis = Y)
       "thickness": 0.02,          // shape "ring" ONLY: wall thickness of the generated annular band
                                   // (outer+inner shell + top/bottom annulus caps — thin metal with real

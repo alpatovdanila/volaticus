@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { WebGPURenderer } from 'three/webgpu'
+import { WebGPURenderer, MeshBasicNodeMaterial } from 'three/webgpu'
+import { positionLocal, normalLocal, vec3 } from 'three/tsl'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { setLevelEnvMap } from '../inventory/envmap'
 import { EffectSystem } from '../inventory/effects'
@@ -23,6 +24,9 @@ export interface PickResult {
 }
 
 const LIGHTS_KEY = 'volaticus.lights'
+// selection stroke width, in the part's local units (normal-space inflation of the
+// inverted-hull shell). ~12mm reads as a thin rim on the ~0.5m props.
+const OUTLINE_THICKNESS = 0.012
 
 function loadLightPrefs(): LightParams {
   try {
@@ -290,45 +294,37 @@ export class Viewport {
     }
   }
 
-  // Thin static outline on the given meshes (the selected material slot).
-  // Closed shapes get an inflated back-face shell (silhouette contour);
-  // flat shapes (plane/cross) get edge lines.
+  // Selection highlight on the given meshes (the selected material slot): a thin white
+  // SILHOUETTE stroke — an inverted-hull shell that shares the part's geometry, pushed
+  // out along its normals, drawn UNDER the body (renderOrder -1, depthWrite off) so the
+  // real surface paints over the interior and only the expanded rim survives. The whole
+  // surface stays visible (you can pick materials over it) — no wireframe, no white fill.
+  //
+  // Winding-independent by design: DoubleSide (no face culling) is what makes it robust
+  // to doubleWall's folded geometry — the earlier BackSide shell rendered the folded
+  // back-faces and filled white. depthWrite off = the hull never occludes the body; it's
+  // occluded BY later scene geometry, so the stroke is silhouette-only + occlusion-aware.
+  // toneMapped off keeps the stroke a crisp constant white regardless of exposure.
+  //
+  // Added as a child of each source mesh, so it inherits the node's transform + animation
+  // for free. Geometry is SHARED with the source — never disposed here.
   setOutline(meshes: THREE.Mesh[]): void {
     for (const o of this.outlines) {
       o.removeFromParent()
-      if (o.userData.ownGeometry) (o as THREE.Mesh).geometry.dispose()
-      const mat = (o as THREE.Mesh).material as THREE.Material
-      mat.dispose()
+      ;((o as THREE.Mesh).material as THREE.Material).dispose()
     }
     this.outlines = []
-    const GROW = 0.012 // outline thickness in meters, per side
     for (const mesh of meshes) {
-      let outline: THREE.Object3D
-      if (mesh.geometry.type === 'PlaneGeometry') {
-        const edges = new THREE.LineSegments(
-          new THREE.EdgesGeometry(mesh.geometry),
-          new THREE.LineBasicMaterial({ color: '#ffffff' }),
-        )
-        edges.scale.setScalar(1.02)
-        edges.userData.ownGeometry = true
-        outline = edges
-      } else {
-        const shell = new THREE.Mesh(
-          mesh.geometry, // shared with the source mesh — never disposed here
-          new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.BackSide }),
-        )
-        mesh.geometry.computeBoundingBox()
-        const size = mesh.geometry.boundingBox!.getSize(new THREE.Vector3())
-        shell.scale.set(
-          (size.x + GROW * 2) / Math.max(size.x, 1e-4),
-          (size.y + GROW * 2) / Math.max(size.y, 1e-4),
-          (size.z + GROW * 2) / Math.max(size.z, 1e-4),
-        )
-        shell.userData.ownGeometry = false
-        outline = shell
-      }
-      mesh.add(outline) // inherits node transforms and animation
-      this.outlines.push(outline)
+      const mat = new MeshBasicNodeMaterial()
+      mat.colorNode = vec3(1, 1, 1)
+      mat.positionNode = positionLocal.add(normalLocal.mul(OUTLINE_THICKNESS)) // inflate along normals
+      mat.side = THREE.DoubleSide
+      mat.depthWrite = false
+      mat.toneMapped = false
+      const hull = new THREE.Mesh(mesh.geometry, mat)
+      hull.renderOrder = -1 // draw before the body so the surface paints over the interior
+      mesh.add(hull) // inherits node transform + animation
+      this.outlines.push(hull)
     }
   }
 

@@ -4,10 +4,10 @@
   "name": "Barrel",
   "category": "prop",
   "tags": ["wood", "container"],
-  "notes": "Low-poly faceted barrel: ONE open-ended double-sided shell (20-segment, curved via cylinder bulge 0.05 for the cask belly with ~9 vertical loops, per-slot doubleSided), floor+content is ONE flat disk plane (no volume). Two thin gray straps, thin top lip. oneOf lid: flush / deep inside (open look) / ajar.",
+  "notes": "Low-poly faceted barrel: ONE open-ended shell (20-segment, curved via cylinder bulge 0.05 for the cask belly with ~9 vertical loops) baked doubleWall so it reads two-sided with a single-sided material and merges with the lip/lid wood (one fewer draw), floor+content is ONE flat disk plane (no volume). Two thin gray straps, thin top lip. oneOf lid: flush / deep inside (open look) / ajar.",
   "materials": {
     "planks": { "material": "wood_planks_20", "flat": true, "uvRot": 90, "uvScale": 2, "tint": "#fee1e1" },
-    "shell": { "inherit": "planks", "doubleSided": true, "uvProject": "sphere" },
+    "shell": { "inherit": "planks", "uvProject": "sphere" },
     "floor": { "inherit": "interior", "uvProject": "planar" },
     "lip": { "inherit": "planks", "uvMode": "tile", "uvProject": "none" },
     "lid_flush": { "inherit": "lid" },
@@ -38,6 +38,7 @@
           "bulge": 0.05,
           "segments": 20,
           "open": true,
+          "doubleWall": true,
           "pos": [0, 0.4, 0],
           "material": "shell",
           "craftSeed": 1343812577

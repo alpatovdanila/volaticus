@@ -160,6 +160,7 @@ export type NodeDef = {
   segmentsY?: number
   open?: boolean
   bulge?: number
+  doubleWall?: boolean
   pos?: [number, number, number]
   rot?: [number, number, number]
   scale?: number | [number, number, number]
@@ -195,6 +196,12 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
     segmentsY: z.number().int().min(2).max(32).optional(), // sphere ONLY: vertical rows (default segments/2)
     open: z.boolean().optional(), // cylinder without end caps (hollow tube)
     bulge: z.number().optional(), // cylinder ONLY: barrel-belly, +meters of radius at mid-height (0 at rims)
+    // BAKE the back-faces in as real geometry (duplicate triangles, reversed winding + flipped
+    // normals) so an open/thin surface reads from BOTH sides with a SINGLE-SIDED material — which
+    // then merges with the part's other single-sided same-material parts (one fewer draw). Trades
+    // 2× the part's triangles (cheap — GPU is idle) for one fewer draw ritual (the real cost).
+    // Pair with a single-sided slot: setting BOTH this and material doubleSided just double-pays.
+    doubleWall: z.boolean().optional(),
     pos: vec3.optional(),
     rot: vec3.optional(),
     scale: z.union([z.number().positive(), vec3]).optional(),

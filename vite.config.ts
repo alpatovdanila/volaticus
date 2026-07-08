@@ -60,10 +60,14 @@ function devApi(): Plugin {
         }
         try {
           if (url.pathname === '/__inv/list') {
-            const items = walkFiles(INV_DIR, '.json').map((p) => ({
-              path: p,
-              mtime: fs.statSync(path.join(INV_DIR, p)).mtimeMs,
-            }))
+            // *.geom.{i}.json are baked geometry sidecars, not inventory items — the
+            // studio fetches them directly by path (see loadBaked), so exclude them here.
+            const items = walkFiles(INV_DIR, '.json')
+              .filter((p) => !/\.geom\.\d+\.json$/.test(p))
+              .map((p) => ({
+                path: p,
+                mtime: fs.statSync(path.join(INV_DIR, p)).mtimeMs,
+              }))
             return send(200, { items })
           }
           if (url.pathname === '/__inv/read') {

@@ -1,0 +1,145 @@
+{
+  "format": 1,
+  "id": "barrel",
+  "name": "Barrel",
+  "category": "prop",
+  "tags": ["wood", "container"],
+  "notes": "Low-poly faceted barrel: ONE open-ended double-sided shell (20-segment, curved via cylinder bulge 0.05 for the cask belly with ~9 vertical loops, per-slot doubleSided), floor+content is ONE flat disk plane (no volume). Two thin gray straps, thin top lip. oneOf lid: flush / deep inside (open look) / ajar.",
+  "materials": {
+    "planks": { "material": "wood_planks_20", "flat": true, "uvRot": 90, "uvScale": 2, "tint": "#fee1e1" },
+    "shell": { "inherit": "planks", "doubleSided": true, "uvProject": "sphere" },
+    "floor": { "inherit": "interior" },
+    "lip": { "inherit": "planks", "uvMode": "tile", "uvProject": "none" },
+    "lid_flush": { "inherit": "lid" },
+    "lid_deep": { "inherit": "lid" },
+    "lid_ajar": { "inherit": "lid" },
+    "band": { "material": "metal_01", "flat": true, "uvRot": 90, "uvScale": 2, "tint": "#707070" },
+    "band_top": { "inherit": "band" },
+    "band_bot": { "inherit": "band" },
+    "lid": { "flat": true, "uvScale": 2, "uvProject": "planar", "inherit": "planks", "uvRot": 0 },
+    "lid_flush_2": { "inherit": "lid" },
+    "lid_flush_top": { "inherit": "lid_flush_2" },
+    "lid_flush_bottom": { "inherit": "lid_flush_2" },
+    "lid_deep_3": { "inherit": "lid" },
+    "lid_ajar_2": { "inherit": "lip" },
+    "lid_ajar_top": { "inherit": "lid" },
+    "lid_ajar_bottom": { "inherit": "lid_ajar_2" },
+    "interior": { "material": "desert_ground_01", "flat": true, "tint": "#696969" },
+    "lid_deep_2": { "inherit": "lid" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "shell": {
+          "shape": "cylinder",
+          "radiusBottom": 0.26,
+          "radiusTop": 0.26,
+          "height": 0.8,
+          "bulge": 0.05,
+          "segments": 20,
+          "open": true,
+          "pos": [0, 0.4, 0],
+          "material": "shell",
+          "uvProject": "box"
+        },
+        "floor": {
+          "shape": "disk",
+          "radius": 0.27,
+          "segments": 20,
+          "pos": [0, 0.075, 0],
+          "material": "floor",
+          "uvProject": "planar"
+        },
+        "lip": {
+          "shape": "torus",
+          "radius": 0.265,
+          "tube": 0.022,
+          "segments": 20,
+          "pos": [0, 0.79, 0],
+          "material": "lip",
+          "uvProject": "box"
+        },
+        "band_top": {
+          "shape": "ring",
+          "radiusBottom": 0.31,
+          "radiusTop": 0.297,
+          "height": 0.07,
+          "thickness": 0.012,
+          "segments": 20,
+          "pos": [0, 0.66, 0],
+          "material": "band_top",
+          "craft": 0.95
+        },
+        "band_bot": {
+          "shape": "ring",
+          "radiusBottom": 0.297,
+          "radiusTop": 0.31,
+          "height": 0.07,
+          "thickness": 0.012,
+          "segments": 20,
+          "pos": [0, 0.14, 0],
+          "material": "band_bot",
+          "craft": 0.95
+        },
+        "lid_flush": {
+          "shape": "cylinder",
+          "radius": 0.262,
+          "height": 0.045,
+          "segments": 20,
+          "pos": [0, 0.745, 0],
+          "material": { "side": "lid_flush", "top": "lid_flush_top", "bottom": "lid_flush_bottom" },
+          "uvProject": "box"
+        },
+        "lid_deep": {
+          "shape": "cylinder",
+          "radius": 0.262,
+          "height": 0.045,
+          "segments": 20,
+          "pos": [0, 0.34, 0],
+          "material": { "side": "lid_deep", "top": "lid_deep_2", "bottom": "lid_deep_3" },
+          "uvProject": "box"
+        },
+        "lid_ajar": {
+          "shape": "cylinder",
+          "radius": 0.26,
+          "height": 0.045,
+          "segments": 20,
+          "pos": [0.09, 0.83, -0.03],
+          "rot": [11, 0, 14],
+          "material": { "side": "lid_ajar", "top": "lid_ajar_top", "bottom": "lid_ajar_bottom" },
+          "uvProject": "box"
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "dynamic",
+    "collider": { "shape": "cylinder", "radius": 0.31, "height": 0.8, "offset": [0, 0.4, 0] },
+    "mass": 18
+  },
+  "props": { "health": 2 },
+  "variants": { "count": 6, "oneOf": { "lid": ["lid_flush", "lid_deep", "lid_ajar"] } },
+  "anims": {
+    "wobble": {
+      "duration": 0.42,
+      "tracks": [
+        {
+          "node": "root",
+          "prop": "scale",
+          "ease": "sine",
+          "keys": [[0, 1], [0.06, 0.86], [0.16, 1.1], [0.26, 0.94], [0.34, 1.03], [0.42, 1]]
+        },
+        {
+          "node": "root",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 0], [0.06, -4], [0.16, 4], [0.26, -2], [0.34, 1], [0.42, 0]]
+        }
+      ]
+    }
+  },
+  "events": {
+    "hit": { "anim": "wobble" },
+    "died": { "effect": { "id": "wood_break", "slot": "planks" }, "hideGeometry": true }
+  }
+}

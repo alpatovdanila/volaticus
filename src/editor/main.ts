@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { warmEffects } from '../inventory/effects'
 import { applyEnvReflection } from '../inventory/envmap'
-import { buildColliderViz, buildEntity, disposeEntity, projectGeometryUv, type BuiltEntity } from '../inventory/factory'
+import { bakeEntityGeometry, buildColliderViz, buildEntity, disposeEntity, projectGeometryUv, type BakedGeometry, type BuiltEntity } from '../inventory/factory'
 import { mergeBuiltEntity } from '../inventory/merge'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
@@ -42,16 +42,67 @@ interface Selection {
   built?: BuiltEntity
   preview?: EntityPreview
   pickedSlot: string | null
-  variantIndex: number // index into the STORED variant set (variants.seeds)
-  seed: number // seeds[variantIndex] — never random; geometry is a pure replay
+  variantIndex: number // which baked variant is shown (0..variants.count-1)
+  baked?: BakedGeometry // cached baked geometry for this selection (fetched or freshly baked)
   dirty: boolean
   collider?: THREE.Object3D | null
   effectLoop?: number
 }
 
-// the stored variant set — each seed is one static, reproducible result
-function seedsOf(doc: EntityDoc | undefined): number[] {
-  return doc?.variants?.seeds ?? [1]
+// how many baked geometry variants an entity has (default 1).
+function variantCount(doc: EntityDoc | undefined): number {
+  return Math.max(1, doc?.variants?.count ?? 1)
+}
+
+const geomPath = (id: string, i: number) => `entities/${id}/${id}.geom.${i}.json`
+
+// Persist a freshly-baked geometry set to its sidecar files (studio only). Compact
+// JSON — these are machine data, not hand-edited.
+async function saveBaked(id: string, baked: BakedGeometry): Promise<void> {
+  for (let i = 0; i < baked.length; i++) await inv.save(geomPath(id, i), JSON.stringify(baked[i]))
+}
+
+// Load an entity's baked geometry: fetch every variant sidecar if they ALL exist,
+// otherwise bake fresh + save (the "no geometry yet" trigger).
+async function loadBaked(id: string, doc: EntityDoc): Promise<BakedGeometry> {
+  const count = variantCount(doc)
+  const loaded: BakedGeometry = []
+  for (let i = 0; i < count; i++) {
+    const res = await fetch('/__inv/read?path=' + encodeURIComponent(geomPath(id, i)))
+    if (!res.ok) break
+    try {
+      loaded.push(JSON.parse((await res.json()).content))
+    } catch {
+      break
+    }
+  }
+  if (loaded.length === count) return loaded
+  const baked = bakeEntityGeometry(doc)
+  await saveBaked(id, baked)
+  return baked
+}
+
+// sel-cached: reuse the current selection's baked set across rebuilds, so material/
+// UV edits are instant (no re-bake). Only fetches/bakes when not already cached.
+async function ensureBaked(id: string, doc: EntityDoc): Promise<BakedGeometry> {
+  if (sel?.id === id && sel.baked) return sel.baked
+  return loadBaked(id, doc)
+}
+
+// Regen (studio trigger — craft/geometry edit or explicit button): re-bake every
+// variant with fresh randomness, save the sidecars, rebuild from them.
+async function regen(): Promise<void> {
+  if (!sel || sel.kind !== 'entity') return
+  const id = sel.id
+  const doc = inv.entities.get(id)?.doc
+  if (!doc) return
+  await preloadEntityMeshes(doc)
+  if (sel?.id !== id) return // selection changed during preload — don't cross-write
+  const baked = bakeEntityGeometry(doc)
+  await saveBaked(id, baked)
+  if (sel?.id !== id) return
+  sel.baked = baked
+  rebuild()
 }
 
 let sel: Selection | null = null
@@ -137,7 +188,7 @@ function select(kind: ItemKind, id: string, opts: { keepCamera?: boolean; keepSt
   if (sel?.id !== id) collapsedGroups.clear() // item 34: collapse state is per-entity, in-memory
   exitLineup()
   clearSelection()
-  sel = { kind, id, pickedSlot: null, variantIndex: prevIndex, seed: 1, dirty: false }
+  sel = { kind, id, pickedSlot: null, variantIndex: prevIndex, dirty: false }
   localStorage.setItem('volaticus.sel', kind + ':' + id)
 
   const item = kind === 'entity' ? inv.entities.get(id) : kind === 'effect' ? inv.effects.get(id) : inv.sfx.get(id)
@@ -159,11 +210,11 @@ function select(kind: ItemKind, id: string, opts: { keepCamera?: boolean; keepSt
 // A monotonic token lets only the LATEST build land.
 let buildToken = 0
 
-// does any state/event binding of this doc request the death shatter? The flag
-// can sit at several nesting levels (states.*.enter, states.*.cues.*, events.*)
-// — a serialized-key scan is the cheap, shape-proof test.
+// does any binding of this doc request the death shatter? A serialized scan for the
+// reserved keyword is the cheap, shape-proof test (it can sit in states.*.enter,
+// states.*.cues.*, events.*, or a byContext override).
 function canShatter(doc: EntityDoc): boolean {
-  return JSON.stringify(doc).includes('"shatter"')
+  return JSON.stringify(doc).includes('SCRIPT_EFFECT_SHATTER')
 }
 
 async function buildSelectedEntity(doc: EntityDoc, restoreState?: string): Promise<void> {
@@ -172,11 +223,19 @@ async function buildSelectedEntity(doc: EntityDoc, restoreState?: string): Promi
   const myToken = ++buildToken
   await preloadEntityMeshes(doc)
   if (sel !== mySel || myToken !== buildToken) return // superseded while meshes were loading
-  const seeds = seedsOf(doc)
-  sel.variantIndex = ((sel.variantIndex % seeds.length) + seeds.length) % seeds.length
-  sel.seed = seeds[sel.variantIndex]
+  let baked: BakedGeometry
   try {
-    sel.built = buildEntity(doc, sel.seed)
+    baked = await ensureBaked(sel.id, doc)
+  } catch (e) {
+    setValidation(['bake/load error: ' + String(e)])
+    return
+  }
+  if (sel !== mySel || myToken !== buildToken) return // superseded while baking/loading
+  sel.baked = baked
+  const count = baked.length || 1
+  sel.variantIndex = ((sel.variantIndex % count) + count) % count
+  try {
+    sel.built = buildEntity(doc, baked[sel.variantIndex])
     // WYSIWYG: render the SAME merged object the game/level ships. Keeps the
     // source primitives (hidden on a non-render layer) for slot picking + outlines
     // + shatter; re-runs on every rebuild so edits stay reflected.
@@ -188,6 +247,25 @@ async function buildSelectedEntity(doc: EntityDoc, restoreState?: string): Promi
   applyEnvReflection(sel.built.group) // surface presets keep their opt-in sheen
   vp.patchEmissive(sel.built.group) // global emissive self-illum lift
   vp.root.add(sel.built.group)
+  if (sel.collider) {
+    // keep the collider viz in sync with the freshly (re)built entity — here, where
+    // sel.built exists (rebuild() kicks this off async, so it can't do it itself)
+    sel.collider.removeFromParent()
+    sel.collider = buildColliderViz(doc, sel.built.bounds)
+    if (sel.collider) vp.scene.add(sel.collider)
+  }
+  const hideAndRespawn = () => {
+    // preview convenience: hide, then respawn into the initial state
+    if (!sel?.built || !sel.preview) return
+    sel.built.group.visible = false
+    const p = sel.preview
+    setTimeout(() => {
+      if (sel?.preview !== p || !sel.built) return
+      sel.built.group.visible = true
+      if (p.initial) p.setState(p.initial, 0)
+      refreshOverlay()
+    }, 1100)
+  }
   sel.preview = new EntityPreview(doc, sel.built, {
     playSfx: effectDeps.playSfx,
     playEffect: playEffectById,
@@ -195,18 +273,10 @@ async function buildSelectedEntity(doc: EntityDoc, restoreState?: string): Promi
     shatter: () => {
       if (sel?.built) vp.effects.shatterMeshes(sel.built.meshes)
     },
-    onDespawn: () => {
-      // preview convenience: hide, then respawn into the initial state
-      if (!sel?.built || !sel.preview) return
-      sel.built.group.visible = false
-      const p = sel.preview
-      setTimeout(() => {
-        if (sel?.preview !== p || !sel.built) return
-        sel.built.group.visible = true
-        if (p.initial) p.setState(p.initial, 0)
-        refreshOverlay()
-      }, 1100)
-    },
+    // hideGeometry (a reaction) + onDespawn (a state's despawnAfter) preview the same
+    // in the studio — hide the entity, respawn after a beat; in the game they diverge.
+    hideGeometry: hideAndRespawn,
+    onDespawn: hideAndRespawn,
   })
   if (restoreState && sel.preview.stateNames.includes(restoreState)) sel.preview.setState(restoreState, 0)
   vp.onUpdate.add(previewTick)
@@ -235,13 +305,8 @@ function rebuild(opts: { keepState?: boolean } = { keepState: true }): void {
   if (sel.built) disposeEntity(sel.built)
   sel.built = undefined // don't double-dispose if another rebuild lands first
   vp.onUpdate.delete(previewTick)
-  void buildSelectedEntity(doc, state ?? undefined)
+  void buildSelectedEntity(doc, state ?? undefined) // collider viz refreshed inside, once sel.built exists
   refreshSlots()
-  if (sel.collider) {
-    sel.collider.removeFromParent()
-    sel.collider = buildColliderViz(doc, sel.built!.bounds)
-    if (sel.collider) vp.scene.add(sel.collider)
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -260,8 +325,8 @@ function refreshOverlay(): void {
       modifier: sel.preview?.modifier ?? null,
       contextDims: doc ? contextDimsOf(doc) : undefined,
       context: sel.preview?.context,
-      variant: doc ? { index: sel.variantIndex, count: seedsOf(doc).length } : undefined,
-      hasSeeds: !!doc?.variants?.seeds?.length,
+      variant: doc ? { index: sel.variantIndex, count: variantCount(doc) } : undefined,
+      hasSeeds: variantCount(doc) > 1,
     },
     overlayCb,
   )
@@ -287,25 +352,17 @@ const overlayCb = {
   onNextVariant: () => {
     // step through the STORED variant set — a pure replay, nothing regenerates
     if (!sel || sel.kind !== 'entity') return
-    sel.variantIndex = (sel.variantIndex + 1) % seedsOf(inv.entities.get(sel.id)?.doc).length
+    sel.variantIndex = (sel.variantIndex + 1) % variantCount(inv.entities.get(sel.id)?.doc)
     rebuild()
     refreshOverlay()
   },
   onRegenVariants: () => {
-    // rewrite the STORED variant set with fresh randoms (same count) — an
-    // explicit editor action whose result is saved; builds still only replay
-    if (!sel || sel.kind !== 'entity') return
-    const item = inv.entities.get(sel.id)
-    const seeds = item?.doc?.variants?.seeds
-    if (!item?.doc || !seeds?.length) return
-    const fresh = seeds.map(() => Math.floor(Math.random() * 1e9))
-    for (const target of [item.raw as EntityDoc, item.doc])
-      if (target.variants?.seeds) target.variants.seeds = fresh.slice()
-    sel.dirty = true
-    setTitle(sel.id, true)
-    rebuild()
-    refreshOverlay()
-    toast(`regenerated ${fresh.length} variant seed${fresh.length > 1 ? 's' : ''} — save to keep`)
+    // Regen: re-bake every variant's geometry with fresh randomness + save the
+    // <id>.geom.{i}.json sidecars (the entity JSON stores no geometry itself).
+    void regen().then(() => {
+      refreshOverlay()
+      toast('re-baked geometry')
+    })
   },
   onCollider: (show: boolean) => {
     if (!sel) return
@@ -621,7 +678,7 @@ const genCb = {
       }
     sel.dirty = true
     setTitle(sel.id, true)
-    rebuild() // same stored seeds — same lumber, new amplitude
+    void regen() // craft changed → re-bake the geometry (one of the two regen triggers)
   },
   onGenSub: (slot: string, value: number | null) => {
     if (!sel || sel.kind !== 'entity') return
@@ -634,28 +691,12 @@ const genCb = {
       }
     sel.dirty = true
     setTitle(sel.id, true)
-    rebuild()
+    void regen() // subdivision changed → re-bake the geometry
   },
-  onRegen: (slot: string) => {
-    if (!sel || sel.kind !== 'entity') return
-    const item = inv.entities.get(sel.id)
-    if (!item?.doc) return
-    // ONE new seed shared by every generated node of the part: the craft
-    // jitter hashes entity-space positions, so nodes that abut (barrel shell
-    // halves) keep moving together — regen never tears a sealed seam
-    const names = new Set<string>()
-    for (const e of nodesUsingSlot(item.doc, slot)) if (isGenerated(e.node)) names.add(e.name)
-    if (!names.size) {
-      toast(`"${slot}" has no generated geometry (set craft first)`)
-      return
-    }
-    const newSeed = Math.floor(Math.random() * 1e9)
-    for (const target of [item.raw as EntityDoc, item.doc])
-      for (const e of nodesUsingSlot(target, slot))
-        if (names.has(e.name)) e.node.seed = newSeed
-    sel.dirty = true
-    setTitle(sel.id, true)
-    rebuild()
+  onRegen: (_slot: string) => {
+    // per-part regen retired (geometry has no per-node seeds now) — Regen
+    // re-bakes the whole entity with fresh randomness.
+    void regen()
   },
 }
 
@@ -1115,7 +1156,7 @@ async function enterLineup(): Promise<void> {
   for (const item of items) {
     let built: BuiltEntity
     try {
-      built = buildEntity(item.doc!, seedsOf(item.doc)[0])
+      built = buildEntity(item.doc!, bakeEntityGeometry(item.doc!)[0])
     } catch {
       continue
     }
@@ -1139,6 +1180,7 @@ async function enterLineup(): Promise<void> {
       playEffect: () => {},
       flash: () => {},
       shatter: () => {},
+      hideGeometry: () => {},
       onDespawn: () => {},
     })
     lineup.push({ built, preview })

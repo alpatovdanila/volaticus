@@ -1087,18 +1087,17 @@ export function renderOverlay(
       sel.onchange = () => cb.onContext(dim, sel.value || null)
       top.appendChild(sel)
     }
-    // stored variant set: cycling replays pre-generated seeds — nothing rerolls
+    // cycle the baked variant geometries — static, nothing regenerates on cycle
     if (item.variant && item.variant.count > 1) {
       const btn = el('button', undefined, `🎲 variant ${item.variant.index + 1}/${item.variant.count}`)
-      btn.title = 'cycle the stored variant set (variants.seeds) — static results, nothing is regenerated'
+      btn.title = 'cycle the baked variants (<id>.geom.{i}.json) — static, nothing is regenerated'
       btn.onclick = () => cb.onNextVariant()
       top.appendChild(btn)
     }
-    // regen the SET itself: fresh seeds, same count — an explicit, saved action
+    // Regen: re-bake every variant's geometry with fresh randomness (same count)
     if (item.hasSeeds) {
-      const rg = el('button', undefined, '⟳ seeds')
-      rg.title =
-        'regenerate the variant set: variants.seeds are the stored, pre-generated results world instances pick from — this rewrites them with fresh randoms (same count), changing every variant. Save to keep.'
+      const rg = el('button', undefined, '⟳ regen')
+      rg.title = "re-bake every variant's geometry with fresh randomness — rewrites the <id>.geom.{i}.json sidecars"
       rg.onclick = () => cb.onRegenVariants()
       top.appendChild(rg)
     }

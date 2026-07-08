@@ -1,0 +1,173 @@
+{
+  "format": 1,
+  "id": "tree_oak",
+  "name": "Oak Tree",
+  "category": "prop",
+  "tags": ["vegetation", "nature"],
+  "notes": "oneOf picks the crown silhouette: round / tall / twin. Crown = bush-style faceted leaf blobs (low-seg crafted cutout spheres, two tones). Collider is trunk-only.",
+  "materials": {
+    "bark": { "material": "bark_02", "uvScale": 0.25, "uvProject": "box" },
+    "trunk": { "inherit": "bark" },
+    "branch": { "inherit": "bark" },
+    "leaves": { "material": "grass_01", "tint": "#5d9c3f", "uvScale": 0.25, "uvRot": 90, "flat": true },
+    "blob_r1": { "inherit": "leaves" },
+    "blob_r3": { "inherit": "leaves" },
+    "blob_t1": { "inherit": "leaves" },
+    "blob_t3": { "inherit": "leaves" },
+    "blob_w1": { "inherit": "leaves" },
+    "blob_w3": { "inherit": "leaves" },
+    "leaves_light": { "material": "grass_01", "tint": "#77b453", "uvScale": 2, "flat": true },
+    "blob_r2": { "inherit": "leaves_light" },
+    "blob_t2": { "inherit": "leaves_light" },
+    "blob_w2": { "inherit": "leaves_light" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "trunk": {
+          "shape": "cylinder",
+          "radius": 0.14,
+          "height": 1.5,
+          "pos": [0, 0.75, 0],
+          "rotJitter": [2, 0, 2],
+          "material": "trunk",
+          "craft": 0.94
+        },
+        "branch": {
+          "shape": "cylinder",
+          "radius": 0.055,
+          "height": 0.5,
+          "pos": [0.28, 1.08, 0.05],
+          "rot": [0, 0, -55],
+          "material": "branch",
+          "chance": 0.5,
+          "craft": 0.94
+        },
+        "crown_round": {
+          "children": {
+            "blob_r1": {
+              "shape": "sphere",
+              "radius": 0.73,
+              "segments": 7,
+              "pos": [0, 1.85, 0],
+              "scale": [1, 0.85, 0.95],
+              "material": "blob_r1",
+              "sub": 3,
+              "craft": 0.84
+            },
+            "blob_r2": {
+              "shape": "sphere",
+              "radius": 0.51,
+              "segments": 6,
+              "pos": [0.42, 1.55, 0.18],
+              "scale": [1, 0.8, 1],
+              "material": "blob_r2",
+              "craft": 0.9,
+              "sub": 3
+            },
+            "blob_r3": {
+              "shape": "sphere",
+              "radius": 0.47,
+              "segments": 6,
+              "pos": [-0.4, 1.6, -0.14],
+              "scale": [1, 0.82, 0.95],
+              "material": "blob_r3",
+              "sub": 3,
+              "craft": 0.84
+            }
+          }
+        },
+        "crown_tall": {
+          "children": {
+            "blob_t1": {
+              "shape": "sphere",
+              "radius": 0.63,
+              "segments": 7,
+              "pos": [0.05, 1.55, 0.05],
+              "scale": [1, 0.85, 0.95],
+              "material": "blob_t1",
+              "sub": 3,
+              "craft": 0.84
+            },
+            "blob_t2": {
+              "shape": "sphere",
+              "radius": 0.56,
+              "segments": 6,
+              "pos": [0, 2.15, 0],
+              "scale": [1, 0.85, 1],
+              "material": "blob_t2",
+              "craft": 0.9,
+              "sub": 3
+            },
+            "blob_t3": {
+              "shape": "sphere",
+              "radius": 0.35,
+              "segments": 6,
+              "pos": [-0.02, 2.6, 0],
+              "scale": [1, 0.8, 1],
+              "material": "blob_t3",
+              "sub": 3,
+              "craft": 0.84
+            }
+          }
+        },
+        "crown_twin": {
+          "children": {
+            "blob_w1": {
+              "shape": "sphere",
+              "radius": 0.56,
+              "segments": 7,
+              "pos": [0.42, 1.9, 0],
+              "scale": [1, 0.85, 0.95],
+              "material": "blob_w1",
+              "sub": 3,
+              "craft": 0.84
+            },
+            "blob_w2": {
+              "shape": "sphere",
+              "radius": 0.53,
+              "segments": 7,
+              "pos": [-0.4, 1.8, 0.08],
+              "scale": [1, 0.82, 1],
+              "material": "blob_w2",
+              "craft": 0.9,
+              "sub": 3
+            },
+            "blob_w3": {
+              "shape": "sphere",
+              "radius": 0.41,
+              "segments": 6,
+              "pos": [0, 1.62, -0.1],
+              "scale": [1, 0.8, 1],
+              "material": "blob_w3",
+              "sub": 3,
+              "craft": 0.84
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "fixed",
+    "collider": { "shape": "cylinder", "radius": 0.18, "height": 1.6, "offset": [0, 0.8, 0] }
+  },
+  "variants": { "count": 6, "oneOf": { "crown": ["crown_round", "crown_tall", "crown_twin"] } },
+  "states": { "initial": "idle", "idle": { "anim": "sway" } },
+  "anims": {
+    "sway": {
+      "loop": true,
+      "duration": 4.4,
+      "tracks": [
+        { "node": "root", "prop": "rot.z", "ease": "sine", "keys": [[0, 1.7], [2.2, -1.7], [4.4, 1.7]] },
+        {
+          "node": "root",
+          "prop": "rot.x",
+          "ease": "sine",
+          "keys": [[0, 0], [1.1, 0.8], [2.2, 0], [3.3, -0.8], [4.4, 0]]
+        },
+        { "node": "branch", "prop": "rot.z", "ease": "sine", "keys": [[0, 1.5], [2.2, -1.5], [4.4, 1.5]] }
+      ]
+    }
+  }
+}

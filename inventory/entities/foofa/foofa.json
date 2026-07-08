@@ -1,0 +1,190 @@
+{
+  "format": 1,
+  "id": "foofa",
+  "name": "Foofa",
+  "category": "enemy",
+  "tags": ["flyer", "swarm"],
+  "notes": "Small flying bug, attacks in swarms. oneOf picks the coat color (moss/purple/honey) and antennae appear by chance, so a swarm never looks cloned. Aggro tilts the whole bug so the nose spike points at the target.",
+  "materials": {
+    "coat_moss": { "material": "grass_01" },
+    "body_moss": { "inherit": "coat_moss" },
+    "seg1_moss": { "inherit": "coat_moss" },
+    "seg2_moss": { "inherit": "coat_moss" },
+    "coat_purple": { "material": "plaster_wall_01" },
+    "body_purple": { "inherit": "coat_purple" },
+    "seg1_purple": { "inherit": "coat_purple" },
+    "seg2_purple": { "inherit": "coat_purple" },
+    "coat_honey": { "material": "plaster_wall_01" },
+    "body_honey": { "inherit": "coat_honey" },
+    "seg1_honey": { "inherit": "coat_honey" },
+    "seg2_honey": { "inherit": "coat_honey" },
+    "wing": { "material": "plaster_wall_01", "tint": "#e8f1ff", "uvMode": "stretch" },
+    "wing_l": { "inherit": "wing" },
+    "wing_r": { "inherit": "wing" },
+    "eye": { "material": "plaster_wall_01", "uvMode": "stretch" },
+    "eye_l": { "inherit": "eye" },
+    "eye_r": { "inherit": "eye" },
+    "antenna_l": { "inherit": "eye" },
+    "antenna_r": { "inherit": "eye" },
+    "stinger": { "material": "plaster_wall_01", "tint": "#4a4a52", "uvMode": "stretch" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "bug": {
+          "pos": [0, 0.75, 0],
+          "children": {
+            "body_moss": {
+              "shape": "sphere",
+              "radius": 0.14,
+              "pos": [0, 0, 0],
+              "material": "body_moss",
+              "children": {
+                "seg1_moss": { "shape": "sphere", "radius": 0.115, "pos": [0, -0.012, -0.13], "material": "seg1_moss" },
+                "seg2_moss": { "shape": "sphere", "radius": 0.09, "pos": [0, -0.024, -0.235], "material": "seg2_moss" }
+              }
+            },
+            "body_purple": {
+              "shape": "sphere",
+              "radius": 0.14,
+              "pos": [0, 0, 0],
+              "material": "body_purple",
+              "children": {
+                "seg1_purple": { "shape": "sphere", "radius": 0.115, "pos": [0, -0.012, -0.13], "material": "seg1_purple" },
+                "seg2_purple": { "shape": "sphere", "radius": 0.09, "pos": [0, -0.024, -0.235], "material": "seg2_purple" }
+              }
+            },
+            "body_honey": {
+              "shape": "sphere",
+              "radius": 0.14,
+              "pos": [0, 0, 0],
+              "material": "body_honey",
+              "children": {
+                "seg1_honey": { "shape": "sphere", "radius": 0.115, "pos": [0, -0.012, -0.13], "material": "seg1_honey" },
+                "seg2_honey": { "shape": "sphere", "radius": 0.09, "pos": [0, -0.024, -0.235], "material": "seg2_honey" }
+              }
+            },
+            "wing_l": {
+              "shape": "box",
+              "size": [0.21, 0.015, 0.24],
+              "pos": [-0.16, 0.1, -0.04],
+              "pivot": [0.105, 0, 0],
+              "material": "wing_l"
+            },
+            "wing_r": {
+              "shape": "box",
+              "size": [0.21, 0.015, 0.24],
+              "pos": [0.16, 0.1, -0.04],
+              "pivot": [-0.105, 0, 0],
+              "material": "wing_r"
+            },
+            "eye_l": { "shape": "box", "size": [0.045, 0.055, 0.02], "pos": [-0.05, 0.02, 0.125], "material": "eye_l" },
+            "eye_r": { "shape": "box", "size": [0.045, 0.055, 0.02], "pos": [0.05, 0.02, 0.125], "material": "eye_r" },
+            "spike": {
+              "shape": "cone",
+              "radius": 0.035,
+              "height": 0.13,
+              "pos": [0, -0.02, 0.18],
+              "rot": [90, 0, 0],
+              "material": "stinger"
+            },
+            "antenna_l": {
+              "shape": "box",
+              "size": [0.015, 0.11, 0.015],
+              "pos": [-0.04, 0.17, 0.03],
+              "rot": [12, 0, 22],
+              "material": "antenna_l",
+              "chance": 0.7
+            },
+            "antenna_r": {
+              "shape": "box",
+              "size": [0.015, 0.11, 0.015],
+              "pos": [0.04, 0.17, 0.03],
+              "rot": [12, 0, -22],
+              "material": "antenna_r",
+              "chance": 0.7
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "kinematicCharacter", "collider": { "shape": "sphere", "radius": 0.17, "offset": [0, 0.75, 0] } },
+  "props": {
+    "health": 1,
+    "flySpeed": 1.6,
+    "chaseSpeed": 3.8,
+    "aggroRadius": 5,
+    "damage": 1,
+    "swarmMin": 3,
+    "swarmMax": 6
+  },
+  "states": { "initial": "walking", "walking": { "anim": "drift" }, "aggro": { "anim": "chase" } },
+  "anims": {
+    "drift": {
+      "loop": true,
+      "duration": 1.68,
+      "tracks": [
+        {
+          "node": "bug",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [[0, -0.045], [0.84, 0.045], [1.68, -0.045]]
+        },
+        { "node": "bug", "prop": "rot.z", "ease": "sine", "keys": [[0, 4], [0.84, -4], [1.68, 4]] },
+        {
+          "node": "wing_l",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 32], [0.07, -32], [0.14, 32], [0.21, -32], [0.28, 32], [0.35, -32], [0.42, 32], [0.49, -32], [0.56, 32], [0.63, -32], [0.7, 32], [0.77, -32], [0.84, 32], [0.91, -32], [0.98, 32], [1.05, -32], [1.12, 32], [1.19, -32], [1.26, 32], [1.33, -32], [1.4, 32], [1.47, -32], [1.54, 32], [1.61, -32], [1.68, 32]]
+        },
+        {
+          "node": "wing_r",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, -32], [0.07, 32], [0.14, -32], [0.21, 32], [0.28, -32], [0.35, 32], [0.42, -32], [0.49, 32], [0.56, -32], [0.63, 32], [0.7, -32], [0.77, 32], [0.84, -32], [0.91, 32], [0.98, -32], [1.05, 32], [1.12, -32], [1.19, 32], [1.26, -32], [1.33, 32], [1.4, -32], [1.47, 32], [1.54, -32], [1.61, 32], [1.68, -32]]
+        },
+        {
+          "node": "antenna_l",
+          "prop": "rot.x",
+          "ease": "sine",
+          "keys": [[0, 3.5], [0.84, -3.5], [1.68, 3.5]]
+        },
+        {
+          "node": "antenna_r",
+          "prop": "rot.x",
+          "ease": "sine",
+          "keys": [[0, -3.5], [0.84, 3.5], [1.68, -3.5]]
+        }
+      ]
+    },
+    "chase": {
+      "loop": true,
+      "duration": 1,
+      "tracks": [
+        { "node": "bug", "prop": "rot.x", "keys": [[0, 38]] },
+        {
+          "node": "bug",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [[0, -0.02], [0.25, 0.02], [0.5, -0.02], [0.75, 0.02], [1, -0.02]]
+        },
+        { "node": "bug", "prop": "pos.z", "ease": "sine", "keys": [[0, 0], [0.5, 0.05], [1, 0]] },
+        {
+          "node": "wing_l",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 42], [0.05, -42], [0.1, 42], [0.15, -42], [0.2, 42], [0.25, -42], [0.3, 42], [0.35, -42], [0.4, 42], [0.45, -42], [0.5, 42], [0.55, -42], [0.6, 42], [0.65, -42], [0.7, 42], [0.75, -42], [0.8, 42], [0.85, -42], [0.9, 42], [0.95, -42], [1, 42]]
+        },
+        {
+          "node": "wing_r",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, -42], [0.05, 42], [0.1, -42], [0.15, 42], [0.2, -42], [0.25, 42], [0.3, -42], [0.35, 42], [0.4, -42], [0.45, 42], [0.5, -42], [0.55, 42], [0.6, -42], [0.65, 42], [0.7, -42], [0.75, 42], [0.8, -42], [0.85, 42], [0.9, -42], [0.95, 42], [1, -42]]
+        }
+      ]
+    }
+  },
+  "variants": { "count": 6, "oneOf": { "coat": ["body_moss", "body_purple", "body_honey"] } },
+  "events": { "hit": { "effect": "poof" }, "died": { "effect": "SCRIPT_EFFECT_SHATTER", "hideGeometry": true } }
+}

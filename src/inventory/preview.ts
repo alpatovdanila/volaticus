@@ -8,6 +8,7 @@ import { catalogColorPath, catalogDefaultTint } from './materials'
 import {
   effectIdOf,
   effectParamsOf,
+  isScriptEffect,
   resolveBinding,
   resolveMaterials,
   statesOf,
@@ -20,8 +21,9 @@ export interface PreviewDeps {
   playSfx(id: string): void
   playEffect(id: string, at: THREE.Vector3, params?: { texture?: string; tint?: string }): void
   flash(hex: string): void
-  shatter(): void
-  onDespawn(): void
+  shatter(): void // effect === SCRIPT_EFFECT_SHATTER — throw the entity's parts apart
+  hideGeometry(): void // binding.hideGeometry — hide the main mesh (reaction); instance stays
+  onDespawn(): void // state.despawnAfter — the runtime removes the instance
 }
 
 export class EntityPreview {
@@ -71,7 +73,10 @@ export class EntityPreview {
     const b = resolveBinding(raw, this.context)
     if (b.sfx) this.deps.playSfx(b.sfx)
     const effectId = effectIdOf(b.effect)
-    if (effectId) {
+    if (isScriptEffect(effectId)) {
+      // reserved built-in script effect (resolved here, not looked up in inventory/effects/)
+      if (effectId === 'SCRIPT_EFFECT_SHATTER') this.deps.shatter()
+    } else if (effectId) {
       const params = effectParamsOf(b.effect)
       // "slot" inherits the current texture+tint of one of this entity's material
       // slots — debris stays in sync when the object is retextured. Item 34: the
@@ -99,8 +104,7 @@ export class EntityPreview {
       }
     }
     if (b.flash) this.deps.flash(b.flash)
-    if (b.shatter) this.deps.shatter()
-    if (b.despawn) this.deps.onDespawn()
+    if (b.hideGeometry) this.deps.hideGeometry()
   }
 
   // visibility = defaults, then the state's show/hide, then the active

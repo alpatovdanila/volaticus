@@ -30,7 +30,8 @@ function walk(dir: string, ext: string, base = dir): string[] {
   return out
 }
 
-const files = walk(INV, '.json')
+// *.geom.{i}.json are baked geometry sidecars, not inventory items.
+const files = walk(INV, '.json').filter((p) => !/\.geom\.\d+\.json$/.test(p))
 // .png for the minecraft packs + legacy slots; .jpg for a few freestylized catalog maps.
 const textures = new Set([...walk(RES, '.png'), ...walk(RES, '.jpg')])
 const animated = new Set(walk(RES, '.png.mcmeta').map((p) => p.replace(/\.mcmeta$/, '')))

@@ -1,0 +1,277 @@
+{
+  "format": 1,
+  "id": "wooden_bridge",
+  "name": "Wooden Bridge",
+  "category": "prop",
+  "tags": ["village", "bridge", "wood"],
+  "notes": "Arched plank footbridge (v1 makeBridge port, 7.6m span x 2.2m wide, crown ~1.07m): seven tilted deck planks follow the arch, alternating light/dark wood with grain running across the walk direction; low rails on five posts per side. Physics trade-off: v2 collision is 2.5D, so the collider is ONE box whose top (~0.7m) sits at the deck's mid-height - the player floats slightly at the ends and sinks slightly at the crown instead of walking the true arch.",
+  "materials": {
+    "deck_a": { "material": "wood_planks_14", "flat": true, "uvScale": 0.5, "uvRot": 90, "uvProject": "box" },
+    "plank_0": { "inherit": "deck_a" },
+    "plank_2": { "inherit": "deck_a" },
+    "plank_4": { "inherit": "deck_a" },
+    "plank_6": { "inherit": "deck_a" },
+    "deck_b": { "material": "wood_planks_18", "flat": true, "uvScale": 0.5, "uvRot": 90, "uvProject": "box" },
+    "plank_1": { "inherit": "deck_b" },
+    "plank_3": { "inherit": "deck_b" },
+    "plank_5": { "inherit": "deck_b" },
+    "wood_dark": { "material": "wood_planks_20", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "post_l0": { "inherit": "wood_dark" },
+    "post_l1": { "inherit": "wood_dark" },
+    "post_l2": { "inherit": "wood_dark" },
+    "post_l3": { "inherit": "wood_dark" },
+    "post_l4": { "inherit": "wood_dark" },
+    "post_r0": { "inherit": "wood_dark" },
+    "post_r1": { "inherit": "wood_dark" },
+    "post_r2": { "inherit": "wood_dark" },
+    "post_r3": { "inherit": "wood_dark" },
+    "post_r4": { "inherit": "wood_dark" },
+    "rail_l1": { "inherit": "wood_dark" },
+    "rail_l2": { "inherit": "wood_dark" },
+    "rail_l3": { "inherit": "wood_dark" },
+    "rail_l4": { "inherit": "wood_dark" },
+    "rail_r1": { "inherit": "wood_dark" },
+    "rail_r2": { "inherit": "wood_dark" },
+    "rail_r3": { "inherit": "wood_dark" },
+    "rail_r4": { "inherit": "wood_dark" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "deck": {
+          "children": {
+            "plank_0": {
+              "shape": "plank",
+              "size": [1.44, 0.13, 2.2],
+              "pos": [-3.8, 0.22, 0],
+              "rot": [0, 0, 18],
+              "material": "plank_0",
+              "craft": 0.68
+            },
+            "plank_1": {
+              "shape": "plank",
+              "size": [1.44, 0.13, 2.2],
+              "pos": [-2.53, 0.61, 0],
+              "rot": [0, 0, 15.5],
+              "material": "plank_1",
+              "craft": 0.68
+            },
+            "plank_2": {
+              "shape": "plank",
+              "size": [1.44, 0.13, 2.2],
+              "pos": [-1.27, 0.9, 0],
+              "rot": [0, 0, 9],
+              "material": "plank_2",
+              "craft": 0.68
+            },
+            "plank_3": {
+              "shape": "plank",
+              "size": [1.44, 0.13, 2.2],
+              "pos": [0, 1, 0],
+              "material": "plank_3",
+              "craft": 0.68
+            },
+            "plank_4": {
+              "shape": "plank",
+              "size": [1.44, 0.13, 2.2],
+              "pos": [1.27, 0.9, 0],
+              "rot": [0, 0, -9],
+              "material": "plank_4",
+              "craft": 0.68
+            },
+            "plank_5": {
+              "shape": "plank",
+              "size": [1.44, 0.13, 2.2],
+              "pos": [2.53, 0.61, 0],
+              "rot": [0, 0, -15.5],
+              "material": "plank_5",
+              "craft": 0.68
+            },
+            "plank_6": {
+              "shape": "plank",
+              "size": [1.44, 0.13, 2.2],
+              "pos": [3.8, 0.22, 0],
+              "rot": [0, 0, -18],
+              "material": "plank_6",
+              "craft": 0.68
+            }
+          }
+        },
+        "rail_left": {
+          "children": {
+            "post_l0": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [-3.6, 0.59, 1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_l0",
+              "craft": 0.6
+            },
+            "post_l1": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [-1.8, 1.14, 1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_l1",
+              "craft": 0.6
+            },
+            "post_l2": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [0, 1.37, 1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_l2",
+              "craft": 0.6
+            },
+            "post_l3": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [1.8, 1.14, 1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_l3",
+              "craft": 0.6
+            },
+            "post_l4": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [3.6, 0.59, 1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_l4",
+              "craft": 0.6
+            },
+            "rail_l1": {
+              "shape": "plank",
+              "size": [1.95, 0.07, 0.07],
+              "pos": [-2.7, 1.145, 1.02],
+              "rot": [0, 0, 17],
+              "material": "rail_l1",
+              "craft": 0.7
+            },
+            "rail_l2": {
+              "shape": "plank",
+              "size": [1.9, 0.07, 0.07],
+              "pos": [-0.9, 1.535, 1.02],
+              "rot": [0, 0, 7.5],
+              "material": "rail_l2",
+              "craft": 0.7
+            },
+            "rail_l3": {
+              "shape": "plank",
+              "size": [1.9, 0.07, 0.07],
+              "pos": [0.9, 1.535, 1.02],
+              "rot": [0, 0, -7.5],
+              "material": "rail_l3",
+              "craft": 0.7
+            },
+            "rail_l4": {
+              "shape": "plank",
+              "size": [1.95, 0.07, 0.07],
+              "pos": [2.7, 1.145, 1.02],
+              "rot": [0, 0, -17],
+              "material": "rail_l4",
+              "craft": 0.7
+            }
+          }
+        },
+        "rail_right": {
+          "children": {
+            "post_r0": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [-3.6, 0.59, -1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_r0",
+              "craft": 0.6
+            },
+            "post_r1": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [-1.8, 1.14, -1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_r1",
+              "craft": 0.6
+            },
+            "post_r2": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [0, 1.37, -1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_r2",
+              "craft": 0.6
+            },
+            "post_r3": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [1.8, 1.14, -1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_r3",
+              "craft": 0.6
+            },
+            "post_r4": {
+              "shape": "post",
+              "radius": 0.055,
+              "height": 0.62,
+              "segments": 7,
+              "pos": [3.6, 0.59, -1.02],
+              "rotJitter": [0, 0, 2],
+              "material": "post_r4",
+              "craft": 0.6
+            },
+            "rail_r1": {
+              "shape": "plank",
+              "size": [1.95, 0.07, 0.07],
+              "pos": [-2.7, 1.145, -1.02],
+              "rot": [0, 0, 17],
+              "material": "rail_r1",
+              "craft": 0.7
+            },
+            "rail_r2": {
+              "shape": "plank",
+              "size": [1.9, 0.07, 0.07],
+              "pos": [-0.9, 1.535, -1.02],
+              "rot": [0, 0, 7.5],
+              "material": "rail_r2",
+              "craft": 0.7
+            },
+            "rail_r3": {
+              "shape": "plank",
+              "size": [1.9, 0.07, 0.07],
+              "pos": [0.9, 1.535, -1.02],
+              "rot": [0, 0, -7.5],
+              "material": "rail_r3",
+              "craft": 0.7
+            },
+            "rail_r4": {
+              "shape": "plank",
+              "size": [1.95, 0.07, 0.07],
+              "pos": [2.7, 1.145, -1.02],
+              "rot": [0, 0, -17],
+              "material": "rail_r4",
+              "craft": 0.7
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [7.6, 0.7, 2.3], "offset": [0, 0.35, 0] } },
+  "variants": { "count": 6 }
+}

@@ -1,32 +1,16 @@
 # VOLATICUS inventory format
 
 One JSON file per item under `inventory/`. The filename (minus `.json`) **is** the id.
-Folder decides the kind: `effects/` → effect, `sfx/` → sfx, anything else → entity.
-`inventory/settings.json` is special — global settings: the active `texturePack` plus
-`surfaces`, the named surface presets materials can pick (see Materials below):
-
-```jsonc
-{ "format": 1, "texturePack": "sapixcraft",
-  "surfaces": {                     // roughness/metalness/env per preset; env = how much of the
-    "matte":    { "roughness": 0.95 },                 // neutral environment map it reflects.
-    "polished": { "roughness": 0.3, "env": 0.45 },     // Materials WITHOUT a preset get env 0 —
-    "metal":    { "roughness": 0.45, "metalness": 1, "env": 0.8 },  // fully predictable color.
-    "chrome":   { "roughness": 0.12, "metalness": 1, "env": 1 },
-    "wet":      { "roughness": 0.12, "env": 0.5 } } }
-```
-
-Texture ids in content always stay canonical
-(`vanilla/textures/...`); when another pack (e.g. `sapixcraft`) is active, lookups redirect
-per-file to `<pack>/textures/...` and fall back to vanilla for files the pack doesn't have —
-so switching packs can never break content.
+Folder decides the kind: `effects/` → effect, `sfx/` → sfx, `materials/` → material (the
+named PBR catalog — see Material catalog below), anything else → entity.
 `npm run check` validates everything (schema, node/anim/slot refs, cross-file sfx/effect refs,
 texture existence, animated-texture warnings). The editor shows the same issues live.
 
-Conventions: meters, Y-up, entity origin at ground-center. Texture ids are paths relative to
-`resources/` (e.g. `vanilla/textures/block/oak_planks.png`). Rendering is pixel-art
+Conventions: meters, Y-up, entity origin at ground-center. Resource paths are relative to
+`resources/` (e.g. `PBR/bricks_wall_01/bricks_wall_01_color_1k.png`, `particle/explosion_0.png`,
+`sounds/Footsteps/foley_footstep_carpet_1.wav`). Rendering is pixel-art
 (NearestFilter); UVs tile at 1 texture repeat per meter unless a material says `"uvMode": "fit"`
 (whole repeats, never cut mid-motif) or `"stretch"` (exactly once).
-Animated Minecraft textures (ones with `.png.mcmeta`) are frame strips — don't use them yet.
 
 ## Entity (`inventory/props|pickups|enemies|characters/*.json`)
 
@@ -36,41 +20,36 @@ Animated Minecraft textures (ones with `.png.mcmeta`) are frame strips — don't
   "id": "boomba",                 // must equal filename
   "name": "Boomba",
   "category": "prop|pickup|enemy|character|levelpart",   // editor grouping
-  "behavior": "static|dynamic|destructible|pickup|container|character|player", // game logic archetype
   "tags": ["bomb"], "notes": "free text",
 
-  "materials": {                  // named slots; primitives reference slots, the editor assigns textures to slots
-    "shell": { "texture": "vanilla/textures/block/coal_block.png",
-               "tint": "#f2a13c",        // multiplies (white texture + tint = flat color). THE source of
-                                         // "same texture, different colors" — editor shows it as a color
-                                         // swatch on every slot chip (white = off)
-               "emissive": 0.7,          // 0..3, glows
-               "cutout": true,           // alpha-test (leaves, sprites) — without it transparent texels
-                                         // render BLACK. The editor auto-sets it when an assigned texture
-                                         // has an alpha channel; a per-slot checkbox overrides either way
-               "doubleSided": true,
-               "flat": true,             // flat shading — the house low-poly look
-               "surface": "metal",       // surface preset from settings.json (editor: dropdown per slot).
-                                         // Supplies roughness/metalness/env; explicit values below override it
-               "roughness": 0.85,        // default 0.85 matte; lower = shinier (prompt-authored fine-tuning)
-               "metalness": 0,           // 0..1
-               "noise": 0.5,             // subtle procedural surface grain (stone, rough wood)
-               "opacity": 0.55,          // <1 = translucent, no depth-write (well water, glass)
+  "materials": {                  // named slots; a rig node references a slot, and each slot references a
+                                  // PBR catalog material by id + GEOMETRIC/placement overrides layered on top
+    "shell": { "material": "metal_01",     // catalog material id (inventory/materials/<id>.json). Supplies the
+                                           // color/normal/roughness/metallic/ao maps AND the roughness/metalness/
+                                           // emissive/opacity/cutout/doubleSided/flat from its `tuning` — see the
+                                           // Material catalog section below. (The old per-slot texture/surface/
+                                           // opacity/cutout/emissive/roughness/metalness keys are RETIRED —
+                                           // a catalog material carries its own maps + tuning for all of that.)
+               "tint": "#f2a13c",        // per-slot albedo multiply, ON TOP of the material's own tint (white
+                                         // texture + tint = flat color). THE source of "same material, different
+                                         // colors" — editor shows a color swatch on every slot chip (white = off)
+               "flat": true,             // flat-shading override (else inherits the material's `tuning.flat`)
+               "doubleSided": true,      // render both faces (open shells) — overrides `tuning.doubleSided`;
+                                         // kept per-slot so a shared catalog material stays single-sided elsewhere
                "uvMode": "tile|fit|stretch", "uvScale": 1,  // tile = repeats per meter; fit = whole repeats
                                          // rounded so motifs never cut mid-pattern; stretch = exactly once.
-                                         // uvScale multiplies density in tile/fit
-               "uvRot": 90 }             // texture direction: degrees 0–359 (editor dropdowns offer 15° steps)
-    // HD packs (HD1/HD2) ship foo_n.png next to each texture — wired as a normal
-    // map automatically when that pack is active. No tone mapping; lights are
-    // neutral white so tints render true.
+                                         // uvScale multiplies density in tile/fit (× the material's own default)
+               "uvRot": 90,              // texture direction: degrees 0–359 (editor dropdowns offer 15° steps)
+               "uvProject": "box" }      // per-slot UV re-projection override: box|planar|sphere|none (else the
+                                         // material's default, then the node's authored UVs; see node.uvProject)
   },
 ```
 
 ### Slot inheritance (`"inherit"`)
 
 A slot may declare `"inherit": "<parentSlot>"` instead of (or in addition to) its own keys.
-Every property that is UNSET on the slot — `material`, `tint`, `uvMode`, `uvScale`, `uvRot`,
-`uvProject`, `flat` — resolves from the parent, recursively (chains allowed). Own keys are
+Every property that is UNSET on the slot — `material`, `tint`, `flat`, `doubleSided`, `uvMode`,
+`uvScale`, `uvRot`, `uvProject` — resolves from the parent, recursively (chains allowed). Own keys are
 **overrides**; **reset = delete the override key**, which falls straight back to the live
 parent value. The single shared resolver (`resolveMaterials` in `src/inventory/schema.ts`)
 feeds the factory, effects/preview, the editor chips and the game/level builds alike — there
@@ -101,8 +80,8 @@ Rules and semantics:
   "rig": {                        // tree of named nodes; names are the animation/prompting vocabulary
     "body": {
       "shape": "box|cylinder|sphere|capsule|cone|plane|cross|torus|mesh|plank|post|ring|arrow|star",  // omit shape = pure group
-      "mesh": "craftpix/.../Stone_big_001.fbx",  // shape "mesh": external low-poly FBX, merged to one
-                                  // geometry (craftpix packs are cm-scale — node scale ~0.003-0.01);
+      "mesh": "models/stone_big.fbx",  // shape "mesh": external low-poly FBX (path relative to resources/),
+                                  // merged to one geometry (many FBX packs are cm-scale — node scale ~0.003-0.01);
                                   // gets a normal material slot (the pack's texture atlas + flat + stretch)
       "size": [0.7, 0.6, 0.5],    // box/plank/arrow [w,h,d]; plane/cross [w,h]
       "tip": 0.2,                 // shape "arrow" ONLY: length of the sawn point, meters (default
@@ -171,23 +150,22 @@ Rules and semantics:
   "physics": { "body": "fixed|dynamic|kinematicCharacter",
                "collider": "auto" | { "shape": "box|sphere|capsule|cylinder", "size": [..], "radius": 0, "height": 0, "offset": [..] },
                // Explicit collider dims (size/radius/height/offset) are authored in the
-               // entity's UNSCALED local units and SCALE WITH variants.scale at build time —
-               // the collider always matches the rendered variant, same as "auto".
+               // entity's local units; the collider always matches the rendered geometry.
                "mass": 12, "friction": 0.5, "restitution": 0 },
 
-  "props": { "health": 2, "walkSpeed": 1.3 },   // gameplay tunables, free-form per behavior
+  "props": { "health": 2, "walkSpeed": 1.3 },   // gameplay tunables, free-form (the runtime reads these)
 
-  "variants": {                   // a FIXED, STORED set of pre-generated results — never rolled at render
-    "scale": [0.9, 1.1], "yawJitter": 8, "tiltJitter": 2, "tintJitter": 0.06,
-    "oneOf": { "lid": ["lid_flat", "lid_ajar", "lid_broken"] }, // keep exactly one node per group, drop the rest
-    "seeds": [862063942, 878841561, 828508704]  // THE variant set: each seed fully determines one static
-                                  // result (oneOf picks, chance nodes, jitters, generated geometry).
-                                  // The editor's 🎲 cycles them; world instances reference an index.
-                                  // Regenerating the set = rewriting these numbers (on request only —
-                                  // the editor's "⟳ seeds" button does exactly that, same count).
+  // Geometry is BAKED by the studio, not generated at runtime. `variants` are the
+  // bake RULES: the studio bakes `count` distinct geometry compositions into
+  // <id>.geom.{i}.json sidecars (resolving oneOf/chance/rotJitter/craft with fresh
+  // randomness per file); any runtime cycles them (🎲) and never regenerates. The
+  // studio re-bakes only when a geom is missing or on a craft/Regen edit.
+  "variants": {                   // absent = a single baked composition
+    "count": 3,                   // how many variant geom files to bake (default 1)
+    "oneOf": { "lid": ["lid_flat", "lid_ajar", "lid_broken"] } // one node kept per group, per variant
   },
 
-  "states": {                     // presentation per lifecycle state; transitions live in behavior code
+  "states": {                     // presentation per lifecycle state; transitions live in runtime/game code
     "initial": "sleeping",
     "sleeping": {
       "anim": "sleep",            // clip from anims (loops or holds last frame)
@@ -216,9 +194,9 @@ Rules and semantics:
     ]}
   },
 
-  "events": {                     // reactive one-shots fired by the game (hit, destroyed, collected, died, ...)
-    "hit": { "sfx": "wood_hit", "anim": "wobble" },        // anim = one-shot overlay clip, state anim resumes after
-    "destroyed": { "effect": "wood_break", "despawn": true } // despawn removes the entity (editor: hides + respawns)
+  "events": {                     // reactive one-shots fired by the runtime (hit, died, collected, ...)
+    "hit": { "anim": "wobble" },        // anim = one-shot overlay clip, state anim resumes after
+    "died": { "effect": { "id": "wood_break", "slot": "planks" }, "hideGeometry": true } // death reaction (barrels, enemies, all): hideGeometry hides the mesh; the runtime owns actual despawn
   }
 }
 ```
@@ -228,10 +206,12 @@ Bindings (state `enter`, `cues`, and `events`) accept: `sfx`, `effect` (plain id
 time — debris stays in sync when the object is retextured; or freeze explicit values with
 `{ "id": ..., "texture": "...", "tint": "#...", "uvRot": 90 }`. Effect bursts marked `"inherit": true`
 receive the params. The editor shows these as "fx" chips with an [inherit from → slot] control, plus
-texture + direction pickers in explicit mode), `anim`,
+texture + direction pickers in explicit mode; OR a reserved `SCRIPT_EFFECT_*` id — currently
+`"SCRIPT_EFFECT_SHATTER"`, a built-in that throws the entity's rig pieces apart (death drama),
+resolved by the runtime instead of an inventory-effect lookup), `anim`,
 `flash` (avoid — cartoon wobble anims read better),
-`shatter` (the entity breaks into its rig pieces and they tumble away — death drama; pair with
-`despawn`), `despawn`, and `byContext` — context-conditional overrides keyed
+`hideGeometry` (hide the entity's main mesh as part of a reaction, so only the effect/debris shows —
+NOT instance removal; the runtime decides whether/when to despawn), and `byContext` — context-conditional overrides keyed
 `"dimension=value"`. The game maintains the context (e.g. `surface` from the ground underfoot);
 matching entries merge over the base binding. The editor shows a preview dropdown per dimension
 it finds in the doc.
@@ -240,6 +220,35 @@ it finds in the doc.
 "0.03": { "sfx": "footstep",
           "byContext": { "surface=grass": { "sfx": "footstep_grass", "effect": "grass_puff" },
                          "surface=stone": { "sfx": "footstep_stone" } } }
+```
+
+## Material catalog (`inventory/materials/*.json`) — the named PBR library
+
+Entity material slots reference these by `id`. One file per material: the importer
+(`scripts/import-materials.ts`) writes `maps` with resolved paths under `resources/PBR/`,
+and the studio's material manager edits `tuning`. Slots layer only geometry/placement on top.
+
+```jsonc
+{ "format": 1, "id": "wood_planks_20", "name": "Wood Planks 20", "category": "wood_planks",
+  "maps": {                       // one texture path (relative to resources/) per kind, or null.
+                                  // Single resolution — only the 1k maps ship on disk.
+    "color":     "PBR/wood_planks_20/wood_planks_20_basecolor_1k.png",  // the one guaranteed channel
+    "normal":    "PBR/wood_planks_20/wood_planks_20_normal_gl_1k.png",  // GL convention
+    "roughness": "PBR/wood_planks_20/wood_planks_20_roughness_1k.png",
+    "height":    "PBR/wood_planks_20/wood_planks_20_height_1k.png",     // linked but NOT bound (parallax removed)
+    "ao":        "PBR/wood_planks_20/wood_planks_20_ambientocclusion_1k.png",
+    "metallic":  "PBR/wood_planks_20/wood_planks_20_metallic_1k.png",
+    "emissive":  null },
+  "tuning": {                     // the baked surface look — an entity slot layers only geometry over this
+    "tint": null,                 // #rrggbb base albedo multiply, or null
+    "roughness": 1, "metalness": 0,   // scalar × the roughness/metallic maps (metalness defaults to 0)
+    "normalScale": 1, "aoIntensity": 1,
+    "emissive": 0,                // 0..4; the emissive map binds only when this is > 0
+    "opacity": 1, "cutout": false,    // opacity < 1 = translucent; cutout = alpha-test (leaves/sprites)
+    "doubleSided": false, "flat": false }
+  // optional tuning keys: "uvScale" (default tiling density), "uvProject" ("box"|"planar"|"sphere"
+  // default projection), "alphaMap" (one resource path used as an opacity/cutout mask)
+}
 ```
 
 ## Effect (`inventory/effects/*.json`) — named gfx+sfx combo
@@ -260,11 +269,11 @@ Referenced from entity bindings via `"effect": "<id>"`.
       "life": [0.4, 0.85], "colors": ["#ffd23c", "#3a3a3a"],
       "spin": 9, "fade": true, "delay": 0.06 },
     // flipbook burst: camera-facing sprite playing a frame sequence over its life
-    { "count": 6, "flipbook": { "pattern": "vanilla/textures/particle/explosion_#.png", "frames": 16 },
+    { "count": 6, "flipbook": { "pattern": "particle/explosion_#.png", "frames": 16 },
       "size": [0.9, 1.4], "grow": 1.6,  // grow = size multiplier reached at end of life
       "speed": [0.4, 1.1], "dir": "sphere", "life": [0.45, 0.7], "colors": ["#ffffff"] },
     // single static sprite (e.g. the villager angry cloud)
-    { "count": 2, "sprite": "vanilla/textures/particle/angry.png", "size": [0.3, 0.36], "grow": 1.25,
+    { "count": 2, "sprite": "particle/angry.png", "size": [0.3, 0.36], "grow": 1.25,
       "speed": [0.5, 0.8], "dir": "up", "life": [0.55, 0.75], "colors": ["#ffffff"] }
   ],
   "flash": { "color": "#ffcc66", "intensity": 3.5, "radius": 8, "duration": 0.3 },
@@ -273,12 +282,17 @@ Referenced from entity bindings via `"effect": "<id>"`.
 
 ## SFX (`inventory/sfx/*.json`) — sample files OR synthesized patch
 
-Sample form (paths relative to `resources/`; one file picked at random per play — list several for variety):
+The `sfx` binding field is still part of the format, but `inventory/sfx/` is currently
+EMPTY — there are no sfx files at the moment, so any binding that names one won't resolve
+until the library is repopulated.
+
+Sample form (paths relative to `resources/`, rooted at `sounds/`; one file picked at random per
+play — list several for variety):
 
 ```jsonc
 { "format": 1, "id": "footstep", "volume": 0.35, "pitchJitter": 0.12,
-  "files": ["400 Sounds Pack/Footsteps/foley_footstep_gravel_1.wav",
-            "400 Sounds Pack/Footsteps/foley_footstep_gravel_2.wav"] }
+  "files": ["sounds/Footsteps/foley_footstep_carpet_1.wav",
+            "sounds/Footsteps/foley_footstep_carpet_2.wav"] }
 ```
 
 Synth form (WebAudio, good for bespoke bleeps/hisses no pack file covers):

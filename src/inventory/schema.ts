@@ -147,7 +147,6 @@ export type NodeDef = {
   mesh?: string
   craft?: number
   sub?: number
-  seed?: number
   uvProject?: 'box' | 'planar' | 'sphere'
   size?: number[]
   radius?: number
@@ -183,7 +182,6 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
     mesh: z.string().optional(), // external model path relative to resources/ (fbx)
     craft: z.number().min(0).max(1).optional(), // craftsmanship: 1 = machine-perfect, 0 = crooked (any shape)
     sub: z.number().int().min(0).max(4).optional(), // subdivision levels before craft jitter (4^n triangles)
-    seed: z.number().int().optional(), // generator seed override — written by the editor's per-slot ⟲ regen
     // UV re-projection in entity space, applied AFTER subdivision + craft jitter:
     // box = dominant-axis planar per triangle, planar = XZ from above, sphere =
     // spherical around the node's bbox center. Material uvMode/uvScale metering
@@ -238,13 +236,24 @@ export function effectParamsOf(e: EffectRef | undefined): { texture?: string; ti
   return typeof e === 'object' && e ? { texture: e.texture, tint: e.tint, uvRot: e.uvRot } : {}
 }
 
+// Reserved "script effect" ids referenced from a binding's `effect` field instead
+// of an inventory effect — built-in runtime behaviors the studio/game resolve
+// directly (preview.ts) rather than looking up inventory/effects/. Exempt from the
+// effect-existence cross-check. SCRIPT_EFFECT_SHATTER = throw the entity's parts apart.
+export const SCRIPT_EFFECTS = ['SCRIPT_EFFECT_SHATTER'] as const
+export type ScriptEffect = (typeof SCRIPT_EFFECTS)[number]
+export function isScriptEffect(id: string | undefined): id is ScriptEffect {
+  return !!id && (SCRIPT_EFFECTS as readonly string[]).includes(id)
+}
+
 const bindingCore = {
   sfx: z.string().optional(),
-  effect: effectRef.optional(),
+  effect: effectRef.optional(), // an inventory effect id, or a reserved SCRIPT_EFFECT_* (e.g. shatter)
   anim: z.string().optional(), // one-shot overlay clip (hit wobble etc.); state anim resumes after
   flash: hexColor.optional(),
-  shatter: z.boolean().optional(), // the entity breaks into its pieces (death drama)
-  despawn: z.boolean().optional(), // entity is removed after this fires (preview: hides + respawns)
+  // hide the entity's MAIN geometry as part of a reaction (so only the effect/debris
+  // shows). NOT instance removal — the runtime decides whether/when to despawn.
+  hideGeometry: z.boolean().optional(),
 }
 
 export const BindingSchema = z.object({
@@ -329,7 +338,6 @@ export const EntitySchema = z.object({
   id: z.string().regex(/^[a-z0-9_]+$/),
   name: z.string(),
   category: z.enum(['prop', 'pickup', 'enemy', 'character', 'levelpart']),
-  behavior: z.enum(['static', 'dynamic', 'destructible', 'pickup', 'container', 'character', 'player']),
   tags: z.array(z.string()).optional(),
   notes: z.string().optional(),
   materials: z.record(MaterialSchema),
@@ -355,20 +363,17 @@ export const EntitySchema = z.object({
     })
     .optional(),
   props: z.record(z.union([z.number(), z.string(), z.boolean()])).optional(),
+  // Geometry-composition variants. The studio BAKES `count` distinct compositions
+  // into <id>.geom.{i}.json — resolving oneOf/chance/rotJitter/craft with fresh
+  // randomness per file — and any runtime cycles them (never regenerates). Absent
+  // = a single composition. Per-instance placement variety (scale/yaw/tilt/tint)
+  // is a level-editor concern now, not an entity field.
   variants: z
     .object({
-      scale: range.optional(),
-      yawJitter: z.number().min(0).optional(), // degrees
-      tiltJitter: z.number().min(0).optional(), // degrees, random x/z lean of the whole entity
-      tintJitter: z.number().min(0).max(1).optional(),
+      count: z.number().int().min(1).optional(), // number of variant geom files to bake (default 1)
       // mutually exclusive structural alternatives: per group, exactly one of the
-      // listed rig nodes is kept, the others are dropped (seeded)
+      // listed rig nodes is kept per variant, the others dropped.
       oneOf: z.record(z.array(z.string()).min(2)).optional(),
-      // THE stored variant set: each seed fully determines one static result
-      // (oneOf picks, chance nodes, jitters, generated geometry). Builds replay
-      // them exactly; nothing rerolls at render time. World instances reference
-      // an index into this list. Regenerate only on request.
-      seeds: z.array(z.number().int()).min(1).optional(),
     })
     .optional(),
   // states is { initial: "name", <stateName>: StateDef, ... } — validated in validateEntity
@@ -757,7 +762,8 @@ function checkBinding(
   if (!b) return
   const checkEffect = (e: EffectRef | undefined, at: string) => {
     const id = effectIdOf(e)
-    if (id && !ctx.hasEffect(id)) issues.push(`${at}: unknown effect "${id}"`)
+    // reserved SCRIPT_EFFECT_* ids are built-in runtime behaviors, not inventory effects
+    if (id && !isScriptEffect(id) && !ctx.hasEffect(id)) issues.push(`${at}: unknown effect "${id}"`)
     const tex = effectParamsOf(e).texture
     if (tex && !ctx.hasTexture(tex)) issues.push(`${at}: effect texture not found "${tex}"`)
     if (typeof e === 'object' && e?.slot && materials && !materials[e.slot])

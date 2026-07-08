@@ -1,0 +1,259 @@
+{
+  "format": 1,
+  "id": "well",
+  "name": "Well",
+  "category": "prop",
+  "tags": ["village", "water"],
+  "notes": "Stone ring, gable roof on two posts, crank axle with rope and a hanging bucket. Bucket height varies by chance nodes.",
+  "materials": {
+    "stone": { "material": "stone_bricks_wall_03", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "stone_dark": { "material": "wood_planks_20", "flat": true, "uvProject": "sphere", "uvRot": 180, "uvScale": 0.25 },
+    "rim": { "inherit": "stone_dark", "material": "stone_bricks_wall_03", "uvProject": "box" },
+    "shaft_floor": { "inherit": "stone_dark" },
+    "shaft_floor_side": { "inherit": "shaft_floor" },
+    "shaft_floor_top": { "inherit": "shaft_floor" },
+    "shaft_floor_bottom": { "inherit": "shaft_floor" },
+    "wood": { "material": "metal_01", "flat": true, "uvScale": 0.25 },
+    "axle": { "inherit": "wood" },
+    "crank_grip": { "inherit": "wood" },
+    "rh_bucket": { "inherit": "wood" },
+    "rh_bucket_side": { "inherit": "rh_bucket" },
+    "rh_bucket_top": { "inherit": "rh_bucket" },
+    "rh_bucket_bottom": { "inherit": "rh_bucket" },
+    "rl_bucket": { "inherit": "wood" },
+    "rl_bucket_side": { "inherit": "rl_bucket", "uvScale": 2 },
+    "rl_bucket_top": { "inherit": "rl_bucket" },
+    "rl_bucket_bottom": { "inherit": "rl_bucket" },
+    "wood_dark": { "material": "wood_planks_20", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "post_l": { "inherit": "wood_dark", "uvRot": 90 },
+    "post_r": { "inherit": "wood_dark", "uvRot": 90 },
+    "ridge": { "inherit": "wood_dark" },
+    "rh_floor": { "inherit": "wood_dark" },
+    "rl_floor": { "inherit": "wood_dark" },
+    "roof": { "material": "hay_roof_01", "flat": true, "uvScale": 0.25, "uvRot": 180, "uvProject": "box" },
+    "roof_l": { "inherit": "roof", "uvRot": 180, "uvProject": "box" },
+    "roof_r": { "inherit": "roof", "uvRot": 0 },
+    "rope": {
+      "material": "wood_planks_01",
+      "tint": "#c9b184",
+      "flat": true,
+      "uvScale": 0.25,
+      "uvRot": 90,
+      "uvProject": "box"
+    },
+    "rope_coil": { "inherit": "rope" },
+    "rh_line": { "inherit": "rope" },
+    "rl_line": { "inherit": "rope" },
+    "metal": { "material": "metal_01", "tint": "#4d5258", "flat": true, "uvScale": 0.25 },
+    "crank": { "inherit": "metal", "uvMode": "tile", "tint": "#ffffff" },
+    "rh_band": { "inherit": "metal" },
+    "rl_band": { "inherit": "metal" },
+    "water": { "material": "rocks_with_water_01", "tint": "#3d6d8f", "uvScale": 0.25 }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "ring": {
+          "shape": "cylinder",
+          "radiusBottom": 0.62,
+          "radiusTop": 0.56,
+          "height": 0.55,
+          "segments": 16,
+          "pos": [0, 0.275, 0],
+          "material": "stone",
+          "open": true,
+          "craft": 0.8
+        },
+        "hole": {
+          "shape": "cylinder",
+          "radius": 0.5,
+          "height": 0.03,
+          "segments": 16,
+          "pos": [0, 0.32, 0],
+          "material": "water"
+        },
+        "rim": {
+          "shape": "torus",
+          "radius": 0.56,
+          "tube": 0.06,
+          "segments": 16,
+          "pos": [0, 0.57, 0],
+          "material": "rim"
+        },
+        "post_l": {
+          "shape": "plank",
+          "size": [0.12, 2.06, 0.12],
+          "pos": [-0.62, 1.03, 0],
+          "material": "post_l",
+          "craft": 0.5
+        },
+        "post_r": {
+          "shape": "plank",
+          "size": [0.12, 2.06, 0.12],
+          "pos": [0.62, 1.03, 0],
+          "material": "post_r",
+          "craft": 0.5
+        },
+        "roof_l": {
+          "shape": "plank",
+          "size": [1.7, 0.06, 0.75],
+          "pos": [0, 1.87, -0.28],
+          "rot": [-38, 0, 0],
+          "material": "roof_l",
+          "craft": 0.58
+        },
+        "roof_r": {
+          "shape": "plank",
+          "size": [1.7, 0.06, 0.75],
+          "pos": [0, 1.87, 0.28],
+          "rot": [38, 0, 0],
+          "material": "roof_r",
+          "craft": 0.58
+        },
+        "ridge": {
+          "shape": "plank",
+          "size": [1.74, 0.09, 0.12],
+          "pos": [0, 2.1, 0],
+          "material": "ridge",
+          "craft": 0.48
+        },
+        "axle": {
+          "shape": "cylinder",
+          "radius": 0.055,
+          "height": 1.3,
+          "segments": 8,
+          "pos": [0, 1.55, 0],
+          "rot": [0, 0, 90],
+          "material": "axle"
+        },
+        "crank": {
+          "shape": "box",
+          "size": [0.06, 0.3, 0.06],
+          "pos": [0.72, 1.44, 0],
+          "material": "crank",
+          "children": {
+            "crank_grip": {
+              "shape": "cylinder",
+              "radius": 0.035,
+              "height": 0.16,
+              "segments": 6,
+              "pos": [0.06, -0.13, 0],
+              "rot": [0, 0, 90],
+              "material": "crank_grip"
+            }
+          }
+        },
+        "rope_coil": {
+          "shape": "cylinder",
+          "radius": 0.075,
+          "height": 0.22,
+          "segments": 8,
+          "pos": [0, 1.55, 0],
+          "rot": [0, 0, 90],
+          "material": "rope_coil"
+        },
+        "rope_high": {
+          "children": {
+            "rh_line": {
+              "shape": "cylinder",
+              "radius": 0.016,
+              "height": 0.5,
+              "segments": 5,
+              "pos": [0, 1.3, 0],
+              "material": "rh_line"
+            },
+            "rh_bucket": {
+              "shape": "ring",
+              "radiusBottom": 0.1,
+              "radiusTop": 0.13,
+              "height": 0.17,
+              "thickness": 0.018,
+              "segments": 12,
+              "pos": [0, 0.97, 0],
+              "material": { "side": "rh_bucket_side", "top": "rh_bucket_top", "bottom": "rh_bucket_bottom" },
+              "children": {
+                "rh_floor": {
+                  "shape": "cylinder",
+                  "radius": 0.1,
+                  "height": 0.03,
+                  "segments": 12,
+                  "pos": [0, -0.06, 0],
+                  "material": "rh_floor"
+                },
+                "rh_band": {
+                  "shape": "ring",
+                  "radiusBottom": 0.105,
+                  "radiusTop": 0.125,
+                  "height": 0.05,
+                  "thickness": 0.008,
+                  "segments": 12,
+                  "pos": [0, 0.04, 0],
+                  "material": "rh_band",
+                  "craft": 0.9
+                }
+              },
+              "craft": 1
+            }
+          }
+        },
+        "rope_low": {
+          "children": {
+            "rl_line": {
+              "shape": "cylinder",
+              "radius": 0.016,
+              "height": 0.95,
+              "segments": 5,
+              "pos": [0, 1.08, 0],
+              "material": "rl_line"
+            },
+            "rl_bucket": {
+              "shape": "ring",
+              "radiusBottom": 0.1,
+              "radiusTop": 0.13,
+              "height": 0.17,
+              "thickness": 0.018,
+              "segments": 12,
+              "pos": [0, 0.52, 0],
+              "material": { "side": "rl_bucket_side", "top": "rl_bucket_top", "bottom": "rl_bucket_bottom" },
+              "children": {
+                "rl_floor": {
+                  "shape": "cylinder",
+                  "radius": 0.1,
+                  "height": 0.03,
+                  "segments": 12,
+                  "pos": [0, -0.06, 0],
+                  "material": "rl_floor"
+                },
+                "rl_band": {
+                  "shape": "ring",
+                  "radiusBottom": 0.105,
+                  "radiusTop": 0.125,
+                  "height": 0.05,
+                  "thickness": 0.008,
+                  "segments": 12,
+                  "pos": [0, 0.04, 0],
+                  "material": "rl_band",
+                  "craft": 0.9
+                }
+              },
+              "craft": 1
+            }
+          }
+        },
+        "shaft_floor": {
+          "shape": "cylinder",
+          "radius": 0.5,
+          "height": 0.03,
+          "segments": 16,
+          "pos": [0, 0.06, 0],
+          "material": { "side": "shaft_floor_side", "top": "shaft_floor_top", "bottom": "shaft_floor_bottom" }
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "fixed",
+    "collider": { "shape": "cylinder", "radius": 0.65, "height": 0.6, "offset": [0, 0.3, 0] }
+  },
+  "variants": { "count": 6, "oneOf": { "bucket": ["rope_high", "rope_low"] } }
+}

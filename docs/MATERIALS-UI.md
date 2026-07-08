@@ -7,7 +7,7 @@ Baseline files: src/editor/main.ts, ui.ts, style.css, index.html (+ preview.ts/e
 ## Layout — main window
 1. **Material picker → its own column**, immediately right of the Model-parts column (today it's the
    bottom-right "Materials" browser). Three columns in the right region: [Model parts] [Materials picker] … .
-   Keep it searchable + category-grouped; thumbnails = active-res color map.
+   Keep it searchable + category-grouped; thumbnails = active-res color map. (later removed — single-res now: just the color map, no active-res.)
 
 ## Part chips (Model-parts selector)
 2. Material **preview thumbnail bigger**, **top-aligned** within the chip.
@@ -38,7 +38,7 @@ Baseline files: src/editor/main.ts, ui.ts, style.css, index.html (+ preview.ts/e
    **overridable per-application** via the part chip's tint (#4/#11) when the material is applied to an object.
 9. **Hover hint on EVERY option** (short tooltip explaining what it does). **No dead options** — audit each
    control end-to-end:
-   - **heightBump appears to do nothing** → either make it visibly affect the surface (bumpMap scale from the
+   - **heightBump appears to do nothing** (heightBump removed — height maps not bound) → either make it visibly affect the surface (bumpMap scale from the
      height map — confirm the height map is wired and bumpScale is large enough to see) OR remove it.
    - Verify roughness/metalness/normalScale/aoIntensity/emissive/opacity/cutout/doubleSided/flat/uvScale each
      produce a visible change in the preview; cut or fix any that don't.
@@ -111,7 +111,7 @@ Baseline files: src/editor/main.ts, ui.ts, style.css, index.html (+ preview.ts/e
     - **Wireframe** toggle — icon
     - **Lineup**
     - **Materials preset** = the material quality / resolution selector (the 1k/256/128 dropdown, reframed as
-      a quality preset)
+      a quality preset) (later removed — single-res now: the resolution/preset switcher is gone)
     Keep Save (and the dirty dot) + anything essential. Clean, compact toolbar.
 26. **Selected-entity title to the bottom** (goes with #25's top-bar cleanup): move the selected item's
     title line (`#sel-title`, e.g. "tree_birch — Birch Tree") OUT of the top bar to the BOTTOM of the
@@ -145,7 +145,7 @@ Baseline files: src/editor/main.ts, ui.ts, style.css, index.html (+ preview.ts/e
     transparent holes (preview + on a tree entity's leaves slot). (Uploading other map types can come later —
     alpha is the ask now.)
 
-30. **Import minecraft_ported textures as materials** (`resources/freestylized-textures/minecraft_ported/`):
+30. **Import minecraft_ported textures as materials** (`resources/freestylized-textures/minecraft_ported/`): (later removed — the minecraft_ported textures were dropped from resources/ and the catalog is single-res PBR-only, so the freestylized paths, 1k/256/128 replication, and res-resolver described below no longer apply)
     a FLAT set of ~1006 classic minecraft block textures, each `<name>.png` (color) + `<name>_n.png` (normal,
     1004/1006 have it) + `<name>_s.png` (specular). 58 are animated (have a `.png.mcmeta`). The user wants
     them listed alongside the freestylized materials in the picker, USING THEIR NORMAL MAPS.

@@ -1,0 +1,900 @@
+{
+  "format": 1,
+  "id": "house_admin",
+  "name": "Administrative Building",
+  "category": "levelpart",
+  "tags": ["village", "building"],
+  "notes": "Town hall: stone-brick ground floor, half-timbered jettied upper floor, central projecting clock tower with a pyramid cap and gold finial, double door with steps. oneOf picks slate or weathered-copper roof (tower cap rides along) and the gold emblem (diamond or star); banners, side X-braces and chimney appear by chance.",
+  "materials": {
+    "stonework": { "material": "bricks_wall_12", "flat": true, "uvScale": 0.5 },
+    "step_a": { "inherit": "stonework" },
+    "step_b": { "inherit": "stonework" },
+    "ground": { "inherit": "stonework" },
+    "tw_base": { "inherit": "stonework" },
+    "chimney": { "inherit": "stonework" },
+    "chim_cap": { "inherit": "stonework" },
+    "plaster": { "material": "concrete_wall_06", "tint": "#ece4d4", "flat": true },
+    "upper": { "inherit": "plaster" },
+    "gable_e": { "inherit": "plaster" },
+    "gable_w": { "inherit": "plaster" },
+    "tw_shaft": { "inherit": "plaster" },
+    "timber": { "material": "bark_09", "flat": true },
+    "string_course": { "inherit": "timber" },
+    "a_up_post_l": { "inherit": "timber" },
+    "a_up_post_r": { "inherit": "timber" },
+    "a_eave_beam": { "inherit": "timber" },
+    "a_jetty_beam": { "inherit": "timber" },
+    "a_stud_l": { "inherit": "timber" },
+    "a_stud_r": { "inherit": "timber" },
+    "a_bk_post_l": { "inherit": "timber" },
+    "a_bk_post_r": { "inherit": "timber" },
+    "a_bk_beam": { "inherit": "timber" },
+    "a_bk_jetty": { "inherit": "timber" },
+    "bk_stud_l": { "inherit": "timber" },
+    "bk_stud_r": { "inherit": "timber" },
+    "bk_brace_l": { "inherit": "timber" },
+    "bk_brace_r": { "inherit": "timber" },
+    "bkw_frame": { "inherit": "timber" },
+    "bkg_l_frame": { "inherit": "timber" },
+    "bkg_r_frame": { "inherit": "timber" },
+    "side_band_l": { "inherit": "timber" },
+    "side_band_r": { "inherit": "timber" },
+    "sx_l1": { "inherit": "timber" },
+    "sx_l2": { "inherit": "timber" },
+    "sx_r1": { "inherit": "timber" },
+    "sx_r2": { "inherit": "timber" },
+    "uw_l_frame_t": { "inherit": "timber" },
+    "uw_l_frame_b": { "inherit": "timber" },
+    "uw_l_frame_s1": { "inherit": "timber" },
+    "uw_l_frame_s2": { "inherit": "timber" },
+    "uw_l_mull": { "inherit": "timber" },
+    "uw_r_frame_t": { "inherit": "timber" },
+    "uw_r_frame_b": { "inherit": "timber" },
+    "uw_r_frame_s1": { "inherit": "timber" },
+    "uw_r_frame_s2": { "inherit": "timber" },
+    "uw_r_mull": { "inherit": "timber" },
+    "gw_l_frame_t": { "inherit": "timber" },
+    "gw_l_frame_b": { "inherit": "timber" },
+    "gw_l_frame_s1": { "inherit": "timber" },
+    "gw_l_frame_s2": { "inherit": "timber" },
+    "gw_l_mull_v": { "inherit": "timber" },
+    "gw_l_mull_h": { "inherit": "timber" },
+    "gw_r_frame_t": { "inherit": "timber" },
+    "gw_r_frame_b": { "inherit": "timber" },
+    "gw_r_frame_s1": { "inherit": "timber" },
+    "gw_r_frame_s2": { "inherit": "timber" },
+    "gw_r_mull_v": { "inherit": "timber" },
+    "gw_r_mull_h": { "inherit": "timber" },
+    "collar_e": { "inherit": "timber" },
+    "king_e": { "inherit": "timber" },
+    "collar_w": { "inherit": "timber" },
+    "king_w": { "inherit": "timber" },
+    "tw_post_1": { "inherit": "timber" },
+    "tw_post_2": { "inherit": "timber" },
+    "tw_post_3": { "inherit": "timber" },
+    "tw_post_4": { "inherit": "timber" },
+    "tw_band": { "inherit": "timber" },
+    "tw_cornice": { "inherit": "timber" },
+    "tw_win_frame": { "inherit": "timber" },
+    "clock_hand_h": { "inherit": "timber" },
+    "clock_hand_m": { "inherit": "timber" },
+    "doorpost_l": { "inherit": "timber" },
+    "doorpost_r": { "inherit": "timber" },
+    "door_lintel": { "inherit": "timber" },
+    "banner_rod_l": { "inherit": "timber" },
+    "banner_rod_r": { "inherit": "timber" },
+    "roof_slate": { "material": "roof_tiles_01", "tint": "#5c6e82", "flat": true, "uvRot": 90 },
+    "ridge_s": { "inherit": "roof_slate" },
+    "rs_deck_s": { "inherit": "roof_slate" },
+    "rs_c1_s": { "inherit": "roof_slate" },
+    "rs_c2_s": { "inherit": "roof_slate" },
+    "rn_deck_s": { "inherit": "roof_slate" },
+    "rn_c1_s": { "inherit": "roof_slate" },
+    "rn_c2_s": { "inherit": "roof_slate" },
+    "cap_s": { "inherit": "roof_slate" },
+    "roof_copper": { "material": "roof_tiles_01", "tint": "#58907a", "flat": true, "uvRot": 90 },
+    "ridge_c": { "inherit": "roof_copper" },
+    "rs_deck_c": { "inherit": "roof_copper" },
+    "rs_c1_c": { "inherit": "roof_copper" },
+    "rs_c2_c": { "inherit": "roof_copper" },
+    "rn_deck_c": { "inherit": "roof_copper" },
+    "rn_c1_c": { "inherit": "roof_copper" },
+    "rn_c2_c": { "inherit": "roof_copper" },
+    "cap_c": { "inherit": "roof_copper" },
+    "door": { "material": "wood_planks_01", "uvMode": "stretch", "flat": true },
+    "door_l": { "inherit": "door" },
+    "door_r": { "inherit": "door" },
+    "pane": { "material": "plaster_wall_01", "tint": "#ffe6a3", "uvMode": "stretch" },
+    "bkw_pane": { "inherit": "pane" },
+    "bkg_l_pane": { "inherit": "pane" },
+    "bkg_r_pane": { "inherit": "pane" },
+    "uw_l_pane": { "inherit": "pane" },
+    "uw_r_pane": { "inherit": "pane" },
+    "gw_l_pane": { "inherit": "pane" },
+    "gw_r_pane": { "inherit": "pane" },
+    "tw_win_pane": { "inherit": "pane" },
+    "clock_face": { "inherit": "pane" },
+    "gold": { "material": "metal_02", "uvMode": "stretch" },
+    "clock_rim": { "inherit": "gold" },
+    "finial": { "inherit": "gold" },
+    "knob_l": { "inherit": "gold" },
+    "knob_r": { "inherit": "gold" },
+    "emblem_diamond": { "inherit": "gold" },
+    "emblem_star": { "inherit": "gold" },
+    "banner": { "material": "plaster_wall_01", "flat": true },
+    "banner_l": { "inherit": "banner" },
+    "banner_r": { "inherit": "banner" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "step_a": {
+          "shape": "box",
+          "size": [1.9, 0.16, 0.7],
+          "pos": [0, 0.08, 1.95],
+          "material": "step_a",
+          "craft": 0.96
+        },
+        "step_b": {
+          "shape": "box",
+          "size": [1.6, 0.16, 0.45],
+          "pos": [0, 0.24, 1.8],
+          "material": "step_b",
+          "craft": 0.96
+        },
+        "ground": { "shape": "box", "size": [3.6, 1.9, 3], "pos": [0, 0.95, 0], "material": "ground", "craft": 0.96 },
+        "string_course": {
+          "shape": "plank",
+          "size": [3.74, 0.15, 3.14],
+          "pos": [0, 1.95, 0],
+          "material": "string_course",
+          "craft": 0.95
+        },
+        "upper": { "shape": "box", "size": [3.9, 1.28, 3.3], "pos": [0, 2.66, 0], "material": "upper", "craft": 0.86 },
+        "a_up_post_l": {
+          "shape": "plank",
+          "size": [0.14, 1.3, 0.11],
+          "pos": [-1.88, 2.66, 1.68],
+          "material": "a_up_post_l",
+          "craft": 0.95
+        },
+        "a_up_post_r": {
+          "shape": "plank",
+          "size": [0.14, 1.3, 0.11],
+          "pos": [1.88, 2.66, 1.68],
+          "material": "a_up_post_r",
+          "craft": 0.95
+        },
+        "a_eave_beam": {
+          "shape": "plank",
+          "size": [3.96, 0.14, 0.11],
+          "pos": [0, 3.24, 1.68],
+          "material": "a_eave_beam",
+          "craft": 0.95
+        },
+        "a_jetty_beam": {
+          "shape": "plank",
+          "size": [3.96, 0.16, 0.12],
+          "pos": [0, 2.08, 1.7],
+          "material": "a_jetty_beam",
+          "craft": 0.95
+        },
+        "a_stud_l": {
+          "shape": "plank",
+          "size": [0.12, 1, 0.1],
+          "pos": [-0.72, 2.66, 1.68],
+          "material": "a_stud_l",
+          "craft": 0.95
+        },
+        "a_stud_r": {
+          "shape": "plank",
+          "size": [0.12, 1, 0.1],
+          "pos": [0.72, 2.66, 1.68],
+          "material": "a_stud_r",
+          "craft": 0.95
+        },
+        "a_bk_post_l": {
+          "shape": "plank",
+          "size": [0.14, 1.3, 0.11],
+          "pos": [-1.88, 2.66, -1.68],
+          "material": "a_bk_post_l",
+          "craft": 0.95
+        },
+        "a_bk_post_r": {
+          "shape": "plank",
+          "size": [0.14, 1.3, 0.11],
+          "pos": [1.88, 2.66, -1.68],
+          "material": "a_bk_post_r",
+          "craft": 0.95
+        },
+        "a_bk_beam": {
+          "shape": "plank",
+          "size": [3.96, 0.13, 0.1],
+          "pos": [0, 3.24, -1.68],
+          "material": "a_bk_beam",
+          "craft": 0.95
+        },
+        "a_bk_jetty": {
+          "shape": "plank",
+          "size": [3.96, 0.15, 0.11],
+          "pos": [0, 2.08, -1.69],
+          "material": "a_bk_jetty",
+          "craft": 0.95
+        },
+        "bk_stud_l": {
+          "shape": "plank",
+          "size": [0.12, 1, 0.1],
+          "pos": [-0.72, 2.66, -1.68],
+          "material": "bk_stud_l",
+          "craft": 0.95
+        },
+        "bk_stud_r": {
+          "shape": "plank",
+          "size": [0.12, 1, 0.1],
+          "pos": [0.72, 2.66, -1.68],
+          "material": "bk_stud_r",
+          "craft": 0.95
+        },
+        "bk_brace_l": {
+          "shape": "plank",
+          "size": [0.11, 1.05, 0.09],
+          "pos": [-1.32, 2.64, -1.68],
+          "rot": [0, 0, 33],
+          "material": "bk_brace_l",
+          "craft": 0.95
+        },
+        "bk_brace_r": {
+          "shape": "plank",
+          "size": [0.11, 1.05, 0.09],
+          "pos": [1.32, 2.64, -1.68],
+          "rot": [0, 0, -33],
+          "material": "bk_brace_r",
+          "craft": 0.95
+        },
+        "bkw_frame": {
+          "shape": "box",
+          "size": [0.6, 0.66, 0.08],
+          "pos": [0, 2.7, -1.67],
+          "material": "bkw_frame",
+          "craft": 0.95
+        },
+        "bkw_pane": { "shape": "box", "size": [0.48, 0.54, 0.08], "pos": [0, 2.7, -1.675], "material": "bkw_pane" },
+        "bkg_l_frame": {
+          "shape": "box",
+          "size": [0.5, 0.72, 0.08],
+          "pos": [-1, 1.2, -1.51],
+          "material": "bkg_l_frame",
+          "craft": 0.95
+        },
+        "bkg_l_pane": { "shape": "box", "size": [0.38, 0.6, 0.08], "pos": [-1, 1.2, -1.515], "material": "bkg_l_pane" },
+        "bkg_r_frame": {
+          "shape": "box",
+          "size": [0.5, 0.72, 0.08],
+          "pos": [1, 1.2, -1.51],
+          "material": "bkg_r_frame",
+          "craft": 0.95
+        },
+        "bkg_r_pane": { "shape": "box", "size": [0.38, 0.6, 0.08], "pos": [1, 1.2, -1.515], "material": "bkg_r_pane" },
+        "side_band_l": {
+          "shape": "plank",
+          "size": [0.11, 0.15, 3.34],
+          "pos": [-1.96, 2.08, 0],
+          "material": "side_band_l",
+          "craft": 0.95
+        },
+        "side_band_r": {
+          "shape": "plank",
+          "size": [0.11, 0.15, 3.34],
+          "pos": [1.96, 2.08, 0],
+          "material": "side_band_r",
+          "craft": 0.95
+        },
+        "side_x_grp": {
+          "chance": 0.75,
+          "children": {
+            "sx_l1": {
+              "shape": "plank",
+              "size": [0.1, 1.5, 0.1],
+              "pos": [-1.97, 2.66, 0],
+              "rot": [40, 0, 0],
+              "material": "sx_l1",
+              "craft": 0.95
+            },
+            "sx_l2": {
+              "shape": "plank",
+              "size": [0.1, 1.5, 0.1],
+              "pos": [-1.99, 2.66, 0],
+              "rot": [-40, 0, 0],
+              "material": "sx_l2",
+              "craft": 0.95
+            },
+            "sx_r1": {
+              "shape": "plank",
+              "size": [0.1, 1.5, 0.1],
+              "pos": [1.97, 2.66, 0],
+              "rot": [40, 0, 0],
+              "material": "sx_r1",
+              "craft": 0.95
+            },
+            "sx_r2": {
+              "shape": "plank",
+              "size": [0.1, 1.5, 0.1],
+              "pos": [1.99, 2.66, 0],
+              "rot": [-40, 0, 0],
+              "material": "sx_r2",
+              "craft": 0.95
+            }
+          }
+        },
+        "uw_l_frame_t": {
+          "shape": "plank",
+          "size": [0.68, 0.09, 0.1],
+          "pos": [-1.29, 3.04, 1.68],
+          "material": "uw_l_frame_t",
+          "craft": 0.95
+        },
+        "uw_l_frame_b": {
+          "shape": "plank",
+          "size": [0.76, 0.08, 0.12],
+          "pos": [-1.29, 2.36, 1.68],
+          "material": "uw_l_frame_b",
+          "craft": 0.95
+        },
+        "uw_l_frame_s1": {
+          "shape": "plank",
+          "size": [0.09, 0.6, 0.1],
+          "pos": [-1.59, 2.7, 1.68],
+          "material": "uw_l_frame_s1",
+          "craft": 0.95
+        },
+        "uw_l_frame_s2": {
+          "shape": "plank",
+          "size": [0.09, 0.6, 0.1],
+          "pos": [-0.99, 2.7, 1.68],
+          "material": "uw_l_frame_s2",
+          "craft": 0.95
+        },
+        "uw_l_pane": { "shape": "box", "size": [0.52, 0.6, 0.06], "pos": [-1.29, 2.7, 1.665], "material": "uw_l_pane" },
+        "uw_l_mull": {
+          "shape": "plank",
+          "size": [0.04, 0.6, 0.05],
+          "pos": [-1.29, 2.7, 1.695],
+          "material": "uw_l_mull",
+          "craft": 0.95
+        },
+        "uw_r_frame_t": {
+          "shape": "plank",
+          "size": [0.68, 0.09, 0.1],
+          "pos": [1.29, 3.04, 1.68],
+          "material": "uw_r_frame_t",
+          "craft": 0.95
+        },
+        "uw_r_frame_b": {
+          "shape": "plank",
+          "size": [0.76, 0.08, 0.12],
+          "pos": [1.29, 2.36, 1.68],
+          "material": "uw_r_frame_b",
+          "craft": 0.95
+        },
+        "uw_r_frame_s1": {
+          "shape": "plank",
+          "size": [0.09, 0.6, 0.1],
+          "pos": [0.99, 2.7, 1.68],
+          "material": "uw_r_frame_s1",
+          "craft": 0.95
+        },
+        "uw_r_frame_s2": {
+          "shape": "plank",
+          "size": [0.09, 0.6, 0.1],
+          "pos": [1.59, 2.7, 1.68],
+          "material": "uw_r_frame_s2",
+          "craft": 0.95
+        },
+        "uw_r_pane": { "shape": "box", "size": [0.52, 0.6, 0.06], "pos": [1.29, 2.7, 1.665], "material": "uw_r_pane" },
+        "uw_r_mull": {
+          "shape": "plank",
+          "size": [0.04, 0.6, 0.05],
+          "pos": [1.29, 2.7, 1.695],
+          "material": "uw_r_mull",
+          "craft": 0.95
+        },
+        "gw_l_frame_t": {
+          "shape": "plank",
+          "size": [0.78, 0.1, 0.1],
+          "pos": [-1.2, 1.72, 1.51],
+          "material": "gw_l_frame_t",
+          "craft": 0.95
+        },
+        "gw_l_frame_b": {
+          "shape": "plank",
+          "size": [0.86, 0.09, 0.13],
+          "pos": [-1.2, 0.6, 1.52],
+          "material": "gw_l_frame_b",
+          "craft": 0.95
+        },
+        "gw_l_frame_s1": {
+          "shape": "plank",
+          "size": [0.1, 1.04, 0.1],
+          "pos": [-1.54, 1.16, 1.51],
+          "material": "gw_l_frame_s1",
+          "craft": 0.95
+        },
+        "gw_l_frame_s2": {
+          "shape": "plank",
+          "size": [0.1, 1.04, 0.1],
+          "pos": [-0.86, 1.16, 1.51],
+          "material": "gw_l_frame_s2",
+          "craft": 0.95
+        },
+        "gw_l_pane": { "shape": "box", "size": [0.58, 1.04, 0.06], "pos": [-1.2, 1.16, 1.5], "material": "gw_l_pane" },
+        "gw_l_mull_v": {
+          "shape": "plank",
+          "size": [0.045, 1.04, 0.05],
+          "pos": [-1.2, 1.16, 1.53],
+          "material": "gw_l_mull_v",
+          "craft": 0.95
+        },
+        "gw_l_mull_h": {
+          "shape": "plank",
+          "size": [0.58, 0.045, 0.05],
+          "pos": [-1.2, 1.3, 1.528],
+          "material": "gw_l_mull_h",
+          "craft": 0.95
+        },
+        "gw_r_frame_t": {
+          "shape": "plank",
+          "size": [0.78, 0.1, 0.1],
+          "pos": [1.2, 1.72, 1.51],
+          "material": "gw_r_frame_t",
+          "craft": 0.95
+        },
+        "gw_r_frame_b": {
+          "shape": "plank",
+          "size": [0.86, 0.09, 0.13],
+          "pos": [1.2, 0.6, 1.52],
+          "material": "gw_r_frame_b",
+          "craft": 0.95
+        },
+        "gw_r_frame_s1": {
+          "shape": "plank",
+          "size": [0.1, 1.04, 0.1],
+          "pos": [0.86, 1.16, 1.51],
+          "material": "gw_r_frame_s1",
+          "craft": 0.95
+        },
+        "gw_r_frame_s2": {
+          "shape": "plank",
+          "size": [0.1, 1.04, 0.1],
+          "pos": [1.54, 1.16, 1.51],
+          "material": "gw_r_frame_s2",
+          "craft": 0.95
+        },
+        "gw_r_pane": { "shape": "box", "size": [0.58, 1.04, 0.06], "pos": [1.2, 1.16, 1.5], "material": "gw_r_pane" },
+        "gw_r_mull_v": {
+          "shape": "plank",
+          "size": [0.045, 1.04, 0.05],
+          "pos": [1.2, 1.16, 1.53],
+          "material": "gw_r_mull_v",
+          "craft": 0.95
+        },
+        "gw_r_mull_h": {
+          "shape": "plank",
+          "size": [0.58, 0.045, 0.05],
+          "pos": [1.2, 1.3, 1.528],
+          "material": "gw_r_mull_h",
+          "craft": 0.95
+        },
+        "gable_e": {
+          "shape": "cone",
+          "radius": 1.65,
+          "height": 1.3,
+          "segments": 4,
+          "scale": [0.075, 1, 1],
+          "pos": [1.86, 3.91, 0],
+          "material": "gable_e",
+          "craft": 0.86
+        },
+        "gable_w": {
+          "shape": "cone",
+          "radius": 1.65,
+          "height": 1.3,
+          "segments": 4,
+          "scale": [0.075, 1, 1],
+          "pos": [-1.86, 3.91, 0],
+          "material": "gable_w",
+          "craft": 0.86
+        },
+        "collar_e": {
+          "shape": "plank",
+          "size": [0.1, 0.12, 1.9],
+          "pos": [2, 3.7, 0],
+          "material": "collar_e",
+          "craft": 0.95
+        },
+        "king_e": {
+          "shape": "plank",
+          "size": [0.1, 0.85, 0.12],
+          "pos": [2, 4.1, 0],
+          "material": "king_e",
+          "craft": 0.95
+        },
+        "collar_w": {
+          "shape": "plank",
+          "size": [0.1, 0.12, 1.9],
+          "pos": [-2, 3.7, 0],
+          "material": "collar_w",
+          "craft": 0.95
+        },
+        "king_w": {
+          "shape": "plank",
+          "size": [0.1, 0.85, 0.12],
+          "pos": [-2, 4.1, 0],
+          "material": "king_w",
+          "craft": 0.95
+        },
+        "roof_slate_grp": {
+          "children": {
+            "ridge_s": {
+              "shape": "plank",
+              "size": [4.95, 0.14, 0.42],
+              "pos": [0, 4.68, 0],
+              "material": "ridge_s",
+              "craft": 0.85
+            },
+            "roof_s_s": {
+              "pos": [0, 4.66, 0],
+              "rot": [39, 0, 0],
+              "children": {
+                "rs_deck_s": {
+                  "shape": "plank",
+                  "size": [4.8, 0.11, 2.65],
+                  "pos": [0, -0.065, 1.27],
+                  "material": "rs_deck_s",
+                  "craft": 0.85
+                },
+                "rs_c1_s": {
+                  "shape": "plank",
+                  "size": [4.85, 0.08, 1],
+                  "pos": [0.02, 0.02, 1.35],
+                  "material": "rs_c1_s",
+                  "craft": 0.85
+                },
+                "rs_c2_s": {
+                  "shape": "plank",
+                  "size": [4.9, 0.08, 1],
+                  "pos": [-0.02, 0.02, 2.1],
+                  "material": "rs_c2_s",
+                  "craft": 0.85
+                }
+              }
+            },
+            "roof_n_s": {
+              "pos": [0, 4.66, 0],
+              "rot": [-39, 0, 0],
+              "children": {
+                "rn_deck_s": {
+                  "shape": "plank",
+                  "size": [4.8, 0.11, 2.65],
+                  "pos": [0, -0.065, -1.27],
+                  "material": "rn_deck_s",
+                  "craft": 0.85
+                },
+                "rn_c1_s": {
+                  "shape": "plank",
+                  "size": [4.85, 0.08, 1],
+                  "pos": [-0.02, 0.02, -1.35],
+                  "material": "rn_c1_s",
+                  "craft": 0.85
+                },
+                "rn_c2_s": {
+                  "shape": "plank",
+                  "size": [4.9, 0.08, 1],
+                  "pos": [0.02, 0.02, -2.1],
+                  "material": "rn_c2_s",
+                  "craft": 0.85
+                }
+              }
+            },
+            "cap_s": {
+              "shape": "cone",
+              "radius": 1.06,
+              "height": 1,
+              "segments": 4,
+              "rot": [0, 45, 0],
+              "pos": [0, 5.3, 1.28],
+              "material": "cap_s",
+              "craft": 0.88
+            }
+          }
+        },
+        "roof_copper_grp": {
+          "children": {
+            "ridge_c": {
+              "shape": "plank",
+              "size": [4.95, 0.14, 0.42],
+              "pos": [0, 4.68, 0],
+              "material": "ridge_c",
+              "craft": 0.85
+            },
+            "roof_s_c": {
+              "pos": [0, 4.66, 0],
+              "rot": [39, 0, 0],
+              "children": {
+                "rs_deck_c": {
+                  "shape": "plank",
+                  "size": [4.8, 0.11, 2.65],
+                  "pos": [0, -0.065, 1.27],
+                  "material": "rs_deck_c",
+                  "craft": 0.85
+                },
+                "rs_c1_c": {
+                  "shape": "plank",
+                  "size": [4.85, 0.08, 1],
+                  "pos": [0.02, 0.02, 1.35],
+                  "material": "rs_c1_c",
+                  "craft": 0.85
+                },
+                "rs_c2_c": {
+                  "shape": "plank",
+                  "size": [4.9, 0.08, 1],
+                  "pos": [-0.02, 0.02, 2.1],
+                  "material": "rs_c2_c",
+                  "craft": 0.85
+                }
+              }
+            },
+            "roof_n_c": {
+              "pos": [0, 4.66, 0],
+              "rot": [-39, 0, 0],
+              "children": {
+                "rn_deck_c": {
+                  "shape": "plank",
+                  "size": [4.8, 0.11, 2.65],
+                  "pos": [0, -0.065, -1.27],
+                  "material": "rn_deck_c",
+                  "craft": 0.85
+                },
+                "rn_c1_c": {
+                  "shape": "plank",
+                  "size": [4.85, 0.08, 1],
+                  "pos": [-0.02, 0.02, -1.35],
+                  "material": "rn_c1_c",
+                  "craft": 0.85
+                },
+                "rn_c2_c": {
+                  "shape": "plank",
+                  "size": [4.9, 0.08, 1],
+                  "pos": [0.02, 0.02, -2.1],
+                  "material": "rn_c2_c",
+                  "craft": 0.85
+                }
+              }
+            },
+            "cap_c": {
+              "shape": "cone",
+              "radius": 1.06,
+              "height": 1,
+              "segments": 4,
+              "rot": [0, 45, 0],
+              "pos": [0, 5.3, 1.28],
+              "material": "cap_c",
+              "craft": 0.88
+            }
+          }
+        },
+        "tw_base": { "shape": "box", "size": [1.36, 2, 1.06], "pos": [0, 1, 1.28], "material": "tw_base", "craft": 0.96 },
+        "tw_shaft": {
+          "shape": "box",
+          "size": [1.28, 2.8, 0.98],
+          "pos": [0, 3.4, 1.28],
+          "material": "tw_shaft",
+          "craft": 0.86
+        },
+        "tw_post_1": {
+          "shape": "plank",
+          "size": [0.1, 2.82, 0.1],
+          "pos": [-0.6, 3.4, 0.85],
+          "material": "tw_post_1",
+          "craft": 0.95
+        },
+        "tw_post_2": {
+          "shape": "plank",
+          "size": [0.1, 2.82, 0.1],
+          "pos": [0.6, 3.4, 0.85],
+          "material": "tw_post_2",
+          "craft": 0.95
+        },
+        "tw_post_3": {
+          "shape": "plank",
+          "size": [0.1, 2.82, 0.1],
+          "pos": [-0.6, 3.4, 1.71],
+          "material": "tw_post_3",
+          "craft": 0.95
+        },
+        "tw_post_4": {
+          "shape": "plank",
+          "size": [0.1, 2.82, 0.1],
+          "pos": [0.6, 3.4, 1.71],
+          "material": "tw_post_4",
+          "craft": 0.95
+        },
+        "tw_band": {
+          "shape": "plank",
+          "size": [1.42, 0.12, 1.12],
+          "pos": [0, 2.06, 1.28],
+          "material": "tw_band",
+          "craft": 0.95
+        },
+        "tw_cornice": {
+          "shape": "plank",
+          "size": [1.44, 0.12, 1.14],
+          "pos": [0, 4.78, 1.28],
+          "material": "tw_cornice",
+          "craft": 0.95
+        },
+        "tw_win_frame": {
+          "shape": "box",
+          "size": [0.42, 0.52, 0.06],
+          "pos": [0, 3.62, 1.765],
+          "material": "tw_win_frame",
+          "craft": 0.95
+        },
+        "tw_win_pane": { "shape": "box", "size": [0.3, 0.4, 0.06], "pos": [0, 3.62, 1.775], "material": "tw_win_pane" },
+        "clock_face": {
+          "shape": "cylinder",
+          "radius": 0.26,
+          "height": 0.06,
+          "segments": 12,
+          "rot": [90, 0, 0],
+          "pos": [0, 4.25, 1.77],
+          "material": "clock_face"
+        },
+        "clock_rim": {
+          "shape": "torus",
+          "radius": 0.27,
+          "tube": 0.035,
+          "segments": 14,
+          "rot": [90, 0, 0],
+          "pos": [0, 4.25, 1.78],
+          "material": "clock_rim"
+        },
+        "clock_hand_h": {
+          "shape": "plank",
+          "size": [0.035, 0.15, 0.025],
+          "pos": [0.04, 4.28, 1.82],
+          "rot": [0, 0, 55],
+          "material": "clock_hand_h",
+          "craft": 0.95
+        },
+        "clock_hand_m": {
+          "shape": "plank",
+          "size": [0.03, 0.2, 0.025],
+          "pos": [0, 4.3, 1.818],
+          "rot": [0, 0, 8],
+          "material": "clock_hand_m",
+          "craft": 0.95
+        },
+        "finial": {
+          "shape": "box",
+          "size": [0.14, 0.14, 0.14],
+          "rot": [45, 0, 45],
+          "pos": [0, 5.86, 1.28],
+          "material": "finial"
+        },
+        "doorpost_l": {
+          "shape": "plank",
+          "size": [0.12, 1.62, 0.12],
+          "pos": [-0.53, 0.97, 1.8],
+          "material": "doorpost_l",
+          "craft": 0.95
+        },
+        "doorpost_r": {
+          "shape": "plank",
+          "size": [0.12, 1.62, 0.12],
+          "pos": [0.53, 0.97, 1.8],
+          "material": "doorpost_r",
+          "craft": 0.95
+        },
+        "door_lintel": {
+          "shape": "plank",
+          "size": [1.2, 0.14, 0.12],
+          "pos": [0, 1.84, 1.8],
+          "material": "door_lintel",
+          "craft": 0.95
+        },
+        "door_l": {
+          "shape": "plank",
+          "size": [0.47, 1.5, 0.07],
+          "pos": [-0.245, 0.91, 1.79],
+          "material": "door_l",
+          "craft": 0.88
+        },
+        "door_r": {
+          "shape": "plank",
+          "size": [0.47, 1.5, 0.07],
+          "pos": [0.245, 0.91, 1.79],
+          "material": "door_r",
+          "craft": 0.88
+        },
+        "knob_l": { "shape": "box", "size": [0.05, 0.05, 0.045], "pos": [-0.09, 0.95, 1.835], "material": "knob_l" },
+        "knob_r": { "shape": "box", "size": [0.05, 0.05, 0.045], "pos": [0.09, 0.95, 1.835], "material": "knob_r" },
+        "emblem_diamond": {
+          "shape": "box",
+          "size": [0.34, 0.34, 0.07],
+          "rot": [0, 0, 45],
+          "pos": [0, 2.45, 1.79],
+          "material": "emblem_diamond"
+        },
+        "emblem_star": {
+          "shape": "star",
+          "radius": 0.24,
+          "innerRatio": 0.45,
+          "points": 5,
+          "depth": 0.06,
+          "pos": [0, 2.45, 1.79],
+          "material": "emblem_star",
+          "craft": 0.9
+        },
+        "banners_grp": {
+          "chance": 0.7,
+          "children": {
+            "banner_rod_l": {
+              "shape": "plank",
+              "size": [0.44, 0.05, 0.05],
+              "pos": [-1.5, 3.05, 1.72],
+              "material": "banner_rod_l",
+              "craft": 0.95
+            },
+            "banner_l": {
+              "shape": "plank",
+              "size": [0.34, 0.95, 0.05],
+              "pos": [-1.5, 2.55, 1.74],
+              "rot": [-4, 0, 0],
+              "material": "banner_l",
+              "craft": 0.8
+            },
+            "banner_rod_r": {
+              "shape": "plank",
+              "size": [0.44, 0.05, 0.05],
+              "pos": [1.5, 3.05, 1.72],
+              "material": "banner_rod_r",
+              "craft": 0.95
+            },
+            "banner_r": {
+              "shape": "plank",
+              "size": [0.34, 0.95, 0.05],
+              "pos": [1.5, 2.55, 1.74],
+              "rot": [-4, 0, 0],
+              "material": "banner_r",
+              "craft": 0.8
+            }
+          }
+        },
+        "chimney_grp": {
+          "chance": 0.5,
+          "children": {
+            "chimney": {
+              "shape": "box",
+              "size": [0.4, 1.4, 0.4],
+              "pos": [-1.1, 4.35, -0.6],
+              "material": "chimney",
+              "craft": 0.96
+            },
+            "chim_cap": {
+              "shape": "box",
+              "size": [0.54, 0.12, 0.54],
+              "pos": [-1.1, 5.11, -0.6],
+              "material": "chim_cap",
+              "craft": 0.96
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [3.9, 3.4, 3.3], "offset": [0, 1.7, 0] } },
+  "variants": {
+    "count": 6,
+    "oneOf": { "roof": ["roof_slate_grp", "roof_copper_grp"], "emblem": ["emblem_diamond", "emblem_star"] }
+  }
+}

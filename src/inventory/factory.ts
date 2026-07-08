@@ -34,10 +34,9 @@ function toBufferGeometry(g: GeneratedGeometry): THREE.BufferGeometry {
 
 // generic "proceduralizator": seeded vertex jitter on any built-in shape.
 // Positions are hashed in ENTITY space (the node's composed transform chain),
-// with the shared entity/variant seed — so coincident vertices of DIFFERENT
-// nodes (e.g. two shell halves meeting at a barrel's waist) receive the same
-// offset and the seam stays sealed. An explicit node.seed (per-part ⟲ regen)
-// mixes in and accepts local divergence.
+// with the shared per-variant seed — so coincident vertices of DIFFERENT nodes
+// (e.g. two shell halves meeting at a barrel's waist) receive the same offset and
+// the seam stays sealed.
 function applyCraftJitter(geo: THREE.BufferGeometry, craft: number, matrix: THREE.Matrix4, seed: number): void {
   geo.computeBoundingBox()
   const size = geo.boundingBox!.getSize(new THREE.Vector3())
@@ -110,11 +109,33 @@ export interface BuiltEntity {
   slotMaterials: Map<string, EntityMaterial>
   bounds: THREE.Box3
   seed: number
-  // variants.tintJitter multiplier baked into every slot material's color
-  // (1 = no jitter). Exposed so vegetation batching can divide it back out and
-  // re-apply it per-instance (BatchedMesh setColorAt) — one shared material.
+  // legacy per-instance tint multiplier — always 1 now (tint jitter moved to the
+  // level editor). Kept so batching code that divides it back out still compiles.
   tintK: number
 }
+
+// ---------------------------------------------------------------------------
+// Baked geometry: the studio pre-generates this (bakeEntityGeometry) and stores
+// it in <id>.geom.{i}.json; the runtime loads it (buildEntity) and never
+// generates. Per NODE, so anims/states/shatter still address nodes by name. UVs
+// are stored in METERS (base), then metered/projected + uvRot'd live at load so
+// material edits reflect without a re-bake. oneOf/chance/rotJitter are resolved
+// at bake — a shaped node dropped by them is simply absent from `nodes`.
+export interface BakedNodeGeom {
+  positions: number[]
+  normals: number[]
+  uv: number[] // meters, pre-metering
+  index: number[] // empty = non-indexed
+  groups: [number, number, number][] // [start, count, materialIndex]
+}
+export interface BakedNode {
+  rot?: [number, number, number] // resolved rotJitter (overrides node.rot); present on group nodes too
+  geom?: BakedNodeGeom // absent on pure-group (shapeless) nodes
+}
+export interface BakedVariant {
+  nodes: Record<string, BakedNode> // every node that survived oneOf/chance this variant
+}
+export type BakedGeometry = BakedVariant[] // one entry per variant
 
 // BoxGeometry group order: +x -x +y -y +z -z
 const BOX_GROUP_FACES: FaceKey[] = ['right', 'left', 'top', 'bottom', 'front', 'back']
@@ -528,68 +549,110 @@ function effectiveUvProject(
   return undefined
 }
 
-// #32 ROOT CAUSE (rewritten): this used to early-return for the generated lumber
-// shapes (plank/post/arrow/star), so their slots' uvMode/uvScale changes were
-// simply never applied — the "tiling sometimes doesn't apply" bug (crates,
-// benches, fences, wells are almost all planks/posts). Their UVs are authored in
-// METERS (faces carry su=sv=1), while built-in shapes author 0..1 per face with
-// the world size in faces[gi].su/sv — so: (1) scale every group's UVs to meters,
-// (2) meter by uvMode + effective uvScale (slot × material default) with the
-// same meterGroupUVs the projection path uses, (3) bake the slot's uvRot. Only
-// shape "mesh" keeps its authored atlas UVs unmetered (uvRot still bakes).
-function applyUvTiling(
-  geo: THREE.BufferGeometry,
-  faces: FaceRepeat[],
-  node: NodeDef,
-  materials: Record<string, ResolvedMaterialDef>,
-): void {
-  // shape "mesh" keeps its authored atlas UVs — never retiled/metered — but the
-  // uvRot bake still applies (it replaces the texture-space rotation the material
-  // used to carry via per-slot texture clones, for every shape alike).
-  const retile = node.shape !== 'mesh'
+// BAKE step 1: convert a freshly-generated geometry's authored UVs to METERS
+// (built-ins author 0..1 with the face world-size in faces[gi].su/sv; generated
+// lumber is already meters, su=sv=1). Material-independent — the per-material
+// metering (uvMode/uvScale/uvRot) is deferred to load so it stays live. Shape
+// "mesh" keeps its authored atlas UVs untouched.
+function bakeUvsToMeters(geo: THREE.BufferGeometry, faces: FaceRepeat[], node: NodeDef): void {
+  if (node.shape === 'mesh') return
   const uv = geo.getAttribute('uv') as THREE.BufferAttribute
   if (!uv) return
   const groups = geo.groups.length ? geo.groups : [{ start: 0, count: indexCount(geo), materialIndex: 0 }]
   for (let gi = 0; gi < groups.length; gi++) {
     const g = groups[gi]
     const f = faces[gi] ?? faces[0]
-    if (!f) continue
-    const def = materials[resolveFaceSlot(node.material, f.face)]
+    if (!f || (f.su === 1 && f.sv === 1)) continue
+    const count = g.count === Infinity ? indexCount(geo) - g.start : g.count
+    for (const vi of groupVerts(geo, g.start, count)) uv.setXY(vi, uv.getX(vi) * f.su, uv.getY(vi) * f.sv)
+  }
+  uv.needsUpdate = true
+}
+
+// LOAD steps 2+3 (non-projected path): meter the (already-meters) baked UVs by
+// uvMode + effective uvScale, then bake the slot's uvRot. Face keys derive from
+// the shape's group order (groupFacesOf). Shape "mesh" keeps atlas UVs (uvRot only).
+function meterBakedUvs(geo: THREE.BufferGeometry, node: NodeDef, materials: Record<string, ResolvedMaterialDef>): void {
+  const uv = geo.getAttribute('uv') as THREE.BufferAttribute
+  if (!uv) return
+  const retile = node.shape !== 'mesh'
+  const faceKeys = groupFacesOf(node)
+  const groups = geo.groups.length ? geo.groups : [{ start: 0, count: indexCount(geo), materialIndex: 0 }]
+  for (let gi = 0; gi < groups.length; gi++) {
+    const g = groups[gi]
+    const def = materials[resolveFaceSlot(node.material, faceKeys[gi] ?? faceKeys[0] ?? 'all')]
     if (!def) continue
     if (!retile && !def.uvRot) continue
     const count = g.count === Infinity ? indexCount(geo) - g.start : g.count
     const verts = groupVerts(geo, g.start, count)
-    if (retile) {
-      // 1) authored 0..1 → meters via the face's world size (su=sv=1 = already meters)
-      if (f.su !== 1 || f.sv !== 1)
-        for (const vi of verts) uv.setXY(vi, uv.getX(vi) * f.su, uv.getY(vi) * f.sv)
-      // 2) tile / fit / stretch metering at the effective density
-      meterGroupUVs(uv, verts, def.uvMode ?? 'tile', effectiveUvScale(def))
-    }
-    // 3) baked texture direction (see rotateGroupUVs) — after metering, like the
-    // shader applied texture.rotation to the final metered UVs
+    if (retile) meterGroupUVs(uv, verts, def.uvMode ?? 'tile', effectiveUvScale(def)) // UVs already in meters
     rotateGroupUVs(uv, verts, def.uvRot)
   }
   uv.needsUpdate = true
 }
 
-function makeMesh(
-  nodeName: string,
-  node: NodeDef,
-  slotMaterials: Map<string, EntityMaterial>,
-  materials: Record<string, ResolvedMaterialDef>,
-  jitterSeed: number,
-  nodeMatrix: THREE.Matrix4,
-): THREE.Mesh[] {
+// serialize a built geometry into the stored form / rebuild it back.
+function extractGeom(geo: THREE.BufferGeometry): BakedNodeGeom {
+  const pos = geo.getAttribute('position') as THREE.BufferAttribute
+  const nrm = geo.getAttribute('normal') as THREE.BufferAttribute | undefined
+  const uv = geo.getAttribute('uv') as THREE.BufferAttribute | undefined
+  const idx = geo.getIndex()
+  const vertCount = idx ? idx.count : pos.count
+  return {
+    positions: Array.from(pos.array as Float32Array),
+    normals: nrm ? Array.from(nrm.array as Float32Array) : [],
+    uv: uv ? Array.from(uv.array as Float32Array) : [],
+    index: idx ? Array.from(idx.array as ArrayLike<number>) : [],
+    groups: (geo.groups.length ? geo.groups : [{ start: 0, count: vertCount, materialIndex: 0 }]).map((g) => [
+      g.start,
+      g.count === Infinity ? vertCount - g.start : g.count,
+      g.materialIndex ?? 0,
+    ]),
+  }
+}
+function bakedGeomToBuffer(b: BakedNodeGeom): THREE.BufferGeometry {
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(b.positions, 3))
+  if (b.normals.length) geo.setAttribute('normal', new THREE.Float32BufferAttribute(b.normals, 3))
+  if (b.uv.length) geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)) // a UV-less mesh keeps none (matches the old path)
+  if (b.index.length) geo.setIndex(b.index)
+  for (const [start, count, mi] of b.groups) geo.addGroup(start, count, mi)
+  if (!b.normals.length) geo.computeVertexNormals()
+  return geo
+}
+
+// entity-space transform for a node — the SAME formula buildEntity's buildNode
+// uses (outer[pos+pivot, rot, scale] × inner[-pivot]), so the craft jitter baked
+// through it lines up with the live tree and seams between nodes stay sealed.
+function composeNodeMatrix(node: NodeDef, rot: readonly number[], parentMatrix: THREE.Matrix4): THREE.Matrix4 {
+  const pivot = node.pivot ?? [0, 0, 0]
+  const pos = node.pos ?? [0, 0, 0]
+  const outer = new THREE.Object3D()
+  outer.position.set(pos[0] + pivot[0], pos[1] + pivot[1], pos[2] + pivot[2])
+  outer.rotation.set(THREE.MathUtils.degToRad(rot[0]), THREE.MathUtils.degToRad(rot[1]), THREE.MathUtils.degToRad(rot[2]))
+  if (node.scale !== undefined) {
+    if (typeof node.scale === 'number') outer.scale.setScalar(node.scale)
+    else outer.scale.set(node.scale[0], node.scale[1], node.scale[2])
+  }
+  outer.updateMatrix()
+  const inner = new THREE.Object3D()
+  inner.position.set(-pivot[0], -pivot[1], -pivot[2])
+  inner.updateMatrix()
+  return new THREE.Matrix4().multiplyMatrices(parentMatrix, outer.matrix).multiply(inner.matrix)
+}
+
+// BAKE one node's geometry (STUDIO/tool only): generate → subdivide → craft
+// jitter (entity-space, seeded per variant) → UVs-to-meters → serialize. Returns
+// null for a mesh whose FBX isn't preloaded.
+function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: number): BakedNodeGeom | null {
+  if (node.shape === 'mesh') {
+    const g = getMeshGeometry(node.mesh!)
+    return g ? extractGeom(g.clone()) : null
+  }
   const built = buildGeometry(node)
   let geo = built.geo
-  // uvProject replaces the shape's authored/tiled UVs wholesale (after jitter).
-  // Node-level uvProject wins; else the slot material's per-slot uvProject (#4).
-  const projectMode = effectiveUvProject(node, materials)
-  const project = projectMode !== undefined
-  if (!project) applyUvTiling(geo, built.faces, node, materials)
   const generated = GENERATED_SHAPES.has(node.shape)
-  if (!generated && node.shape !== 'mesh') {
+  if (!generated) {
     const sub = node.sub ?? 0
     if (sub > 0) {
       const coarse = geo
@@ -597,14 +660,28 @@ function makeMesh(
       coarse.dispose()
     }
   }
-  // one unified craft pass for every shape (generated lumber defaults to 0.5):
-  // entity-space positional hash, so seams between abutting nodes stay sealed
   const craft = node.craft ?? (generated ? 0.5 : undefined)
-  if (craft !== undefined && node.shape !== 'mesh') applyCraftJitter(geo, craft, nodeMatrix, jitterSeed)
-  if (project) geo = applyUvProjection(geo, node, materials, nodeMatrix, projectMode)
+  if (craft !== undefined) applyCraftJitter(geo, craft, matrix, jitterSeed)
+  bakeUvsToMeters(geo, built.faces, node)
+  return extractGeom(geo)
+}
 
-  // aoMap samples uv2. Catalog materials all carry an AO map, so every geometry
-  // needs a uv2 — share the (final, metered) uv channel. Cheap: same buffer.
+// LOAD one node's render meshes from its BAKED geometry (runtime + studio): the
+// cheap live steps only — UV metering/projection + uvRot (so material edits show
+// without a re-bake), uv2, and per-face material assignment. "cross" → two meshes.
+function loadNodeMeshes(
+  nodeName: string,
+  node: NodeDef,
+  bakedGeom: BakedNodeGeom,
+  slotMaterials: Map<string, EntityMaterial>,
+  materials: Record<string, ResolvedMaterialDef>,
+  nodeMatrix: THREE.Matrix4,
+): THREE.Mesh[] {
+  let geo = bakedGeomToBuffer(bakedGeom)
+  const projectMode = effectiveUvProject(node, materials)
+  if (projectMode !== undefined) geo = applyUvProjection(geo, node, materials, nodeMatrix, projectMode)
+  else meterBakedUvs(geo, node, materials)
+
   const uv = geo.getAttribute('uv')
   if (uv && !geo.getAttribute('uv2')) geo.setAttribute('uv2', uv)
 
@@ -637,60 +714,93 @@ function makeMesh(
   return meshes
 }
 
-export function buildEntity(doc: EntityDoc, seed = 1): BuiltEntity {
-  const rng = mulberry32(seed)
-  const group = new THREE.Group()
-  group.name = doc.id
-  const nodes = new Map<string, BuiltNode>()
-  const meshes: THREE.Mesh[] = []
-
-  // structural variants: keep exactly one node per oneOf group, drop the rest
+// BAKE every variant's geometry (STUDIO/tool only). Each variant resolves
+// oneOf/chance/rotJitter/craft with FRESH randomness — nothing seeded is stored,
+// only the resulting geometry — then serializes each surviving node.
+function bakeVariant(doc: EntityDoc, rng: () => number): BakedVariant {
   const dropped = new Set<string>()
   for (const names of Object.values(doc.variants?.oneOf ?? {})) {
     const keep = names[Math.floor(rng() * names.length) % names.length]
     for (const n of names) if (n !== keep) dropped.add(n)
   }
+  // ONE shared craft-jitter seed for EVERY node of this variant: applyCraftJitter
+  // hashes vertices in ENTITY space, so two abutting nodes only move a shared
+  // coincident vertex together — keeping the seam sealed — when they hash with the
+  // same seed. (The old builder shared one per-build seed the same way.)
+  const seed = (rng() * 0x7fffffff) | 0
+  const nodes: Record<string, BakedNode> = {}
+  const walk = (name: string, node: NodeDef, parentMatrix: THREE.Matrix4): void => {
+    if (dropped.has(name)) return
+    if (node.chance !== undefined && rng() > node.chance) return
+    let rot: readonly number[] = node.rot ?? [0, 0, 0]
+    let rotOverride: [number, number, number] | undefined
+    if (node.rotJitter) {
+      const r: [number, number, number] = [rot[0], rot[1], rot[2]]
+      for (let i = 0; i < 3; i++) r[i] += randRange(rng, -node.rotJitter[i], node.rotJitter[i])
+      rot = r
+      rotOverride = r
+    }
+    const matrix = composeNodeMatrix(node, rot, parentMatrix)
+    const entry: BakedNode = {}
+    if (rotOverride) entry.rot = rotOverride
+    if (node.shape) {
+      const g = bakeNodeGeometry(node, matrix, seed)
+      if (g) entry.geom = g
+    }
+    nodes[name] = entry
+    for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix)
+  }
+  const identity = new THREE.Matrix4()
+  for (const [name, node] of Object.entries(doc.rig)) walk(name, node, identity)
+  return { nodes }
+}
 
-  // item 34: resolve slot inheritance ONCE — every downstream lookup (material
-  // construction, UV metering, projection) reads fully-resolved defs.
+export function bakeEntityGeometry(doc: EntityDoc): BakedGeometry {
+  const count = Math.max(1, doc.variants?.count ?? 1)
+  const out: BakedGeometry = []
+  for (let v = 0; v < count; v++) out.push(bakeVariant(doc, mulberry32((Math.random() * 0x7fffffff) | 0)))
+  return out
+}
+
+// Build a live THREE tree from a doc + ONE baked variant — the runtime path
+// (studio preview + game). No generation, no rng: which nodes exist, their
+// rotJitter and their geometry all come from `baked`.
+export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
+  const group = new THREE.Group()
+  group.name = doc.id
+  const nodes = new Map<string, BuiltNode>()
+  const meshes: THREE.Mesh[] = []
+
+  // item 34: resolve slot inheritance ONCE — every downstream lookup reads it.
   const resolvedMaterials = resolveMaterials(doc.materials)
   const slotMaterials = new Map<string, EntityMaterial>()
   for (const [slot, def] of Object.entries(resolvedMaterials)) slotMaterials.set(slot, makeSlotMaterial(slot, def))
 
   const buildNode = (name: string, node: NodeDef, parent: THREE.Object3D, parentMatrix: THREE.Matrix4): void => {
-    if (dropped.has(name)) return
-    if (node.chance !== undefined && rng() > node.chance) return
+    const b = baked.nodes[name]
+    if (!b) return // dropped by oneOf/chance at bake time
 
     const pivot = node.pivot ?? [0, 0, 0]
     const pos = node.pos ?? [0, 0, 0]
     const outer = new THREE.Group()
     outer.name = name
     outer.position.set(pos[0] + pivot[0], pos[1] + pivot[1], pos[2] + pivot[2])
-    const rot = [...(node.rot ?? [0, 0, 0])]
-    if (node.rotJitter) for (let i = 0; i < 3; i++) rot[i] += randRange(rng, -node.rotJitter[i], node.rotJitter[i])
+    const rot = b.rot ?? node.rot ?? [0, 0, 0] // baked rotJitter override
     outer.rotation.set(THREE.MathUtils.degToRad(rot[0]), THREE.MathUtils.degToRad(rot[1]), THREE.MathUtils.degToRad(rot[2]))
     if (node.scale !== undefined) {
       if (typeof node.scale === 'number') outer.scale.setScalar(node.scale)
-      else outer.scale.set(...node.scale)
+      else outer.scale.set(node.scale[0], node.scale[1], node.scale[2])
     }
 
     const inner = new THREE.Group()
     inner.position.set(-pivot[0], -pivot[1], -pivot[2])
     outer.add(inner)
-
-    // entity-space transform of this node's geometry — the craft jitter hashes
-    // positions through it so abutting nodes stay sealed
     outer.updateMatrix()
     inner.updateMatrix()
     const nodeMatrix = new THREE.Matrix4().multiplyMatrices(parentMatrix, outer.matrix).multiply(inner.matrix)
 
-    // deterministic jitter seed: the shared variant seed, mixed with node.seed
-    // ONLY when explicitly set (written by the editor's per-part ⟲ regen —
-    // accepting local divergence). Same inputs → identical geometry, every
-    // build, editor and game alike.
-    if (node.shape) {
-      const jitterSeed = node.seed !== undefined ? (seed ^ (node.seed | 0)) | 0 : seed
-      for (const m of makeMesh(name, node, slotMaterials, resolvedMaterials, jitterSeed, nodeMatrix)) {
+    if (node.shape && b.geom) {
+      for (const m of loadNodeMeshes(name, node, b.geom, slotMaterials, resolvedMaterials, nodeMatrix)) {
         inner.add(m)
         meshes.push(m)
       }
@@ -711,22 +821,8 @@ export function buildEntity(doc: EntityDoc, seed = 1): BuiltEntity {
   const identity = new THREE.Matrix4()
   for (const [name, node] of Object.entries(doc.rig)) buildNode(name, node, group, identity)
 
-  // seeded per-instance variation
-  const v = doc.variants
-  if (v?.scale) group.scale.setScalar(randRange(rng, v.scale[0], v.scale[1]))
-  if (v?.yawJitter) group.rotation.y = THREE.MathUtils.degToRad(randRange(rng, -v.yawJitter, v.yawJitter))
-  if (v?.tiltJitter) {
-    group.rotation.x = THREE.MathUtils.degToRad(randRange(rng, -v.tiltJitter, v.tiltJitter))
-    group.rotation.z = THREE.MathUtils.degToRad(randRange(rng, -v.tiltJitter, v.tiltJitter))
-  }
-  let tintK = 1
-  if (v?.tintJitter) {
-    tintK = 1 + randRange(rng, -v.tintJitter, v.tintJitter)
-    for (const mat of slotMaterials.values()) mat.color.multiplyScalar(tintK)
-  }
-
   const bounds = new THREE.Box3().setFromObject(group)
-  return { group, nodes, meshes, slotMaterials, bounds, seed, tintK }
+  return { group, nodes, meshes, slotMaterials, bounds, seed: 0, tintK: 1 }
 }
 
 export function disposeEntity(built: BuiltEntity): void {

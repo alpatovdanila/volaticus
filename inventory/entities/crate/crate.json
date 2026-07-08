@@ -1,0 +1,209 @@
+{
+  "format": 1,
+  "id": "crate",
+  "name": "Crate",
+  "category": "prop",
+  "tags": ["wood", "container"],
+  "notes": "Slatted low-poly crate: corner posts + rails frame an inset panel, diagonal braces by chance. oneOf damage variant.",
+  "materials": {
+    "panel": { "material": "wood_planks_20", "flat": true, "uvScale": 0.25 },
+    "panel_2": { "inherit": "panel", "uvRot": 90 },
+    "hole_split_a": { "inherit": "panel" },
+    "hole_split_b": { "inherit": "panel" },
+    "frame": { "material": "bark_11", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "post_a": { "inherit": "frame" },
+    "post_b": { "inherit": "frame", "uvMode": "tile" },
+    "post_c": { "inherit": "frame" },
+    "post_d": { "inherit": "frame" },
+    "rail_top_f": { "inherit": "frame" },
+    "rail_top_b": { "inherit": "frame" },
+    "rail_top_l": { "inherit": "frame" },
+    "rail_top_r": { "inherit": "frame" },
+    "rail_bot_f": { "inherit": "frame" },
+    "rail_bot_b": { "inherit": "frame" },
+    "brace_f": { "inherit": "frame" },
+    "brace_b": { "inherit": "frame" },
+    "chip_board": { "inherit": "frame" },
+    "interior": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true },
+    "chip_opening": { "inherit": "interior" },
+    "hole_opening": { "inherit": "interior" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "panel": {
+          "shape": "plank",
+          "size": [0.56, 0.56, 0.56],
+          "pos": [0, 0.31, 0],
+          "material": "panel_2",
+          "craft": 0.95
+        },
+        "post_a": {
+          "shape": "plank",
+          "size": [0.11, 0.66, 0.11],
+          "pos": [-0.28, 0.33, 0.28],
+          "material": "post_a",
+          "craft": 0.95
+        },
+        "post_b": {
+          "shape": "plank",
+          "size": [0.11, 0.66, 0.11],
+          "pos": [0.28, 0.33, 0.28],
+          "material": "post_b",
+          "craft": 0.95
+        },
+        "post_c": {
+          "shape": "plank",
+          "size": [0.11, 0.66, 0.11],
+          "pos": [-0.28, 0.33, -0.28],
+          "material": "post_c",
+          "craft": 0.95
+        },
+        "post_d": {
+          "shape": "plank",
+          "size": [0.11, 0.66, 0.11],
+          "pos": [0.28, 0.33, -0.28],
+          "material": "post_d",
+          "craft": 0.95
+        },
+        "rail_top_f": {
+          "shape": "plank",
+          "size": [0.56, 0.1, 0.1],
+          "pos": [0, 0.61, 0.28],
+          "material": "rail_top_f",
+          "craft": 0.95
+        },
+        "rail_top_b": {
+          "shape": "plank",
+          "size": [0.56, 0.1, 0.1],
+          "pos": [0, 0.61, -0.28],
+          "material": "rail_top_b",
+          "craft": 0.95
+        },
+        "rail_top_l": {
+          "shape": "plank",
+          "size": [0.1, 0.1, 0.46],
+          "pos": [-0.28, 0.61, 0],
+          "material": "rail_top_l",
+          "craft": 0.95
+        },
+        "rail_top_r": {
+          "shape": "plank",
+          "size": [0.1, 0.1, 0.46],
+          "pos": [0.28, 0.61, 0],
+          "material": "rail_top_r",
+          "craft": 0.95
+        },
+        "rail_bot_f": {
+          "shape": "plank",
+          "size": [0.56, 0.1, 0.1],
+          "pos": [0, 0.05, 0.28],
+          "material": "rail_bot_f",
+          "craft": 0.95
+        },
+        "rail_bot_b": {
+          "shape": "plank",
+          "size": [0.56, 0.1, 0.1],
+          "pos": [0, 0.05, -0.28],
+          "material": "rail_bot_b",
+          "craft": 0.95
+        },
+        "brace_f": {
+          "shape": "plank",
+          "size": [0.74, 0.09, 0.05],
+          "pos": [0, 0.31, 0.3],
+          "rot": [0, 0, 40],
+          "material": "brace_f",
+          "chance": 0.6,
+          "craft": 0.95
+        },
+        "brace_b": {
+          "shape": "plank",
+          "size": [0.74, 0.09, 0.05],
+          "pos": [0, 0.31, -0.3],
+          "rot": [0, 0, -40],
+          "material": "brace_b",
+          "chance": 0.6,
+          "craft": 0.95
+        },
+        "crate_ok": {},
+        "crate_chip": {
+          "children": {
+            "chip_opening": {
+              "shape": "box",
+              "size": [0.24, 0.035, 0.24],
+              "pos": [0.13, 0.615, 0.13],
+              "rot": [0, 10, 0],
+              "material": "chip_opening"
+            },
+            "chip_board": {
+              "shape": "plank",
+              "size": [0.3, 0.045, 0.11],
+              "pos": [0.02, 0.645, 0.19],
+              "rot": [3, 24, 7],
+              "material": "chip_board",
+              "craft": 0.95
+            }
+          }
+        },
+        "crate_hole": {
+          "children": {
+            "hole_opening": {
+              "shape": "box",
+              "size": [0.22, 0.2, 0.05],
+              "pos": [0.03, 0.34, 0.29],
+              "rot": [0, 0, 8],
+              "material": "hole_opening"
+            },
+            "hole_split_a": {
+              "shape": "plank",
+              "size": [0.1, 0.28, 0.04],
+              "pos": [-0.1, 0.36, 0.3],
+              "rot": [0, 0, 16],
+              "material": "hole_split_a",
+              "craft": 0.95
+            },
+            "hole_split_b": {
+              "shape": "plank",
+              "size": [0.09, 0.24, 0.04],
+              "pos": [0.16, 0.31, 0.3],
+              "rot": [0, 0, -13],
+              "material": "hole_split_b",
+              "craft": 0.95
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "dynamic",
+    "collider": { "shape": "box", "size": [0.62, 0.66, 0.62], "offset": [0, 0.33, 0] },
+    "mass": 12
+  },
+  "props": { "health": 1 },
+  "variants": { "count": 6, "oneOf": { "damage": ["crate_ok", "crate_chip", "crate_hole"] } },
+  "anims": {
+    "wobble": {
+      "duration": 0.42,
+      "tracks": [
+        {
+          "node": "root",
+          "prop": "scale",
+          "ease": "sine",
+          "keys": [[0, 1], [0.06, 0.85], [0.16, 1.1], [0.26, 0.94], [0.34, 1.03], [0.42, 1]]
+        },
+        {
+          "node": "root",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 0], [0.06, -3], [0.16, 3], [0.26, -1.5], [0.34, 0.5], [0.42, 0]]
+        }
+      ]
+    }
+  },
+  "events": {
+    "hit": { "anim": "wobble" },
+    "died": { "effect": { "id": "wood_break", "slot": "panel" }, "hideGeometry": true }
+  }
+}

@@ -1,0 +1,300 @@
+{
+  "format": 1,
+  "id": "rooket",
+  "name": "Rooket",
+  "category": "enemy",
+  "tags": ["chaser", "walker", "ram"],
+  "notes": "Battering-ram beast: long low torpedo body on stubby legs with a steel hammer head for a nose — attacks by charging nose-first. Button eyes on the body sides, angry brows. Notices the target (alert ~1s), sprints to ram, runs out of breath and rests. Forward = +Z (hammer end).",
+  "materials": {
+    "shell": { "material": "stone_wall_01", "uvScale": 4 },
+    "body_main": { "inherit": "shell" },
+    "tail": { "inherit": "shell" },
+    "leg_l": { "inherit": "shell" },
+    "leg_r": { "inherit": "shell" },
+    "eye": { "material": "plaster_wall_01", "uvMode": "stretch" },
+    "eye_l": { "inherit": "eye" },
+    "eye_r": { "inherit": "eye" },
+    "pupil": { "material": "plaster_wall_01", "uvMode": "stretch" },
+    "pupil_l": { "inherit": "pupil" },
+    "pupil_r": { "inherit": "pupil" },
+    "brow": { "material": "plaster_wall_01", "uvMode": "stretch" },
+    "brow_l": { "inherit": "brow" },
+    "brow_r": { "inherit": "brow" },
+    "hammer": { "material": "metal_pattern_01", "tint": "#8a9096", "flat": true },
+    "collar": { "inherit": "hammer" },
+    "head": { "inherit": "hammer" },
+    "face_cap": { "inherit": "hammer" },
+    "face_cap_side": { "inherit": "face_cap" },
+    "face_cap_bottom": { "inherit": "face_cap" },
+    "hammer_face": { "material": "metal_pattern_01", "uvMode": "stretch", "flat": true },
+    "feet": { "material": "plaster_wall_01" },
+    "foot_l": { "inherit": "feet" },
+    "toe_l": { "inherit": "feet" },
+    "foot_r": { "inherit": "feet" },
+    "toe_r": { "inherit": "feet" }
+  },
+  "rig": {
+    "body": {
+      "pos": [0, 0.3, 0],
+      "children": {
+        "body_main": {
+          "shape": "capsule",
+          "radius": 0.15,
+          "height": 0.34,
+          "pos": [0, 0, -0.04],
+          "rot": [90, 0, 0],
+          "material": "body_main",
+          "craft": 0.9
+        },
+        "tail": {
+          "shape": "sphere",
+          "radius": 0.09,
+          "segments": 10,
+          "pos": [0, 0.05, -0.36],
+          "material": "tail",
+          "craft": 0.85
+        },
+        "collar": {
+          "shape": "cylinder",
+          "radiusTop": 0.17,
+          "radiusBottom": 0.13,
+          "height": 0.07,
+          "segments": 10,
+          "pos": [0, 0, 0.3],
+          "rot": [90, 0, 0],
+          "material": "collar",
+          "craft": 0.95
+        },
+        "head": {
+          "shape": "sphere",
+          "radius": 0.19,
+          "segments": 12,
+          "pos": [0, 0, 0.46],
+          "scale": [1, 0.94, 0.85],
+          "material": "head",
+          "craft": 0.72
+        },
+        "face_cap": {
+          "shape": "cylinder",
+          "radius": 0.11,
+          "height": 0.025,
+          "segments": 10,
+          "pos": [0, 0, 0.615],
+          "rot": [90, 0, 0],
+          "material": { "side": "face_cap_side", "top": "hammer_face", "bottom": "face_cap_bottom" },
+          "craft": 0.95
+        },
+        "eye_l": {
+          "shape": "cylinder",
+          "radius": 0.045,
+          "height": 0.02,
+          "segments": 10,
+          "pos": [-0.148, 0.05, 0.12],
+          "rot": [0, 0, 71],
+          "material": "eye_l"
+        },
+        "eye_r": {
+          "shape": "cylinder",
+          "radius": 0.045,
+          "height": 0.02,
+          "segments": 10,
+          "pos": [0.148, 0.05, 0.12],
+          "rot": [0, 0, -71],
+          "material": "eye_r"
+        },
+        "pupil_l": {
+          "shape": "cylinder",
+          "radius": 0.02,
+          "height": 0.014,
+          "segments": 8,
+          "pos": [-0.162, 0.055, 0.128],
+          "rot": [0, 0, 71],
+          "material": "pupil_l"
+        },
+        "pupil_r": {
+          "shape": "cylinder",
+          "radius": 0.02,
+          "height": 0.014,
+          "segments": 8,
+          "pos": [0.162, 0.055, 0.128],
+          "rot": [0, 0, -71],
+          "material": "pupil_r"
+        },
+        "brow_l": {
+          "shape": "box",
+          "size": [0.02, 0.03, 0.09],
+          "pos": [-0.13, 0.1, 0.14],
+          "rot": [20, 0, -38],
+          "material": "brow_l"
+        },
+        "brow_r": {
+          "shape": "box",
+          "size": [0.02, 0.03, 0.09],
+          "pos": [0.13, 0.1, 0.14],
+          "rot": [20, 0, 38],
+          "material": "brow_r"
+        },
+        "leg_l": {
+          "shape": "box",
+          "size": [0.07, 0.11, 0.08],
+          "pos": [-0.09, -0.19, 0.02],
+          "pivot": [0, 0.05, 0],
+          "material": "leg_l",
+          "craft": 0.9,
+          "children": {
+            "foot_l": {
+              "shape": "box",
+              "size": [0.085, 0.05, 0.08],
+              "pos": [0, -0.07, -0.015],
+              "material": "foot_l",
+              "craft": 0.85,
+              "children": {
+                "toe_l": {
+                  "shape": "box",
+                  "size": [0.098, 0.038, 0.065],
+                  "pos": [0, -0.006, 0.065],
+                  "material": "toe_l",
+                  "craft": 0.85
+                }
+              }
+            }
+          }
+        },
+        "leg_r": {
+          "shape": "box",
+          "size": [0.07, 0.11, 0.08],
+          "pos": [0.09, -0.19, 0.02],
+          "pivot": [0, 0.05, 0],
+          "material": "leg_r",
+          "craft": 0.9,
+          "children": {
+            "foot_r": {
+              "shape": "box",
+              "size": [0.085, 0.05, 0.08],
+              "pos": [0, -0.07, -0.015],
+              "material": "foot_r",
+              "craft": 0.85,
+              "children": {
+                "toe_r": {
+                  "shape": "box",
+                  "size": [0.098, 0.038, 0.065],
+                  "pos": [0, -0.006, 0.065],
+                  "material": "toe_r",
+                  "craft": 0.85
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "kinematicCharacter",
+    "collider": { "shape": "capsule", "radius": 0.24, "height": 0.1, "offset": [0, 0.3, 0] }
+  },
+  "props": {
+    "health": 2,
+    "walkSpeed": 1.2,
+    "runSpeed": 4.2,
+    "aggroRadius": 7,
+    "alertTime": 1,
+    "staminaTime": 3.5,
+    "restTime": 2.5,
+    "damage": 1
+  },
+  "states": {
+    "initial": "idle",
+    "idle": { "anim": "bob" },
+    "walking": { "anim": "waddle" },
+    "alert": { "anim": "startle", "enter": { "effect": "angry_pop" } },
+    "running": { "anim": "sprint", "cues": { "0.03": { "byContext": { "surface=grass": { "effect": "grass_puff" } } } } },
+    "resting": { "anim": "pant", "cues": { "0.7": { "effect": "sweat_drip" } } }
+  },
+  "anims": {
+    "bob": {
+      "loop": true,
+      "duration": 2.8,
+      "tracks": [
+        { "node": "body", "prop": "pos.y", "ease": "sine", "keys": [[0, 0], [1.4, 0.025], [2.8, 0]] },
+        { "node": "body", "prop": "scale", "ease": "sine", "keys": [[0, 1], [1.4, 1.02], [2.8, 1]] },
+        { "node": "tail", "prop": "rot.x", "ease": "sine", "keys": [[0, 6], [1.4, -6], [2.8, 6]] },
+        { "node": "brow_l", "prop": "rot.x", "keys": [[0, -14]] },
+        { "node": "brow_r", "prop": "rot.x", "keys": [[0, -14]] }
+      ]
+    },
+    "waddle": {
+      "loop": true,
+      "duration": 0.8,
+      "tracks": [
+        { "node": "leg_l", "prop": "rot.x", "ease": "sine", "keys": [[0, 34], [0.4, -34], [0.8, 34]] },
+        { "node": "leg_r", "prop": "rot.x", "ease": "sine", "keys": [[0, -34], [0.4, 34], [0.8, -34]] },
+        { "node": "body", "prop": "rot.z", "ease": "sine", "keys": [[0, 4], [0.4, -4], [0.8, 4]] },
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [[0, 0.015], [0.2, 0], [0.4, 0.015], [0.6, 0], [0.8, 0.015]]
+        }
+      ]
+    },
+    "startle": {
+      "duration": 1,
+      "tracks": [
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "ease": "quadOut",
+          "keys": [[0, 0], [0.12, 0.2], [0.3, 0], [0.38, 0.05], [0.46, 0]]
+        },
+        {
+          "node": "body",
+          "prop": "scale",
+          "ease": "quadOut",
+          "keys": [[0, 1], [0.1, 1.15], [0.3, 1], [0.75, 1.05], [1, 1.02]]
+        },
+        {
+          "node": "body",
+          "prop": "rot.z",
+          "ease": "linear",
+          "keys": [[0.5, 0], [0.57, -4], [0.64, 4], [0.71, -4], [0.78, 4], [0.85, -3], [0.92, 2], [1, 0]]
+        },
+        { "node": "pupil_l", "prop": "scale", "ease": "quadOut", "keys": [[0, 1], [0.12, 1.5], [1, 1.4]] },
+        { "node": "pupil_r", "prop": "scale", "ease": "quadOut", "keys": [[0, 1], [0.12, 1.5], [1, 1.4]] }
+      ]
+    },
+    "sprint": {
+      "loop": true,
+      "duration": 0.32,
+      "tracks": [
+        { "node": "leg_l", "prop": "rot.x", "ease": "sine", "keys": [[0, 58], [0.16, -58], [0.32, 58]] },
+        { "node": "leg_r", "prop": "rot.x", "ease": "sine", "keys": [[0, -58], [0.16, 58], [0.32, -58]] },
+        { "node": "body", "prop": "rot.x", "keys": [[0, 9]] },
+        { "node": "tail", "prop": "rot.x", "ease": "sine", "keys": [[0, 10], [0.16, -10], [0.32, 10]] },
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [[0, 0.02], [0.08, 0], [0.16, 0.02], [0.24, 0], [0.32, 0.02]]
+        }
+      ]
+    },
+    "pant": {
+      "loop": true,
+      "duration": 1.2,
+      "tracks": [
+        { "node": "body", "prop": "pos.y", "keys": [[0, -0.09]] },
+        { "node": "body", "prop": "rot.x", "keys": [[0, -6]] },
+        { "node": "leg_l", "prop": "rot.x", "keys": [[0, -22]] },
+        { "node": "leg_r", "prop": "rot.x", "keys": [[0, -22]] },
+        { "node": "body", "prop": "scale", "ease": "sine", "keys": [[0, 0.98], [0.6, 1.07], [1.2, 0.98]] },
+        { "node": "brow_l", "prop": "rot.x", "keys": [[0, 8]] },
+        { "node": "brow_r", "prop": "rot.x", "keys": [[0, 8]] }
+      ]
+    }
+  },
+  "events": {
+    "hit": { "effect": "poof", "anim": "startle" },
+    "died": { "effect": "SCRIPT_EFFECT_SHATTER", "hideGeometry": true }
+  }
+}

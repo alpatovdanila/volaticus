@@ -1,0 +1,271 @@
+{
+  "format": 1,
+  "id": "bush_flowering",
+  "name": "Flowering Bush",
+  "category": "prop",
+  "tags": ["vegetation", "nature"],
+  "notes": "Low-poly bush dotted with stemless blossom heads sitting directly on the main blob's surface (positions computed on the blob ellipsoid); oneOf picks pink or white blossoms.",
+  "materials": {
+    "leaves": { "material": "grass_01", "flat": true, "uvScale": 0.25, "uvProject": "box", "tint": "#9e9e9e" },
+    "blob_a": { "inherit": "leaves" },
+    "blob_c": { "inherit": "leaves" },
+    "leaves_light": { "material": "grass_01", "flat": true, "inherit": "leaves" },
+    "petal_pink": {
+      "material": "concrete_wall_01",
+      "uvMode": "stretch",
+      "uvRot": 90,
+      "flat": true,
+      "inherit": "petal_white"
+    },
+    "fp_a": { "inherit": "petal_pink" },
+    "fp_b": { "inherit": "petal_pink" },
+    "fp_c": { "inherit": "petal_pink" },
+    "fp_d": { "inherit": "petal_pink" },
+    "fp_e": { "inherit": "petal_pink" },
+    "fp_f": { "inherit": "petal_pink" },
+    "fp_g": { "inherit": "petal_pink" },
+    "fp_h": { "inherit": "petal_pink" },
+    "petal_white": { "material": "concrete_wall_01", "uvMode": "stretch", "uvRot": 90, "flat": true },
+    "fw_a": { "inherit": "petal_white" },
+    "fw_b": { "inherit": "petal_white" },
+    "fw_c": { "inherit": "petal_white" },
+    "fw_d": { "inherit": "petal_white" },
+    "fw_e": { "inherit": "petal_white" },
+    "fw_f": { "inherit": "petal_white" },
+    "fw_g": { "inherit": "petal_white" },
+    "fw_h": { "flat": true, "inherit": "petal_white" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "blob_a": {
+          "shape": "sphere",
+          "radius": 0.34,
+          "segments": 7,
+          "pos": [0, 0.36, 0],
+          "scale": [1, 0.85, 0.95],
+          "material": "blob_a",
+          "craft": 0.88,
+          "sub": 3
+        },
+        "blob_b": {
+          "shape": "sphere",
+          "radius": 0.25,
+          "segments": 6,
+          "pos": [0.27, 0.28, 0.1],
+          "material": "leaves_light",
+          "chance": 0.8,
+          "craft": 0.88,
+          "sub": 3
+        },
+        "blob_c": {
+          "shape": "sphere",
+          "radius": 0.22,
+          "segments": 6,
+          "pos": [-0.26, 0.26, -0.1],
+          "material": "blob_c",
+          "chance": 0.65,
+          "craft": 0.88,
+          "sub": 3
+        },
+        "flowers_pink": {
+          "children": {
+            "fp_a": {
+              "shape": "sphere",
+              "radius": 0.065,
+              "segments": 6,
+              "pos": [0.076, 0.617, 0.027],
+              "scale": [1, 0.8, 1],
+              "material": "fp_a",
+              "uvProject": "planar"
+            },
+            "fp_b": {
+              "shape": "sphere",
+              "radius": 0.055,
+              "segments": 6,
+              "pos": [-0.035, 0.563, 0.189],
+              "scale": [1, 0.8, 1],
+              "material": "fp_b",
+              "uvProject": "planar"
+            },
+            "fp_c": {
+              "shape": "sphere",
+              "radius": 0.06,
+              "segments": 6,
+              "pos": [-0.191, 0.548, -0.105],
+              "scale": [1, 0.8, 1],
+              "material": "fp_c",
+              "uvProject": "planar"
+            },
+            "fp_d": {
+              "shape": "sphere",
+              "radius": 0.055,
+              "segments": 6,
+              "pos": [0.184, 0.531, -0.146],
+              "scale": [1, 0.8, 1],
+              "material": "fp_d",
+              "chance": 0.85,
+              "uvProject": "planar"
+            },
+            "fp_e": {
+              "shape": "sphere",
+              "radius": 0.06,
+              "segments": 6,
+              "pos": [0.147, 0.451, 0.242],
+              "scale": [1, 0.8, 1],
+              "material": "fp_e",
+              "uvProject": "planar"
+            },
+            "fp_f": {
+              "shape": "sphere",
+              "radius": 0.05,
+              "segments": 6,
+              "pos": [-0.261, 0.429, 0.144],
+              "scale": [1, 0.8, 1],
+              "material": "fp_f",
+              "chance": 0.8,
+              "uvProject": "planar"
+            },
+            "fp_g": {
+              "shape": "sphere",
+              "radius": 0.055,
+              "segments": 6,
+              "pos": [-0.052, 0.442, -0.279],
+              "scale": [1, 0.8, 1],
+              "material": "fp_g",
+              "chance": 0.8,
+              "uvProject": "planar"
+            },
+            "fp_h": {
+              "shape": "sphere",
+              "radius": 0.05,
+              "segments": 6,
+              "pos": [0.285, 0.459, -0.048],
+              "scale": [1, 0.8, 1],
+              "material": "fp_h",
+              "chance": 0.7,
+              "uvProject": "planar"
+            }
+          }
+        },
+        "flowers_white": {
+          "children": {
+            "fw_a": {
+              "shape": "sphere",
+              "radius": 0.065,
+              "segments": 6,
+              "pos": [0.076, 0.617, 0.027],
+              "scale": [1, 0.8, 1],
+              "material": "fw_a",
+              "craft": 0.96,
+              "sub": 3
+            },
+            "fw_b": {
+              "shape": "sphere",
+              "radius": 0.055,
+              "segments": 6,
+              "pos": [-0.035, 0.563, 0.189],
+              "scale": [1, 0.8, 1],
+              "material": "fw_b",
+              "craft": 0.96,
+              "sub": 3
+            },
+            "fw_c": {
+              "shape": "sphere",
+              "radius": 0.06,
+              "segments": 6,
+              "pos": [-0.191, 0.548, -0.105],
+              "scale": [1, 0.8, 1],
+              "material": "fw_c",
+              "craft": 0.94,
+              "sub": 3
+            },
+            "fw_d": {
+              "shape": "sphere",
+              "radius": 0.055,
+              "segments": 6,
+              "pos": [0.184, 0.531, -0.146],
+              "scale": [1, 0.8, 1],
+              "material": "fw_d",
+              "chance": 0.85,
+              "craft": 0.94,
+              "sub": 3
+            },
+            "fw_e": {
+              "shape": "sphere",
+              "radius": 0.06,
+              "segments": 6,
+              "pos": [0.147, 0.451, 0.242],
+              "scale": [1, 0.8, 1],
+              "material": "fw_e",
+              "craft": 0.94,
+              "sub": 3
+            },
+            "fw_f": {
+              "shape": "sphere",
+              "radius": 0.05,
+              "segments": 6,
+              "pos": [-0.261, 0.429, 0.144],
+              "scale": [1, 0.8, 1],
+              "material": "fw_f",
+              "chance": 0.8,
+              "craft": 0.94,
+              "sub": 3
+            },
+            "fw_g": {
+              "shape": "sphere",
+              "radius": 0.055,
+              "segments": 6,
+              "pos": [-0.052, 0.442, -0.279],
+              "scale": [1, 0.8, 1],
+              "material": "fw_g",
+              "chance": 0.8,
+              "craft": 0.94,
+              "sub": 3
+            },
+            "fw_h": {
+              "shape": "sphere",
+              "radius": 0.05,
+              "segments": 6,
+              "pos": [0.285, 0.459, -0.048],
+              "scale": [1, 0.8, 1],
+              "material": "fw_h",
+              "chance": 0.7,
+              "craft": 0.94,
+              "sub": 3
+            }
+          }
+        }
+      }
+    }
+  },
+  "variants": { "count": 6, "oneOf": { "flowers": ["flowers_pink", "flowers_white"] } },
+  "states": { "initial": "idle", "idle": { "anim": "sway" } },
+  "anims": {
+    "sway": {
+      "loop": true,
+      "duration": 3.6,
+      "tracks": [
+        { "node": "root", "prop": "rot.z", "ease": "sine", "keys": [[0, -0.7], [1.8, 0.7], [3.6, -0.7]] }
+      ]
+    },
+    "rustle": {
+      "duration": 0.38,
+      "tracks": [
+        {
+          "node": "root",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [[0, 0], [0.06, 4], [0.14, -4], [0.22, 2.5], [0.3, -1.5], [0.38, 0]]
+        },
+        {
+          "node": "root",
+          "prop": "scale",
+          "ease": "sine",
+          "keys": [[0, 1], [0.08, 1.06], [0.2, 0.97], [0.3, 1.02], [0.38, 1]]
+        }
+      ]
+    }
+  },
+  "events": { "hit": { "anim": "rustle" } }
+}

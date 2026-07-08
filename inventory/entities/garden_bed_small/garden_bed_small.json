@@ -1,0 +1,257 @@
+{
+  "format": 1,
+  "id": "garden_bed_small",
+  "name": "Small Garden Bed",
+  "category": "prop",
+  "tags": ["village", "nature"],
+  "notes": "Chunky framed bed with a soil mound and primitive blossom flowers (each appears by chance, mixed colors).",
+  "materials": {
+    "frame": { "material": "wood_planks_13", "uvScale": 0.25, "uvRot": 90, "flat": true },
+    "rail_f": { "inherit": "frame" },
+    "rail_b": { "inherit": "frame" },
+    "rail_l": { "inherit": "frame" },
+    "rail_r": { "inherit": "frame" },
+    "post_a": { "inherit": "frame", "material": "wood_planks_12" },
+    "post_b": { "inherit": "frame", "material": "wood_planks_12" },
+    "post_c": { "inherit": "frame", "material": "wood_planks_12" },
+    "post_d": { "inherit": "frame", "material": "wood_planks_12" },
+    "soil": { "material": "ground_01", "tint": "#969696", "flat": true, "uvProject": "box", "uvScale": 0.25 },
+    "stem": { "material": "grass_05", "tint": "#3f6b2e", "flat": true, "uvScale": 2 },
+    "flower_a": { "inherit": "stem" },
+    "flower_b": { "inherit": "stem" },
+    "flower_c": { "inherit": "stem" },
+    "flower_d": { "inherit": "stem" },
+    "flower_e": { "inherit": "stem" },
+    "petal_pink": { "material": "plaster_wall_01", "tint": "#e88ab5", "uvMode": "stretch", "flat": true },
+    "head_a": { "inherit": "petal_pink" },
+    "head_d": { "inherit": "petal_pink" },
+    "petal_red": { "material": "stone_wall_01", "tint": "#d6543f", "uvMode": "stretch", "flat": true },
+    "petal_white": { "material": "concrete_wall_01", "uvMode": "stretch", "flat": true },
+    "head_c": { "inherit": "petal_white" },
+    "head_e": { "inherit": "petal_white" },
+    "pollen": { "material": "plaster_wall_01", "tint": "#f2c53d", "uvMode": "stretch", "flat": true },
+    "core_a": { "inherit": "pollen" },
+    "core_b": { "inherit": "pollen" },
+    "core_c": { "inherit": "pollen" },
+    "core_d": { "inherit": "pollen" },
+    "core_e": { "inherit": "pollen" }
+  },
+  "rig": {
+    "root": {
+      "children": {
+        "mound": {
+          "shape": "sphere",
+          "radius": 0.62,
+          "segments": 8,
+          "pos": [0, 0.02, 0],
+          "scale": [0.95, 0.32, 0.68],
+          "material": "soil",
+          "craft": 0.6
+        },
+        "rail_f": {
+          "shape": "plank",
+          "size": [1.24, 0.18, 0.11],
+          "pos": [0, 0.12, 0.42],
+          "material": "rail_f",
+          "craft": 0.55
+        },
+        "rail_b": {
+          "shape": "plank",
+          "size": [1.24, 0.18, 0.11],
+          "pos": [0, 0.12, -0.42],
+          "material": "rail_b",
+          "craft": 0.55
+        },
+        "rail_l": {
+          "shape": "plank",
+          "size": [0.11, 0.18, 0.73],
+          "pos": [-0.565, 0.12, 0],
+          "material": "rail_l",
+          "craft": 0.55
+        },
+        "rail_r": {
+          "shape": "plank",
+          "size": [0.11, 0.18, 0.73],
+          "pos": [0.565, 0.12, 0],
+          "material": "rail_r",
+          "craft": 0.55
+        },
+        "post_a": {
+          "shape": "plank",
+          "size": [0.15, 0.26, 0.15],
+          "pos": [-0.565, 0.13, 0.42],
+          "material": "post_a",
+          "craft": 0.55
+        },
+        "post_b": {
+          "shape": "plank",
+          "size": [0.15, 0.26, 0.15],
+          "pos": [0.565, 0.13, 0.42],
+          "material": "post_b",
+          "craft": 0.55
+        },
+        "post_c": {
+          "shape": "plank",
+          "size": [0.15, 0.26, 0.15],
+          "pos": [-0.565, 0.13, -0.42],
+          "material": "post_c",
+          "craft": 0.55
+        },
+        "post_d": {
+          "shape": "plank",
+          "size": [0.15, 0.26, 0.15],
+          "pos": [0.565, 0.13, -0.42],
+          "material": "post_d",
+          "craft": 0.55
+        },
+        "flower_a": {
+          "shape": "cylinder",
+          "radius": 0.016,
+          "height": 0.3,
+          "segments": 5,
+          "pos": [-0.3, 0.32, -0.1],
+          "rot": [4, 0, -6],
+          "material": "flower_a",
+          "chance": 0.85,
+          "children": {
+            "head_a": {
+              "shape": "sphere",
+              "radius": 0.07,
+              "segments": 6,
+              "pos": [0, 0.18, 0],
+              "scale": [1, 0.8, 1],
+              "material": "head_a",
+              "children": {
+                "core_a": {
+                  "shape": "sphere",
+                  "radius": 0.028,
+                  "segments": 5,
+                  "pos": [0, 0.05, 0],
+                  "material": "core_a"
+                }
+              }
+            }
+          }
+        },
+        "flower_b": {
+          "shape": "cylinder",
+          "radius": 0.016,
+          "height": 0.34,
+          "segments": 5,
+          "pos": [0.05, 0.34, 0.12],
+          "rot": [-6, 0, 5],
+          "material": "flower_b",
+          "chance": 0.85,
+          "children": {
+            "head_b": {
+              "shape": "sphere",
+              "radius": 0.075,
+              "segments": 6,
+              "pos": [0, 0.2, 0],
+              "scale": [1, 0.8, 1],
+              "material": "petal_red",
+              "children": {
+                "core_b": {
+                  "shape": "sphere",
+                  "radius": 0.03,
+                  "segments": 5,
+                  "pos": [0, 0.052, 0],
+                  "material": "core_b"
+                }
+              }
+            }
+          }
+        },
+        "flower_c": {
+          "shape": "cylinder",
+          "radius": 0.016,
+          "height": 0.28,
+          "segments": 5,
+          "pos": [0.36, 0.31, -0.08],
+          "rot": [5, 0, 8],
+          "material": "flower_c",
+          "chance": 0.85,
+          "children": {
+            "head_c": {
+              "shape": "sphere",
+              "radius": 0.065,
+              "segments": 6,
+              "pos": [0, 0.17, 0],
+              "scale": [1, 0.8, 1],
+              "material": "head_c",
+              "children": {
+                "core_c": {
+                  "shape": "sphere",
+                  "radius": 0.026,
+                  "segments": 5,
+                  "pos": [0, 0.046, 0],
+                  "material": "core_c"
+                }
+              }
+            }
+          }
+        },
+        "flower_d": {
+          "shape": "cylinder",
+          "radius": 0.014,
+          "height": 0.26,
+          "segments": 5,
+          "pos": [-0.05, 0.3, -0.22],
+          "rot": [8, 0, -4],
+          "material": "flower_d",
+          "chance": 0.6,
+          "children": {
+            "head_d": {
+              "shape": "sphere",
+              "radius": 0.06,
+              "segments": 6,
+              "pos": [0, 0.16, 0],
+              "scale": [1, 0.8, 1],
+              "material": "head_d",
+              "children": {
+                "core_d": {
+                  "shape": "sphere",
+                  "radius": 0.024,
+                  "segments": 5,
+                  "pos": [0, 0.044, 0],
+                  "material": "core_d"
+                }
+              }
+            }
+          }
+        },
+        "flower_e": {
+          "shape": "cylinder",
+          "radius": 0.014,
+          "height": 0.24,
+          "segments": 5,
+          "pos": [0.28, 0.29, 0.18],
+          "rot": [-4, 0, 7],
+          "material": "flower_e",
+          "chance": 0.6,
+          "children": {
+            "head_e": {
+              "shape": "sphere",
+              "radius": 0.06,
+              "segments": 6,
+              "pos": [0, 0.15, 0],
+              "scale": [1, 0.8, 1],
+              "material": "head_e",
+              "children": {
+                "core_e": {
+                  "shape": "sphere",
+                  "radius": 0.024,
+                  "segments": 5,
+                  "pos": [0, 0.044, 0],
+                  "material": "core_e"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [1.24, 0.24, 0.95], "offset": [0, 0.12, 0] } },
+  "variants": { "count": 6 }
+}

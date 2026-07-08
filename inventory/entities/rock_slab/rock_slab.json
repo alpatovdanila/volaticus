@@ -15,7 +15,13 @@
   "rig": {
     "root": {
       "children": {
-        "slab_main": { "shape": "box", "size": [0.38, 3.5, 1.88], "pos": [0, 1.75, 0], "material": "slab_main" },
+        "slab_main": {
+          "shape": "box",
+          "size": [0.38, 3.5, 1.88],
+          "pos": [0, 1.75, 0],
+          "material": "slab_main",
+          "craftSeed": 1735477704
+        },
         "bevel_front": {
           "shape": "box",
           "size": [0.3, 3.3, 0.3],
@@ -23,7 +29,8 @@
           "rot": [0, 45, 0],
           "rotJitter": [0, 8, 1],
           "material": "bevel_front",
-          "craft": 0.97
+          "craft": 0.97,
+          "craftSeed": 1735477704
         },
         "bevel_back": {
           "shape": "box",
@@ -32,7 +39,8 @@
           "rot": [0, 45, 0],
           "rotJitter": [0, 8, 1],
           "material": "bevel_back",
-          "craft": 0.93
+          "craft": 0.93,
+          "craftSeed": 1735477704
         },
         "base_chunk": {
           "shape": "sphere",
@@ -43,7 +51,8 @@
           "scale": [1, 0.65, 0.9],
           "material": "base_chunk",
           "chance": 0.55,
-          "sub": 1
+          "sub": 1,
+          "craftSeed": 1735477704
         }
       }
     }

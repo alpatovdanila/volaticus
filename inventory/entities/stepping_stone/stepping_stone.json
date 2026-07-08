@@ -23,7 +23,8 @@
           "pos": [0, 0.25, 0],
           "material": "puck",
           "sub": 2,
-          "craft": 0.58
+          "craft": 0.58,
+          "craftSeed": 554654948
         },
         "moss_patch": {
           "shape": "sphere",
@@ -34,7 +35,8 @@
           "material": "moss_patch",
           "chance": 0.4,
           "sub": 2,
-          "craft": 0.7
+          "craft": 0.7,
+          "craftSeed": 554654948
         },
         "pebble": {
           "shape": "sphere",
@@ -46,7 +48,8 @@
           "material": "pebble",
           "chance": 0.5,
           "sub": 1,
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 554654948
         }
       }
     }

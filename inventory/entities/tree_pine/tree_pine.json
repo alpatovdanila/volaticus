@@ -34,7 +34,8 @@
           "pos": [0, 0.95, 0],
           "rotJitter": [1.5, 0, 1.5],
           "material": "bark",
-          "craft": 0.86
+          "craft": 0.86,
+          "craftSeed": 2066779698
         },
         "tiers_3": {
           "children": {
@@ -45,9 +46,17 @@
               "pos": [0, 1.3, 0],
               "material": "cone_a",
               "children": {
-                "spray_a": { "shape": "cone", "radius": 0.76, "height": 0.78, "material": "spray_a", "craft": 0.77 }
+                "spray_a": {
+                  "shape": "cone",
+                  "radius": 0.76,
+                  "height": 0.78,
+                  "material": "spray_a",
+                  "craft": 0.77,
+                  "craftSeed": 2066779698
+                }
               },
-              "craft": 0.68
+              "craft": 0.68,
+              "craftSeed": 2066779698
             },
             "cone_b": {
               "shape": "cone",
@@ -56,9 +65,17 @@
               "pos": [0, 1.8, 0],
               "material": "cone_b",
               "children": {
-                "spray_b": { "shape": "cone", "radius": 0.6, "height": 0.72, "material": "spray_b", "craft": 0.77 }
+                "spray_b": {
+                  "shape": "cone",
+                  "radius": 0.6,
+                  "height": 0.72,
+                  "material": "spray_b",
+                  "craft": 0.77,
+                  "craftSeed": 2066779698
+                }
               },
-              "craft": 0.68
+              "craft": 0.68,
+              "craftSeed": 2066779698
             },
             "cone_c": {
               "shape": "cone",
@@ -67,9 +84,17 @@
               "pos": [0, 2.3, 0],
               "material": "cone_c",
               "children": {
-                "spray_c": { "shape": "cone", "radius": 0.42, "height": 0.66, "material": "spray_c", "craft": 0.77 }
+                "spray_c": {
+                  "shape": "cone",
+                  "radius": 0.42,
+                  "height": 0.66,
+                  "material": "spray_c",
+                  "craft": 0.77,
+                  "craftSeed": 2066779698
+                }
               },
-              "craft": 0.68
+              "craft": 0.68,
+              "craftSeed": 2066779698
             }
           }
         },
@@ -82,9 +107,17 @@
               "pos": [0, 1.15, 0],
               "material": "cone_d",
               "children": {
-                "spray_d": { "shape": "cone", "radius": 0.81, "height": 0.72, "material": "spray_d", "craft": 0.77 }
+                "spray_d": {
+                  "shape": "cone",
+                  "radius": 0.81,
+                  "height": 0.72,
+                  "material": "spray_d",
+                  "craft": 0.77,
+                  "craftSeed": 2066779698
+                }
               },
-              "craft": 0.68
+              "craft": 0.68,
+              "craftSeed": 2066779698
             },
             "cone_e": {
               "shape": "cone",
@@ -93,9 +126,17 @@
               "pos": [0, 1.6, 0],
               "material": "cone_e",
               "children": {
-                "spray_e": { "shape": "cone", "radius": 0.64, "height": 0.68, "material": "spray_e", "craft": 0.77 }
+                "spray_e": {
+                  "shape": "cone",
+                  "radius": 0.64,
+                  "height": 0.68,
+                  "material": "spray_e",
+                  "craft": 0.77,
+                  "craftSeed": 2066779698
+                }
               },
-              "craft": 0.68
+              "craft": 0.68,
+              "craftSeed": 2066779698
             },
             "cone_f": {
               "shape": "cone",
@@ -104,9 +145,17 @@
               "pos": [0, 2.05, 0],
               "material": "cone_f",
               "children": {
-                "spray_f": { "shape": "cone", "radius": 0.47, "height": 0.63, "material": "spray_f", "craft": 0.77 }
+                "spray_f": {
+                  "shape": "cone",
+                  "radius": 0.47,
+                  "height": 0.63,
+                  "material": "spray_f",
+                  "craft": 0.77,
+                  "craftSeed": 2066779698
+                }
               },
-              "craft": 0.68
+              "craft": 0.68,
+              "craftSeed": 2066779698
             },
             "cone_g": {
               "shape": "cone",
@@ -115,9 +164,17 @@
               "pos": [0, 2.5, 0],
               "material": "cone_g",
               "children": {
-                "spray_g": { "shape": "cone", "radius": 0.3, "height": 0.58, "material": "spray_g", "craft": 0.77 }
+                "spray_g": {
+                  "shape": "cone",
+                  "radius": 0.3,
+                  "height": 0.58,
+                  "material": "spray_g",
+                  "craft": 0.77,
+                  "craftSeed": 2066779698
+                }
               },
-              "craft": 0.68
+              "craft": 0.68,
+              "craftSeed": 2066779698
             }
           }
         }

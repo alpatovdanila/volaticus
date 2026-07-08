@@ -29,7 +29,8 @@
           "pos": [0, 0.875, 0],
           "rotJitter": [2, 0, 2.5],
           "material": "trunk",
-          "craft": 0.93
+          "craft": 0.93,
+          "craftSeed": 1275865619
         },
         "branch": {
           "shape": "cylinder",
@@ -39,7 +40,8 @@
           "rot": [0, 0, 50],
           "material": "branch",
           "chance": 0.55,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1275865619
         },
         "crown_oval": {
           "children": {
@@ -51,7 +53,8 @@
               "scale": [1, 0.85, 0.95],
               "material": "blob_o1",
               "craft": 0.5,
-              "sub": 2
+              "sub": 2,
+              "craftSeed": 1275865619
             },
             "blob_o2": {
               "shape": "sphere",
@@ -61,7 +64,8 @@
               "scale": [1, 0.82, 1],
               "material": "blob_o2",
               "craft": 0.64,
-              "sub": 2
+              "sub": 2,
+              "craftSeed": 1275865619
             }
           }
         },
@@ -75,7 +79,8 @@
               "scale": [1, 0.85, 0.95],
               "material": "blob_h1",
               "craft": 0.7,
-              "sub": 2
+              "sub": 2,
+              "craftSeed": 1275865619
             },
             "blob_h2": {
               "shape": "sphere",
@@ -84,7 +89,8 @@
               "pos": [0.24, 1.75, 0.1],
               "scale": [1, 0.8, 1],
               "material": "blob_h2",
-              "craft": 0.7
+              "craft": 0.7,
+              "craftSeed": 1275865619
             }
           }
         },
@@ -98,7 +104,8 @@
               "scale": [1, 0.8, 0.95],
               "material": "blob_l1",
               "craft": 0.7,
-              "sub": 2
+              "sub": 2,
+              "craftSeed": 1275865619
             },
             "blob_l2": {
               "shape": "sphere",
@@ -107,7 +114,8 @@
               "pos": [-0.08, 2.1, 0.05],
               "scale": [1, 0.82, 1],
               "material": "blob_l2",
-              "craft": 0.7
+              "craft": 0.7,
+              "craftSeed": 1275865619
             },
             "blob_l3": {
               "shape": "sphere",
@@ -117,7 +125,8 @@
               "scale": [1, 0.8, 1],
               "material": "blob_l3",
               "craft": 0.7,
-              "sub": 2
+              "sub": 2,
+              "craftSeed": 1275865619
             }
           }
         }

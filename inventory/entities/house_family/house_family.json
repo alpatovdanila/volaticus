@@ -130,20 +130,29 @@
   "rig": {
     "root": {
       "children": {
-        "base": { "shape": "box", "size": [3.06, 0.5, 2.66], "pos": [0, 0.22, 0], "material": "base", "craft": 0.8 },
+        "base": {
+          "shape": "box",
+          "size": [3.06, 0.5, 2.66],
+          "pos": [0, 0.22, 0],
+          "material": "base",
+          "craft": 0.8,
+          "craftSeed": 1297190895
+        },
         "wall_g": {
           "shape": "box",
           "size": [2.96, 1.34, 2.56],
           "pos": [0, 1.1, 0],
           "material": "wall_g",
-          "craft": 0.92
+          "craft": 0.92,
+          "craftSeed": 1297190895
         },
         "wall_up": {
           "shape": "box",
           "size": [3.24, 1.06, 2.84],
           "pos": [0, 2.3, 0],
           "material": "wall_up",
-          "craft": 0.92
+          "craft": 0.92,
+          "craftSeed": 1297190895
         },
         "gable_e": {
           "shape": "cone",
@@ -153,7 +162,8 @@
           "scale": [0.08, 1, 1],
           "pos": [1.55, 3.355, 0],
           "material": "gable_e",
-          "craft": 0.95
+          "craft": 0.95,
+          "craftSeed": 1297190895
         },
         "gable_w": {
           "shape": "cone",
@@ -163,35 +173,40 @@
           "scale": [0.08, 1, 1],
           "pos": [-1.55, 3.355, 0],
           "material": "gable_w",
-          "craft": 0.95
+          "craft": 0.95,
+          "craftSeed": 1297190895
         },
         "collar_e": {
           "shape": "plank",
           "size": [0.1, 0.12, 1.66],
           "pos": [1.7, 3.13, 0],
           "material": "collar_e",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "king_e": {
           "shape": "plank",
           "size": [0.1, 0.78, 0.12],
           "pos": [1.7, 3.5, 0],
           "material": "king_e",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "collar_w": {
           "shape": "plank",
           "size": [0.1, 0.12, 1.66],
           "pos": [-1.7, 3.13, 0],
           "material": "collar_w",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "king_w": {
           "shape": "plank",
           "size": [0.1, 0.78, 0.12],
           "pos": [-1.7, 3.5, 0],
           "material": "king_w",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "roof_red_grp": {
           "children": {
@@ -200,7 +215,8 @@
               "size": [4.16, 0.13, 0.4],
               "pos": [0, 4, 0],
               "material": "ridge_r",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "roof_s_r": {
               "pos": [0, 3.98, 0],
@@ -211,21 +227,24 @@
                   "size": [4.1, 0.1, 2.42],
                   "pos": [0, -0.06, 1.16],
                   "material": "rs_deck_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rs_c1_r": {
                   "shape": "plank",
                   "size": [4.14, 0.07, 0.92],
                   "pos": [0.015, 0.02, 1.3],
                   "material": "rs_c1_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rs_c2_r": {
                   "shape": "plank",
                   "size": [4.18, 0.07, 0.95],
                   "pos": [-0.015, 0.02, 2],
                   "material": "rs_c2_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 }
               }
             },
@@ -238,21 +257,24 @@
                   "size": [4.1, 0.1, 2.42],
                   "pos": [0, -0.06, -1.16],
                   "material": "rn_deck_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rn_c1_r": {
                   "shape": "plank",
                   "size": [4.14, 0.07, 0.92],
                   "pos": [-0.015, 0.02, -1.3],
                   "material": "rn_c1_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rn_c2_r": {
                   "shape": "plank",
                   "size": [4.18, 0.07, 0.95],
                   "pos": [0.015, 0.02, -2],
                   "material": "rn_c2_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 }
               }
             },
@@ -265,23 +287,32 @@
                   "size": [0.56, 0.6, 0.6],
                   "pos": [0, -0.05, 0],
                   "material": "d_body_r",
-                  "craft": 0.93
+                  "craft": 0.93,
+                  "craftSeed": 1297190895
                 },
                 "d_frame_r": {
                   "shape": "box",
                   "size": [0.36, 0.4, 0.06],
                   "pos": [0, 0.03, 0.31],
                   "material": "d_frame_r",
-                  "craft": 0.9
+                  "craft": 0.9,
+                  "craftSeed": 1297190895
                 },
-                "d_pane_r": { "shape": "box", "size": [0.26, 0.3, 0.07], "pos": [0, 0.03, 0.315], "material": "d_pane_r" },
+                "d_pane_r": {
+                  "shape": "box",
+                  "size": [0.26, 0.3, 0.07],
+                  "pos": [0, 0.03, 0.315],
+                  "material": "d_pane_r",
+                  "craftSeed": 1297190895
+                },
                 "d_roof_l_r": {
                   "shape": "plank",
                   "size": [0.42, 0.06, 0.72],
                   "rot": [0, 0, 45],
                   "pos": [-0.155, 0.4, 0],
                   "material": "d_roof_l_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "d_roof_r_r": {
                   "shape": "plank",
@@ -289,7 +320,8 @@
                   "rot": [0, 0, -45],
                   "pos": [0.155, 0.4, 0],
                   "material": "d_roof_r_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 }
               }
             }
@@ -302,7 +334,8 @@
               "size": [4.16, 0.13, 0.4],
               "pos": [0, 4, 0],
               "material": "ridge_g",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "roof_s_g": {
               "pos": [0, 3.98, 0],
@@ -313,21 +346,24 @@
                   "size": [4.1, 0.1, 2.42],
                   "pos": [0, -0.06, 1.16],
                   "material": "rs_deck_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rs_c1_g": {
                   "shape": "plank",
                   "size": [4.14, 0.07, 0.92],
                   "pos": [0.015, 0.02, 1.3],
                   "material": "rs_c1_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rs_c2_g": {
                   "shape": "plank",
                   "size": [4.18, 0.07, 0.95],
                   "pos": [-0.015, 0.02, 2],
                   "material": "rs_c2_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 }
               }
             },
@@ -340,21 +376,24 @@
                   "size": [4.1, 0.1, 2.42],
                   "pos": [0, -0.06, -1.16],
                   "material": "rn_deck_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rn_c1_g": {
                   "shape": "plank",
                   "size": [4.14, 0.07, 0.92],
                   "pos": [-0.015, 0.02, -1.3],
                   "material": "rn_c1_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "rn_c2_g": {
                   "shape": "plank",
                   "size": [4.18, 0.07, 0.95],
                   "pos": [0.015, 0.02, -2],
                   "material": "rn_c2_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 }
               }
             },
@@ -367,23 +406,32 @@
                   "size": [0.56, 0.6, 0.6],
                   "pos": [0, -0.05, 0],
                   "material": "d_body_g",
-                  "craft": 0.93
+                  "craft": 0.93,
+                  "craftSeed": 1297190895
                 },
                 "d_frame_g": {
                   "shape": "box",
                   "size": [0.36, 0.4, 0.06],
                   "pos": [0, 0.03, 0.31],
                   "material": "d_frame_g",
-                  "craft": 0.9
+                  "craft": 0.9,
+                  "craftSeed": 1297190895
                 },
-                "d_pane_g": { "shape": "box", "size": [0.26, 0.3, 0.07], "pos": [0, 0.03, 0.315], "material": "d_pane_g" },
+                "d_pane_g": {
+                  "shape": "box",
+                  "size": [0.26, 0.3, 0.07],
+                  "pos": [0, 0.03, 0.315],
+                  "material": "d_pane_g",
+                  "craftSeed": 1297190895
+                },
                 "d_roof_l_g": {
                   "shape": "plank",
                   "size": [0.42, 0.06, 0.72],
                   "rot": [0, 0, 45],
                   "pos": [-0.155, 0.4, 0],
                   "material": "d_roof_l_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 },
                 "d_roof_r_g": {
                   "shape": "plank",
@@ -391,7 +439,8 @@
                   "rot": [0, 0, -45],
                   "pos": [0.155, 0.4, 0],
                   "material": "d_roof_r_g",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1297190895
                 }
               }
             }
@@ -405,14 +454,16 @@
               "size": [0.42, 1.5, 0.42],
               "pos": [0.82, 3.62, -0.5],
               "material": "chimney",
-              "craft": 0.7
+              "craft": 0.7,
+              "craftSeed": 1297190895
             },
             "chim_cap": {
               "shape": "box",
               "size": [0.56, 0.12, 0.56],
               "pos": [0.82, 4.43, -0.5],
               "material": "chim_cap",
-              "craft": 0.75
+              "craft": 0.75,
+              "craftSeed": 1297190895
             }
           }
         },
@@ -421,28 +472,32 @@
           "size": [3.08, 0.15, 0.11],
           "pos": [0, 0.5, 1.3],
           "material": "sill_g",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "post_fl": {
           "shape": "plank",
           "size": [0.15, 1.34, 0.11],
           "pos": [-1.42, 1.1, 1.3],
           "material": "post_fl",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "post_fr": {
           "shape": "plank",
           "size": [0.15, 1.34, 0.11],
           "pos": [1.42, 1.1, 1.3],
           "material": "post_fr",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "jetty_beam": {
           "shape": "plank",
           "size": [3.3, 0.17, 0.13],
           "pos": [0, 1.8, 1.36],
           "material": "jetty_beam",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "jetty_ends": {
           "children": {
@@ -451,35 +506,40 @@
               "size": [0.11, 0.15, 0.22],
               "pos": [-1.3, 1.64, 1.33],
               "material": "je_1",
-              "craft": 0.8
+              "craft": 0.8,
+              "craftSeed": 1297190895
             },
             "je_2": {
               "shape": "plank",
               "size": [0.11, 0.15, 0.22],
               "pos": [-0.65, 1.64, 1.33],
               "material": "je_2",
-              "craft": 0.8
+              "craft": 0.8,
+              "craftSeed": 1297190895
             },
             "je_3": {
               "shape": "plank",
               "size": [0.11, 0.15, 0.22],
               "pos": [0, 1.64, 1.33],
               "material": "je_3",
-              "craft": 0.8
+              "craft": 0.8,
+              "craftSeed": 1297190895
             },
             "je_4": {
               "shape": "plank",
               "size": [0.11, 0.15, 0.22],
               "pos": [0.65, 1.64, 1.33],
               "material": "je_4",
-              "craft": 0.8
+              "craft": 0.8,
+              "craftSeed": 1297190895
             },
             "je_5": {
               "shape": "plank",
               "size": [0.11, 0.15, 0.22],
               "pos": [1.3, 1.64, 1.33],
               "material": "je_5",
-              "craft": 0.8
+              "craft": 0.8,
+              "craftSeed": 1297190895
             }
           }
         },
@@ -488,72 +548,94 @@
           "size": [0.11, 1.32, 0.11],
           "pos": [-0.99, 1.09, 1.3],
           "material": "doorpost_l",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "doorpost_r": {
           "shape": "plank",
           "size": [0.11, 1.32, 0.11],
           "pos": [-0.25, 1.09, 1.3],
           "material": "doorpost_r",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "door_lintel": {
           "shape": "plank",
           "size": [0.92, 0.12, 0.11],
           "pos": [-0.62, 1.66, 1.3],
           "material": "door_lintel",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "door_panel": {
           "shape": "plank",
           "size": [0.64, 1.17, 0.07],
           "pos": [-0.62, 1.015, 1.27],
           "material": "door",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
-        "door_knob": { "shape": "box", "size": [0.055, 0.055, 0.05], "pos": [-0.43, 1.02, 1.315], "material": "gold" },
+        "door_knob": {
+          "shape": "box",
+          "size": [0.055, 0.055, 0.05],
+          "pos": [-0.43, 1.02, 1.315],
+          "material": "gold",
+          "craftSeed": 1297190895
+        },
         "wf_t": {
           "shape": "plank",
           "size": [0.82, 0.1, 0.1],
           "pos": [0.78, 1.62, 1.3],
           "material": "wf_t",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "wf_b": {
           "shape": "plank",
           "size": [0.92, 0.09, 0.14],
           "pos": [0.78, 0.83, 1.31],
           "material": "wf_b",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "wf_l": {
           "shape": "plank",
           "size": [0.1, 0.7, 0.1],
           "pos": [0.42, 1.22, 1.3],
           "material": "wf_l",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "wf_r": {
           "shape": "plank",
           "size": [0.1, 0.7, 0.1],
           "pos": [1.14, 1.22, 1.3],
           "material": "wf_r",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
-        "w_pane": { "shape": "box", "size": [0.64, 0.72, 0.06], "pos": [0.78, 1.22, 1.285], "material": "w_pane" },
+        "w_pane": {
+          "shape": "box",
+          "size": [0.64, 0.72, 0.06],
+          "pos": [0.78, 1.22, 1.285],
+          "material": "w_pane",
+          "craftSeed": 1297190895
+        },
         "w_mull_v": {
           "shape": "plank",
           "size": [0.045, 0.7, 0.05],
           "pos": [0.78, 1.22, 1.312],
           "material": "w_mull_v",
-          "craft": 0.9
+          "craft": 0.9,
+          "craftSeed": 1297190895
         },
         "w_mull_h": {
           "shape": "plank",
           "size": [0.62, 0.045, 0.05],
           "pos": [0.78, 1.22, 1.315],
           "material": "w_mull_h",
-          "craft": 0.9
+          "craft": 0.9,
+          "craftSeed": 1297190895
         },
         "brace_a": {
           "shape": "plank",
@@ -561,7 +643,8 @@
           "pos": [0.08, 1.1, 1.3],
           "rot": [0, 0, 24],
           "material": "brace_a",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "brace_b": {
           "shape": "plank",
@@ -569,42 +652,48 @@
           "pos": [-1.21, 1.1, 1.3],
           "rot": [0, 0, -12],
           "material": "brace_b",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "up_post_l": {
           "shape": "plank",
           "size": [0.14, 1.06, 0.11],
           "pos": [-1.55, 2.3, 1.44],
           "material": "up_post_l",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "up_post_r": {
           "shape": "plank",
           "size": [0.14, 1.06, 0.11],
           "pos": [1.55, 2.3, 1.44],
           "material": "up_post_r",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "eave_beam": {
           "shape": "plank",
           "size": [3.3, 0.13, 0.11],
           "pos": [0, 2.77, 1.44],
           "material": "eave_beam",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "stud_l": {
           "shape": "plank",
           "size": [0.11, 0.82, 0.1],
           "pos": [-0.62, 2.295, 1.44],
           "material": "stud_l",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "stud_r": {
           "shape": "plank",
           "size": [0.11, 0.82, 0.1],
           "pos": [0.62, 2.295, 1.44],
           "material": "stud_r",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "up_brace_l": {
           "shape": "plank",
@@ -612,7 +701,8 @@
           "pos": [-1.08, 2.29, 1.44],
           "rot": [0, 0, -30],
           "material": "up_brace_l",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "up_brace_r": {
           "shape": "plank",
@@ -620,50 +710,63 @@
           "pos": [1.08, 2.29, 1.44],
           "rot": [0, 0, 30],
           "material": "up_brace_r",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "uwf_t": {
           "shape": "plank",
           "size": [0.72, 0.09, 0.1],
           "pos": [0, 2.64, 1.44],
           "material": "uwf_t",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "uwf_b": {
           "shape": "plank",
           "size": [0.8, 0.08, 0.12],
           "pos": [0, 2, 1.44],
           "material": "uwf_b",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "uwf_l": {
           "shape": "plank",
           "size": [0.09, 0.56, 0.1],
           "pos": [-0.31, 2.32, 1.44],
           "material": "uwf_l",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "uwf_r": {
           "shape": "plank",
           "size": [0.09, 0.56, 0.1],
           "pos": [0.31, 2.32, 1.44],
           "material": "uwf_r",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
-        "u_pane": { "shape": "box", "size": [0.56, 0.6, 0.06], "pos": [0, 2.32, 1.425], "material": "u_pane" },
+        "u_pane": {
+          "shape": "box",
+          "size": [0.56, 0.6, 0.06],
+          "pos": [0, 2.32, 1.425],
+          "material": "u_pane",
+          "craftSeed": 1297190895
+        },
         "u_mull_v": {
           "shape": "plank",
           "size": [0.04, 0.56, 0.05],
           "pos": [0, 2.32, 1.455],
           "material": "u_mull_v",
-          "craft": 0.9
+          "craft": 0.9,
+          "craftSeed": 1297190895
         },
         "u_mull_h": {
           "shape": "plank",
           "size": [0.5, 0.04, 0.05],
           "pos": [0, 2.32, 1.452],
           "material": "u_mull_h",
-          "craft": 0.9
+          "craft": 0.9,
+          "craftSeed": 1297190895
         },
         "shutters_open": {
           "children": {
@@ -672,28 +775,32 @@
               "size": [0.28, 0.68, 0.05],
               "pos": [0.26, 1.22, 1.3],
               "material": "sho_gl",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "sho_gr": {
               "shape": "plank",
               "size": [0.28, 0.68, 0.05],
               "pos": [1.3, 1.22, 1.3],
               "material": "sho_gr",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "sho_ul": {
               "shape": "plank",
               "size": [0.26, 0.56, 0.05],
               "pos": [-0.47, 2.32, 1.44],
               "material": "sho_ul",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "sho_ur": {
               "shape": "plank",
               "size": [0.26, 0.56, 0.05],
               "pos": [0.47, 2.32, 1.44],
               "material": "sho_ur",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             }
           }
         },
@@ -704,28 +811,32 @@
               "size": [0.3, 0.68, 0.05],
               "pos": [0.63, 1.22, 1.325],
               "material": "shc_gl",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "shc_gr": {
               "shape": "plank",
               "size": [0.3, 0.68, 0.05],
               "pos": [0.93, 1.22, 1.325],
               "material": "shc_gr",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "shc_ul": {
               "shape": "plank",
               "size": [0.27, 0.56, 0.05],
               "pos": [-0.135, 2.32, 1.465],
               "material": "shc_ul",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             },
             "shc_ur": {
               "shape": "plank",
               "size": [0.27, 0.56, 0.05],
               "pos": [0.135, 2.32, 1.465],
               "material": "shc_ur",
-              "craft": 0.85
+              "craft": 0.85,
+              "craftSeed": 1297190895
             }
           }
         },
@@ -734,28 +845,32 @@
           "size": [0.12, 0.17, 2.88],
           "pos": [-1.625, 1.8, 0],
           "material": "side_fascia_l",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "side_fascia_r": {
           "shape": "plank",
           "size": [0.12, 0.17, 2.88],
           "pos": [1.625, 1.8, 0],
           "material": "side_fascia_r",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "side_stud_ul": {
           "shape": "plank",
           "size": [0.11, 0.95, 0.12],
           "pos": [-1.635, 2.33, 0],
           "material": "side_stud_ul",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "side_stud_ur": {
           "shape": "plank",
           "size": [0.11, 0.95, 0.12],
           "pos": [1.635, 2.33, 0],
           "material": "side_stud_ur",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "side_diag_ul_f": {
           "shape": "plank",
@@ -763,7 +878,8 @@
           "pos": [-1.635, 2.32, 0.75],
           "rot": [-33, 0, 0],
           "material": "side_diag_ul_f",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "side_diag_ul_b": {
           "shape": "plank",
@@ -771,7 +887,8 @@
           "pos": [-1.635, 2.32, -0.75],
           "rot": [33, 0, 0],
           "material": "side_diag_ul_b",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "side_diag_ur_f": {
           "shape": "plank",
@@ -779,7 +896,8 @@
           "pos": [1.635, 2.32, 0.75],
           "rot": [-33, 0, 0],
           "material": "side_diag_ur_f",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "side_diag_ur_b": {
           "shape": "plank",
@@ -787,63 +905,72 @@
           "pos": [1.635, 2.32, -0.75],
           "rot": [33, 0, 0],
           "material": "side_diag_ur_b",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "side_stud_gl_f": {
           "shape": "plank",
           "size": [0.11, 1.3, 0.12],
           "pos": [-1.505, 1.1, 0.62],
           "material": "side_stud_gl_f",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "side_stud_gl_b": {
           "shape": "plank",
           "size": [0.11, 1.3, 0.12],
           "pos": [-1.505, 1.1, -0.62],
           "material": "side_stud_gl_b",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "side_stud_gr_f": {
           "shape": "plank",
           "size": [0.11, 1.3, 0.12],
           "pos": [1.505, 1.1, 0.62],
           "material": "side_stud_gr_f",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "side_stud_gr_b": {
           "shape": "plank",
           "size": [0.11, 1.3, 0.12],
           "pos": [1.505, 1.1, -0.62],
           "material": "side_stud_gr_b",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "gs_post_fl": {
           "shape": "plank",
           "size": [0.11, 1.34, 0.14],
           "pos": [-1.505, 1.1, 1.235],
           "material": "gs_post_fl",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "gs_post_fr": {
           "shape": "plank",
           "size": [0.11, 1.34, 0.14],
           "pos": [1.505, 1.1, 1.235],
           "material": "gs_post_fr",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "gs_post_bl": {
           "shape": "plank",
           "size": [0.11, 1.34, 0.14],
           "pos": [-1.505, 1.1, -1.235],
           "material": "gs_post_bl",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "gs_post_br": {
           "shape": "plank",
           "size": [0.11, 1.34, 0.14],
           "pos": [1.505, 1.1, -1.235],
           "material": "gs_post_br",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "side_brace_r": {
           "shape": "plank",
@@ -852,7 +979,8 @@
           "rot": [-30, 0, 0],
           "material": "side_brace_r",
           "craft": 0.85,
-          "chance": 0.65
+          "chance": 0.65,
+          "craftSeed": 1297190895
         },
         "win_side": {
           "chance": 0.6,
@@ -862,9 +990,16 @@
               "size": [0.1, 0.6, 0.6],
               "pos": [-1.51, 1.3, 0],
               "material": "ws_frame",
-              "craft": 0.9
+              "craft": 0.9,
+              "craftSeed": 1297190895
             },
-            "ws_pane": { "shape": "box", "size": [0.1, 0.48, 0.48], "pos": [-1.525, 1.3, 0], "material": "ws_pane" }
+            "ws_pane": {
+              "shape": "box",
+              "size": [0.1, 0.48, 0.48],
+              "pos": [-1.525, 1.3, 0],
+              "material": "ws_pane",
+              "craftSeed": 1297190895
+            }
           }
         },
         "doorstep": {
@@ -873,28 +1008,32 @@
           "pos": [-0.62, 0.07, 1.6],
           "material": "doorstep",
           "chance": 0.8,
-          "craft": 0.7
+          "craft": 0.7,
+          "craftSeed": 1297190895
         },
         "bk_sill": {
           "shape": "plank",
           "size": [3.08, 0.15, 0.11],
           "pos": [0, 0.5, -1.3],
           "material": "bk_sill",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "bk_post_gl": {
           "shape": "plank",
           "size": [0.15, 1.34, 0.11],
           "pos": [-1.42, 1.1, -1.3],
           "material": "bk_post_gl",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "bk_post_gr": {
           "shape": "plank",
           "size": [0.15, 1.34, 0.11],
           "pos": [1.42, 1.1, -1.3],
           "material": "bk_post_gr",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "bk_gbrace": {
           "shape": "plank",
@@ -903,7 +1042,8 @@
           "rot": [0, 0, 26],
           "material": "bk_gbrace",
           "craft": 0.85,
-          "chance": 0.7
+          "chance": 0.7,
+          "craftSeed": 1297190895
         },
         "bk_win": {
           "chance": 0.55,
@@ -913,9 +1053,16 @@
               "size": [0.52, 0.52, 0.1],
               "pos": [0.7, 1.28, -1.29],
               "material": "bkw_frame",
-              "craft": 0.9
+              "craft": 0.9,
+              "craftSeed": 1297190895
             },
-            "bkw_pane": { "shape": "box", "size": [0.4, 0.4, 0.1], "pos": [0.7, 1.28, -1.3], "material": "bkw_pane" }
+            "bkw_pane": {
+              "shape": "box",
+              "size": [0.4, 0.4, 0.1],
+              "pos": [0.7, 1.28, -1.3],
+              "material": "bkw_pane",
+              "craftSeed": 1297190895
+            }
           }
         },
         "bk_jetty_beam": {
@@ -923,35 +1070,40 @@
           "size": [3.3, 0.17, 0.13],
           "pos": [0, 1.8, -1.36],
           "material": "bk_jetty_beam",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "bk_eave_beam": {
           "shape": "plank",
           "size": [3.3, 0.13, 0.11],
           "pos": [0, 2.77, -1.44],
           "material": "bk_eave_beam",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "bk_up_post_l": {
           "shape": "plank",
           "size": [0.14, 1.06, 0.11],
           "pos": [-1.55, 2.3, -1.44],
           "material": "bk_up_post_l",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "bk_up_post_r": {
           "shape": "plank",
           "size": [0.14, 1.06, 0.11],
           "pos": [1.55, 2.3, -1.44],
           "material": "bk_up_post_r",
-          "craft": 0.87
+          "craft": 0.87,
+          "craftSeed": 1297190895
         },
         "bk_stud": {
           "shape": "plank",
           "size": [0.11, 0.82, 0.1],
           "pos": [0, 2.295, -1.44],
           "material": "bk_stud",
-          "craft": 0.88
+          "craft": 0.88,
+          "craftSeed": 1297190895
         },
         "bk_ubrace_l": {
           "shape": "plank",
@@ -959,7 +1111,8 @@
           "pos": [-0.78, 2.29, -1.44],
           "rot": [0, 0, 30],
           "material": "bk_ubrace_l",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         },
         "bk_ubrace_r": {
           "shape": "plank",
@@ -967,7 +1120,8 @@
           "pos": [0.78, 2.29, -1.44],
           "rot": [0, 0, -30],
           "material": "bk_ubrace_r",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1297190895
         }
       }
     }

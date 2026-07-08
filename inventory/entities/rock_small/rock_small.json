@@ -21,7 +21,8 @@
           "pos": [0, 0.12, 0],
           "scale": [1, 0.75, 0.92],
           "material": "pebble_round",
-          "craft": 0.5
+          "craft": 0.5,
+          "craftSeed": 1107305943
         },
         "pebble_angular": {
           "shape": "sphere",
@@ -31,7 +32,8 @@
           "rot": [15, 30, 10],
           "scale": [1.05, 0.8, 0.9],
           "material": "stone_dark",
-          "craft": 0.5
+          "craft": 0.5,
+          "craftSeed": 1107305943
         },
         "pebble_flat": {
           "shape": "sphere",
@@ -41,7 +43,8 @@
           "rot": [0, 20, 4],
           "scale": [1.1, 0.5, 0.95],
           "material": "pebble_flat",
-          "craft": 0.5
+          "craft": 0.5,
+          "craftSeed": 1107305943
         }
       }
     }

@@ -40,8 +40,8 @@ Conventions: meters, Y-up, entity origin at ground-center. Resource paths are re
                                          // rounded so motifs never cut mid-pattern; stretch = exactly once.
                                          // uvScale multiplies density in tile/fit (× the material's own default)
                "uvRot": 90,              // texture direction: degrees 0–359 (editor dropdowns offer 15° steps)
-               "uvProject": "box" }      // per-slot UV re-projection override: box|planar|sphere|none (else the
-                                         // material's default, then the node's authored UVs; see node.uvProject)
+               "uvProject": "box" }      // UV re-projection for this part: box|planar|sphere|none.
+                                         // THE single source for projection — no node/catalog fallback.
   },
 ```
 
@@ -73,8 +73,8 @@ Rules and semantics:
   overrides never affect siblings; deleting the override re-joins the group.
 - `"uvProject": "none"` is an explicit override value meaning "keep authored/tiled UVs":
   an inheriting child can pin no-projection over a parent that sets `box`/`planar`/`sphere`
-  (the editor's `proj: —` choice writes it on inheriting slots). It also blocks the catalog
-  material's default `uvProject`. An ABSENT key defers (parent, then catalog default).
+  (the editor's `proj: —` choice writes it on inheriting slots). An ABSENT key defers to
+  the parent slot; if nothing in the chain sets it, there is no projection.
 ```jsonc
 
   "rig": {                        // tree of named nodes; names are the animation/prompting vocabulary
@@ -117,32 +117,24 @@ Rules and semantics:
                                   // thickness; tip for arrow; innerRatio/points/depth for star)
                                   // &craft&seed. Geometry density is UNIFORM in all directions: side rings,
                                   // concentric cap rings and grid cells share one target edge length.
-                                  // Jitter hashes ENTITY-space vertex positions with the shared variant seed,
-                                  // so nodes that abut stay sealed (coincident vertices move together) —
-                                  // seams only diverge when per-part "seed" values differ (see below).
-      "seed": 812734502,          // jitter seed override for THIS node — written by the ⟲ regen inside each
-                                  // part chip (Model parts panel; regen writes the SAME seed to every node of
-                                  // the part, so sealed seams within a part survive regen). Mixed with the
-                                  // variant seed, so variants stay distinct. Absent = the shared variant seed.
-                                  // GENERATION IS ON-DEMAND ONLY: builds replay stored seeds verbatim —
-                                  // the same entity renders identically every time, editor and game alike.
-      "uvProject": "box",         // OPTIONAL UV re-projection: 'box'|'planar'|'sphere'. Recomputed in
-                                  // ENTITY space AFTER subdivision + craft jitter — box = dominant-axis
-                                  // planar per triangle (crafted rocks, rubble), planar = XZ from above
-                                  // (ground slabs), sphere = around the node's bbox center (boulders).
-                                  // Replaces the shape's authored/tiled UVs; the material's
-                                  // uvMode/uvScale metering still applies on top (tile = repeats/m,
-                                  // fit = whole repeats over the projected extent, stretch = once).
-                                  // Ignored on shape "mesh" (external models keep their atlas UVs).
-                                  // Editor: "uv:" dropdown inside each part chip's craft panel —
-                                  // written to every node of the part, like craft.
+                                  // Jitter hashes ENTITY-space (BASE-pose) vertex positions with the node's
+                                  // craftSeed, so nodes that abut stay sealed (coincident vertices move
+                                  // together) ONLY when they share a seed — see craftSeed + seam-groups below.
+      "craftSeed": 812734502,     // this part's craft-jitter seed — STUDIO-written, stored so craft is
+                                  // reproducible (re-baking reproduces it exactly) and individually
+                                  // re-rollable. First seeding gives every node ONE shared value (coherent
+                                  // jitter, all seams trivially sealed). "⟲ craft" rerolls all; the part
+                                  // chip's ⟲ rerolls just this part — AND its seam-group (any nodes that
+                                  // share a base-pose vertex, e.g. welded frame corners), so a real seam
+                                  // can't crack. GENERATION IS STUDIO-ONLY: the runtime replays baked geometry.
+      // (UV projection is NOT a node field — it lives on the material slot; see materials.uvProject)
       "pos": [0, 0.36, 0],        // center of the primitive, in parent space
       "rot": [0, 0, 10],          // degrees
-      "rotJitter": [0, 0, 4],     // variant: seeded random rotation, ± degrees per axis
+      "rotJitter": [0, 0, 4],     // variant: random rotation ± degrees per axis, rolled per variant into <id>.variants.json
       "pivot": [0, 0.1, 0],       // rotation point relative to center (e.g. shoulder at top of arm)
       "material": "shell",        // or per-face: { "side": "s", "top": "t", "bottom": "b", "front": ..., "all": ... }
       "hidden": true,             // default invisibility (revealed by a state's "show")
-      "chance": 0.65,             // variant: node exists with this probability (seeded)
+      "chance": 0.65,             // variant: node exists with this probability, rolled per variant into <id>.variants.json
       "children": { ... }         // child positions are relative to this node's center
     }
   },
@@ -156,12 +148,27 @@ Rules and semantics:
   "props": { "health": 2, "walkSpeed": 1.3 },   // gameplay tunables, free-form (the runtime reads these)
 
   // Geometry is BAKED by the studio, not generated at runtime. `variants` are the
-  // bake RULES: the studio bakes `count` distinct geometry compositions into
-  // <id>.geom.{i}.json sidecars (resolving oneOf/chance/rotJitter/craft with fresh
-  // randomness per file); any runtime cycles them (🎲) and never regenerates. The
-  // studio re-bakes only when a geom is missing or on a craft/Regen edit.
+  // bake RULES. Two sidecars, on independent clocks (so a craft edit never
+  // reshuffles the arrangement):
+  //   <id>.variants.json  — every entity has one (single-variant too). `count`
+  //                          RESOLVED manifests: { parts: { <node>: { pos, rot } } }
+  //                          — the parts present this variant (oneOf/chance already
+  //                          resolved, rotJitter rolled into rot), no operators. The
+  //                          composer + runtime read pos/rot straight from here — the
+  //                          rig is never consulted for placement. Re-rolled by "⟳ variants".
+  //   <id>.geom.{i}.json   — one per variant, a SELF-CONTAINED scene tree (glTF-
+  //                          style): the rig's node hierarchy with each node's final
+  //                          transform (pos/rot/scale/pivot), render fields (shape /
+  //                          material slot / hidden) and baked geometry.
+  //                          The runtime builds from this ALONE; the main file only
+  //                          supplies material DEFINITIONS (by slot name) + anims (by
+  //                          node name). Re-composed on a craft/sub edit, a reroll, or
+  //                          "⟳ variants" — deterministically. Any runtime cycles them (🎲).
+  // NOTE: variants derive their variety from LAYOUT (oneOf/chance/rotJitter). If
+  // `count` exceeds the distinct layouts an entity can produce, some geom files are
+  // identical — set count to the number of meaningful compositions.
   "variants": {                   // absent = a single baked composition
-    "count": 3,                   // how many variant geom files to bake (default 1)
+    "count": 3,                   // how many variant layouts/geom files to bake (default 1)
     "oneOf": { "lid": ["lid_flat", "lid_ajar", "lid_broken"] } // one node kept per group, per variant
   },
 
@@ -246,8 +253,8 @@ and the studio's material manager edits `tuning`. Slots layer only geometry/plac
     "emissive": 0,                // 0..4; the emissive map binds only when this is > 0
     "opacity": 1, "cutout": false,    // opacity < 1 = translucent; cutout = alpha-test (leaves/sprites)
     "doubleSided": false, "flat": false }
-  // optional tuning keys: "uvScale" (default tiling density), "uvProject" ("box"|"planar"|"sphere"
-  // default projection), "alphaMap" (one resource path used as an opacity/cutout mask)
+  // optional tuning keys: "uvScale" (default tiling density), "alphaMap" (one resource
+  // path used as an opacity/cutout mask). Projection is per-ENTITY-SLOT, not on the catalog material.
 }
 ```
 
@@ -316,6 +323,6 @@ Synth form (WebAudio, good for bespoke bleeps/hisses no pack file covers):
   "overrides": { "physics.body": "fixed", "props.health": 5, "states.initial": "aggro" } }
 ```
 
-`variant` indexes into the entity's stored `variants.seeds` — placement PICKS a
-pre-generated static result, it never generates. `overrides` are dot-path patches
+`variant` indexes into the entity's baked `<id>.geom.{i}.json` set — placement PICKS
+a pre-composed static result, it never generates. `overrides` are dot-path patches
 onto the entity doc.

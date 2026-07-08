@@ -29,7 +29,8 @@
           "scale": [1, 0.7, 0.95],
           "material": "rock_a",
           "sub": 1,
-          "craft": 0.62
+          "craft": 0.62,
+          "craftSeed": 1230498331
         },
         "rock_b": {
           "shape": "sphere",
@@ -41,7 +42,8 @@
           "scale": [1.05, 0.68, 0.9],
           "material": "rock_b",
           "sub": 1,
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1230498331
         },
         "rock_c": {
           "shape": "sphere",
@@ -53,7 +55,8 @@
           "scale": [1, 0.72, 1],
           "material": "rock_c",
           "sub": 1,
-          "craft": 0.58
+          "craft": 0.58,
+          "craftSeed": 1230498331
         },
         "rock_d": {
           "shape": "sphere",
@@ -64,7 +67,8 @@
           "scale": [1, 0.75, 0.9],
           "material": "rock_d",
           "sub": 1,
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1230498331
         },
         "rock_e": {
           "shape": "sphere",
@@ -76,7 +80,8 @@
           "material": "rock_e",
           "chance": 0.75,
           "sub": 1,
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1230498331
         },
         "rock_top": {
           "shape": "sphere",
@@ -89,7 +94,8 @@
           "material": "rock_top",
           "chance": 0.6,
           "sub": 1,
-          "craft": 0.62
+          "craft": 0.62,
+          "craftSeed": 1230498331
         },
         "rock_f": {
           "shape": "sphere",
@@ -101,7 +107,8 @@
           "material": "rock_f",
           "chance": 0.45,
           "sub": 1,
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1230498331
         },
         "moss_blob": {
           "shape": "sphere",
@@ -112,7 +119,8 @@
           "material": "moss_blob",
           "chance": 0.4,
           "sub": 2,
-          "craft": 0.7
+          "craft": 0.7,
+          "craftSeed": 1230498331
         }
       }
     }

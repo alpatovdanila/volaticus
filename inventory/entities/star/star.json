@@ -15,7 +15,8 @@
           "points": 5,
           "depth": 0.09,
           "craft": 0.92,
-          "material": "star"
+          "material": "star",
+          "craftSeed": 1970237395
         }
       }
     }

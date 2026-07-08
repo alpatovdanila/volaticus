@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { warmEffects } from '../inventory/effects'
 import { applyEnvReflection } from '../inventory/envmap'
-import { bakeEntityGeometry, buildColliderViz, buildEntity, disposeEntity, projectGeometryUv, type BakedGeometry, type BuiltEntity } from '../inventory/factory'
+import { bakeEntityGeometry, bakeVariantLayouts, buildColliderViz, buildEntity, disposeEntity, ensureCraftSeeds, projectGeometryUv, rerollCraftSeeds, rerollPartSeed, type BakedGeometry, type BuiltEntity, type VariantLayout } from '../inventory/factory'
 import { mergeBuiltEntity } from '../inventory/merge'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
@@ -54,7 +54,20 @@ function variantCount(doc: EntityDoc | undefined): number {
   return Math.max(1, doc?.variants?.count ?? 1)
 }
 
+// does any node actually get craft-jittered? (generated lumber always jitters;
+// plain shapes only when craft is set.) Gates the "reroll craft" button — no point
+// offering it on an entity with nothing crooked to reroll.
+function hasCraftGeometry(doc: EntityDoc | undefined): boolean {
+  if (!doc) return false
+  let found = false
+  walkRig(doc.rig, (_n, node) => {
+    if (node.craft !== undefined || isGeneratedShape(node.shape)) found = true
+  })
+  return found
+}
+
 const geomPath = (id: string, i: number) => `entities/${id}/${id}.geom.${i}.json`
+const variantsPath = (id: string) => `entities/${id}/${id}.variants.json`
 
 // Persist a freshly-baked geometry set to its sidecar files (studio only). Compact
 // JSON — these are machine data, not hand-edited.
@@ -62,8 +75,64 @@ async function saveBaked(id: string, baked: BakedGeometry): Promise<void> {
   for (let i = 0; i < baked.length; i++) await inv.save(geomPath(id, i), JSON.stringify(baked[i]))
 }
 
+async function saveVariants(id: string, layouts: VariantLayout[]): Promise<void> {
+  await inv.save(variantsPath(id), JSON.stringify({ format: 1, variants: layouts }))
+}
+
+// Load the STORED variant layouts (<id>.variants.json). Missing, unparseable, or a
+// stale length (count changed) → re-roll fresh + save. Craft edits reuse these, so
+// the arrangement holds still; only "Regenerate variants" replaces them.
+async function loadVariants(id: string, doc: EntityDoc): Promise<VariantLayout[]> {
+  const count = variantCount(doc)
+  let existing: VariantLayout[] | null = null
+  const res = await fetch('/__inv/read?path=' + encodeURIComponent(variantsPath(id)))
+  if (res.ok) {
+    try {
+      const layouts = JSON.parse((await res.json()).content)?.variants
+      // valid = resolved-manifest shape (rejects stale pre-manifest files)
+      if (Array.isArray(layouts) && layouts.every((l) => l?.parts)) existing = layouts as VariantLayout[]
+    } catch {
+      /* re-roll below */
+    }
+  }
+  if (existing && existing.length === count) return existing
+  // count changed (or no file): PRESERVE existing arrangements — a plain count edit
+  // must not reshuffle the variants the user already has. Grow → keep all + append
+  // only the new ones; shrink → keep the first `count`; no file → roll `count`.
+  const layouts = !existing
+    ? bakeVariantLayouts(doc)
+    : existing.length > count
+      ? existing.slice(0, count)
+      : [...existing, ...bakeVariantLayouts(doc, count - existing.length)]
+  await saveVariants(id, layouts)
+  return layouts
+}
+
+// Mirror an ensure/reroll seed map into a rig (the raw JSON). Returns whether any
+// craftSeed changed, so the caller only persists the entity file when needed.
+function applySeedMap(rig: Record<string, unknown>, map: Record<string, number>): boolean {
+  let changed = false
+  walkRig(rig as never, (name, node) => {
+    const n = node as { craftSeed?: number }
+    if (map[name] !== undefined && n.craftSeed !== map[name]) {
+      n.craftSeed = map[name]
+      changed = true
+    }
+  })
+  return changed
+}
+
+// Ensure the doc's per-part craft seeds exist (or apply a supplied reroll map),
+// mirror them into the raw JSON, and persist the entity file if they changed. Seeds
+// live IN the entity JSON, so a geom bake that assigns/rerolls them must save it.
+async function persistSeeds(item: { path: string; raw: unknown; doc: EntityDoc }, seedMap?: Record<string, number>): Promise<void> {
+  const map = seedMap ?? ensureCraftSeeds(item.doc)
+  const changed = applySeedMap((item.raw as EntityDoc).rig as never, map)
+  if (changed) await inv.save(item.path, stringifyPretty(item.raw))
+}
+
 // Load an entity's baked geometry: fetch every variant sidecar if they ALL exist,
-// otherwise bake fresh + save (the "no geometry yet" trigger).
+// otherwise compose fresh (seeds + layouts) + save (the "no geometry yet" trigger).
 async function loadBaked(id: string, doc: EntityDoc): Promise<BakedGeometry> {
   const count = variantCount(doc)
   const loaded: BakedGeometry = []
@@ -77,7 +146,9 @@ async function loadBaked(id: string, doc: EntityDoc): Promise<BakedGeometry> {
     }
   }
   if (loaded.length === count) return loaded
-  const baked = bakeEntityGeometry(doc)
+  const item = inv.entities.get(id)
+  if (item?.doc) await persistSeeds(item as never)
+  const baked = bakeEntityGeometry(doc, await loadVariants(id, doc))
   await saveBaked(id, baked)
   return baked
 }
@@ -89,20 +160,71 @@ async function ensureBaked(id: string, doc: EntityDoc): Promise<BakedGeometry> {
   return loadBaked(id, doc)
 }
 
-// Regen (studio trigger — craft/geometry edit or explicit button): re-bake every
-// variant with fresh randomness, save the sidecars, rebuild from them.
-async function regen(): Promise<void> {
+// Persist an entity's FULL state for `id` as ONE unit — entity JSON (seeds + any
+// pending authored edits) + variants sidecar + geom sidecars. Every write targets
+// `id` (not the live selection), so a mid-flight selection change can't leave a
+// half-written, mismatched set (the source of the reroll/regenVariants desync bugs).
+// `freshLayouts` (Regenerate variants) replaces the stored layouts; otherwise the
+// PRESERVED layouts are reused so a craft edit never reshuffles the arrangement.
+async function bakeAndSaveAll(id: string, freshLayouts?: VariantLayout[]): Promise<BakedGeometry | null> {
+  const item = inv.entities.get(id)
+  if (!item?.doc) return null
+  await preloadEntityMeshes(item.doc)
+  // seeds: ensure present, mirror into the raw JSON
+  applySeedMap((item.raw as EntityDoc).rig as never, ensureCraftSeeds(item.doc))
+  // source first: the whole entity JSON (seeds + any pending authored edits), once
+  await inv.save(item.path, stringifyPretty(item.raw))
+  // then the derived sidecars — variants (preserved or the fresh roll) + geom
+  const layouts = freshLayouts ?? (await loadVariants(id, item.doc))
+  if (freshLayouts) await saveVariants(id, freshLayouts)
+  const baked = bakeEntityGeometry(item.doc, layouts)
+  await saveBaked(id, baked)
+  return baked
+}
+
+// Re-compose after a craft/sub edit or reroll: unify-write the whole entity, then
+// reconcile the live view + clear dirty ONLY if this entity is still selected. A bake
+// IS a save — entity JSON + sidecars land together, so nothing drifts on disk.
+async function regen(freshLayouts?: VariantLayout[]): Promise<void> {
   if (!sel || sel.kind !== 'entity') return
   const id = sel.id
-  const doc = inv.entities.get(id)?.doc
-  if (!doc) return
-  await preloadEntityMeshes(doc)
-  if (sel?.id !== id) return // selection changed during preload — don't cross-write
-  const baked = bakeEntityGeometry(doc)
-  await saveBaked(id, baked)
-  if (sel?.id !== id) return
+  const baked = await bakeAndSaveAll(id, freshLayouts)
+  // id's files are consistent regardless; only touch the view if still selected
+  if (!baked || sel?.id !== id) return
   sel.baked = baked
+  sel.dirty = false
+  setTitle(id, false)
   rebuild()
+}
+
+// Regenerate variants (explicit): re-roll the layouts (new oneOf/chance/rotJitter
+// arrangement); regen persists them + the geom as one unit.
+async function regenVariants(): Promise<void> {
+  const id = sel?.id
+  const doc = id ? inv.entities.get(id)?.doc : undefined
+  if (!id || !doc) return
+  await regen(bakeVariantLayouts(doc))
+}
+
+// Reroll craft (explicit): fresh crookedness for every part (layouts untouched).
+async function rerollCraft(): Promise<void> {
+  const id = sel?.id
+  const doc = id ? inv.entities.get(id)?.doc : undefined
+  if (!id || !doc) return
+  rerollCraftSeeds(doc) // mutate doc seeds; regen's ensureCraftSeeds keeps + persists them
+  await regen()
+}
+
+// Reroll one part (its whole seam-group, so welded frame corners can't crack) —
+// the per-part ⟲ in the gen bar. `slot` is a material slot; reroll every node on it.
+async function rerollPart(slot: string): Promise<void> {
+  const id = sel?.id
+  const doc = id ? inv.entities.get(id)?.doc : undefined
+  if (!id || !doc) return
+  const nodeNames = nodesUsingSlot(doc, slot).map((e) => e.name)
+  if (!nodeNames.length) return
+  rerollPartSeed(doc, nodeNames) // seam-group-aware; regen persists
+  await regen()
 }
 
 let sel: Selection | null = null
@@ -326,7 +448,7 @@ function refreshOverlay(): void {
       contextDims: doc ? contextDimsOf(doc) : undefined,
       context: sel.preview?.context,
       variant: doc ? { index: sel.variantIndex, count: variantCount(doc) } : undefined,
-      hasSeeds: variantCount(doc) > 1,
+      canReroll: hasCraftGeometry(doc),
     },
     overlayCb,
   )
@@ -357,12 +479,16 @@ const overlayCb = {
     refreshOverlay()
   },
   onRegenVariants: () => {
-    // Regen: re-bake every variant's geometry with fresh randomness + save the
-    // <id>.geom.{i}.json sidecars (the entity JSON stores no geometry itself).
-    void regen().then(() => {
+    // re-roll the variant LAYOUTS (new oneOf/chance/rotJitter arrangement) into
+    // <id>.variants.json, then re-compose the geom sidecars.
+    void regenVariants().then(() => {
       refreshOverlay()
-      toast('re-baked geometry')
+      toast('re-rolled variants')
     })
+  },
+  onRerollCraft: () => {
+    // fresh craft crookedness for every part (new stored seeds) — layouts stay put.
+    void rerollCraft().then(() => toast('re-rolled craft'))
   },
   onCollider: (show: boolean) => {
     if (!sel) return
@@ -693,10 +819,10 @@ const genCb = {
     setTitle(sel.id, true)
     void regen() // subdivision changed → re-bake the geometry
   },
-  onRegen: (_slot: string) => {
-    // per-part regen retired (geometry has no per-node seeds now) — Regen
-    // re-bakes the whole entity with fresh randomness.
-    void regen()
+  onRegen: (slot: string) => {
+    // per-part reroll: fresh craft seed for this part's node(s) — and their seam-
+    // group, so a welded frame corner can't crack — then re-compose (layouts stay).
+    void rerollPart(slot)
   },
 }
 

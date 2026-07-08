@@ -27,7 +27,7 @@
           "pos": [0, 0.45, 0.11],
           "material": "seat_a",
           "craft": 0.4,
-          "uvProject": "box"
+          "craftSeed": 36201411
         },
         "seat_b": {
           "shape": "plank",
@@ -35,7 +35,7 @@
           "pos": [0, 0.45, -0.12],
           "material": "seat_b",
           "craft": 0.4,
-          "uvProject": "box"
+          "craftSeed": 36201411
         },
         "back_top": {
           "shape": "plank",
@@ -46,7 +46,7 @@
           "material": "back_top",
           "chance": 0.85,
           "craft": 0.4,
-          "uvProject": "box"
+          "craftSeed": 36201411
         },
         "back_bot": {
           "shape": "plank",
@@ -55,7 +55,7 @@
           "rot": [-8, 0, 0],
           "material": "back_bot",
           "craft": 0.4,
-          "uvProject": "box"
+          "craftSeed": 36201411
         },
         "spine_l": {
           "shape": "plank",
@@ -63,7 +63,8 @@
           "pos": [-0.45, 0.64, -0.24],
           "rot": [-8, 0, 0],
           "material": "spine_l",
-          "craft": 0.37
+          "craft": 0.37,
+          "craftSeed": 36201411
         },
         "spine_r": {
           "shape": "plank",
@@ -71,7 +72,8 @@
           "pos": [0.45, 0.64, -0.24],
           "rot": [-8, 0, 0],
           "material": "spine_r",
-          "craft": 0.37
+          "craft": 0.37,
+          "craftSeed": 36201411
         },
         "leg_l": {
           "shape": "plank",
@@ -79,7 +81,8 @@
           "pos": [-0.6, 0.22, 0],
           "rotJitter": [2, 0, 2],
           "material": "leg_l",
-          "craft": 0.37
+          "craft": 0.37,
+          "craftSeed": 36201411
         },
         "leg_r": {
           "shape": "plank",
@@ -87,7 +90,8 @@
           "pos": [0.6, 0.22, 0],
           "rotJitter": [2, 0, 2],
           "material": "leg_r",
-          "craft": 0.37
+          "craft": 0.37,
+          "craftSeed": 36201411
         },
         "brace": {
           "shape": "plank",
@@ -95,7 +99,8 @@
           "pos": [0, 0.18, 0],
           "material": "brace",
           "chance": 0.7,
-          "craft": 0.37
+          "craft": 0.37,
+          "craftSeed": 36201411
         }
       }
     }

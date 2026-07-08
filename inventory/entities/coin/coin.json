@@ -8,7 +8,14 @@
     "spinner": {
       "pos": [0, 0.42, 0],
       "children": {
-        "disc": { "shape": "cylinder", "radius": 0.19, "height": 0.05, "rot": [90, 0, 0], "material": "gold" }
+        "disc": {
+          "shape": "cylinder",
+          "radius": 0.19,
+          "height": 0.05,
+          "rot": [90, 0, 0],
+          "material": "gold",
+          "craftSeed": 1225490936
+        }
       }
     }
   },

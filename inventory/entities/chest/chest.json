@@ -38,31 +38,36 @@
           "shape": "box",
           "size": [0.84, 0.1, 0.54],
           "pos": [0, 0.05, 0],
-          "material": { "all": "floor", "top": "floor_2" }
+          "material": { "all": "floor", "top": "floor_2" },
+          "craftSeed": 39210134
         },
         "wall_f": {
           "shape": "box",
           "size": [0.84, 0.4, 0.06],
           "pos": [0, 0.3, 0.24],
-          "material": { "all": "wall_f", "back": "wall_f_2" }
+          "material": { "all": "wall_f", "back": "wall_f_2" },
+          "craftSeed": 39210134
         },
         "wall_b": {
           "shape": "box",
           "size": [0.84, 0.4, 0.06],
           "pos": [0, 0.3, -0.24],
-          "material": { "all": "wall_b", "front": "wall_b_2" }
+          "material": { "all": "wall_b", "front": "wall_b_2" },
+          "craftSeed": 39210134
         },
         "wall_l": {
           "shape": "box",
           "size": [0.06, 0.4, 0.4],
           "pos": [-0.39, 0.3, 0],
-          "material": { "all": "wall_l", "right": "wall_l_2" }
+          "material": { "all": "wall_l", "right": "wall_l_2" },
+          "craftSeed": 39210134
         },
         "wall_r": {
           "shape": "box",
           "size": [0.06, 0.4, 0.4],
           "pos": [0.39, 0.3, 0],
-          "material": { "all": "wall_r", "left": "wall_r_2" }
+          "material": { "all": "wall_r", "left": "wall_r_2" },
+          "craftSeed": 39210134
         },
         "strap_lf": {
           "shape": "box",
@@ -70,7 +75,7 @@
           "pos": [-0.26, 0.27, 0.265],
           "material": "strap_lf",
           "craft": 0.85,
-          "uvProject": "planar"
+          "craftSeed": 39210134
         },
         "strap_lb": {
           "shape": "box",
@@ -78,7 +83,7 @@
           "pos": [-0.26, 0.27, -0.265],
           "material": "strap_lb",
           "craft": 0.85,
-          "uvProject": "planar"
+          "craftSeed": 39210134
         },
         "strap_rf": {
           "shape": "box",
@@ -86,7 +91,7 @@
           "pos": [0.26, 0.27, 0.265],
           "material": "strap_rf",
           "craft": 0.85,
-          "uvProject": "planar"
+          "craftSeed": 39210134
         },
         "strap_rb": {
           "shape": "box",
@@ -94,7 +99,7 @@
           "pos": [0.26, 0.27, -0.265],
           "material": "strap_rb",
           "craft": 0.85,
-          "uvProject": "planar"
+          "craftSeed": 39210134
         },
         "lid": {
           "pos": [0, 0.5, 0],
@@ -104,16 +109,23 @@
               "shape": "box",
               "size": [0.86, 0.13, 0.56],
               "pos": [0, 0.065, 0],
-              "material": { "all": "lid_lower", "bottom": "lid_lower_2" }
+              "material": { "all": "lid_lower", "bottom": "lid_lower_2" },
+              "craftSeed": 39210134
             },
-            "lid_upper": { "shape": "box", "size": [0.7, 0.11, 0.42], "pos": [0, 0.18, 0], "material": "lid_upper" },
+            "lid_upper": {
+              "shape": "box",
+              "size": [0.7, 0.11, 0.42],
+              "pos": [0, 0.18, 0],
+              "material": "lid_upper",
+              "craftSeed": 39210134
+            },
             "lid_strap_l": {
               "shape": "box",
               "size": [0.09, 0.14, 0.58],
               "pos": [-0.26, 0.065, 0],
               "material": "lid_strap_l",
               "craft": 0.85,
-              "uvProject": "planar"
+              "craftSeed": 39210134
             },
             "lid_strap_r": {
               "shape": "box",
@@ -121,9 +133,15 @@
               "pos": [0.26, 0.065, 0],
               "material": "lid_strap_r",
               "craft": 0.85,
-              "uvProject": "planar"
+              "craftSeed": 39210134
             },
-            "latch": { "shape": "box", "size": [0.13, 0.18, 0.06], "pos": [0, 0.02, 0.29], "material": "latch" }
+            "latch": {
+              "shape": "box",
+              "size": [0.13, 0.18, 0.06],
+              "pos": [0, 0.02, 0.29],
+              "material": "latch",
+              "craftSeed": 39210134
+            }
           }
         }
       }

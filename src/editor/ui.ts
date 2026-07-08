@@ -509,11 +509,10 @@ export function renderSlotChips(
     projSel.value = s.uvProject
     projSel.onclick = (e) => e.stopPropagation()
     projSel.onchange = () => cb.onParam(s.slot, 'uvProject', projSel.value)
-    // The per-slot chip is AUTHORITATIVE (factory.effectiveUvProject): an explicit
-    // choice here overrides the authored node-level projection, so it always
-    // changes the model — no lock/dead-option case anymore.
+    // The per-slot chip is THE single source of projection (factory.effectiveUvProject
+    // reads only the slot), so it always changes the model — no node/catalog fallback.
     projSel.title =
-      'UV projection for this part: box = per-face planar, planar = from above, sphere = around center (— = material/authored; overrides the part’s authored node projection when set; on an inheriting part, choosing — PINS authored UVs over the parent’s projection — ↺ to re-follow the parent)'
+      'UV projection for this part: box = per-face planar, planar = from above, sphere = around center (— = no projection; on an inheriting part, choosing — PINS no-projection over the parent’s projection — ↺ to re-follow the parent)'
     decorate(uvSel, 'uvMode', controls)
     decorate(scaleSel, 'uvScale', controls)
     decorate(rotSel, 'uvRot', controls)
@@ -1022,7 +1021,8 @@ export interface OverlayCallbacks {
   onTriggerEffect(): void
   onPlaySfx(): void
   onNextVariant(): void
-  onRegenVariants(): void // rewrite variants.seeds with fresh randoms (explicit editor action)
+  onRegenVariants(): void // re-roll the layouts in <id>.variants.json, then re-compose (arrangement changes)
+  onRerollCraft(): void // re-roll every part's craft seed (crookedness changes; layout stays)
   onCollider(show: boolean): void
   onResetCam(): void
   onContext(dim: string, value: string | null): void
@@ -1039,8 +1039,8 @@ export function renderOverlay(
     modifier?: string | null // the active one
     contextDims?: Map<string, Set<string>>
     context?: Record<string, string>
-    variant?: { index: number; count: number } // stored variant set (variants.seeds)
-    hasSeeds?: boolean // doc carries an explicit variants.seeds list
+    variant?: { index: number; count: number } // baked variant set (<id>.geom.{i}.json + layouts)
+    canReroll?: boolean // entity has craft geometry → offer the "reroll craft" button
   } | null,
   cb: OverlayCallbacks,
 ): void {
@@ -1093,13 +1093,18 @@ export function renderOverlay(
       btn.title = 'cycle the baked variants (<id>.geom.{i}.json) — static, nothing is regenerated'
       btn.onclick = () => cb.onNextVariant()
       top.appendChild(btn)
+      // re-roll the LAYOUTS (which oneOf/chance/rotJitter per variant) → new arrangement
+      const rv = el('button', undefined, '⟳ variants')
+      rv.title = 're-roll the variant layouts (oneOf/chance/rotJitter) in <id>.variants.json, then re-compose — the arrangement changes; craft crookedness stays'
+      rv.onclick = () => cb.onRegenVariants()
+      top.appendChild(rv)
     }
-    // Regen: re-bake every variant's geometry with fresh randomness (same count)
-    if (item.hasSeeds) {
-      const rg = el('button', undefined, '⟳ regen')
-      rg.title = "re-bake every variant's geometry with fresh randomness — rewrites the <id>.geom.{i}.json sidecars"
-      rg.onclick = () => cb.onRegenVariants()
-      top.appendChild(rg)
+    // re-roll the craft SEEDS (crookedness) — layouts untouched
+    if (item.canReroll) {
+      const rc = el('button', undefined, '⟲ craft')
+      rc.title = "re-roll every part's craft seed → fresh crookedness; the layout/arrangement stays put"
+      rc.onclick = () => cb.onRerollCraft()
+      top.appendChild(rc)
     }
     const colWrap = el('label', 'chk')
     const chk = el('input') as HTMLInputElement

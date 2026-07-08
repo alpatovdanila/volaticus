@@ -17,14 +17,14 @@
       "flat": true,
       "inherit": "petal_white"
     },
-    "fp_a": { "inherit": "petal_pink" },
-    "fp_b": { "inherit": "petal_pink" },
-    "fp_c": { "inherit": "petal_pink" },
-    "fp_d": { "inherit": "petal_pink" },
-    "fp_e": { "inherit": "petal_pink" },
-    "fp_f": { "inherit": "petal_pink" },
-    "fp_g": { "inherit": "petal_pink" },
-    "fp_h": { "inherit": "petal_pink" },
+    "fp_a": { "inherit": "petal_pink", "uvProject": "planar" },
+    "fp_b": { "inherit": "petal_pink", "uvProject": "planar" },
+    "fp_c": { "inherit": "petal_pink", "uvProject": "planar" },
+    "fp_d": { "inherit": "petal_pink", "uvProject": "planar" },
+    "fp_e": { "inherit": "petal_pink", "uvProject": "planar" },
+    "fp_f": { "inherit": "petal_pink", "uvProject": "planar" },
+    "fp_g": { "inherit": "petal_pink", "uvProject": "planar" },
+    "fp_h": { "inherit": "petal_pink", "uvProject": "planar" },
     "petal_white": { "material": "concrete_wall_01", "uvMode": "stretch", "uvRot": 90, "flat": true },
     "fw_a": { "inherit": "petal_white" },
     "fw_b": { "inherit": "petal_white" },
@@ -46,7 +46,8 @@
           "scale": [1, 0.85, 0.95],
           "material": "blob_a",
           "craft": 0.88,
-          "sub": 3
+          "sub": 3,
+          "craftSeed": 46263075
         },
         "blob_b": {
           "shape": "sphere",
@@ -56,7 +57,8 @@
           "material": "leaves_light",
           "chance": 0.8,
           "craft": 0.88,
-          "sub": 3
+          "sub": 3,
+          "craftSeed": 46263075
         },
         "blob_c": {
           "shape": "sphere",
@@ -66,7 +68,8 @@
           "material": "blob_c",
           "chance": 0.65,
           "craft": 0.88,
-          "sub": 3
+          "sub": 3,
+          "craftSeed": 46263075
         },
         "flowers_pink": {
           "children": {
@@ -77,7 +80,7 @@
               "pos": [0.076, 0.617, 0.027],
               "scale": [1, 0.8, 1],
               "material": "fp_a",
-              "uvProject": "planar"
+              "craftSeed": 46263075
             },
             "fp_b": {
               "shape": "sphere",
@@ -86,7 +89,7 @@
               "pos": [-0.035, 0.563, 0.189],
               "scale": [1, 0.8, 1],
               "material": "fp_b",
-              "uvProject": "planar"
+              "craftSeed": 46263075
             },
             "fp_c": {
               "shape": "sphere",
@@ -95,7 +98,7 @@
               "pos": [-0.191, 0.548, -0.105],
               "scale": [1, 0.8, 1],
               "material": "fp_c",
-              "uvProject": "planar"
+              "craftSeed": 46263075
             },
             "fp_d": {
               "shape": "sphere",
@@ -105,7 +108,7 @@
               "scale": [1, 0.8, 1],
               "material": "fp_d",
               "chance": 0.85,
-              "uvProject": "planar"
+              "craftSeed": 46263075
             },
             "fp_e": {
               "shape": "sphere",
@@ -114,7 +117,7 @@
               "pos": [0.147, 0.451, 0.242],
               "scale": [1, 0.8, 1],
               "material": "fp_e",
-              "uvProject": "planar"
+              "craftSeed": 46263075
             },
             "fp_f": {
               "shape": "sphere",
@@ -124,7 +127,7 @@
               "scale": [1, 0.8, 1],
               "material": "fp_f",
               "chance": 0.8,
-              "uvProject": "planar"
+              "craftSeed": 46263075
             },
             "fp_g": {
               "shape": "sphere",
@@ -134,7 +137,7 @@
               "scale": [1, 0.8, 1],
               "material": "fp_g",
               "chance": 0.8,
-              "uvProject": "planar"
+              "craftSeed": 46263075
             },
             "fp_h": {
               "shape": "sphere",
@@ -144,7 +147,7 @@
               "scale": [1, 0.8, 1],
               "material": "fp_h",
               "chance": 0.7,
-              "uvProject": "planar"
+              "craftSeed": 46263075
             }
           }
         },
@@ -158,7 +161,8 @@
               "scale": [1, 0.8, 1],
               "material": "fw_a",
               "craft": 0.96,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             },
             "fw_b": {
               "shape": "sphere",
@@ -168,7 +172,8 @@
               "scale": [1, 0.8, 1],
               "material": "fw_b",
               "craft": 0.96,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             },
             "fw_c": {
               "shape": "sphere",
@@ -178,7 +183,8 @@
               "scale": [1, 0.8, 1],
               "material": "fw_c",
               "craft": 0.94,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             },
             "fw_d": {
               "shape": "sphere",
@@ -189,7 +195,8 @@
               "material": "fw_d",
               "chance": 0.85,
               "craft": 0.94,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             },
             "fw_e": {
               "shape": "sphere",
@@ -199,7 +206,8 @@
               "scale": [1, 0.8, 1],
               "material": "fw_e",
               "craft": 0.94,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             },
             "fw_f": {
               "shape": "sphere",
@@ -210,7 +218,8 @@
               "material": "fw_f",
               "chance": 0.8,
               "craft": 0.94,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             },
             "fw_g": {
               "shape": "sphere",
@@ -221,7 +230,8 @@
               "material": "fw_g",
               "chance": 0.8,
               "craft": 0.94,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             },
             "fw_h": {
               "shape": "sphere",
@@ -232,7 +242,8 @@
               "material": "fw_h",
               "chance": 0.7,
               "craft": 0.94,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 46263075
             }
           }
         }

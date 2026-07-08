@@ -26,7 +26,8 @@
           "rotJitter": [2, 30, 3],
           "material": { "side": "menhir_side", "top": "moss_top", "bottom": "menhir_bottom" },
           "sub": 2,
-          "craft": 0.58
+          "craft": 0.58,
+          "craftSeed": 116787235
         },
         "foot_pebble": {
           "shape": "sphere",
@@ -38,7 +39,8 @@
           "material": "foot_pebble",
           "chance": 0.5,
           "sub": 1,
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 116787235
         }
       }
     }

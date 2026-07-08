@@ -44,7 +44,8 @@
           "pos": [0, 0, -0.04],
           "rot": [90, 0, 0],
           "material": "body_main",
-          "craft": 0.9
+          "craft": 0.9,
+          "craftSeed": 1756698513
         },
         "tail": {
           "shape": "sphere",
@@ -52,7 +53,8 @@
           "segments": 10,
           "pos": [0, 0.05, -0.36],
           "material": "tail",
-          "craft": 0.85
+          "craft": 0.85,
+          "craftSeed": 1756698513
         },
         "collar": {
           "shape": "cylinder",
@@ -63,7 +65,8 @@
           "pos": [0, 0, 0.3],
           "rot": [90, 0, 0],
           "material": "collar",
-          "craft": 0.95
+          "craft": 0.95,
+          "craftSeed": 1756698513
         },
         "head": {
           "shape": "sphere",
@@ -72,7 +75,8 @@
           "pos": [0, 0, 0.46],
           "scale": [1, 0.94, 0.85],
           "material": "head",
-          "craft": 0.72
+          "craft": 0.72,
+          "craftSeed": 1756698513
         },
         "face_cap": {
           "shape": "cylinder",
@@ -82,7 +86,8 @@
           "pos": [0, 0, 0.615],
           "rot": [90, 0, 0],
           "material": { "side": "face_cap_side", "top": "hammer_face", "bottom": "face_cap_bottom" },
-          "craft": 0.95
+          "craft": 0.95,
+          "craftSeed": 1756698513
         },
         "eye_l": {
           "shape": "cylinder",
@@ -91,7 +96,8 @@
           "segments": 10,
           "pos": [-0.148, 0.05, 0.12],
           "rot": [0, 0, 71],
-          "material": "eye_l"
+          "material": "eye_l",
+          "craftSeed": 1756698513
         },
         "eye_r": {
           "shape": "cylinder",
@@ -100,7 +106,8 @@
           "segments": 10,
           "pos": [0.148, 0.05, 0.12],
           "rot": [0, 0, -71],
-          "material": "eye_r"
+          "material": "eye_r",
+          "craftSeed": 1756698513
         },
         "pupil_l": {
           "shape": "cylinder",
@@ -109,7 +116,8 @@
           "segments": 8,
           "pos": [-0.162, 0.055, 0.128],
           "rot": [0, 0, 71],
-          "material": "pupil_l"
+          "material": "pupil_l",
+          "craftSeed": 1756698513
         },
         "pupil_r": {
           "shape": "cylinder",
@@ -118,21 +126,24 @@
           "segments": 8,
           "pos": [0.162, 0.055, 0.128],
           "rot": [0, 0, -71],
-          "material": "pupil_r"
+          "material": "pupil_r",
+          "craftSeed": 1756698513
         },
         "brow_l": {
           "shape": "box",
           "size": [0.02, 0.03, 0.09],
           "pos": [-0.13, 0.1, 0.14],
           "rot": [20, 0, -38],
-          "material": "brow_l"
+          "material": "brow_l",
+          "craftSeed": 1756698513
         },
         "brow_r": {
           "shape": "box",
           "size": [0.02, 0.03, 0.09],
           "pos": [0.13, 0.1, 0.14],
           "rot": [20, 0, 38],
-          "material": "brow_r"
+          "material": "brow_r",
+          "craftSeed": 1756698513
         },
         "leg_l": {
           "shape": "box",
@@ -154,11 +165,14 @@
                   "size": [0.098, 0.038, 0.065],
                   "pos": [0, -0.006, 0.065],
                   "material": "toe_l",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1756698513
                 }
-              }
+              },
+              "craftSeed": 1756698513
             }
-          }
+          },
+          "craftSeed": 1756698513
         },
         "leg_r": {
           "shape": "box",
@@ -180,11 +194,14 @@
                   "size": [0.098, 0.038, 0.065],
                   "pos": [0, -0.006, 0.065],
                   "material": "toe_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 1756698513
                 }
-              }
+              },
+              "craftSeed": 1756698513
             }
-          }
+          },
+          "craftSeed": 1756698513
         }
       }
     }

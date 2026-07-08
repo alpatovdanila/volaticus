@@ -73,7 +73,8 @@
               "pos": [0, 0, 0],
               "material": "body_cube",
               "craft": 0.91,
-              "sub": 2
+              "sub": 2,
+              "craftSeed": 1488609397
             },
             "body_ball": {
               "shape": "sphere",
@@ -81,25 +82,46 @@
               "pos": [0, -0.25, 0],
               "material": "body_ball",
               "hidden": true,
-              "craft": 0.9
+              "craft": 0.9,
+              "craftSeed": 1488609397
             },
             "face": {
               "pos": [0, 0, 0],
               "children": {
-                "eye_l": { "shape": "box", "size": [0.1, 0.2, 0.03], "pos": [-0.135, 0.05, 0.28], "material": "eye_l" },
-                "eye_r": { "shape": "box", "size": [0.1, 0.2, 0.03], "pos": [0.135, 0.05, 0.28], "material": "eye_r" },
-                "mouth": { "shape": "box", "size": [0.19, 0.13, 0.03], "pos": [0, -0.15, 0.28], "material": "mouth_2" },
+                "eye_l": {
+                  "shape": "box",
+                  "size": [0.1, 0.2, 0.03],
+                  "pos": [-0.135, 0.05, 0.28],
+                  "material": "eye_l",
+                  "craftSeed": 1488609397
+                },
+                "eye_r": {
+                  "shape": "box",
+                  "size": [0.1, 0.2, 0.03],
+                  "pos": [0.135, 0.05, 0.28],
+                  "material": "eye_r",
+                  "craftSeed": 1488609397
+                },
+                "mouth": {
+                  "shape": "box",
+                  "size": [0.19, 0.13, 0.03],
+                  "pos": [0, -0.15, 0.28],
+                  "material": "mouth_2",
+                  "craftSeed": 1488609397
+                },
                 "cheek_l": {
                   "shape": "box",
                   "size": [0.08, 0.065, 0.025],
                   "pos": [-0.25, -0.08, 0.28],
-                  "material": "cheek_l"
+                  "material": "cheek_l",
+                  "craftSeed": 1488609397
                 },
                 "cheek_r": {
                   "shape": "box",
                   "size": [0.08, 0.065, 0.025],
                   "pos": [0.25, -0.08, 0.28],
-                  "material": "cheek_r"
+                  "material": "cheek_r",
+                  "craftSeed": 1488609397
                 },
                 "brow_angry_l": {
                   "shape": "box",
@@ -107,7 +129,8 @@
                   "pos": [-0.14, 0.2, 0.28],
                   "rot": [0, 0, -18],
                   "material": "brow_angry_l",
-                  "hidden": true
+                  "hidden": true,
+                  "craftSeed": 1488609397
                 },
                 "brow_angry_r": {
                   "shape": "box",
@@ -115,7 +138,8 @@
                   "pos": [0.14, 0.2, 0.28],
                   "rot": [0, 0, 18],
                   "material": "brow_angry_r",
-                  "hidden": true
+                  "hidden": true,
+                  "craftSeed": 1488609397
                 },
                 "brow_sad_l": {
                   "shape": "box",
@@ -123,7 +147,8 @@
                   "pos": [-0.14, 0.2, 0.28],
                   "rot": [0, 0, 14],
                   "material": "brow_sad_l",
-                  "hidden": true
+                  "hidden": true,
+                  "craftSeed": 1488609397
                 },
                 "brow_sad_r": {
                   "shape": "box",
@@ -131,7 +156,8 @@
                   "pos": [0.14, 0.2, 0.28],
                   "rot": [0, 0, -14],
                   "material": "brow_sad_r",
-                  "hidden": true
+                  "hidden": true,
+                  "craftSeed": 1488609397
                 },
                 "mouth_happy": {
                   "hidden": true,
@@ -140,19 +166,22 @@
                       "shape": "box",
                       "size": [0.19, 0.055, 0.03],
                       "pos": [0, -0.165, 0.28],
-                      "material": "smile_mid"
+                      "material": "smile_mid",
+                      "craftSeed": 1488609397
                     },
                     "smile_l": {
                       "shape": "box",
                       "size": [0.05, 0.05, 0.03],
                       "pos": [-0.125, -0.13, 0.28],
-                      "material": "smile_l"
+                      "material": "smile_l",
+                      "craftSeed": 1488609397
                     },
                     "smile_r": {
                       "shape": "box",
                       "size": [0.05, 0.05, 0.03],
                       "pos": [0.125, -0.13, 0.28],
-                      "material": "smile_r"
+                      "material": "smile_r",
+                      "craftSeed": 1488609397
                     }
                   }
                 },
@@ -161,7 +190,8 @@
                   "size": [0.2, 0.05, 0.03],
                   "pos": [0, -0.14, 0.28],
                   "material": "mouth_angry",
-                  "hidden": true
+                  "hidden": true,
+                  "craftSeed": 1488609397
                 },
                 "mouth_sad": {
                   "hidden": true,
@@ -170,19 +200,22 @@
                       "shape": "box",
                       "size": [0.15, 0.05, 0.03],
                       "pos": [0, -0.15, 0.28],
-                      "material": "sad_mid"
+                      "material": "sad_mid",
+                      "craftSeed": 1488609397
                     },
                     "sad_l": {
                       "shape": "box",
                       "size": [0.045, 0.05, 0.03],
                       "pos": [-0.1, -0.185, 0.28],
-                      "material": "sad_l"
+                      "material": "sad_l",
+                      "craftSeed": 1488609397
                     },
                     "sad_r": {
                       "shape": "box",
                       "size": [0.045, 0.05, 0.03],
                       "pos": [0.1, -0.185, 0.28],
-                      "material": "sad_r"
+                      "material": "sad_r",
+                      "craftSeed": 1488609397
                     }
                   }
                 },
@@ -191,7 +224,8 @@
                   "size": [0.1, 0.09, 0.03],
                   "pos": [0, -0.16, 0.28],
                   "material": "mouth_hurt",
-                  "hidden": true
+                  "hidden": true,
+                  "craftSeed": 1488609397
                 },
                 "eye_x_l": {
                   "hidden": true,
@@ -201,14 +235,16 @@
                       "size": [0.15, 0.035, 0.03],
                       "pos": [-0.135, 0.05, 0.28],
                       "rot": [0, 0, 45],
-                      "material": "xbar_l_a"
+                      "material": "xbar_l_a",
+                      "craftSeed": 1488609397
                     },
                     "xbar_l_b": {
                       "shape": "box",
                       "size": [0.15, 0.035, 0.03],
                       "pos": [-0.135, 0.05, 0.28],
                       "rot": [0, 0, -45],
-                      "material": "xbar_l_b"
+                      "material": "xbar_l_b",
+                      "craftSeed": 1488609397
                     }
                   }
                 },
@@ -220,14 +256,16 @@
                       "size": [0.15, 0.035, 0.03],
                       "pos": [0.135, 0.05, 0.28],
                       "rot": [0, 0, 45],
-                      "material": "xbar_r_a"
+                      "material": "xbar_r_a",
+                      "craftSeed": 1488609397
                     },
                     "xbar_r_b": {
                       "shape": "box",
                       "size": [0.15, 0.035, 0.03],
                       "pos": [0.135, 0.05, 0.28],
                       "rot": [0, 0, -45],
-                      "material": "xbar_r_b"
+                      "material": "xbar_r_b",
+                      "craftSeed": 1488609397
                     }
                   }
                 }
@@ -242,7 +280,8 @@
                   "pos": [0, 0, 0],
                   "material": "pack",
                   "craft": 0.91,
-                  "sub": 2
+                  "sub": 2,
+                  "craftSeed": 1488609397
                 },
                 "pack_flap": {
                   "shape": "box",
@@ -250,14 +289,16 @@
                   "pos": [0, 0.13, 0],
                   "material": "pack_flap",
                   "sub": 2,
-                  "craft": 0.94
+                  "craft": 0.94,
+                  "craftSeed": 1488609397
                 },
                 "pack_buckle": {
                   "shape": "box",
                   "size": [0.06, 0.06, 0.03],
                   "pos": [0, 0.05, -0.075],
                   "material": "pack_buckle",
-                  "craft": 0.8
+                  "craft": 0.8,
+                  "craftSeed": 1488609397
                 },
                 "propeller": {
                   "pos": [0, 0.02, -0.11],
@@ -270,19 +311,22 @@
                       "segments": 6,
                       "pos": [0, 0, 0],
                       "rot": [90, 0, 0],
-                      "material": "prop_nub"
+                      "material": "prop_nub",
+                      "craftSeed": 1488609397
                     },
                     "prop_blade_a": {
                       "shape": "box",
                       "size": [0.44, 0.05, 0.012],
                       "pos": [0, 0, -0.06],
-                      "material": "prop_blade_a"
+                      "material": "prop_blade_a",
+                      "craftSeed": 1488609397
                     },
                     "prop_blade_b": {
                       "shape": "box",
                       "size": [0.05, 0.44, 0.012],
                       "pos": [0, 0, -0.06],
-                      "material": "prop_blade_b"
+                      "material": "prop_blade_b",
+                      "craftSeed": 1488609397
                     }
                   }
                 }
@@ -299,35 +343,40 @@
                   "segments": 6,
                   "pos": [0, 0.02, -0.05],
                   "rot": [90, 0, 0],
-                  "material": "keel"
+                  "material": "keel",
+                  "craftSeed": 1488609397
                 },
                 "sail_l": {
                   "shape": "box",
                   "size": [0.95, 0.016, 0.6],
                   "pos": [-0.46, 0.04, -0.12],
                   "rot": [0, 26, -5],
-                  "material": "sail_l"
+                  "material": "sail_l",
+                  "craftSeed": 1488609397
                 },
                 "sail_r": {
                   "shape": "box",
                   "size": [0.95, 0.016, 0.6],
                   "pos": [0.46, 0.04, -0.12],
                   "rot": [0, -26, 5],
-                  "material": "sail_r"
+                  "material": "sail_r",
+                  "craftSeed": 1488609397
                 },
                 "sail_tip_l": {
                   "shape": "box",
                   "size": [0.28, 0.014, 0.34],
                   "pos": [-0.98, 0.005, -0.28],
                   "rot": [0, 30, -7],
-                  "material": "sail_tip_l"
+                  "material": "sail_tip_l",
+                  "craftSeed": 1488609397
                 },
                 "sail_tip_r": {
                   "shape": "box",
                   "size": [0.28, 0.014, 0.34],
                   "pos": [0.98, 0.005, -0.28],
                   "rot": [0, -30, 7],
-                  "material": "sail_tip_r"
+                  "material": "sail_tip_r",
+                  "craftSeed": 1488609397
                 }
               }
             },
@@ -340,14 +389,16 @@
                   "size": [0.13, 0.4, 0.13],
                   "pos": [0, 0, 0],
                   "material": "arm_l_box",
-                  "craft": 0.92
+                  "craft": 0.92,
+                  "craftSeed": 1488609397
                 },
                 "mitt_l": {
                   "shape": "box",
                   "size": [0.19, 0.17, 0.19],
                   "pos": [0, -0.27, 0],
                   "material": "mitt_l",
-                  "craft": 0.88
+                  "craft": 0.88,
+                  "craftSeed": 1488609397
                 }
               }
             },
@@ -361,7 +412,8 @@
                   "size": [0.13, 0.4, 0.13],
                   "pos": [0, 0, 0],
                   "material": "arm_r_box",
-                  "craft": 0.92
+                  "craft": 0.92,
+                  "craftSeed": 1488609397
                 },
                 "mitt_r": {
                   "shape": "box",
@@ -377,19 +429,22 @@
                           "shape": "box",
                           "size": [0.055, 0.3, 0.055],
                           "pos": [0, 0, 0],
-                          "material": "sword_grip"
+                          "material": "sword_grip",
+                          "craftSeed": 1488609397
                         },
                         "sword_guard": {
                           "shape": "box",
                           "size": [0.22, 0.055, 0.07],
                           "pos": [0, -0.13, 0],
-                          "material": "sword_guard"
+                          "material": "sword_guard",
+                          "craftSeed": 1488609397
                         },
                         "sword_blade": {
                           "shape": "box",
                           "size": [0.1, 0.5, 0.035],
                           "pos": [0, -0.41, 0],
-                          "material": "sword_blade"
+                          "material": "sword_blade",
+                          "craftSeed": 1488609397
                         },
                         "sword_tip": {
                           "shape": "cone",
@@ -397,12 +452,14 @@
                           "height": 0.14,
                           "pos": [0, -0.73, 0],
                           "rot": [180, 0, 0],
-                          "material": "sword_tip"
+                          "material": "sword_tip",
+                          "craftSeed": 1488609397
                         }
                       }
                     }
                   },
-                  "craft": 0.88
+                  "craft": 0.88,
+                  "craftSeed": 1488609397
                 }
               }
             }
@@ -418,14 +475,16 @@
               "size": [0.17, 0.3, 0.17],
               "pos": [0, 0, 0],
               "material": "leg_l_box",
-              "craft": 0.92
+              "craft": 0.92,
+              "craftSeed": 1488609397
             },
             "boot_l": {
               "shape": "box",
               "size": [0.21, 0.15, 0.28],
               "pos": [0, -0.2, 0.04],
               "material": "boot_l",
-              "craft": 0.88
+              "craft": 0.88,
+              "craftSeed": 1488609397
             }
           }
         },
@@ -438,14 +497,16 @@
               "size": [0.17, 0.3, 0.17],
               "pos": [0, 0, 0],
               "material": "leg_r_box",
-              "craft": 0.92
+              "craft": 0.92,
+              "craftSeed": 1488609397
             },
             "boot_r": {
               "shape": "box",
               "size": [0.21, 0.15, 0.28],
               "pos": [0, -0.2, 0.04],
               "material": "boot_r",
-              "craft": 0.88
+              "craft": 0.88,
+              "craftSeed": 1488609397
             }
           }
         }

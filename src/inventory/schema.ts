@@ -51,13 +51,11 @@ export const MaterialSchema = z.object({
   uvMode: z.enum(['tile', 'fit', 'stretch']).optional(),
   uvScale: z.number().positive().optional(), // density: repeats per meter in tile/fit modes (default 1)
   uvRot: z.number().min(0).max(359).optional(), // texture direction, degrees CCW (UI offers 15° steps)
-  // per-slot UV projection override (box | planar | sphere), applied in entity
-  // space after jitter — same modes as node.uvProject. A node without its own
-  // node.uvProject inherits this from the slot material it uses (node wins).
-  // 'none' = EXPLICIT "keep authored/tiled UVs": a persistable override, so an
-  // inheriting child can pin no-projection over a parent that projects (item 34
-  // round 2) — it also blocks the catalog material's default uvProject. Absent
-  // key = defer (parent, then catalog default).
+  // UV projection for the geometry using this slot (box | planar | sphere), applied
+  // in entity space after jitter — THE single source for projection (resolved through
+  // the slot inherit chain; it is no longer a rig/node concern). 'none' = EXPLICIT
+  // "keep authored/tiled UVs" (persistable, so an inheriting child can pin
+  // no-projection over a projecting parent). Absent = no projection (or defer to parent).
   uvProject: z.enum(['box', 'planar', 'sphere', 'none']).optional(),
 })
 export type MaterialDef = z.infer<typeof MaterialSchema>
@@ -147,7 +145,6 @@ export type NodeDef = {
   mesh?: string
   craft?: number
   sub?: number
-  uvProject?: 'box' | 'planar' | 'sphere'
   size?: number[]
   radius?: number
   radiusTop?: number
@@ -171,6 +168,7 @@ export type NodeDef = {
   hidden?: boolean
   chance?: number
   rotJitter?: [number, number, number]
+  craftSeed?: number
   children?: Record<string, NodeDef>
 }
 
@@ -182,11 +180,6 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
     mesh: z.string().optional(), // external model path relative to resources/ (fbx)
     craft: z.number().min(0).max(1).optional(), // craftsmanship: 1 = machine-perfect, 0 = crooked (any shape)
     sub: z.number().int().min(0).max(4).optional(), // subdivision levels before craft jitter (4^n triangles)
-    // UV re-projection in entity space, applied AFTER subdivision + craft jitter:
-    // box = dominant-axis planar per triangle, planar = XZ from above, sphere =
-    // spherical around the node's bbox center. Material uvMode/uvScale metering
-    // still applies on top. Not for shape "mesh" (authored atlas UVs).
-    uvProject: z.enum(['box', 'planar', 'sphere']).optional(),
     size: z.array(z.number().positive()).min(2).max(3).optional(),
     radius: z.number().positive().optional(),
     radiusTop: z.number().positive().optional(), // cylinder frustum (defaults to radius)
@@ -209,7 +202,8 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
     material: faceMaterial.optional(),
     hidden: z.boolean().optional(),
     chance: z.number().min(0).max(1).optional(),
-    rotJitter: vec3.optional(), // per-instance random rotation, ± degrees per axis (seeded)
+    rotJitter: vec3.optional(), // random rotation, ± degrees per axis — rolled per variant into <id>.variants.json
+    craftSeed: z.number().int().optional(), // stored per-part craft-jitter seed (studio-written); seam-group members share one
     children: z.record(NodeSchema).optional(),
   }),
 )
@@ -363,11 +357,12 @@ export const EntitySchema = z.object({
     })
     .optional(),
   props: z.record(z.union([z.number(), z.string(), z.boolean()])).optional(),
-  // Geometry-composition variants. The studio BAKES `count` distinct compositions
-  // into <id>.geom.{i}.json — resolving oneOf/chance/rotJitter/craft with fresh
-  // randomness per file — and any runtime cycles them (never regenerates). Absent
-  // = a single composition. Per-instance placement variety (scale/yaw/tilt/tint)
-  // is a level-editor concern now, not an entity field.
+  // Geometry-composition variants. The studio rolls `count` LAYOUTS (oneOf/chance/
+  // rotJitter picks) once into <id>.variants.json, then composes each against the
+  // per-part baked geometry into <id>.geom.{i}.json; the runtime cycles the geom
+  // files (never regenerates). "Regenerate variants" re-rolls the layouts; a craft
+  // edit re-composes the SAME layouts (stable). Absent = a single composition.
+  // Per-instance placement variety (scale/yaw/tilt/tint) is a level-editor concern.
   variants: z
     .object({
       count: z.number().int().min(1).optional(), // number of variant geom files to bake (default 1)
@@ -422,10 +417,6 @@ export const MaterialTuningSchema = z.object({
   // hand-tuning may still set a per-material tiling density. factory reads it via
   // catalogDefaultUvScale (`?? 1`).
   uvScale: z.number().positive().optional(),
-  // #13: the material's DEFAULT UV projection (box | planar | sphere). A per-slot
-  // uvProject on the entity chip overrides it per application. Optional — absent
-  // means keep the shape's authored/tiled UVs. Read by factory.effectiveUvProject.
-  uvProject: z.enum(['box', 'planar', 'sphere']).optional(),
   // #27: alpha/opacity MASK texture — a SINGLE user-provided resource path
   // (resolution-independent; unlike the per-res `maps`, one file drives every
   // resolution). materials.ts binds it as material.alphaMap (green channel,

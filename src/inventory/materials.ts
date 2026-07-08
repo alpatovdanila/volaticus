@@ -67,12 +67,6 @@ export function catalogDefaultTint(materialId: string): string | undefined {
   return materialCatalog[materialId]?.tuning.tint ?? undefined
 }
 
-// #13: the material's DEFAULT UV projection from its catalog tuning, or undefined.
-// The factory resolves node.uvProject → slot.uvProject → this material default.
-export function catalogDefaultUvProject(materialId: string): 'box' | 'planar' | 'sphere' | undefined {
-  return materialCatalog[materialId]?.tuning.uvProject ?? undefined
-}
-
 // #32: the material's DEFAULT tiling density (tuning.uvScale, repeats per meter).
 // Multiplied with the per-slot uvScale by the factory's geometry UV metering —
 // NEVER applied via texture.repeat on entities (UVs are baked into geometry, so

@@ -35,7 +35,8 @@
           "height": 0.14,
           "segments": 8,
           "pos": [0, 0.07, 0],
-          "material": "base"
+          "material": "base",
+          "craftSeed": 211005768
         },
         "post": {
           "shape": "cylinder",
@@ -46,7 +47,8 @@
           "pos": [0, 1.31, 0],
           "rot": [0, 0, 0.8],
           "rotJitter": [0.5, 0, 1],
-          "material": "post"
+          "material": "post",
+          "craftSeed": 211005768
         },
         "collar": {
           "shape": "cylinder",
@@ -55,7 +57,8 @@
           "height": 0.1,
           "segments": 8,
           "pos": [0, 2.3, 0],
-          "material": "collar"
+          "material": "collar",
+          "craftSeed": 211005768
         },
         "finial": {
           "shape": "cone",
@@ -63,7 +66,8 @@
           "height": 0.16,
           "segments": 6,
           "pos": [0, 2.63, 0],
-          "material": "finial"
+          "material": "finial",
+          "craftSeed": 211005768
         },
         "arm": {
           "shape": "box",
@@ -71,14 +75,16 @@
           "pos": [0.21, 2.5, 0],
           "rot": [0, 0, -2],
           "rotJitter": [0, 0, 2],
-          "material": "arm"
+          "material": "arm",
+          "craftSeed": 211005768
         },
         "brace": {
           "shape": "box",
           "size": [0.32, 0.04, 0.04],
           "pos": [0.13, 2.37, 0],
           "rot": [0, 0, 40],
-          "material": "brace"
+          "material": "brace",
+          "craftSeed": 211005768
         },
         "scroll": {
           "shape": "torus",
@@ -87,7 +93,8 @@
           "pos": [0.43, 2.46, 0],
           "rot": [90, 0, 0],
           "material": "scroll",
-          "chance": 0.8
+          "chance": 0.8,
+          "craftSeed": 211005768
         },
         "lantern": {
           "pos": [0.42, 2.26, 0],
@@ -99,7 +106,8 @@
               "height": 0.12,
               "segments": 6,
               "pos": [0, 0.14, 0],
-              "material": "hang"
+              "material": "hang",
+              "craftSeed": 211005768
             },
             "cap": {
               "shape": "cone",
@@ -108,35 +116,59 @@
               "segments": 4,
               "pos": [0, 0.08, 0],
               "rot": [0, 45, 0],
-              "material": "cap"
+              "material": "cap",
+              "craftSeed": 211005768
             },
-            "glass": { "shape": "box", "size": [0.15, 0.17, 0.15], "pos": [0, -0.03, 0], "material": "glass" },
+            "glass": {
+              "shape": "box",
+              "size": [0.15, 0.17, 0.15],
+              "pos": [0, -0.03, 0],
+              "material": "glass",
+              "craftSeed": 211005768
+            },
             "rib_a": {
               "shape": "box",
               "size": [0.022, 0.19, 0.022],
               "pos": [0.077, -0.03, 0.077],
-              "material": "rib_a"
+              "material": "rib_a",
+              "craftSeed": 211005768
             },
             "rib_b": {
               "shape": "box",
               "size": [0.022, 0.19, 0.022],
               "pos": [-0.077, -0.03, 0.077],
-              "material": "rib_b"
+              "material": "rib_b",
+              "craftSeed": 211005768
             },
             "rib_c": {
               "shape": "box",
               "size": [0.022, 0.19, 0.022],
               "pos": [0.077, -0.03, -0.077],
-              "material": "rib_c"
+              "material": "rib_c",
+              "craftSeed": 211005768
             },
             "rib_d": {
               "shape": "box",
               "size": [0.022, 0.19, 0.022],
               "pos": [-0.077, -0.03, -0.077],
-              "material": "rib_d"
+              "material": "rib_d",
+              "craftSeed": 211005768
             },
-            "base_plate": { "shape": "box", "size": [0.17, 0.03, 0.17], "pos": [0, -0.135, 0], "material": "base_plate" },
-            "knob": { "shape": "sphere", "radius": 0.03, "segments": 6, "pos": [0, -0.165, 0], "material": "knob" }
+            "base_plate": {
+              "shape": "box",
+              "size": [0.17, 0.03, 0.17],
+              "pos": [0, -0.135, 0],
+              "material": "base_plate",
+              "craftSeed": 211005768
+            },
+            "knob": {
+              "shape": "sphere",
+              "radius": 0.03,
+              "segments": 6,
+              "pos": [0, -0.165, 0],
+              "material": "knob",
+              "craftSeed": 211005768
+            }
           }
         }
       }

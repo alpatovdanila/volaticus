@@ -67,10 +67,12 @@
                   "size": [0.55, 0.14, 0.55],
                   "pos": [0, 1.02, 0],
                   "material": "cap_tall",
-                  "craft": 0.6
+                  "craft": 0.6,
+                  "craftSeed": 535770085
                 }
               },
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "col_broken": {
               "shape": "cylinder",
@@ -91,10 +93,12 @@
                   "pos": [0, 0.64, 0],
                   "rot": [4, 0, 6],
                   "material": "break_top",
-                  "craft": 0.6
+                  "craft": 0.6,
+                  "craftSeed": 535770085
                 }
               },
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "col_stump": {
               "shape": "cylinder",
@@ -104,7 +108,8 @@
               "segments": 8,
               "pos": [0.2, 0.2, 0.8],
               "material": "col_stump",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "col_fallen": {
               "shape": "cylinder",
@@ -115,7 +120,8 @@
               "rot": [0, 15, 90],
               "material": "col_fallen",
               "chance": 0.8,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             }
           }
         },
@@ -127,7 +133,8 @@
               "pos": [-0.95, 0.9, 0],
               "rotJitter": [0, 0, 1],
               "material": "arch_pil_l",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "arch_pil_r": {
               "shape": "box",
@@ -135,7 +142,8 @@
               "pos": [0.95, 0.9, 0],
               "rotJitter": [0, 0, 1],
               "material": "arch_pil_r",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "arch_lintel": {
               "shape": "box",
@@ -143,7 +151,8 @@
               "pos": [0, 1.98, 0],
               "rot": [0, 0, 1.5],
               "material": "arch_lintel",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "arch_stub": {
               "shape": "box",
@@ -152,7 +161,8 @@
               "rot": [0, 0, -6],
               "material": "arch_stub",
               "chance": 0.6,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "arch_rubble": {
               "shape": "sphere",
@@ -162,7 +172,8 @@
               "scale": [1.2, 0.55, 1],
               "material": "arch_rubble",
               "chance": 0.7,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             }
           }
         },
@@ -173,7 +184,8 @@
               "size": [2.6, 0.55, 0.45],
               "pos": [0, 0.27, 0],
               "material": "wall_row1",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "wall_row2": {
               "shape": "box",
@@ -181,7 +193,8 @@
               "pos": [-0.2, 0.79, 0],
               "rot": [0, 0, 1],
               "material": "wall_row2",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "wall_row3": {
               "shape": "box",
@@ -189,7 +202,8 @@
               "pos": [-0.55, 1.26, 0],
               "rot": [0, 0, -2],
               "material": "wall_row3",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "wall_top_block": {
               "shape": "box",
@@ -198,7 +212,8 @@
               "rot": [0, 8, -4],
               "material": "wall_top_block",
               "chance": 0.7,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "wall_fallen_a": {
               "shape": "box",
@@ -207,7 +222,8 @@
               "rot": [0, 30, 0],
               "material": "wall_fallen_a",
               "chance": 0.7,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "wall_fallen_b": {
               "shape": "box",
@@ -216,7 +232,8 @@
               "rot": [0, -20, 8],
               "material": "wall_fallen_b",
               "chance": 0.5,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             }
           }
         },
@@ -227,21 +244,24 @@
               "size": [2, 1.7, 0.42],
               "pos": [-0.4, 0.85, -0.7],
               "material": "corner_a",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "corner_b": {
               "shape": "box",
               "size": [0.42, 1.35, 1.6],
               "pos": [0.4, 0.67, 0.25],
               "material": "corner_b",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "corner_win_top": {
               "shape": "box",
               "size": [0.8, 0.35, 0.44],
               "pos": [-0.75, 1.5, -0.7],
               "material": "corner_win_top",
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "corner_broken_edge": {
               "shape": "box",
@@ -250,7 +270,8 @@
               "rot": [0, 0, -8],
               "material": "corner_broken_edge",
               "chance": 0.7,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "corner_rubble": {
               "shape": "sphere",
@@ -260,7 +281,8 @@
               "scale": [1.2, 0.5, 1],
               "material": "corner_rubble",
               "chance": 0.7,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             }
           }
         },
@@ -271,14 +293,16 @@
               "size": [2.4, 0.35, 2.2],
               "pos": [0, 0.17, 0],
               "material": "floor_slab",
-              "craft": 0.87
+              "craft": 0.87,
+              "craftSeed": 535770085
             },
             "floor_step_a": {
               "shape": "box",
               "size": [1.3, 0.18, 0.5],
               "pos": [0, 0.09, 1.32],
               "material": "floor_step_a",
-              "craft": 0.87
+              "craft": 0.87,
+              "craftSeed": 535770085
             },
             "floor_stump_a": {
               "shape": "cylinder",
@@ -288,7 +312,8 @@
               "segments": 8,
               "pos": [-0.85, 0.62, -0.75],
               "material": "floor_stump_a",
-              "craft": 0.95
+              "craft": 0.95,
+              "craftSeed": 535770085
             },
             "floor_stump_b": {
               "shape": "cylinder",
@@ -299,7 +324,8 @@
               "pos": [0.85, 0.8, -0.75],
               "rot": [0, 0, -2],
               "material": "floor_stump_b",
-              "craft": 0.95
+              "craft": 0.95,
+              "craftSeed": 535770085
             },
             "floor_stump_c": {
               "shape": "cylinder",
@@ -310,7 +336,8 @@
               "pos": [0.85, 0.52, 0.75],
               "material": "floor_stump_c",
               "chance": 0.7,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             },
             "floor_crack_block": {
               "shape": "box",
@@ -319,7 +346,8 @@
               "rot": [0, 25, 3],
               "material": "floor_crack_block",
               "chance": 0.6,
-              "craft": 0.6
+              "craft": 0.6,
+              "craftSeed": 535770085
             }
           }
         },
@@ -331,7 +359,8 @@
           "scale": [1, 0.3, 0.9],
           "material": "moss_a",
           "chance": 0.55,
-          "craft": 0.65
+          "craft": 0.65,
+          "craftSeed": 535770085
         },
         "moss_b": {
           "shape": "sphere",
@@ -341,7 +370,8 @@
           "scale": [1, 0.3, 0.9],
           "material": "moss_b",
           "chance": 0.45,
-          "craft": 0.65
+          "craft": 0.65,
+          "craftSeed": 535770085
         }
       }
     }

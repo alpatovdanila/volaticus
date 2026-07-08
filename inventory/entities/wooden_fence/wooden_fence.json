@@ -38,7 +38,8 @@
           "pos": [-0.9, 0.52, 0],
           "rotJitter": [2, 0, 4],
           "material": { "side": "post_l_side", "top": "post_l_2", "bottom": "post_l_bottom" },
-          "craft": 0.93
+          "craft": 0.93,
+          "craftSeed": 9094785
         },
         "post_m": {
           "shape": "post",
@@ -50,7 +51,8 @@
           "rotJitter": [2, 0, 4],
           "material": { "side": "post_m_side", "top": "post_m_2", "bottom": "post_m_bottom" },
           "chance": 0.7,
-          "craft": 0.93
+          "craft": 0.93,
+          "craftSeed": 9094785
         },
         "post_r": {
           "shape": "post",
@@ -61,7 +63,8 @@
           "pos": [0.9, 0.52, 0],
           "rotJitter": [2, 0, 4],
           "material": { "side": "post_r_side", "top": "post_r_2", "bottom": "post_r_bottom" },
-          "craft": 0.93
+          "craft": 0.93,
+          "craftSeed": 9094785
         },
         "rail_top": {
           "shape": "plank",
@@ -69,7 +72,8 @@
           "pos": [0, 0.86, 0.02],
           "rotJitter": [0, 0, 2],
           "material": "rail_top",
-          "craft": 0.59
+          "craft": 0.59,
+          "craftSeed": 9094785
         },
         "rail_bot": {
           "shape": "plank",
@@ -78,7 +82,8 @@
           "rotJitter": [0, 0, 2],
           "material": "rail_bot",
           "chance": 0.85,
-          "craft": 0.59
+          "craft": 0.59,
+          "craftSeed": 9094785
         },
         "picket_a": {
           "shape": "plank",
@@ -88,7 +93,8 @@
           "rotJitter": [0, 0, 8],
           "material": "picket_a",
           "chance": 0.55,
-          "craft": 0.59
+          "craft": 0.59,
+          "craftSeed": 9094785
         },
         "picket_b": {
           "shape": "plank",
@@ -98,7 +104,8 @@
           "rotJitter": [0, 0, 7],
           "material": "picket_b",
           "chance": 0.45,
-          "craft": 0.59
+          "craft": 0.59,
+          "craftSeed": 9094785
         }
       }
     }

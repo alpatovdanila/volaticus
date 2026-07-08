@@ -46,63 +46,72 @@
           "pos": [0, 0.02, 0],
           "scale": [0.95, 0.32, 0.68],
           "material": "soil",
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1358124894
         },
         "rail_f": {
           "shape": "plank",
           "size": [1.24, 0.18, 0.11],
           "pos": [0, 0.12, 0.42],
           "material": "rail_f",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 776188355
         },
         "rail_b": {
           "shape": "plank",
           "size": [1.24, 0.18, 0.11],
           "pos": [0, 0.12, -0.42],
           "material": "rail_b",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 776188355
         },
         "rail_l": {
           "shape": "plank",
           "size": [0.11, 0.18, 0.73],
           "pos": [-0.565, 0.12, 0],
           "material": "rail_l",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 776188355
         },
         "rail_r": {
           "shape": "plank",
           "size": [0.11, 0.18, 0.73],
           "pos": [0.565, 0.12, 0],
           "material": "rail_r",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 776188355
         },
         "post_a": {
           "shape": "plank",
           "size": [0.15, 0.26, 0.15],
           "pos": [-0.565, 0.13, 0.42],
           "material": "post_a",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1358124894
         },
         "post_b": {
           "shape": "plank",
           "size": [0.15, 0.26, 0.15],
           "pos": [0.565, 0.13, 0.42],
           "material": "post_b",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1358124894
         },
         "post_c": {
           "shape": "plank",
           "size": [0.15, 0.26, 0.15],
           "pos": [-0.565, 0.13, -0.42],
           "material": "post_c",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1358124894
         },
         "post_d": {
           "shape": "plank",
           "size": [0.15, 0.26, 0.15],
           "pos": [0.565, 0.13, -0.42],
           "material": "post_d",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1358124894
         },
         "flower_a": {
           "shape": "cylinder",
@@ -127,11 +136,14 @@
                   "radius": 0.028,
                   "segments": 5,
                   "pos": [0, 0.05, 0],
-                  "material": "core_a"
+                  "material": "core_a",
+                  "craftSeed": 1358124894
                 }
-              }
+              },
+              "craftSeed": 1358124894
             }
-          }
+          },
+          "craftSeed": 1358124894
         },
         "flower_b": {
           "shape": "cylinder",
@@ -156,11 +168,14 @@
                   "radius": 0.03,
                   "segments": 5,
                   "pos": [0, 0.052, 0],
-                  "material": "core_b"
+                  "material": "core_b",
+                  "craftSeed": 1358124894
                 }
-              }
+              },
+              "craftSeed": 1358124894
             }
-          }
+          },
+          "craftSeed": 1358124894
         },
         "flower_c": {
           "shape": "cylinder",
@@ -185,11 +200,14 @@
                   "radius": 0.026,
                   "segments": 5,
                   "pos": [0, 0.046, 0],
-                  "material": "core_c"
+                  "material": "core_c",
+                  "craftSeed": 1358124894
                 }
-              }
+              },
+              "craftSeed": 1358124894
             }
-          }
+          },
+          "craftSeed": 1358124894
         },
         "flower_d": {
           "shape": "cylinder",
@@ -214,11 +232,14 @@
                   "radius": 0.024,
                   "segments": 5,
                   "pos": [0, 0.044, 0],
-                  "material": "core_d"
+                  "material": "core_d",
+                  "craftSeed": 1358124894
                 }
-              }
+              },
+              "craftSeed": 1358124894
             }
-          }
+          },
+          "craftSeed": 1358124894
         },
         "flower_e": {
           "shape": "cylinder",
@@ -243,11 +264,14 @@
                   "radius": 0.024,
                   "segments": 5,
                   "pos": [0, 0.044, 0],
-                  "material": "core_e"
+                  "material": "core_e",
+                  "craftSeed": 1358124894
                 }
-              }
+              },
+              "craftSeed": 1358124894
             }
-          }
+          },
+          "craftSeed": 1358124894
         }
       }
     }

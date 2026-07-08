@@ -26,7 +26,8 @@
           "segments": 9,
           "pos": [0, 0.31, 0],
           "material": "stem",
-          "craft": 0.91
+          "craft": 0.91,
+          "craftSeed": 1896896128
         },
         "cap": {
           "shape": "sphere",
@@ -46,7 +47,8 @@
               "segments": 9,
               "open": true,
               "pos": [0, -0.16, 0],
-              "material": "gills"
+              "material": "gills",
+              "craftSeed": 1896896128
             },
             "dot_a": {
               "shape": "sphere",
@@ -55,7 +57,8 @@
               "pos": [0.3, 0.3, 0.2],
               "scale": [1, 0.35, 1],
               "material": "dot_a",
-              "chance": 0.85
+              "chance": 0.85,
+              "craftSeed": 1896896128
             },
             "dot_b": {
               "shape": "sphere",
@@ -64,7 +67,8 @@
               "pos": [-0.32, 0.32, -0.1],
               "scale": [1, 0.35, 1],
               "material": "dot_b",
-              "chance": 0.85
+              "chance": 0.85,
+              "craftSeed": 1896896128
             },
             "dot_c": {
               "shape": "sphere",
@@ -73,7 +77,8 @@
               "pos": [0.05, 0.38, -0.32],
               "scale": [1, 0.35, 1],
               "material": "dot_c",
-              "chance": 0.7
+              "chance": 0.7,
+              "craftSeed": 1896896128
             },
             "dot_d": {
               "shape": "sphere",
@@ -82,9 +87,11 @@
               "pos": [-0.1, 0.36, 0.34],
               "scale": [1, 0.35, 1],
               "material": "dot_d",
-              "chance": 0.6
+              "chance": 0.6,
+              "craftSeed": 1896896128
             }
-          }
+          },
+          "craftSeed": 1896896128
         }
       }
     }

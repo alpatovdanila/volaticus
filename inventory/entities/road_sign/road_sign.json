@@ -18,7 +18,8 @@
       "height": 1.5,
       "pos": [0, 0.75, 0],
       "material": "post",
-      "craft": 0.81
+      "craft": 0.81,
+      "craftSeed": 1588404509
     },
     "board_top": {
       "shape": "arrow",
@@ -27,7 +28,8 @@
       "rot": [0, -12, 0],
       "rotJitter": [0, 14, 2],
       "material": "board_top",
-      "craft": 0.4
+      "craft": 0.4,
+      "craftSeed": 1588404509
     },
     "board_bot": {
       "shape": "arrow",
@@ -37,7 +39,8 @@
       "rotJitter": [0, 16, 2],
       "material": "board_bot",
       "chance": 0.75,
-      "craft": 0.4
+      "craft": 0.4,
+      "craftSeed": 1588404509
     }
   },
   "physics": {

@@ -42,7 +42,8 @@
           "scale": [1, 0.7, 1],
           "pos": [0, 0.2, 0],
           "material": "bulb",
-          "craft": 0.68
+          "craft": 0.68,
+          "craftSeed": 1085515799
         },
         "leaf_a": {
           "shape": "cone",
@@ -53,7 +54,8 @@
           "rot": [0, 0, -56],
           "rotJitter": [6, 10, 6],
           "material": "leaf_a",
-          "craft": 0.66
+          "craft": 0.66,
+          "craftSeed": 1085515799
         },
         "leaf_b": {
           "shape": "cone",
@@ -64,7 +66,8 @@
           "rot": [53, 0, -17],
           "rotJitter": [6, 10, 6],
           "material": "leaf_b",
-          "craft": 0.66
+          "craft": 0.66,
+          "craftSeed": 1085515799
         },
         "leaf_c": {
           "shape": "cone",
@@ -75,7 +78,8 @@
           "rot": [33, 0, 45],
           "rotJitter": [6, 10, 6],
           "material": "leaf_c",
-          "craft": 0.66
+          "craft": 0.66,
+          "craftSeed": 1085515799
         },
         "leaf_d": {
           "shape": "cone",
@@ -87,7 +91,8 @@
           "rotJitter": [6, 10, 6],
           "material": "leaf_d",
           "chance": 0.85,
-          "craft": 0.66
+          "craft": 0.66,
+          "craftSeed": 1085515799
         },
         "leaf_e": {
           "shape": "cone",
@@ -98,7 +103,8 @@
           "rot": [-53, 0, -17],
           "rotJitter": [6, 10, 6],
           "material": "leaf_e",
-          "craft": 0.66
+          "craft": 0.66,
+          "craftSeed": 1085515799
         },
         "neck": {
           "shape": "cylinder",
@@ -125,7 +131,8 @@
                   "scale": [1, 0.85, 1.15],
                   "pos": [0, 0.08, 0.02],
                   "material": "skull",
-                  "craft": 0.8
+                  "craft": 0.8,
+                  "craftSeed": 1085515799
                 },
                 "lips": {
                   "shape": "torus",
@@ -134,7 +141,8 @@
                   "pos": [0, 0.01, 0.26],
                   "rot": [80, 0, 0],
                   "material": "lips",
-                  "craft": 0.75
+                  "craft": 0.75,
+                  "craftSeed": 1085515799
                 },
                 "jaw": {
                   "shape": "sphere",
@@ -155,7 +163,8 @@
                       "segments": 5,
                       "pos": [-0.08, 0.06, 0.16],
                       "material": "tooth_ll",
-                      "craft": 0.8
+                      "craft": 0.8,
+                      "craftSeed": 1085515799
                     },
                     "tooth_lr": {
                       "shape": "cone",
@@ -164,9 +173,11 @@
                       "segments": 5,
                       "pos": [0.08, 0.06, 0.16],
                       "material": "tooth_lr",
-                      "craft": 0.8
+                      "craft": 0.8,
+                      "craftSeed": 1085515799
                     }
-                  }
+                  },
+                  "craftSeed": 1085515799
                 },
                 "tooth_ul": {
                   "shape": "cone",
@@ -176,7 +187,8 @@
                   "pos": [-0.09, -0.02, 0.2],
                   "rot": [180, 0, 0],
                   "material": "tooth_ul",
-                  "craft": 0.8
+                  "craft": 0.8,
+                  "craftSeed": 1085515799
                 },
                 "tooth_ur": {
                   "shape": "cone",
@@ -186,7 +198,8 @@
                   "pos": [0.09, -0.02, 0.2],
                   "rot": [180, 0, 0],
                   "material": "tooth_ur",
-                  "craft": 0.8
+                  "craft": 0.8,
+                  "craftSeed": 1085515799
                 },
                 "eye_l": {
                   "shape": "sphere",
@@ -200,9 +213,11 @@
                       "radius": 0.026,
                       "segments": 6,
                       "pos": [-0.008, 0.008, 0.036],
-                      "material": "pupil_l"
+                      "material": "pupil_l",
+                      "craftSeed": 1085515799
                     }
-                  }
+                  },
+                  "craftSeed": 1085515799
                 },
                 "eye_r": {
                   "shape": "sphere",
@@ -216,13 +231,16 @@
                       "radius": 0.026,
                       "segments": 6,
                       "pos": [0.008, 0.008, 0.036],
-                      "material": "pupil_r"
+                      "material": "pupil_r",
+                      "craftSeed": 1085515799
                     }
-                  }
+                  },
+                  "craftSeed": 1085515799
                 }
               }
             }
-          }
+          },
+          "craftSeed": 1085515799
         }
       }
     }

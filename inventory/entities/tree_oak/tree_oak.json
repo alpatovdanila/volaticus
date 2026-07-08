@@ -31,7 +31,8 @@
           "pos": [0, 0.75, 0],
           "rotJitter": [2, 0, 2],
           "material": "trunk",
-          "craft": 0.94
+          "craft": 0.94,
+          "craftSeed": 237491184
         },
         "branch": {
           "shape": "cylinder",
@@ -41,7 +42,8 @@
           "rot": [0, 0, -55],
           "material": "branch",
           "chance": 0.5,
-          "craft": 0.94
+          "craft": 0.94,
+          "craftSeed": 237491184
         },
         "crown_round": {
           "children": {
@@ -53,7 +55,8 @@
               "scale": [1, 0.85, 0.95],
               "material": "blob_r1",
               "sub": 3,
-              "craft": 0.84
+              "craft": 0.84,
+              "craftSeed": 237491184
             },
             "blob_r2": {
               "shape": "sphere",
@@ -63,7 +66,8 @@
               "scale": [1, 0.8, 1],
               "material": "blob_r2",
               "craft": 0.9,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 237491184
             },
             "blob_r3": {
               "shape": "sphere",
@@ -73,7 +77,8 @@
               "scale": [1, 0.82, 0.95],
               "material": "blob_r3",
               "sub": 3,
-              "craft": 0.84
+              "craft": 0.84,
+              "craftSeed": 237491184
             }
           }
         },
@@ -87,7 +92,8 @@
               "scale": [1, 0.85, 0.95],
               "material": "blob_t1",
               "sub": 3,
-              "craft": 0.84
+              "craft": 0.84,
+              "craftSeed": 237491184
             },
             "blob_t2": {
               "shape": "sphere",
@@ -97,7 +103,8 @@
               "scale": [1, 0.85, 1],
               "material": "blob_t2",
               "craft": 0.9,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 237491184
             },
             "blob_t3": {
               "shape": "sphere",
@@ -107,7 +114,8 @@
               "scale": [1, 0.8, 1],
               "material": "blob_t3",
               "sub": 3,
-              "craft": 0.84
+              "craft": 0.84,
+              "craftSeed": 237491184
             }
           }
         },
@@ -121,7 +129,8 @@
               "scale": [1, 0.85, 0.95],
               "material": "blob_w1",
               "sub": 3,
-              "craft": 0.84
+              "craft": 0.84,
+              "craftSeed": 237491184
             },
             "blob_w2": {
               "shape": "sphere",
@@ -131,7 +140,8 @@
               "scale": [1, 0.82, 1],
               "material": "blob_w2",
               "craft": 0.9,
-              "sub": 3
+              "sub": 3,
+              "craftSeed": 237491184
             },
             "blob_w3": {
               "shape": "sphere",
@@ -141,7 +151,8 @@
               "scale": [1, 0.8, 1],
               "material": "blob_w3",
               "sub": 3,
-              "craft": 0.84
+              "craft": 0.84,
+              "craftSeed": 237491184
             }
           }
         }

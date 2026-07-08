@@ -29,7 +29,8 @@
           "pos": [0, 0.24, 0],
           "rot": [0, 0, 90],
           "material": { "side": "trunk", "top": "trunk_top", "bottom": "trunk_bottom" },
-          "craft": 0.91
+          "craft": 0.91,
+          "craftSeed": 1328148735
         },
         "stub": {
           "shape": "post",
@@ -39,7 +40,8 @@
           "rot": [0, 0, -20],
           "material": "stub",
           "chance": 0.6,
-          "craft": 0.8
+          "craft": 0.8,
+          "craftSeed": 1328148735
         },
         "log_plain": {},
         "log_shrooms": {
@@ -49,7 +51,8 @@
               "size": [0.22, 0.22],
               "pos": [-0.3, 0.58, 0],
               "rot": [0, 25, 0],
-              "material": "shroom_a"
+              "material": "shroom_a",
+              "craftSeed": 1328148735
             },
             "shroom_b": {
               "shape": "cross",
@@ -57,7 +60,8 @@
               "pos": [-0.05, 0.55, 0.1],
               "rot": [0, 60, 0],
               "material": "shroom_b",
-              "chance": 0.7
+              "chance": 0.7,
+              "craftSeed": 1328148735
             }
           }
         },
@@ -70,7 +74,8 @@
               "rot": [0, 6, 4],
               "material": "moss_a",
               "sub": 2,
-              "craft": 0.41
+              "craft": 0.41,
+              "craftSeed": 1328148735
             },
             "moss_b": {
               "shape": "box",
@@ -80,7 +85,8 @@
               "material": "moss_b",
               "chance": 0.7,
               "sub": 2,
-              "craft": 0.4
+              "craft": 0.4,
+              "craftSeed": 1328148735
             }
           }
         }

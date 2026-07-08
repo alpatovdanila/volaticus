@@ -36,7 +36,8 @@
           "pos": [0, 4, 0],
           "material": { "side": "cap_side", "top": "cap_top", "bottom": "cap_bottom" },
           "craft": 0.55,
-          "sub": 1
+          "sub": 1,
+          "craftSeed": 1199401778
         },
         "under_deep": {
           "children": {
@@ -50,7 +51,7 @@
               "material": "ud_core",
               "craft": 0.5,
               "sub": 2,
-              "uvProject": "box"
+              "craftSeed": 1199401778
             },
             "ud_spur": {
               "shape": "cone",
@@ -63,7 +64,7 @@
               "chance": 0.75,
               "craft": 0.5,
               "sub": 1,
-              "uvProject": "box"
+              "craftSeed": 1199401778
             }
           }
         },
@@ -79,7 +80,7 @@
               "material": "us_core",
               "craft": 0.5,
               "sub": 2,
-              "uvProject": "box"
+              "craftSeed": 1199401778
             },
             "us_tip": {
               "shape": "cone",
@@ -91,7 +92,7 @@
               "material": "us_tip",
               "craft": 0.5,
               "sub": 1,
-              "uvProject": "box"
+              "craftSeed": 1199401778
             },
             "us_tip2": {
               "shape": "cone",
@@ -104,7 +105,7 @@
               "chance": 0.7,
               "craft": 0.5,
               "sub": 1,
-              "uvProject": "box"
+              "craftSeed": 1199401778
             }
           }
         },
@@ -119,7 +120,7 @@
           "chance": 0.85,
           "craft": 0.55,
           "sub": 1,
-          "uvProject": "box"
+          "craftSeed": 1199401778
         },
         "outcrop_2": {
           "shape": "box",
@@ -131,7 +132,7 @@
           "chance": 0.6,
           "craft": 0.5,
           "sub": 2,
-          "uvProject": "box"
+          "craftSeed": 1199401778
         },
         "tuft_1": {
           "shape": "cross",
@@ -139,7 +140,8 @@
           "pos": [0.6, 4.95, 2.6],
           "rotJitter": [0, 90, 0],
           "material": "tuft_1",
-          "chance": 0.7
+          "chance": 0.7,
+          "craftSeed": 1199401778
         },
         "tuft_2": {
           "shape": "cross",
@@ -147,7 +149,8 @@
           "pos": [-2.6, 4.95, -1.8],
           "rotJitter": [0, 90, 0],
           "material": "tuft_2",
-          "chance": 0.6
+          "chance": 0.6,
+          "craftSeed": 1199401778
         },
         "tuft_3": {
           "shape": "cross",
@@ -155,7 +158,8 @@
           "pos": [3.2, 4.95, 0.9],
           "rotJitter": [0, 90, 0],
           "material": "tuft_3",
-          "chance": 0.5
+          "chance": 0.5,
+          "craftSeed": 1199401778
         }
       }
     }

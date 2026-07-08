@@ -27,7 +27,8 @@
           "pos": [0, 0.14, 0],
           "rot": [0, 0, 6],
           "material": "stub_a",
-          "craft": 0.69
+          "craft": 0.69,
+          "craftSeed": 2142253427
         },
         "stub_b": {
           "shape": "cylinder",
@@ -38,7 +39,8 @@
           "rot": [8, 0, -18],
           "material": "stub_b",
           "chance": 0.7,
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 2142253427
         },
         "blob_a": {
           "shape": "sphere",
@@ -48,7 +50,8 @@
           "scale": [1, 0.85, 0.95],
           "material": "blob_a",
           "sub": 3,
-          "craft": 0.86
+          "craft": 0.86,
+          "craftSeed": 2142253427
         },
         "blob_b": {
           "shape": "sphere",
@@ -59,7 +62,8 @@
           "material": "blob_b",
           "chance": 0.8,
           "craft": 0.75,
-          "sub": 3
+          "sub": 3,
+          "craftSeed": 2142253427
         },
         "blob_c": {
           "shape": "sphere",
@@ -69,7 +73,8 @@
           "material": "blob_c",
           "chance": 0.65,
           "sub": 3,
-          "craft": 0.77
+          "craft": 0.77,
+          "craftSeed": 2142253427
         },
         "blob_top": {
           "shape": "sphere",
@@ -79,7 +84,8 @@
           "material": "blob_top",
           "chance": 0.55,
           "craft": 0.66,
-          "sub": 3
+          "sub": 3,
+          "craftSeed": 2142253427
         }
       }
     }

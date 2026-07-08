@@ -70,7 +70,8 @@
           "segments": 18,
           "pos": [0, 0.55, 0],
           "material": "plinth",
-          "craft": 0.62
+          "craft": 0.62,
+          "craftSeed": 1018091286
         },
         "drum": {
           "shape": "cylinder",
@@ -80,7 +81,8 @@
           "segments": 20,
           "pos": [0, 7.5, 0],
           "material": "drum",
-          "craft": 0.62
+          "craft": 0.62,
+          "craftSeed": 1018091286
         },
         "course_1": {
           "shape": "ring",
@@ -90,7 +92,8 @@
           "segments": 18,
           "pos": [0, 4, 0],
           "material": "course_1",
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1018091286
         },
         "course_2": {
           "shape": "ring",
@@ -100,7 +103,8 @@
           "segments": 18,
           "pos": [0, 7.6, 0],
           "material": "course_2",
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1018091286
         },
         "course_3": {
           "shape": "ring",
@@ -110,7 +114,8 @@
           "segments": 18,
           "pos": [0, 11.2, 0],
           "material": "course_3",
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1018091286
         },
         "platform": {
           "shape": "cylinder",
@@ -119,7 +124,8 @@
           "segments": 18,
           "pos": [0, 14.5, 0],
           "material": "platform",
-          "craft": 0.65
+          "craft": 0.65,
+          "craftSeed": 1018091286
         },
         "parapet": {
           "shape": "ring",
@@ -129,14 +135,16 @@
           "segments": 18,
           "pos": [0, 14.85, 0],
           "material": "parapet",
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1018091286
         },
         "merlon_0": {
           "shape": "box",
           "size": [0.66, 0.62, 0.36],
           "pos": [0, 15.46, 2.95],
           "material": "merlon_0",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "merlon_1": {
           "shape": "box",
@@ -145,7 +153,8 @@
           "rot": [0, 45, 0],
           "material": "merlon_1",
           "chance": 0.75,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "merlon_2": {
           "shape": "box",
@@ -154,7 +163,8 @@
           "rot": [0, 90, 0],
           "material": "merlon_2",
           "chance": 0.6,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "merlon_3": {
           "shape": "box",
@@ -163,7 +173,8 @@
           "rot": [0, 135, 0],
           "material": "merlon_3",
           "chance": 0.8,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "merlon_4": {
           "shape": "box",
@@ -171,7 +182,8 @@
           "pos": [0, 15.46, -2.95],
           "rot": [0, 180, 0],
           "material": "merlon_4",
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "merlon_5": {
           "shape": "box",
@@ -180,7 +192,8 @@
           "rot": [0, 225, 0],
           "material": "merlon_5",
           "chance": 0.55,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "merlon_6": {
           "shape": "box",
@@ -190,7 +203,8 @@
           "rotJitter": [4, 0, 7],
           "material": "merlon_6",
           "chance": 0.7,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "merlon_7": {
           "shape": "box",
@@ -199,21 +213,24 @@
           "rot": [0, 315, 0],
           "material": "merlon_7",
           "chance": 0.65,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "jamb_l": {
           "shape": "box",
           "size": [0.35, 1.9, 0.45],
           "pos": [-0.62, 0.95, 3.15],
           "material": "jamb_l",
-          "craft": 0.65
+          "craft": 0.65,
+          "craftSeed": 1018091286
         },
         "jamb_r": {
           "shape": "box",
           "size": [0.35, 1.9, 0.45],
           "pos": [0.62, 0.95, 3.15],
           "material": "jamb_r",
-          "craft": 0.65
+          "craft": 0.65,
+          "craftSeed": 1018091286
         },
         "arch": {
           "shape": "torus",
@@ -223,29 +240,39 @@
           "pos": [0, 1.9, 3.38],
           "rot": [90, 0, 0],
           "material": "arch",
-          "craft": 0.6
+          "craft": 0.6,
+          "craftSeed": 1018091286
         },
-        "door_void": { "shape": "box", "size": [0.95, 1.75, 0.72], "pos": [0, 0.9, 3], "material": "door_void" },
+        "door_void": {
+          "shape": "box",
+          "size": [0.95, 1.75, 0.72],
+          "pos": [0, 0.9, 3],
+          "material": "door_void",
+          "craftSeed": 1018091286
+        },
         "slit_1": {
           "shape": "box",
           "size": [0.2, 0.7, 0.3],
           "pos": [1.99, 5, 2.37],
           "rot": [0, 40, 0],
-          "material": "slit_1"
+          "material": "slit_1",
+          "craftSeed": 1018091286
         },
         "slit_2": {
           "shape": "box",
           "size": [0.2, 0.7, 0.3],
           "pos": [1.06, 8, -2.91],
           "rot": [0, 160, 0],
-          "material": "slit_2"
+          "material": "slit_2",
+          "craftSeed": 1018091286
         },
         "slit_3": {
           "shape": "box",
           "size": [0.2, 0.7, 0.3],
           "pos": [-3.05, 11, 0.54],
           "rot": [0, 280, 0],
-          "material": "slit_3"
+          "material": "slit_3",
+          "craftSeed": 1018091286
         },
         "moss_a": {
           "shape": "box",
@@ -255,7 +282,8 @@
           "material": "moss_a",
           "chance": 0.6,
           "craft": 0.6,
-          "sub": 2
+          "sub": 2,
+          "craftSeed": 1018091286
         },
         "moss_b": {
           "shape": "box",
@@ -265,7 +293,8 @@
           "material": "moss_b",
           "chance": 0.55,
           "craft": 0.6,
-          "sub": 2
+          "sub": 2,
+          "craftSeed": 1018091286
         },
         "rubble_1": {
           "shape": "box",
@@ -276,7 +305,7 @@
           "chance": 0.7,
           "craft": 0.5,
           "sub": 2,
-          "uvProject": "box"
+          "craftSeed": 1018091286
         },
         "rubble_2": {
           "shape": "box",
@@ -287,7 +316,7 @@
           "chance": 0.6,
           "craft": 0.5,
           "sub": 2,
-          "uvProject": "box"
+          "craftSeed": 1018091286
         },
         "slab_lean": {
           "shape": "plank",
@@ -296,7 +325,8 @@
           "rot": [12, 25, -18],
           "material": "slab_lean",
           "chance": 0.6,
-          "craft": 0.55
+          "craft": 0.55,
+          "craftSeed": 1018091286
         },
         "belfry_post_l": {
           "shape": "post",
@@ -305,7 +335,8 @@
           "segments": 7,
           "pos": [-0.55, 15.35, 0],
           "material": "belfry_post_l",
-          "craft": 0.7
+          "craft": 0.7,
+          "craftSeed": 1018091286
         },
         "belfry_post_r": {
           "shape": "post",
@@ -314,19 +345,27 @@
           "segments": 7,
           "pos": [0.55, 15.35, 0],
           "material": "belfry_post_r",
-          "craft": 0.7
+          "craft": 0.7,
+          "craftSeed": 1018091286
         },
         "crossbar": {
           "shape": "plank",
           "size": [1.5, 0.14, 0.14],
           "pos": [0, 16, 0],
           "material": "crossbar",
-          "craft": 0.8
+          "craft": 0.8,
+          "craftSeed": 1018091286
         },
         "bell": {
           "pos": [0, 15.9, 0],
           "children": {
-            "hanger": { "shape": "box", "size": [0.06, 0.14, 0.06], "pos": [0, -0.03, 0], "material": "hanger" },
+            "hanger": {
+              "shape": "box",
+              "size": [0.06, 0.14, 0.06],
+              "pos": [0, -0.03, 0],
+              "material": "hanger",
+              "craftSeed": 1018091286
+            },
             "bell_body": {
               "shape": "cylinder",
               "radiusTop": 0.16,
@@ -336,7 +375,8 @@
               "bulge": 0.03,
               "pos": [0, -0.31, 0],
               "material": "bell_body",
-              "craft": 0.88
+              "craft": 0.88,
+              "craftSeed": 1018091286
             },
             "bell_lip": {
               "shape": "ring",
@@ -346,9 +386,17 @@
               "segments": 12,
               "pos": [0, -0.53, 0],
               "material": "bell_lip",
-              "craft": 0.9
+              "craft": 0.9,
+              "craftSeed": 1018091286
             },
-            "clapper": { "shape": "sphere", "radius": 0.06, "segments": 8, "pos": [0, -0.58, 0], "material": "clapper" }
+            "clapper": {
+              "shape": "sphere",
+              "radius": 0.06,
+              "segments": 8,
+              "pos": [0, -0.58, 0],
+              "material": "clapper",
+              "craftSeed": 1018091286
+            }
           }
         }
       }

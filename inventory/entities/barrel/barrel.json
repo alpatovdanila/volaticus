@@ -8,7 +8,7 @@
   "materials": {
     "planks": { "material": "wood_planks_20", "flat": true, "uvRot": 90, "uvScale": 2, "tint": "#fee1e1" },
     "shell": { "inherit": "planks", "doubleSided": true, "uvProject": "sphere" },
-    "floor": { "inherit": "interior" },
+    "floor": { "inherit": "interior", "uvProject": "planar" },
     "lip": { "inherit": "planks", "uvMode": "tile", "uvProject": "none" },
     "lid_flush": { "inherit": "lid" },
     "lid_deep": { "inherit": "lid" },
@@ -40,7 +40,7 @@
           "open": true,
           "pos": [0, 0.4, 0],
           "material": "shell",
-          "uvProject": "box"
+          "craftSeed": 1343812577
         },
         "floor": {
           "shape": "disk",
@@ -48,7 +48,7 @@
           "segments": 20,
           "pos": [0, 0.075, 0],
           "material": "floor",
-          "uvProject": "planar"
+          "craftSeed": 1343812577
         },
         "lip": {
           "shape": "torus",
@@ -57,7 +57,7 @@
           "segments": 20,
           "pos": [0, 0.79, 0],
           "material": "lip",
-          "uvProject": "box"
+          "craftSeed": 1343812577
         },
         "band_top": {
           "shape": "ring",
@@ -68,7 +68,8 @@
           "segments": 20,
           "pos": [0, 0.66, 0],
           "material": "band_top",
-          "craft": 0.95
+          "craft": 0.95,
+          "craftSeed": 1343812577
         },
         "band_bot": {
           "shape": "ring",
@@ -79,7 +80,8 @@
           "segments": 20,
           "pos": [0, 0.14, 0],
           "material": "band_bot",
-          "craft": 0.95
+          "craft": 0.95,
+          "craftSeed": 1343812577
         },
         "lid_flush": {
           "shape": "cylinder",
@@ -88,7 +90,7 @@
           "segments": 20,
           "pos": [0, 0.745, 0],
           "material": { "side": "lid_flush", "top": "lid_flush_top", "bottom": "lid_flush_bottom" },
-          "uvProject": "box"
+          "craftSeed": 1343812577
         },
         "lid_deep": {
           "shape": "cylinder",
@@ -97,7 +99,7 @@
           "segments": 20,
           "pos": [0, 0.34, 0],
           "material": { "side": "lid_deep", "top": "lid_deep_2", "bottom": "lid_deep_3" },
-          "uvProject": "box"
+          "craftSeed": 1343812577
         },
         "lid_ajar": {
           "shape": "cylinder",
@@ -107,7 +109,7 @@
           "pos": [0.09, 0.83, -0.03],
           "rot": [11, 0, 14],
           "material": { "side": "lid_ajar", "top": "lid_ajar_top", "bottom": "lid_ajar_bottom" },
-          "uvProject": "box"
+          "craftSeed": 1343812577
         }
       }
     }

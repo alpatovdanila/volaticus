@@ -40,9 +40,22 @@
               "pos": [0, 0, 0],
               "material": "body_moss",
               "children": {
-                "seg1_moss": { "shape": "sphere", "radius": 0.115, "pos": [0, -0.012, -0.13], "material": "seg1_moss" },
-                "seg2_moss": { "shape": "sphere", "radius": 0.09, "pos": [0, -0.024, -0.235], "material": "seg2_moss" }
-              }
+                "seg1_moss": {
+                  "shape": "sphere",
+                  "radius": 0.115,
+                  "pos": [0, -0.012, -0.13],
+                  "material": "seg1_moss",
+                  "craftSeed": 1765895162
+                },
+                "seg2_moss": {
+                  "shape": "sphere",
+                  "radius": 0.09,
+                  "pos": [0, -0.024, -0.235],
+                  "material": "seg2_moss",
+                  "craftSeed": 1765895162
+                }
+              },
+              "craftSeed": 1765895162
             },
             "body_purple": {
               "shape": "sphere",
@@ -50,9 +63,22 @@
               "pos": [0, 0, 0],
               "material": "body_purple",
               "children": {
-                "seg1_purple": { "shape": "sphere", "radius": 0.115, "pos": [0, -0.012, -0.13], "material": "seg1_purple" },
-                "seg2_purple": { "shape": "sphere", "radius": 0.09, "pos": [0, -0.024, -0.235], "material": "seg2_purple" }
-              }
+                "seg1_purple": {
+                  "shape": "sphere",
+                  "radius": 0.115,
+                  "pos": [0, -0.012, -0.13],
+                  "material": "seg1_purple",
+                  "craftSeed": 1765895162
+                },
+                "seg2_purple": {
+                  "shape": "sphere",
+                  "radius": 0.09,
+                  "pos": [0, -0.024, -0.235],
+                  "material": "seg2_purple",
+                  "craftSeed": 1765895162
+                }
+              },
+              "craftSeed": 1765895162
             },
             "body_honey": {
               "shape": "sphere",
@@ -60,33 +86,61 @@
               "pos": [0, 0, 0],
               "material": "body_honey",
               "children": {
-                "seg1_honey": { "shape": "sphere", "radius": 0.115, "pos": [0, -0.012, -0.13], "material": "seg1_honey" },
-                "seg2_honey": { "shape": "sphere", "radius": 0.09, "pos": [0, -0.024, -0.235], "material": "seg2_honey" }
-              }
+                "seg1_honey": {
+                  "shape": "sphere",
+                  "radius": 0.115,
+                  "pos": [0, -0.012, -0.13],
+                  "material": "seg1_honey",
+                  "craftSeed": 1765895162
+                },
+                "seg2_honey": {
+                  "shape": "sphere",
+                  "radius": 0.09,
+                  "pos": [0, -0.024, -0.235],
+                  "material": "seg2_honey",
+                  "craftSeed": 1765895162
+                }
+              },
+              "craftSeed": 1765895162
             },
             "wing_l": {
               "shape": "box",
               "size": [0.21, 0.015, 0.24],
               "pos": [-0.16, 0.1, -0.04],
               "pivot": [0.105, 0, 0],
-              "material": "wing_l"
+              "material": "wing_l",
+              "craftSeed": 1765895162
             },
             "wing_r": {
               "shape": "box",
               "size": [0.21, 0.015, 0.24],
               "pos": [0.16, 0.1, -0.04],
               "pivot": [-0.105, 0, 0],
-              "material": "wing_r"
+              "material": "wing_r",
+              "craftSeed": 1765895162
             },
-            "eye_l": { "shape": "box", "size": [0.045, 0.055, 0.02], "pos": [-0.05, 0.02, 0.125], "material": "eye_l" },
-            "eye_r": { "shape": "box", "size": [0.045, 0.055, 0.02], "pos": [0.05, 0.02, 0.125], "material": "eye_r" },
+            "eye_l": {
+              "shape": "box",
+              "size": [0.045, 0.055, 0.02],
+              "pos": [-0.05, 0.02, 0.125],
+              "material": "eye_l",
+              "craftSeed": 1765895162
+            },
+            "eye_r": {
+              "shape": "box",
+              "size": [0.045, 0.055, 0.02],
+              "pos": [0.05, 0.02, 0.125],
+              "material": "eye_r",
+              "craftSeed": 1765895162
+            },
             "spike": {
               "shape": "cone",
               "radius": 0.035,
               "height": 0.13,
               "pos": [0, -0.02, 0.18],
               "rot": [90, 0, 0],
-              "material": "stinger"
+              "material": "stinger",
+              "craftSeed": 1765895162
             },
             "antenna_l": {
               "shape": "box",
@@ -94,7 +148,8 @@
               "pos": [-0.04, 0.17, 0.03],
               "rot": [12, 0, 22],
               "material": "antenna_l",
-              "chance": 0.7
+              "chance": 0.7,
+              "craftSeed": 1765895162
             },
             "antenna_r": {
               "shape": "box",
@@ -102,7 +157,8 @@
               "pos": [0.04, 0.17, 0.03],
               "rot": [12, 0, -22],
               "material": "antenna_r",
-              "chance": 0.7
+              "chance": 0.7,
+              "craftSeed": 1765895162
             }
           }
         }

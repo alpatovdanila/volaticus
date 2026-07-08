@@ -35,28 +35,32 @@
           "size": [0.09, 0.13, 0.03],
           "pos": [-0.113, 0.052, 0.278],
           "rot": [-10, -22, 0],
-          "material": "eye_l"
+          "material": "eye_l",
+          "craftSeed": 333318888
         },
         "eye_r": {
           "shape": "box",
           "size": [0.09, 0.13, 0.03],
           "pos": [0.113, 0.052, 0.278],
           "rot": [-10, 22, 0],
-          "material": "eye_r"
+          "material": "eye_r",
+          "craftSeed": 333318888
         },
         "pupil_l": {
           "shape": "box",
           "size": [0.05, 0.07, 0.02],
           "pos": [-0.115, 0.031, 0.302],
           "rot": [-6, -21, 0],
-          "material": "pupil_l"
+          "material": "pupil_l",
+          "craftSeed": 333318888
         },
         "pupil_r": {
           "shape": "box",
           "size": [0.05, 0.07, 0.02],
           "pos": [0.115, 0.031, 0.302],
           "rot": [-6, 21, 0],
-          "material": "pupil_r"
+          "material": "pupil_r",
+          "craftSeed": 333318888
         },
         "fuse": {
           "shape": "cylinder",
@@ -65,7 +69,8 @@
           "pos": [0, 0.34, 0],
           "rot": [0, 0, 10],
           "material": "fuse",
-          "craft": 0.91
+          "craft": 0.91,
+          "craftSeed": 333318888
         },
         "leg_l": {
           "shape": "box",
@@ -86,12 +91,15 @@
                   "size": [0.15, 0.06, 0.1],
                   "pos": [0, -0.01, 0.095],
                   "material": "toe_l",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 333318888
                 }
-              }
+              },
+              "craftSeed": 333318888
             }
           },
-          "craft": 0.96
+          "craft": 0.96,
+          "craftSeed": 333318888
         },
         "leg_r": {
           "shape": "box",
@@ -112,15 +120,19 @@
                   "size": [0.15, 0.06, 0.1],
                   "pos": [0, -0.01, 0.095],
                   "material": "toe_r",
-                  "craft": 0.85
+                  "craft": 0.85,
+                  "craftSeed": 333318888
                 }
-              }
+              },
+              "craftSeed": 333318888
             }
           },
-          "craft": 0.96
+          "craft": 0.96,
+          "craftSeed": 333318888
         }
       },
-      "craft": 0.96
+      "craft": 0.96,
+      "craftSeed": 333318888
     }
   },
   "physics": {

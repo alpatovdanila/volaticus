@@ -3,7 +3,8 @@
 //   1. strip the retired fields from <id>.json: `behavior`, per-node `seed`, and
 //      the old variants jitter (`scale`/`yawJitter`/`tiltJitter`/`tintJitter`/`seeds`);
 //      reshape `variants` → { count, oneOf } (count carried over from seeds.length).
-//   2. bake `count` geometry variants and write <id>.geom.{i}.json (compact).
+//   2. write a per-part `craftSeed` into <id>.json, roll `count` variant layouts
+//      into <id>.variants.json, and compose <id>.geom.{i}.json from them (compact).
 //
 // Runs headless — the bake path uses only THREE's geometry math (no renderer) and
 // procgeom, so no GL context is needed. (No entity currently uses shape "mesh",
@@ -14,7 +15,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { stringifyPretty } from '../src/inventory/json'
-import { bakeEntityGeometry } from '../src/inventory/factory'
+import { bakeEntityGeometry, bakeVariantLayouts, ensureCraftSeeds } from '../src/inventory/factory'
 import type { EntityDoc } from '../src/inventory/schema'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -51,16 +52,20 @@ for (const id of fs.readdirSync(ENTITIES).filter((d) => fs.statSync(path.join(EN
   }
   if (isObj(raw.rig)) stripNodeSeed(raw.rig)
 
-  // 2. bake variants
+  // 2. seed every shaped part (persists into <id>.json), roll the variant LAYOUTS
+  //    (<id>.variants.json), then compose the geom sidecars from seeds + layouts.
   const doc = raw as EntityDoc
-  const baked = bakeEntityGeometry(doc)
+  ensureCraftSeeds(doc) // mutates raw — craftSeed lands in the entity JSON
+  const layouts = bakeVariantLayouts(doc)
+  const baked = bakeEntityGeometry(doc, layouts)
   variantsTotal += baked.length
 
   if (!DRY) {
     fs.writeFileSync(file, stringifyPretty(raw))
-    // remove any stale geom files beyond the new count, then write the fresh set
+    // remove stale sidecars, then write the fresh layouts + geom set
     for (const f of fs.readdirSync(path.join(ENTITIES, id)))
-      if (/\.geom\.\d+\.json$/.test(f)) fs.unlinkSync(path.join(ENTITIES, id, f))
+      if (/\.(geom\.\d+|variants)\.json$/.test(f)) fs.unlinkSync(path.join(ENTITIES, id, f))
+    fs.writeFileSync(path.join(ENTITIES, id, `${id}.variants.json`), JSON.stringify({ format: 1, variants: layouts }))
     for (let i = 0; i < baked.length; i++)
       fs.writeFileSync(path.join(ENTITIES, id, `${id}.geom.${i}.json`), JSON.stringify(baked[i]))
   }

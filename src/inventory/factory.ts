@@ -1,8 +1,8 @@
 // Builds a live THREE object tree from an entity doc. Used identically by the
 // editor preview and (later) the game — what the editor shows is what ships.
 import * as THREE from 'three'
-import { mulberry32, randRange } from '../lib/rng'
-import { catalogDefaultUvProject, catalogDefaultUvScale, makeSlotMaterial, type EntityMaterial } from './materials'
+import { randRange } from '../lib/rng'
+import { catalogDefaultUvScale, makeSlotMaterial, type EntityMaterial } from './materials'
 import { getMeshGeometry } from './meshes'
 import {
   craftAmount,
@@ -17,7 +17,7 @@ import {
   subdivideTriangleSoup,
   type GeneratedGeometry,
 } from './procgeom'
-import { resolveMaterials, type EntityDoc, type FaceKey, type NodeDef, type ResolvedMaterialDef } from './schema'
+import { resolveMaterials, walkRig, type EntityDoc, type FaceKey, type NodeDef, type ResolvedMaterialDef } from './schema'
 
 // generated shapes: always jittered (craft defaults to 0.5), authored UVs
 const GENERATED_SHAPES = new Set<NodeDef['shape']>(['plank', 'post', 'ring', 'arrow', 'star'])
@@ -33,10 +33,11 @@ function toBufferGeometry(g: GeneratedGeometry): THREE.BufferGeometry {
 }
 
 // generic "proceduralizator": seeded vertex jitter on any built-in shape.
-// Positions are hashed in ENTITY space (the node's composed transform chain),
-// with the shared per-variant seed — so coincident vertices of DIFFERENT nodes
-// (e.g. two shell halves meeting at a barrel's waist) receive the same offset and
-// the seam stays sealed.
+// Positions are hashed in ENTITY space (the node's BASE-pose transform chain),
+// with the node's stored craftSeed — so coincident vertices of DIFFERENT nodes
+// (e.g. two frame rails meeting at a corner) receive the same offset and the seam
+// stays sealed IFF the two nodes share a seed. computeSeamGroups guarantees that:
+// nodes that touch are one seam-group and are always seeded together.
 function applyCraftJitter(geo: THREE.BufferGeometry, craft: number, matrix: THREE.Matrix4, seed: number): void {
   geo.computeBoundingBox()
   const size = geo.boundingBox!.getSize(new THREE.Vector3())
@@ -115,12 +116,14 @@ export interface BuiltEntity {
 }
 
 // ---------------------------------------------------------------------------
-// Baked geometry: the studio pre-generates this (bakeEntityGeometry) and stores
-// it in <id>.geom.{i}.json; the runtime loads it (buildEntity) and never
-// generates. Per NODE, so anims/states/shatter still address nodes by name. UVs
-// are stored in METERS (base), then metered/projected + uvRot'd live at load so
-// material edits reflect without a re-bake. oneOf/chance/rotJitter are resolved
-// at bake — a shaped node dropped by them is simply absent from `nodes`.
+// Baked geometry: the studio composes this (bakeEntityGeometry) and stores it in
+// <id>.geom.{i}.json; the runtime loads it (buildEntity) and never generates. Per
+// NODE, so anims/states/shatter still address nodes by name. UVs are stored in
+// METERS (base), then metered/projected + uvRot'd live at load so material edits
+// reflect without a re-bake. Each variant is composed from a resolved LAYOUT
+// (<id>.variants.json: the present parts, each with final pos+rot) against parts
+// baked ONCE in base pose — a node absent from the layout is absent from `nodes`;
+// each present node carries its final pos + rot.
 export interface BakedNodeGeom {
   positions: number[]
   normals: number[]
@@ -128,12 +131,25 @@ export interface BakedNodeGeom {
   index: number[] // empty = non-indexed
   groups: [number, number, number][] // [start, count, materialIndex]
 }
+// A node in the baked SCENE TREE. It mirrors the rig node's render-relevant fields
+// (shape/material/pivot/scale/hidden) + the resolved transform + geometry + nested
+// children, so the geom file is a self-contained tree (glTF-style): the
+// runtime builds from it ALONE and only looks up material definitions + anims (by
+// the slot/node names carried here) in the main file. Generation inputs (craft/sub/
+// size/segments/craftSeed/chance/rotJitter) are NOT copied — they're bake-time only.
 export interface BakedNode {
-  rot?: [number, number, number] // resolved rotJitter (overrides node.rot); present on group nodes too
+  pos: [number, number, number] // final local position (always present)
+  rot: [number, number, number] // final local rotation, rotJitter rolled in (always present)
+  scale?: number | [number, number, number]
+  pivot?: [number, number, number]
+  hidden?: boolean
+  shape?: NodeDef['shape'] // drives per-face material mapping + cross/mesh handling at load
+  material?: NodeDef['material'] // slot name(s) — resolved against the main file's `materials` (which also carry uvProject)
   geom?: BakedNodeGeom // absent on pure-group (shapeless) nodes
+  children?: Record<string, BakedNode> // nested subtree (the rig hierarchy, baked in)
 }
 export interface BakedVariant {
-  nodes: Record<string, BakedNode> // every node that survived oneOf/chance this variant
+  nodes: Record<string, BakedNode> // ROOT nodes; the tree nests via BakedNode.children
 }
 export type BakedGeometry = BakedVariant[] // one entry per variant
 
@@ -388,8 +404,15 @@ function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceR
   }
 }
 
+// The render-relevant fields the LOAD path reads off a node. Both the rig node
+// (NodeDef) and a baked node (BakedNode) satisfy it — so once these are baked into
+// the geom tree, buildEntity/loadNodeMeshes drive off the baked node alone and
+// never touch the rig for structure. (Material DEFINITIONS still come from the main
+// file's `materials`, keyed by the slot names carried here.)
+type RenderNode = Pick<NodeDef, 'shape' | 'material'>
+
 // group index -> face key mapping for the shapes that carry geometry groups
-function groupFacesOf(node: NodeDef): readonly FaceKey[] {
+function groupFacesOf(node: RenderNode): readonly FaceKey[] {
   switch (node.shape) {
     case 'box':
       return BOX_GROUP_FACES
@@ -404,7 +427,8 @@ function groupFacesOf(node: NodeDef): readonly FaceKey[] {
   }
 }
 
-// node.uvProject: re-project UVs in ENTITY space, after build/subdivide/jitter.
+// UV projection (the material slot's uvProject): re-project UVs in ENTITY space,
+// after build/subdivide/jitter.
 // box = dominant-axis planar per triangle (needs a non-indexed soup), planar =
 // XZ from above, sphere = spherical around the node's bbox center. Raw coords
 // come out in meters, then the existing uvMode/uvScale metering applies per
@@ -485,7 +509,7 @@ export function projectGeometryUv(
 
 function applyUvProjection(
   geo: THREE.BufferGeometry,
-  node: NodeDef,
+  node: RenderNode,
   materials: Record<string, ResolvedMaterialDef>,
   matrix: THREE.Matrix4,
   mode: 'box' | 'planar' | 'sphere',
@@ -510,13 +534,12 @@ function applyUvProjection(
   return g
 }
 
-// The UV projection to use for a node. Resolution order (most specific wins):
-//   1. node.uvProject (authored per-node)
-//   2. the slot material's per-slot uvProject override (#4 per-part)
-//   3. the catalog material's DEFAULT uvProject (tuning.uvProject, #13)
-// undefined = keep authored/tiled UVs. Never for meshes (authored atlas UVs).
+// The UV projection to use for a node. SINGLE SOURCE: the material slot's uvProject
+// (doc.materials[slot].uvProject, resolved through the inherit chain). 'none' =
+// explicit "keep authored/tiled UVs"; absent = default (no projection). Never for
+// meshes (authored atlas UVs). Projection is no longer a rig/node concern.
 function effectiveUvProject(
-  node: NodeDef,
+  node: RenderNode,
   materials: Record<string, ResolvedMaterialDef>,
 ): 'box' | 'planar' | 'sphere' | undefined {
   if (node.shape === 'mesh') return undefined
@@ -525,26 +548,10 @@ function effectiveUvProject(
     : typeof node.material === 'string'
       ? [node.material]
       : Object.values(node.material)
-  // PRECEDENCE (highest first): the per-slot chip override is AUTHORITATIVE — an
-  // explicit editor choice outranks the authored node-level uvProject, so the UI
-  // dropdown always changes the model (previously node-level won and the chip was
-  // inert/locked on most props). 'none' is the EXPLICIT "authored/tiled UVs, no
-  // projection" override — it resolves like any other value and blocks both the
-  // node default and the catalog fallback below.
   for (const slot of slots) {
     if (!slot) continue
     const p = materials[slot]?.uvProject
     if (p) return p === 'none' ? undefined : p
-  }
-  // then the authored node-level projection (the asset's baked-in default)
-  if (node.uvProject !== undefined) return node.uvProject
-  if (!slots.length) return undefined
-  // then the material's own default projection from its catalog tuning
-  for (const slot of slots) {
-    if (!slot) continue
-    const id = materials[slot]?.material
-    const p = id ? catalogDefaultUvProject(id) : undefined
-    if (p) return p
   }
   return undefined
 }
@@ -572,7 +579,7 @@ function bakeUvsToMeters(geo: THREE.BufferGeometry, faces: FaceRepeat[], node: N
 // LOAD steps 2+3 (non-projected path): meter the (already-meters) baked UVs by
 // uvMode + effective uvScale, then bake the slot's uvRot. Face keys derive from
 // the shape's group order (groupFacesOf). Shape "mesh" keeps atlas UVs (uvRot only).
-function meterBakedUvs(geo: THREE.BufferGeometry, node: NodeDef, materials: Record<string, ResolvedMaterialDef>): void {
+function meterBakedUvs(geo: THREE.BufferGeometry, node: RenderNode, materials: Record<string, ResolvedMaterialDef>): void {
   const uv = geo.getAttribute('uv') as THREE.BufferAttribute
   if (!uv) return
   const retile = node.shape !== 'mesh'
@@ -671,7 +678,7 @@ function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: numb
 // without a re-bake), uv2, and per-face material assignment. "cross" → two meshes.
 function loadNodeMeshes(
   nodeName: string,
-  node: NodeDef,
+  node: RenderNode,
   bakedGeom: BakedNodeGeom,
   slotMaterials: Map<string, EntityMaterial>,
   materials: Record<string, ResolvedMaterialDef>,
@@ -714,52 +721,231 @@ function loadNodeMeshes(
   return meshes
 }
 
-// BAKE every variant's geometry (STUDIO/tool only). Each variant resolves
-// oneOf/chance/rotJitter/craft with FRESH randomness — nothing seeded is stored,
-// only the resulting geometry — then serializes each surviving node.
-function bakeVariant(doc: EntityDoc, rng: () => number): BakedVariant {
-  const dropped = new Set<string>()
+// A variant's LAYOUT — stored in <id>.variants.json, one entry per variant. FULLY
+// RESOLVED, declarative data: the flat set of parts PRESENT in this variant (oneOf
+// picks + chance already resolved — dropped parts simply aren't listed), each with
+// its final local position + rotation (rotJitter already rolled in). NO logic
+// operators — the composer just reads `parts` and places them. Rolled ONCE
+// ("Regenerate variants"); a craft edit re-composes the same layouts, so the
+// arrangement never shuffles under you.
+export interface VariantLayout {
+  parts: Record<string, { pos: [number, number, number]; rot: [number, number, number] }>
+}
+
+const randSeed = () => (Math.random() * 0x7fffffff) | 0
+
+function shapedNodes(doc: EntityDoc): [string, NodeDef][] {
+  const out: [string, NodeDef][] = []
+  walkRig(doc.rig, (name, node) => {
+    if (node.shape) out.push([name, node])
+  })
+  return out
+}
+
+// Roll ONE variant layout, RESOLVING all structure to plain data (the only place
+// oneOf/chance/rotJitter randomness runs). oneOf keeps one node per group; chance
+// drops a node + its subtree; every surviving node is recorded with its final local
+// pos + rot (rotJitter rolled in). The stored result carries no operators.
+function rollLayout(doc: EntityDoc, rng: () => number): VariantLayout {
+  const drop = new Set<string>()
   for (const names of Object.values(doc.variants?.oneOf ?? {})) {
     const keep = names[Math.floor(rng() * names.length) % names.length]
-    for (const n of names) if (n !== keep) dropped.add(n)
+    for (const n of names) if (n !== keep) drop.add(n)
   }
-  // ONE shared craft-jitter seed for EVERY node of this variant: applyCraftJitter
-  // hashes vertices in ENTITY space, so two abutting nodes only move a shared
-  // coincident vertex together — keeping the seam sealed — when they hash with the
-  // same seed. (The old builder shared one per-build seed the same way.)
-  const seed = (rng() * 0x7fffffff) | 0
-  const nodes: Record<string, BakedNode> = {}
+  const parts: VariantLayout['parts'] = {}
+  const walk = (name: string, node: NodeDef): void => {
+    if (drop.has(name)) return // oneOf loser
+    if (node.chance !== undefined && rng() > node.chance) return // chance drop (subtree gone)
+    const bp = node.pos ?? [0, 0, 0]
+    const br = node.rot ?? [0, 0, 0]
+    const rot: [number, number, number] = node.rotJitter
+      ? [
+          br[0] + randRange(rng, -node.rotJitter[0], node.rotJitter[0]),
+          br[1] + randRange(rng, -node.rotJitter[1], node.rotJitter[1]),
+          br[2] + randRange(rng, -node.rotJitter[2], node.rotJitter[2]),
+        ]
+      : [br[0], br[1], br[2]]
+    parts[name] = { pos: [bp[0], bp[1], bp[2]], rot }
+    for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd)
+  }
+  for (const [name, node] of Object.entries(doc.rig)) walk(name, node)
+  return { parts }
+}
+
+// Roll layouts (STUDIO/tool) — `n` of them, default = the doc's variant count. A
+// partial `n` APPENDS layouts when count grows, leaving existing ones untouched.
+// Persisted to <id>.variants.json.
+export function bakeVariantLayouts(doc: EntityDoc, n = Math.max(1, doc.variants?.count ?? 1)): VariantLayout[] {
+  return Array.from({ length: Math.max(0, n) }, () => rollLayout(doc, Math.random))
+}
+
+// Generate EVERY shaped node's geometry ONCE (STUDIO/tool), in its BASE pose
+// (node.rot — no rotJitter), so a part is variant-independent and can compose into
+// any layout. Craft jitter runs in base entity space with the node's craftSeed;
+// seam-group members share a seed so their coincident base-pose vertices seal.
+// (rotJitter is a rigid transform applied later at compose/build, not baked in.)
+function bakeParts(doc: EntityDoc): Record<string, BakedNodeGeom> {
+  const parts: Record<string, BakedNodeGeom> = {}
   const walk = (name: string, node: NodeDef, parentMatrix: THREE.Matrix4): void => {
-    if (dropped.has(name)) return
-    if (node.chance !== undefined && rng() > node.chance) return
-    let rot: readonly number[] = node.rot ?? [0, 0, 0]
-    let rotOverride: [number, number, number] | undefined
-    if (node.rotJitter) {
-      const r: [number, number, number] = [rot[0], rot[1], rot[2]]
-      for (let i = 0; i < 3; i++) r[i] += randRange(rng, -node.rotJitter[i], node.rotJitter[i])
-      rot = r
-      rotOverride = r
-    }
-    const matrix = composeNodeMatrix(node, rot, parentMatrix)
-    const entry: BakedNode = {}
-    if (rotOverride) entry.rot = rotOverride
+    const matrix = composeNodeMatrix(node, node.rot ?? [0, 0, 0], parentMatrix)
     if (node.shape) {
-      const g = bakeNodeGeometry(node, matrix, seed)
-      if (g) entry.geom = g
+      const g = bakeNodeGeometry(node, matrix, node.craftSeed ?? 0)
+      if (g) parts[name] = g
     }
-    nodes[name] = entry
     for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix)
   }
   const identity = new THREE.Matrix4()
   for (const [name, node] of Object.entries(doc.rig)) walk(name, node, identity)
+  return parts
+}
+
+// Compose one variant into a self-contained scene tree by READING the resolved
+// layout: for each part the layout lists, emit a baked node carrying the rig's
+// render fields + the layout's final pos/rot + the once-baked geometry, and nest
+// its surviving children. A node absent from layout.parts is dropped with its whole
+// subtree. The result needs nothing from the rig at runtime.
+function composeVariant(doc: EntityDoc, parts: Record<string, BakedNodeGeom>, layout: VariantLayout): BakedVariant {
+  const build = (name: string, node: NodeDef): BakedNode | null => {
+    const p = layout.parts[name]
+    if (!p) return null // not in this variant (oneOf loser / chance drop)
+    const entry: BakedNode = { pos: p.pos, rot: p.rot }
+    if (node.scale !== undefined) entry.scale = node.scale
+    if (node.pivot !== undefined) entry.pivot = node.pivot
+    if (node.hidden) entry.hidden = true
+    if (node.shape !== undefined) entry.shape = node.shape
+    if (node.material !== undefined) entry.material = node.material
+    if (node.shape && parts[name]) entry.geom = parts[name]
+    const children: Record<string, BakedNode> = {}
+    for (const [cn, cd] of Object.entries(node.children ?? {})) {
+      const child = build(cn, cd)
+      if (child) children[cn] = child
+    }
+    if (Object.keys(children).length) entry.children = children
+    return entry
+  }
+  const nodes: Record<string, BakedNode> = {}
+  for (const [name, node] of Object.entries(doc.rig)) {
+    const b = build(name, node)
+    if (b) nodes[name] = b
+  }
   return { nodes }
 }
 
-export function bakeEntityGeometry(doc: EntityDoc): BakedGeometry {
-  const count = Math.max(1, doc.variants?.count ?? 1)
-  const out: BakedGeometry = []
-  for (let v = 0; v < count; v++) out.push(bakeVariant(doc, mulberry32((Math.random() * 0x7fffffff) | 0)))
-  return out
+// Compose the full baked geometry set (STUDIO/tool): parts baked once × the given
+// layouts (or freshly rolled ones — the lineup path passes none). Deterministic in
+// (craftSeeds, layouts): re-baking after a craft edit reproduces it exactly.
+export function bakeEntityGeometry(doc: EntityDoc, layouts?: VariantLayout[]): BakedGeometry {
+  const parts = bakeParts(doc)
+  return (layouts ?? bakeVariantLayouts(doc)).map((l) => composeVariant(doc, parts, l))
+}
+
+// ---------------------------------------------------------------------------
+// Per-part craft seeds. Stored on each shaped rig node (craftSeed) so craft is
+// reproducible AND individually re-rollable. Two nodes that share a base-pose
+// vertex (a real seam — rare, only frame corners) MUST share a seed or the seam
+// cracks when jittered; computeSeamGroups finds them and the reroll helpers keep
+// a group's seeds equal.
+
+// Union-find over "two shaped nodes share a base-pose entity-space vertex". Returns
+// seam-groups (singletons included). Quantized like applyCraftJitter's hash (1 mm),
+// so it flags exactly the coincidences the shared-seed logic protects. Pre-jitter
+// geometry — the coincidence a seed must preserve exists BEFORE the offset.
+export function computeSeamGroups(doc: EntityDoc): string[][] {
+  const owner = new Map<string, string>() // vertex key -> a node name that touches it
+  const dsu = new Map<string, string>()
+  const find = (x: string): string => {
+    let r = x
+    while (dsu.get(r) !== r) r = dsu.get(r)!
+    while (dsu.get(x) !== r) {
+      const n = dsu.get(x)!
+      dsu.set(x, r)
+      x = n
+    }
+    return r
+  }
+  const union = (a: string, b: string) => {
+    const ra = find(a), rb = find(b)
+    if (ra !== rb) dsu.set(ra, rb)
+  }
+  const v = new THREE.Vector3()
+  const walk = (name: string, node: NodeDef, parentMatrix: THREE.Matrix4): void => {
+    const matrix = composeNodeMatrix(node, node.rot ?? [0, 0, 0], parentMatrix)
+    if (node.shape && node.shape !== 'mesh') {
+      dsu.set(name, name)
+      const built = buildGeometry(node)
+      let geo = built.geo
+      if (!GENERATED_SHAPES.has(node.shape) && (node.sub ?? 0) > 0) {
+        const coarse = geo
+        geo = subdivideGeometry(geo, node.sub ?? 0)
+        coarse.dispose()
+      }
+      const pos = geo.getAttribute('position') as THREE.BufferAttribute
+      const seen = new Set<string>()
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(matrix)
+        const k = `${Math.round(v.x * 1000)},${Math.round(v.y * 1000)},${Math.round(v.z * 1000)}`
+        if (seen.has(k)) continue
+        seen.add(k)
+        const prev = owner.get(k)
+        if (prev === undefined) owner.set(k, name)
+        else union(prev, name)
+      }
+      geo.dispose()
+    }
+    for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix)
+  }
+  for (const [name, node] of Object.entries(doc.rig)) walk(name, node, new THREE.Matrix4())
+  const groups = new Map<string, string[]>()
+  for (const name of dsu.keys()) {
+    const r = find(name)
+    ;(groups.get(r) ?? groups.set(r, []).get(r)!).push(name)
+  }
+  return [...groups.values()]
+}
+
+// Assign a craftSeed to every shaped node that lacks one (STUDIO/tool). First-ever
+// seeding gives ONE shared value to all (coherent jitter, every seam trivially
+// sealed); a node added later gets a fresh value. Mutates doc.rig; returns the full
+// name→seed map so the caller can mirror it into the raw JSON.
+export function ensureCraftSeeds(doc: EntityDoc): Record<string, number> {
+  const shaped = shapedNodes(doc)
+  const anySeeded = shaped.some(([, n]) => n.craftSeed !== undefined)
+  const shared = randSeed()
+  const map: Record<string, number> = {}
+  for (const [name, node] of shaped) {
+    if (node.craftSeed === undefined) node.craftSeed = anySeeded ? randSeed() : shared
+    map[name] = node.craftSeed
+  }
+  return map
+}
+
+// Reroll ALL parts to one fresh shared value (coherent re-crook, seams sealed).
+export function rerollCraftSeeds(doc: EntityDoc): Record<string, number> {
+  const shared = randSeed()
+  const map: Record<string, number> = {}
+  for (const [name, node] of shapedNodes(doc)) {
+    node.craftSeed = shared
+    map[name] = shared
+  }
+  return map
+}
+
+// Reroll ONE part — and, so a real seam can't crack, its whole seam-group — to a
+// fresh value. Singletons (the 40/44 props with no welded corners) reroll alone.
+export function rerollPartSeed(doc: EntityDoc, nodeNames: string[]): Record<string, number> {
+  const groups = computeSeamGroups(doc)
+  const affected = new Set<string>()
+  for (const target of nodeNames) {
+    const g = groups.find((grp) => grp.includes(target))
+    for (const n of g ?? [target]) affected.add(n)
+  }
+  const fresh = randSeed()
+  const map: Record<string, number> = {}
+  for (const [name, node] of shapedNodes(doc)) {
+    if (affected.has(name)) node.craftSeed = fresh
+    map[name] = node.craftSeed ?? fresh
+  }
+  return map
 }
 
 // Build a live THREE tree from a doc + ONE baked variant — the runtime path
@@ -776,20 +962,19 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
   const slotMaterials = new Map<string, EntityMaterial>()
   for (const [slot, def] of Object.entries(resolvedMaterials)) slotMaterials.set(slot, makeSlotMaterial(slot, def))
 
-  const buildNode = (name: string, node: NodeDef, parent: THREE.Object3D, parentMatrix: THREE.Matrix4): void => {
-    const b = baked.nodes[name]
-    if (!b) return // dropped by oneOf/chance at bake time
-
-    const pivot = node.pivot ?? [0, 0, 0]
-    const pos = node.pos ?? [0, 0, 0]
+  // Walk the baked SCENE TREE — every field (transform, shape, material slot,
+  // hidden, children) comes from the baked node; the rig is never consulted.
+  const buildNode = (name: string, b: BakedNode, parent: THREE.Object3D, parentMatrix: THREE.Matrix4): void => {
+    const pivot = b.pivot ?? [0, 0, 0]
+    const pos = b.pos
     const outer = new THREE.Group()
     outer.name = name
     outer.position.set(pos[0] + pivot[0], pos[1] + pivot[1], pos[2] + pivot[2])
-    const rot = b.rot ?? node.rot ?? [0, 0, 0] // baked rotJitter override
+    const rot = b.rot
     outer.rotation.set(THREE.MathUtils.degToRad(rot[0]), THREE.MathUtils.degToRad(rot[1]), THREE.MathUtils.degToRad(rot[2]))
-    if (node.scale !== undefined) {
-      if (typeof node.scale === 'number') outer.scale.setScalar(node.scale)
-      else outer.scale.set(node.scale[0], node.scale[1], node.scale[2])
+    if (b.scale !== undefined) {
+      if (typeof b.scale === 'number') outer.scale.setScalar(b.scale)
+      else outer.scale.set(b.scale[0], b.scale[1], b.scale[2])
     }
 
     const inner = new THREE.Group()
@@ -799,14 +984,14 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
     inner.updateMatrix()
     const nodeMatrix = new THREE.Matrix4().multiplyMatrices(parentMatrix, outer.matrix).multiply(inner.matrix)
 
-    if (node.shape && b.geom) {
-      for (const m of loadNodeMeshes(name, node, b.geom, slotMaterials, resolvedMaterials, nodeMatrix)) {
+    if (b.shape && b.geom) {
+      for (const m of loadNodeMeshes(name, b, b.geom, slotMaterials, resolvedMaterials, nodeMatrix)) {
         inner.add(m)
         meshes.push(m)
       }
     }
 
-    const defaultVisible = node.hidden !== true
+    const defaultVisible = b.hidden !== true
     outer.visible = defaultVisible
     nodes.set(name, {
       outer,
@@ -815,11 +1000,11 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
       defaultVisible,
     })
     parent.add(outer)
-    for (const [cn, cd] of Object.entries(node.children ?? {})) buildNode(cn, cd, inner, nodeMatrix)
+    for (const [cn, cc] of Object.entries(b.children ?? {})) buildNode(cn, cc, inner, nodeMatrix)
   }
 
   const identity = new THREE.Matrix4()
-  for (const [name, node] of Object.entries(doc.rig)) buildNode(name, node, group, identity)
+  for (const [name, b] of Object.entries(baked.nodes)) buildNode(name, b, group, identity)
 
   const bounds = new THREE.Box3().setFromObject(group)
   return { group, nodes, meshes, slotMaterials, bounds, seed: 0, tintK: 1 }

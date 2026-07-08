@@ -3,6 +3,7 @@ import { warmEffects } from '../inventory/effects'
 import { applyEnvReflection } from '../inventory/envmap'
 import { bakeEntityGeometry, bakeVariantLayouts, buildColliderViz, buildEntity, disposeEntity, ensureCraftSeeds, projectGeometryUv, rerollCraftSeeds, rerollPartSeed, type BakedGeometry, type BuiltEntity, type VariantLayout } from '../inventory/factory'
 import { mergeBuiltEntity } from '../inventory/merge'
+import { SceneBatcher, type BatchInput } from '../inventory/sceneBatcher'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
 import { catalogColorPath, catalogDefaultTint, makeSlotMaterial, materialLoadState, setMaterialCatalog, setSurfacePresets, setTexturePack, type EntityMaterial } from '../inventory/materials'
@@ -35,6 +36,14 @@ import './style.css'
 
 const inv = new Inventory()
 const vp = new Viewport($('#canvas-wrap'))
+;(window as unknown as Record<string, unknown>).__dbg = {
+  get vp() {
+    return vp
+  },
+  get lineupBatcher() {
+    return lineupBatcher
+  },
+}
 
 interface Selection {
   kind: ItemKind
@@ -1244,12 +1253,19 @@ window.addEventListener('keydown', (e) => {
 // lineup: every entity in one scene at real scale (rows by category)
 
 let lineup: { built: BuiltEntity; preview: EntityPreview }[] | null = null
+let lineupBatcher: SceneBatcher | null = null
 const lineupTick = (dt: number) => {
-  if (lineup) for (const l of lineup) l.preview.update(dt)
+  if (lineup) for (const l of lineup) l.preview.update(dt) // advance each entity's anim sim
+  lineupBatcher?.update() // push animated frame instances to their BatchedMesh
 }
 
 function exitLineup(): void {
   if (!lineup) return
+  if (lineupBatcher) {
+    vp.root.remove(lineupBatcher.group)
+    lineupBatcher.dispose()
+    lineupBatcher = null
+  }
   for (const l of lineup) disposeEntity(l.built)
   lineup = null
   vp.onUpdate.delete(lineupTick)
@@ -1279,6 +1295,12 @@ async function enterLineup(): Promise<void> {
   let x = 0
   let z = 0
   let rowDepth = 0
+  // Each entity is built at the ORIGIN (group stays at identity); its grid placement is
+  // folded into a per-instance matrix (below) so the merge's entity-local blobs batch
+  // cleanly. The built graphs stay detached from the scene — they're the animation sim
+  // only; the SceneBatcher renders their geometry.
+  const inputs: BatchInput[] = []
+  const lineupBox = new THREE.Box3()
   for (const item of items) {
     let built: BuiltEntity
     try {
@@ -1286,7 +1308,7 @@ async function enterLineup(): Promise<void> {
     } catch {
       continue
     }
-    applyEnvReflection(built.group)
+    applyEnvReflection(built.group) // patch the slot materials (the batch reuses them)
     vp.patchEmissive(built.group)
     const size = built.bounds.getSize(new THREE.Vector3())
     const center = built.bounds.getCenter(new THREE.Vector3())
@@ -1295,11 +1317,12 @@ async function enterLineup(): Promise<void> {
       z += rowDepth + 2
       rowDepth = 0
     }
-    built.group.position.x += x + size.x / 2 - center.x
-    built.group.position.z += z - center.z
+    const px = x + size.x / 2 - center.x
+    const pz = z - center.z
     x += size.x + GAP
     rowDepth = Math.max(rowDepth, size.z)
-    vp.root.add(built.group)
+    const placement = new THREE.Matrix4().makeTranslation(px, 0, pz)
+    lineupBox.union(built.bounds.clone().applyMatrix4(placement))
     // silent previews: everything animates, but 30 ambient sfx at once would be chaos
     const preview = new EntityPreview(item.doc!, built, {
       playSfx: () => {},
@@ -1310,10 +1333,12 @@ async function enterLineup(): Promise<void> {
       onDespawn: () => {},
     })
     lineup.push({ built, preview })
+    inputs.push({ built, doc: item.doc!, id: item.id, placement })
   }
+  lineupBatcher = new SceneBatcher()
+  lineupBatcher.build(inputs)
+  vp.root.add(lineupBatcher.group)
   vp.onUpdate.add(lineupTick)
-  vp.root.updateMatrixWorld(true)
-  const lineupBox = new THREE.Box3().setFromObject(vp.root)
   vp.fit(lineupBox)
   if (wireOn) applyWire()
   updateStats()

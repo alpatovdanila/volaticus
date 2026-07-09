@@ -51,6 +51,11 @@ function keepSeparateNodes(doc: EntityDoc): Set<string> {
 // uvRot are baked into geometry UVs by the factory, so slots differing only in
 // texture direction/density carry identical uuids and fold into one draw), tint,
 // PBR scalars, and the rasterization flags.
+//
+// Parallax materials bind their maps via NODE graphs and null the classic slots, so
+// m.map/normalMap/… all read '_' here — without the parallaxKey line they'd hash
+// identically and distinct materials would collapse into one wrong bucket. materials.ts
+// publishes their node-texture identity on userData.parallaxKey for exactly this test.
 export function materialKey(m: EntityMaterial): string {
   const u = (t: THREE.Texture | null): string => (t ? t.uuid : '_')
   return [
@@ -60,6 +65,7 @@ export function materialKey(m: EntityMaterial): string {
     m.roughness, m.metalness, m.aoMapIntensity, m.bumpScale, m.emissiveIntensity, m.envMapIntensity,
     m.normalScale ? `${m.normalScale.x},${m.normalScale.y}` : '_',
     m.flatShading ? 1 : 0, m.side, m.transparent ? 1 : 0, m.opacity, m.alphaTest, m.vertexColors ? 1 : 0,
+    (m.userData.parallaxKey as string | undefined) ?? '_',
   ].join('|')
 }
 

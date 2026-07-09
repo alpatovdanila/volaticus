@@ -3,7 +3,7 @@
   "id": "star",
   "name": "Star",
   "category": "pickup",
-  "materials": { "star": { "material": "plaster_wall_01", "tint": "#ffd94a", "flat": true } },
+  "materials": { "star": { "material": "plaster_wall_01", "flat": true } },
   "rig": {
     "spinner": {
       "pos": [0, 0.55, 0],

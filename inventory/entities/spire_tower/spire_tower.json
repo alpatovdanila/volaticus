@@ -6,13 +6,7 @@
   "tags": ["ruin", "stone", "landmark", "tower"],
   "notes": "The Old Spire (v1 makeCastleTower port, scaled to ~16m): battered round stone drum on a dark plinth, three proud course rings, crenellated top with gap-toothed merlons (chance), arched doorway (visual only - dark void inset + torus arch), spiraling arrow slits, moss patches and rubble at the base. A small gold bell hangs from a wooden belfry frame above the parapet - the 'ring' event plays a damped +/-25deg swing (1.2s) plus a chime; scripts trigger it later. Collider is the drum cylinder.",
   "materials": {
-    "masonry": {
-      "material": "stone_bricks_wall_03",
-      "tint": "#d8ccb3",
-      "flat": true,
-      "uvScale": 0.5,
-      "uvProject": "box"
-    },
+    "masonry": { "material": "stone_bricks_wall_03", "flat": true, "uvScale": 0.5, "uvProject": "box" },
     "drum": { "inherit": "masonry" },
     "platform": { "inherit": "masonry" },
     "parapet": { "inherit": "masonry" },
@@ -24,14 +18,8 @@
     "merlon_5": { "inherit": "masonry" },
     "merlon_6": { "inherit": "masonry" },
     "merlon_7": { "inherit": "masonry" },
-    "masonry_dark": {
-      "material": "stone_bricks_wall_07",
-      "tint": "#9a9083",
-      "flat": true,
-      "uvScale": 0.5,
-      "uvProject": "box"
-    },
-    "plinth": { "inherit": "masonry_dark" },
+    "masonry_dark": { "material": "concrete_slabs_02", "flat": true, "uvProject": "box", "uvScale": 0.5 },
+    "plinth": { "inherit": "masonry_dark", "material": "stone_wall_06" },
     "course_1": { "inherit": "masonry_dark" },
     "course_2": { "inherit": "masonry_dark" },
     "course_3": { "inherit": "masonry_dark" },
@@ -41,21 +29,21 @@
     "rubble_1": { "inherit": "masonry_dark" },
     "rubble_2": { "inherit": "masonry_dark" },
     "slab_lean": { "inherit": "masonry_dark" },
-    "void": { "material": "stone_bricks_wall_03", "tint": "#2a2430", "flat": true },
+    "void": { "material": "stone_bricks_wall_03", "flat": true },
     "door_void": { "inherit": "void" },
     "slit_1": { "inherit": "void" },
     "slit_2": { "inherit": "void" },
     "slit_3": { "inherit": "void" },
-    "moss": { "material": "grass_01", "tint": "#5f8f3f", "flat": true, "doubleSided": true, "uvMode": "stretch" },
+    "moss": { "material": "grass_01", "flat": true, "doubleSided": true, "uvMode": "stretch" },
     "moss_a": { "inherit": "moss" },
     "moss_b": { "inherit": "moss" },
-    "wood_dark": { "material": "wood_planks_20", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "wood_dark": { "material": "wood_planks_20", "flat": true, "uvProject": "box" },
     "belfry_post_l": { "inherit": "wood_dark" },
     "belfry_post_r": { "inherit": "wood_dark" },
     "crossbar": { "inherit": "wood_dark" },
     "clapper": { "inherit": "wood_dark" },
     "hanger": { "inherit": "wood_dark" },
-    "gold": { "material": "metal_02", "tint": "#ffb13d", "emissive": 0.6, "flat": true, "uvMode": "stretch" },
+    "gold": { "material": "metal_02", "emissive": 0.6, "flat": true, "uvMode": "stretch" },
     "bell_body": { "inherit": "gold" },
     "bell_lip": { "inherit": "gold" }
   },
@@ -70,7 +58,6 @@
           "segments": 18,
           "pos": [0, 0.55, 0],
           "material": "plinth",
-          "craft": 0.62,
           "craftSeed": 1018091286
         },
         "drum": {
@@ -81,7 +68,6 @@
           "segments": 20,
           "pos": [0, 7.5, 0],
           "material": "drum",
-          "craft": 0.62,
           "craftSeed": 1018091286
         },
         "course_1": {
@@ -124,7 +110,6 @@
           "segments": 18,
           "pos": [0, 14.5, 0],
           "material": "platform",
-          "craft": 0.65,
           "craftSeed": 1018091286
         },
         "parapet": {
@@ -135,7 +120,7 @@
           "segments": 18,
           "pos": [0, 14.85, 0],
           "material": "parapet",
-          "craft": 0.6,
+          "craft": 1,
           "craftSeed": 1018091286
         },
         "merlon_0": {
@@ -143,7 +128,6 @@
           "size": [0.66, 0.62, 0.36],
           "pos": [0, 15.46, 2.95],
           "material": "merlon_0",
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "merlon_1": {
@@ -153,7 +137,6 @@
           "rot": [0, 45, 0],
           "material": "merlon_1",
           "chance": 0.75,
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "merlon_2": {
@@ -163,7 +146,6 @@
           "rot": [0, 90, 0],
           "material": "merlon_2",
           "chance": 0.6,
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "merlon_3": {
@@ -173,7 +155,6 @@
           "rot": [0, 135, 0],
           "material": "merlon_3",
           "chance": 0.8,
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "merlon_4": {
@@ -182,7 +163,6 @@
           "pos": [0, 15.46, -2.95],
           "rot": [0, 180, 0],
           "material": "merlon_4",
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "merlon_5": {
@@ -192,7 +172,6 @@
           "rot": [0, 225, 0],
           "material": "merlon_5",
           "chance": 0.55,
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "merlon_6": {
@@ -203,7 +182,6 @@
           "rotJitter": [4, 0, 7],
           "material": "merlon_6",
           "chance": 0.7,
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "merlon_7": {
@@ -213,7 +191,6 @@
           "rot": [0, 315, 0],
           "material": "merlon_7",
           "chance": 0.65,
-          "craft": 0.55,
           "craftSeed": 1018091286
         },
         "jamb_l": {
@@ -335,7 +312,7 @@
           "segments": 7,
           "pos": [-0.55, 15.35, 0],
           "material": "belfry_post_l",
-          "craft": 0.7,
+          "craft": 1,
           "craftSeed": 1018091286
         },
         "belfry_post_r": {
@@ -345,7 +322,7 @@
           "segments": 7,
           "pos": [0.55, 15.35, 0],
           "material": "belfry_post_r",
-          "craft": 0.7,
+          "craft": 1,
           "craftSeed": 1018091286
         },
         "crossbar": {
@@ -375,8 +352,8 @@
               "bulge": 0.03,
               "pos": [0, -0.31, 0],
               "material": "bell_body",
-              "craft": 0.88,
-              "craftSeed": 1018091286
+              "craftSeed": 1018091286,
+              "craft": 0.95
             },
             "bell_lip": {
               "shape": "ring",

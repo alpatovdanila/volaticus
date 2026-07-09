@@ -1,11 +1,74 @@
 import * as THREE from 'three'
 import { MeshStandardNodeMaterial } from 'three/webgpu'
+import { texture, vec2, normalMap, uv, dFdx, dFdy, uniform } from 'three/tsl'
+import { parallaxUvNode, isParallaxEnabled, type Uniform } from './parallax'
+
+// loose channel-swizzle alias — TSL's published node types don't expose .r/.g/.b fluently here.
+interface Ch {
+  mul(x: unknown): Ch
+  add(x: unknown): Ch
+}
+const chan = (n: unknown): { r: Ch; g: Ch; b: Ch } => n as { r: Ch; g: Ch; b: Ch }
+
 import {
   type MapKind,
   type MaterialCatalogDoc,
   type ResolvedMaterialDef,
   type SurfaceDef,
 } from './schema'
+
+// default parallax depth for a height-map material that hasn't set tuning.height, so
+// toggling POM globally shows an effect the per-material slider can then tune.
+export const DEFAULT_HEIGHT = 0.05
+
+// These PBR height maps ship in a COMPRESSED value band (e.g. 0.43–0.73), not full [0,1]. Read each
+// one's actual min/max once (downsampled, same-origin canvas) and feed the parallax node's live hMin/hMax
+// uniforms — otherwise the peak floats above the surface and the whole texture reads as a deep uniform
+// shift ("glass with a copy behind it"). Cached by URL.
+const heightRangeCache = new Map<string, { min: number; max: number }>()
+function heightUrl(path: string): string {
+  return '/' + encodeURI(resolveTexturePath(path))
+}
+
+// Analyze a height map's actual value band and push it into the material's live hMin/hMax uniforms. These
+// PBR maps sit in a compressed range; without normalization the peak floats above the surface. Cached by
+// URL; async (decodes the image) — the uniforms update the instant it lands, no rebuild.
+function analyzeHeightRange(path: string, hMinU: Uniform, hMaxU: Uniform): void {
+  const url = heightUrl(path)
+  const cached = heightRangeCache.get(url)
+  if (cached) {
+    hMinU.value = cached.min
+    hMaxU.value = cached.max
+    return
+  }
+  const img = new Image()
+  img.src = url
+  img
+    .decode()
+    .then(() => {
+      const S = 64
+      const c = document.createElement('canvas')
+      c.width = S
+      c.height = S
+      const ctx = c.getContext('2d')
+      if (!ctx) return
+      ctx.drawImage(img, 0, 0, S, S)
+      const d = ctx.getImageData(0, 0, S, S).data
+      let min = 255
+      let max = 0
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i] < min) min = d[i]
+        if (d[i] > max) max = d[i]
+      }
+      const range = { min: min / 255, max: max / 255 }
+      heightRangeCache.set(url, range)
+      hMinU.value = range.min
+      hMaxU.value = range.max
+    })
+    .catch(() => {
+      /* best-effort; the provisional {0,1} (no normalization) stays cached */
+    })
+}
 
 // Entity surface material. WebGPU/TSL: a MeshStandardNodeMaterial (honors the same
 // legacy map/color/roughness props a MeshStandardMaterial does, PLUS the node hooks
@@ -95,14 +158,19 @@ export function resolveTexturePath(id: string): string {
   return id
 }
 
-function loadTexture(path: string, srgb: boolean): THREE.Texture {
-  let tex = texCache.get(path)
+function loadTexture(path: string, srgb: boolean, linear = false): THREE.Texture {
+  // `linear` gets its own cache entry so a path used elsewhere as a crisp (Nearest) map can also
+  // be loaded smoothly here. Height and normal maps are CONTINUOUS data (a scalar field / packed
+  // directions), so they must be bilinearly interpolated + mipmapped — Nearest reads back blocky
+  // texel steps that POM and the lighting amplify. (The base colour keeps its Nearest look.)
+  const key = linear ? path + '#lin' : path
+  let tex = texCache.get(key)
   if (tex) return tex
   tex = loader.load('/' + encodeURI(path))
   tex.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-  tex.magFilter = THREE.NearestFilter // crisp pixel art
-  tex.minFilter = THREE.NearestMipmapLinearFilter
+  tex.magFilter = linear ? THREE.LinearFilter : THREE.NearestFilter // Nearest = crisp pixel art
+  tex.minFilter = linear ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter
   // Leftover gap #3: EACH of the setters above (colorSpace/wrap/filter) bumps the
   // texture's `version`, so the still-imageless base texture gets marked for upload
   // and the renderer warns "no image data found" EVERY FRAME until the async load
@@ -111,7 +179,7 @@ function loadTexture(path: string, srgb: boolean): THREE.Texture {
   // image exists, so the single legitimate upload still happens (just after the
   // image is present).
   if (!tex.image) tex.version = 0
-  texCache.set(path, tex)
+  texCache.set(key, tex)
   return tex
 }
 
@@ -203,10 +271,61 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     mat.aoMapIntensity = t.aoIntensity
   }
 
-  // height maps are still linked in the catalog JSON (maps.*.height) but are no
-  // longer bound to the material — the parallax system was removed (rebuilt later).
+  // Parallax occlusion mapping: only the global ON/OFF is BUILD-TIME. When POM is on and the material
+  // ships a height map, replace every base-UV map with a march node; otherwise it stays the plain PBR
+  // built above (classic maps, no march) — 'off' compiles NO parallax shader (no gray, no cost). Depth,
+  // the value band, tint and the PBR scalars are LIVE per-material uniforms and quality is a LIVE global
+  // uniform, so editing any of them updates the render with no rebuild (see applyLiveTuning).
+  const heightPath = resolveCatalogMap(doc, 'height')
+  if (heightPath && isParallaxEnabled()) {
+    const tintU = uniform(mat.color.clone())
+    const roughnessU = uniform(t.roughness)
+    const metalnessU = uniform(t.metalness)
+    const normalScaleU = uniform(t.normalScale)
+    const aoU = uniform(t.aoIntensity)
+    const heightU = uniform(t.height ?? DEFAULT_HEIGHT)
+    const hMinU = uniform(0)
+    const hMaxU = uniform(1)
+    mat.userData.tuningU = { tintU, roughnessU, metalnessU, normalScaleU, aoU, heightU, hMinU, hMaxU }
+    analyzeHeightRange(heightPath, hMinU as never, hMaxU as never) // fills hMin/hMax live (async)
+    const pUv = parallaxUvNode(loadTexture(heightPath, false, true), heightU as never, hMinU as never, hMaxU as never)
+    // Drive the mip from the BASE uv gradients; the march's jitter + binary refinement already kill the
+    // layer-beat moire, so no grazing mip bias is needed (biasing smeared the near-cliff texels).
+    const gdx = dFdx(uv())
+    const gdy = dFdy(uv())
+    // Every base-UV map is replaced by a pUv node below, so NULL the classic map slots: if a *Node and
+    // its classic *Map both stay set, three applies BOTH — the flat base-UV copy floating over the
+    // displaced one (the "semi-transparent layer in the air").
+    mat.map = null
+    mat.normalMap = null
+    mat.roughnessMap = null
+    mat.metalnessMap = null
+    mat.aoMap = null
+    if (colorPath) mat.colorNode = texture(loadTexture(colorPath, true), pUv).grad(gdx, gdy).mul(tintU)
+    if (normalPath)
+      mat.normalNode = normalMap(
+        texture(loadTexture(normalPath, false, true), pUv).grad(gdx, gdy),
+        vec2(normalScaleU, normalScaleU),
+      )
+    // Route the OTHER spatial maps through the SAME parallax UV, or roughness (→ env reflection),
+    // metalness and AO sample the FLAT base UV and float as a sheet over the displaced colour+normal.
+    // Channels + live scalar uniforms match three's classic map behaviour (rough=.g, metal=.b, ao=.r).
+    if (roughPath)
+      mat.roughnessNode = chan(texture(loadTexture(roughPath, false), pUv).grad(gdx, gdy)).g.mul(roughnessU) as never
+    if (metalPath)
+      mat.metalnessNode = chan(texture(loadTexture(metalPath, false), pUv).grad(gdx, gdy)).b.mul(metalnessU) as never
+    if (aoPath)
+      mat.aoNode = chan(texture(loadTexture(aoPath, false), pUv).grad(gdx, gdy)).r.mul(aoU).add(aoU.oneMinus()) as never
+    // Classic map slots nulled → merge.ts/materialKey can't tell two parallax materials apart (all read
+    // texture-less). Publish the node textures' identity + build-time depth so distinct materials don't
+    // collapse into one bucket. (Live edits don't re-key: a merged bucket shares one material object, so
+    // its live uniforms drive every folded slot — which is correct, they're the same catalog material.)
+    mat.userData.parallaxKey =
+      [colorPath, normalPath, roughPath, metalPath, aoPath, heightPath].map((p) => p ?? '_').join('|') +
+      '|' + (t.height ?? DEFAULT_HEIGHT)
+  }
 
-  // emissive: only where a map exists AND the manager turned it on.
+  // emissive: only where a map exists AND tuning turned it on.
   const emissivePath = resolveCatalogMap(doc, 'emissive')
   if (emissivePath && t.emissive > 0) {
     mat.emissive.set('#ffffff')
@@ -255,7 +374,105 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
   // texture clones (which used to split merge/batch buckets on texture uuid).
 
   mat.userData.slot = slot
+  mat.userData.materialId = def.material // catalog id — lets a Manager edit find this instance to live-update
+  mat.userData.slotDef = { tint: def.tint, flat: def.flat, doubleSided: def.doubleSided } // per-slot overrides
   mat.userData.baseEmissiveIntensity = emissivePath && t.emissive > 0 ? t.emissive : 0
   return mat
+}
+
+type MaterialTuning = MaterialCatalogDoc['tuning']
+
+// Push a catalog material's tuning onto a LIVE material with NO rebuild. Continuous params update their
+// uniforms (parallax path) or three's built-in uniforms (plain PBR) instantly. The three structural flags
+// (flat, double-sided, cutout/alphaTest, transparent) can't be a uniform value — they change the shader/
+// pipeline — so they flip via needsUpdate ONLY when they actually change: an in-place recompile of just
+// this material, no re-merge, no geometry rebuild. Slot overrides (tint/flat/doubleSided) layer on top.
+export function applyLiveTuning(mat: EntityMaterial, t: MaterialTuning): void {
+  const sd = (mat.userData.slotDef ?? {}) as { tint?: string; flat?: boolean; doubleSided?: boolean }
+  const u = mat.userData.tuningU as Record<string, { value: number | THREE.Color }> | undefined
+  const tint = new THREE.Color('#ffffff')
+  if (t.tint) tint.set(t.tint)
+  if (sd.tint) tint.multiply(new THREE.Color(sd.tint))
+  if (u) {
+    ;(u.tintU.value as THREE.Color).copy(tint)
+    u.roughnessU.value = t.roughness
+    u.metalnessU.value = t.metalness
+    u.normalScaleU.value = t.normalScale
+    u.aoU.value = t.aoIntensity
+    u.heightU.value = t.height ?? DEFAULT_HEIGHT
+  } else {
+    mat.color.copy(tint)
+    mat.roughness = t.roughness
+    mat.metalness = t.metalness
+    mat.normalScale.set(t.normalScale, t.normalScale)
+    mat.aoMapIntensity = t.aoIntensity
+  }
+  mat.userData.baseEmissiveIntensity = t.emissive
+  mat.emissiveIntensity = t.emissive
+  mat.opacity = t.opacity
+  const flat = sd.flat ?? t.flat
+  if (mat.flatShading !== flat) {
+    mat.flatShading = flat
+    mat.needsUpdate = true
+  }
+  const side = (sd.doubleSided ?? t.doubleSided) ? THREE.DoubleSide : THREE.FrontSide
+  if (mat.side !== side) {
+    mat.side = side
+    mat.needsUpdate = true
+  }
+  const at = t.cutout ? 0.5 : 0
+  if (mat.alphaTest !== at) {
+    mat.alphaTest = at
+    mat.needsUpdate = true
+  }
+  const wantTransparent = t.opacity < 1 || (!!t.alphaMap && !t.cutout)
+  if (mat.transparent !== wantTransparent) {
+    mat.transparent = wantTransparent
+    mat.depthWrite = !wantTransparent
+    mat.needsUpdate = true
+  }
+}
+
+// Fast single-parameter live update for a slider DRAG (no doc write, no full sync). Structural keys aren't
+// handled here — they land on the commit via applyLiveTuning.
+export function setLiveParam(mat: EntityMaterial, key: string, value: number): void {
+  const u = mat.userData.tuningU as Record<string, { value: number }> | undefined
+  switch (key) {
+    case 'roughness':
+      if (u) u.roughnessU.value = value
+      else mat.roughness = value
+      break
+    case 'metalness':
+      if (u) u.metalnessU.value = value
+      else mat.metalness = value
+      break
+    case 'normalScale':
+      if (u) u.normalScaleU.value = value
+      else mat.normalScale.set(value, value)
+      break
+    case 'aoIntensity':
+      if (u) u.aoU.value = value
+      else mat.aoMapIntensity = value
+      break
+    case 'height':
+      if (u) u.heightU.value = value
+      break
+    case 'emissive':
+      mat.emissiveIntensity = value
+      break
+    case 'opacity':
+      mat.opacity = value
+      break
+  }
+}
+
+// Live tint (catalog default × this material's slot override) for a colour-picker DRAG.
+export function setTintLive(mat: EntityMaterial, catalogHex: string): void {
+  const sd = (mat.userData.slotDef ?? {}) as { tint?: string }
+  const c = new THREE.Color(catalogHex)
+  if (sd.tint) c.multiply(new THREE.Color(sd.tint))
+  const u = mat.userData.tuningU as { tintU: { value: THREE.Color } } | undefined
+  if (u) u.tintU.value.copy(c)
+  else mat.color.copy(c)
 }
 

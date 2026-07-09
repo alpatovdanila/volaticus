@@ -9,7 +9,7 @@
     "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
     "menhir_side": { "inherit": "stone" },
     "menhir_bottom": { "inherit": "stone" },
-    "moss_top": { "material": "grass_01", "flat": true, "uvScale": 0.25 },
+    "moss_top": { "material": "grass_01", "flat": true },
     "foot_pebble": { "inherit": "stone", "material": "cliff_rocks_06" }
   },
   "rig": {
@@ -26,8 +26,8 @@
           "rotJitter": [2, 30, 3],
           "material": { "side": "menhir_side", "top": "moss_top", "bottom": "menhir_bottom" },
           "sub": 2,
-          "craft": 0.58,
-          "craftSeed": 116787235
+          "craftSeed": 116787235,
+          "craft": 0.92
         },
         "foot_pebble": {
           "shape": "sphere",

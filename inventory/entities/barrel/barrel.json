@@ -6,14 +6,14 @@
   "tags": ["wood", "container"],
   "notes": "Low-poly faceted barrel: ONE open-ended shell (20-segment, curved via cylinder bulge 0.05 for the cask belly with ~9 vertical loops) baked doubleWall so it reads two-sided with a single-sided material and merges with the lip/lid wood (one fewer draw), floor+content is ONE flat disk plane (no volume). Two thin gray straps, thin top lip. oneOf lid: flush / deep inside (open look) / ajar.",
   "materials": {
-    "planks": { "material": "wood_planks_20", "flat": true, "uvRot": 90, "uvScale": 2, "tint": "#fee1e1" },
+    "planks": { "material": "wood_planks_20", "flat": true, "uvRot": 90, "uvScale": 2 },
     "shell": { "inherit": "planks", "uvProject": "sphere" },
     "floor": { "inherit": "interior", "uvProject": "planar" },
     "lip": { "inherit": "planks", "uvMode": "tile", "uvProject": "none" },
     "lid_flush": { "inherit": "lid" },
     "lid_deep": { "inherit": "lid" },
     "lid_ajar": { "inherit": "lid" },
-    "band": { "material": "metal_01", "flat": true, "uvRot": 90, "uvScale": 2, "tint": "#707070" },
+    "band": { "material": "metal_01", "flat": true, "uvRot": 90, "uvScale": 2 },
     "band_top": { "inherit": "band" },
     "band_bot": { "inherit": "band" },
     "lid": { "flat": true, "uvScale": 2, "uvProject": "planar", "inherit": "planks", "uvRot": 0 },
@@ -24,7 +24,7 @@
     "lid_ajar_2": { "inherit": "lip" },
     "lid_ajar_top": { "inherit": "lid" },
     "lid_ajar_bottom": { "inherit": "lid_ajar_2" },
-    "interior": { "material": "desert_ground_01", "flat": true, "tint": "#696969" },
+    "interior": { "material": "desert_ground_01", "flat": true },
     "lid_deep_2": { "inherit": "lid" }
   },
   "rig": {

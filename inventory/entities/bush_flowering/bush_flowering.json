@@ -6,7 +6,7 @@
   "tags": ["vegetation", "nature"],
   "notes": "Low-poly bush dotted with stemless blossom heads sitting directly on the main blob's surface (positions computed on the blob ellipsoid); oneOf picks pink or white blossoms.",
   "materials": {
-    "leaves": { "material": "grass_01", "flat": true, "uvScale": 0.25, "uvProject": "box", "tint": "#9e9e9e" },
+    "leaves": { "material": "grass_01", "flat": true, "uvScale": 0.25, "uvProject": "box" },
     "blob_a": { "inherit": "leaves" },
     "blob_c": { "inherit": "leaves" },
     "leaves_light": { "material": "grass_01", "flat": true, "inherit": "leaves" },

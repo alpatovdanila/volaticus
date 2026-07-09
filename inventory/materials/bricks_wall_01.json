@@ -14,14 +14,15 @@
   },
   "tuning": {
     "tint": null,
-    "roughness": 1,
-    "metalness": 0,
-    "normalScale": 1,
-    "aoIntensity": 1,
+    "roughness": 0.87,
+    "metalness": 0.11,
+    "normalScale": 1.95,
+    "aoIntensity": 0.35,
     "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,
-    "flat": false
+    "flat": false,
+    "height": 0.05
   }
 }

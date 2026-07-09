@@ -26,6 +26,13 @@
           <button id="lt-reset" title="restore the default HDRI lighting">reset defaults</button>
         </div>
       </div>
+      <div id="render-wrap">
+        <button id="btn-render" class="tb-btn" title="global render options"><span class="tb-ic">⚙</span> Render</button>
+        <div id="render-pop" hidden>
+          <div class="light-row"><label title="parallax occlusion mapping — the height map fakes real surface depth that shifts with the viewing angle">parallax</label><input id="rn-parallax" type="checkbox" /></div>
+          <div class="light-row" id="rn-samples-row"><label title="POM marching steps — higher = smoother depth silhouettes, more GPU cost">quality</label><input id="rn-samples" type="range" min="4" max="64" step="1" /><span class="light-val" id="rn-samples-val"></span></div>
+        </div>
+      </div>
       <div class="spacer"></div>
       <button id="btn-save" disabled>Save (Ctrl+S)</button>
     </div>

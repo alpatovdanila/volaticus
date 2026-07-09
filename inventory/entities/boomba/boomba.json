@@ -6,18 +6,18 @@
   "tags": ["bomb", "walker"],
   "notes": "Round walking bomb. Sleeps until approached; chases and swells, then explodes.",
   "materials": {
-    "shell": { "material": "metal_01", "tint": "#292929", "uvScale": 0.25 },
+    "shell": { "material": "metal_01", "uvScale": 0.25 },
     "body": { "inherit": "shell" },
     "leg_l": { "inherit": "shell" },
     "leg_r": { "inherit": "shell" },
     "eye": { "material": "concrete_wall_04", "uvScale": 0.25 },
     "eye_l": { "inherit": "eye" },
     "eye_r": { "inherit": "eye" },
-    "pupil": { "material": "concrete_ground_01", "tint": "#000000", "uvScale": 0.25 },
+    "pupil": { "material": "concrete_ground_01", "uvScale": 0.25 },
     "pupil_l": { "inherit": "pupil" },
     "pupil_r": { "inherit": "pupil" },
     "fuse": { "material": "bark_02", "uvScale": 0.25, "uvProject": "box" },
-    "feet": { "material": "metal_01", "tint": "#fe6262", "uvScale": 0.25 },
+    "feet": { "material": "metal_01", "uvScale": 0.25 },
     "foot_l": { "inherit": "feet" },
     "toe_l": { "inherit": "feet" },
     "foot_r": { "inherit": "feet" },
@@ -36,7 +36,7 @@
           "pos": [-0.113, 0.052, 0.278],
           "rot": [-10, -22, 0],
           "material": "eye_l",
-          "craftSeed": 333318888
+          "craftSeed": 2110570518
         },
         "eye_r": {
           "shape": "box",
@@ -44,7 +44,7 @@
           "pos": [0.113, 0.052, 0.278],
           "rot": [-10, 22, 0],
           "material": "eye_r",
-          "craftSeed": 333318888
+          "craftSeed": 2110570518
         },
         "pupil_l": {
           "shape": "box",
@@ -52,7 +52,7 @@
           "pos": [-0.115, 0.031, 0.302],
           "rot": [-6, -21, 0],
           "material": "pupil_l",
-          "craftSeed": 333318888
+          "craftSeed": 2110570518
         },
         "pupil_r": {
           "shape": "box",
@@ -60,7 +60,7 @@
           "pos": [0.115, 0.031, 0.302],
           "rot": [-6, 21, 0],
           "material": "pupil_r",
-          "craftSeed": 333318888
+          "craftSeed": 2110570518
         },
         "fuse": {
           "shape": "cylinder",
@@ -70,7 +70,7 @@
           "rot": [0, 0, 10],
           "material": "fuse",
           "craft": 0.91,
-          "craftSeed": 333318888
+          "craftSeed": 2110570518
         },
         "leg_l": {
           "shape": "box",
@@ -92,14 +92,14 @@
                   "pos": [0, -0.01, 0.095],
                   "material": "toe_l",
                   "craft": 0.85,
-                  "craftSeed": 333318888
+                  "craftSeed": 2110570518
                 }
               },
-              "craftSeed": 333318888
+              "craftSeed": 2110570518
             }
           },
           "craft": 0.96,
-          "craftSeed": 333318888
+          "craftSeed": 2110570518
         },
         "leg_r": {
           "shape": "box",
@@ -121,18 +121,18 @@
                   "pos": [0, -0.01, 0.095],
                   "material": "toe_r",
                   "craft": 0.85,
-                  "craftSeed": 333318888
+                  "craftSeed": 2110570518
                 }
               },
-              "craftSeed": 333318888
+              "craftSeed": 2110570518
             }
           },
           "craft": 0.96,
-          "craftSeed": 333318888
+          "craftSeed": 2110570518
         }
       },
       "craft": 0.96,
-      "craftSeed": 333318888
+      "craftSeed": 2110570518
     }
   },
   "physics": {

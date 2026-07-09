@@ -6,15 +6,15 @@
   "tags": ["nature", "water", "hazard"],
   "notes": "Lifecycle: idle (steam wisps + gurgle) → fountain (water column + spray jets) → settling (droplets raining back down). The game drives the cycle; preview via the state dropdown.",
   "materials": {
-    "rock": { "material": "cliff_rocks_01", "tint": "#9a9188", "flat": true, "uvScale": 0.25 },
+    "rock": { "material": "cliff_rocks_01", "flat": true, "uvScale": 0.25 },
     "mound": { "inherit": "rock" },
     "stone_b": { "inherit": "rock" },
-    "rock_dark": { "material": "ground_with_rocks_03", "tint": "#7a7168", "flat": true, "uvScale": 0.25 },
+    "rock_dark": { "material": "ground_with_rocks_03", "flat": true, "uvScale": 0.25 },
     "vent": { "inherit": "rock_dark" },
     "stone_a": { "inherit": "rock_dark" },
     "stone_c": { "inherit": "rock" },
-    "hole": { "inherit": "rock_dark", "tint": "#20272e", "flat": true, "uvScale": 0.25 },
-    "water": { "material": "plaster_wall_01", "tint": "#8fc8f2", "flat": true, "uvScale": 0.25 }
+    "hole": { "inherit": "rock_dark", "flat": true, "uvScale": 0.25 },
+    "water": { "material": "plaster_wall_01", "flat": true, "uvScale": 0.25 }
   },
   "rig": {
     "root": {

@@ -806,6 +806,7 @@ export interface MgrTuning {
   roughness: number
   metalness: number
   normalScale: number
+  height: number // parallax occlusion depth (0 = flat)
   aoIntensity: number
   emissive: number
   opacity: number
@@ -828,7 +829,10 @@ export interface MgrMaps {
 }
 
 export interface MgrTuningCallbacks {
-  onNum(key: 'roughness' | 'metalness' | 'normalScale' | 'aoIntensity' | 'emissive' | 'opacity', value: number): void
+  onNum(key: 'roughness' | 'metalness' | 'normalScale' | 'height' | 'aoIntensity' | 'emissive' | 'opacity', value: number): void
+  // live update while dragging a numeric slider — writes the param's uniform on the preview material
+  // directly (no rebuild). onNum still commits the value to the doc on release.
+  onNumLive(key: 'roughness' | 'metalness' | 'normalScale' | 'height' | 'aoIntensity' | 'emissive' | 'opacity', value: number): void
   onBool(key: 'cutout' | 'doubleSided' | 'flat', value: boolean): void
   onTint(value: string | null): void
   // live default-tint while dragging — applies to the preview material directly
@@ -930,7 +934,11 @@ export function renderMgrTuning(
     input.value = String(val)
     const fmt = (n: number) => n.toFixed(step < 0.1 ? 2 : step < 1 ? 1 : 0)
     const out = el('span', 'tune-val', fmt(val))
-    input.oninput = () => (out.textContent = fmt(parseFloat(input.value)))
+    // drag updates the read-out AND the live uniform on the preview; the value commits to the doc on release.
+    input.oninput = () => {
+      out.textContent = fmt(parseFloat(input.value))
+      cb.onNumLive(key, parseFloat(input.value))
+    }
     input.onchange = () => cb.onNum(key, parseFloat(input.value))
     row.appendChild(input)
     row.appendChild(out)
@@ -947,6 +955,10 @@ export function renderMgrTuning(
   if (maps.normal)
     slider('normalScale', 'normalScale', 0, 3, 0.01, t.normalScale,
       'Strength of the normal map — how much the baked surface bumps catch light. 0 = flat, 3 = strongly exaggerated relief.')
+  // parallax occlusion depth — only meaningful with a height map + POM enabled in Render options
+  if (maps.height)
+    slider('height', 'height', 0, 0.3, 0.005, t.height,
+      'Parallax occlusion depth — how deep the height map recesses the surface. Requires "parallax" ON in the Render options panel. 0 = flat.', true)
   if (maps.ao)
     slider('aoIntensity', 'aoIntensity', 0, 2, 0.01, t.aoIntensity,
       'Ambient-occlusion map strength — darkens crevices under indirect (skybox/IBL) light. 0 = off, 1 = baked strength, 2 = deepened. (Uses the mesh uv2.)')

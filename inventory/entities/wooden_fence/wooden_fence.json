@@ -6,7 +6,7 @@
   "tags": ["wood", "barrier"],
   "notes": "Generated low-poly fence: crooked tapered posts, rails and chance pickets. Scenery — no hit reaction.",
   "materials": {
-    "post": { "material": "wood_01", "flat": true, "uvScale": 0.25 },
+    "post": { "material": "wood_01", "flat": true },
     "post_l": { "inherit": "post" },
     "post_l_side": { "inherit": "post_l" },
     "post_l_bottom": { "inherit": "post_l" },
@@ -16,12 +16,12 @@
     "post_r": { "inherit": "post" },
     "post_r_side": { "inherit": "post_r" },
     "post_r_bottom": { "inherit": "post_r" },
-    "wood": { "material": "wood_01", "uvRot": 90, "flat": true, "uvScale": 0.25 },
+    "wood": { "material": "wood_01", "uvRot": 90, "flat": true, "uvScale": 0.25, "inherit": "post" },
     "rail_top": { "inherit": "wood", "uvProject": "box" },
     "rail_bot": { "inherit": "wood", "uvProject": "box" },
     "picket_a": { "inherit": "wood", "uvRot": 0, "uvProject": "box" },
     "picket_b": { "inherit": "wood", "uvRot": 0, "uvProject": "box" },
-    "cut": { "material": "bark_01", "tint": "#c9a86a", "uvMode": "stretch", "flat": true },
+    "cut": { "material": "bark_01", "uvMode": "stretch", "flat": true },
     "post_l_2": { "inherit": "cut" },
     "post_m_2": { "inherit": "cut" },
     "post_r_2": { "inherit": "cut" }
@@ -38,7 +38,7 @@
           "pos": [-0.9, 0.52, 0],
           "rotJitter": [2, 0, 4],
           "material": { "side": "post_l_side", "top": "post_l_2", "bottom": "post_l_bottom" },
-          "craft": 0.93,
+          "craft": 0.96,
           "craftSeed": 9094785
         },
         "post_m": {

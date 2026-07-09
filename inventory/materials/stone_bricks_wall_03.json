@@ -15,13 +15,14 @@
   "tuning": {
     "tint": null,
     "roughness": 1,
-    "metalness": 0,
+    "metalness": 0.18,
     "normalScale": 1,
-    "aoIntensity": 1,
+    "aoIntensity": 0.67,
     "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,
-    "flat": false
+    "flat": false,
+    "height": 0.055
   }
 }

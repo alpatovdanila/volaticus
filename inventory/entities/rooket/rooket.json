@@ -20,7 +20,7 @@
     "brow": { "material": "plaster_wall_01", "uvMode": "stretch" },
     "brow_l": { "inherit": "brow" },
     "brow_r": { "inherit": "brow" },
-    "hammer": { "material": "metal_pattern_01", "tint": "#8a9096", "flat": true },
+    "hammer": { "material": "metal_pattern_01", "flat": true },
     "collar": { "inherit": "hammer" },
     "head": { "inherit": "hammer" },
     "face_cap": { "inherit": "hammer" },

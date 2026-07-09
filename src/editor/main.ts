@@ -6,9 +6,10 @@ import { mergeBuiltEntity } from '../inventory/merge'
 import { SceneBatcher, type BatchInput } from '../inventory/sceneBatcher'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
-import { catalogColorPath, catalogDefaultTint, makeSlotMaterial, materialLoadState, setMaterialCatalog, setSurfacePresets, setTexturePack, type EntityMaterial } from '../inventory/materials'
+import { applyLiveTuning, catalogColorPath, catalogDefaultTint, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, setTintLive, type EntityMaterial } from '../inventory/materials'
 import { MaterialPreview, previewShapeGeometry, PREVIEW_SHAPES, type PreviewShape, type PreviewUvProject } from './matpreview'
 import { preloadEntityMeshes } from '../inventory/meshes'
+import { setParallaxConfig, getParallaxSamples } from '../inventory/parallax'
 import { EntityPreview } from '../inventory/preview'
 import { Inventory, SETTINGS_PATH, type ItemKind } from '../inventory/registry'
 import { ensureAudio, playSfx, preloadSfx } from '../inventory/sfx'
@@ -42,6 +43,9 @@ const vp = new Viewport($('#canvas-wrap'))
   },
   get lineupBatcher() {
     return lineupBatcher
+  },
+  get mgrPreview() {
+    return mgrPreview
   },
 }
 
@@ -1231,6 +1235,76 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
 initLightPanel({ btn: '#btn-lights', pop: '#light-pop', wrap: '#light-wrap', fp: '#lt-', reset: '#lt-reset' })
 initLightPanel({ btn: '#mgr-btn-lights', pop: '#mgr-light-pop', wrap: '#mgr-light-wrap', fp: '#mgr-lt-', reset: '#mgr-lt-reset' })
 
+// Render-options popover — global render settings (parallax on/off + quality). Live via the
+// shared parallax uniforms; persisted to localStorage.
+// Rebuild whatever the studio is currently showing (Manager preview, else the selected entity). Only the
+// parallax ON/OFF toggle needs this now — it's the one build-time material choice (off = plain PBR, no
+// march). Every other material input is a live uniform and updates in place with no rebuild.
+function rebuildShown(): void {
+  if (mgrMode) rebuildMgrPreview()
+  else if (sel?.kind === 'entity') rebuild()
+}
+
+const RENDER_KEY = 'volaticus.render'
+function initRenderPanel(): void {
+  const btn = $('#btn-render') as HTMLButtonElement
+  const pop = $('#render-pop')
+  const parallaxChk = $('#rn-parallax') as HTMLInputElement
+  const samplesInput = $('#rn-samples') as HTMLInputElement
+  const samplesVal = $('#rn-samples-val')
+  const samplesRow = $('#rn-samples-row')
+  let parallaxOn = false
+  let samples = getParallaxSamples()
+  try {
+    const raw = localStorage.getItem(RENDER_KEY)
+    if (raw) {
+      const s = JSON.parse(raw) as { parallax?: boolean; samples?: number }
+      parallaxOn = !!s.parallax
+      if (typeof s.samples === 'number') samples = s.samples
+    }
+  } catch {
+    /* non-fatal */
+  }
+  const persist = (): void => {
+    try {
+      localStorage.setItem(RENDER_KEY, JSON.stringify({ parallax: parallaxOn, samples }))
+    } catch {
+      /* private mode / quota */
+    }
+  }
+  // apply() pushes the build-time config into the material builder + syncs the UI. It does NOT rebuild
+  // (it also runs once at init, before anything is built); the handlers below rebuild on user change.
+  const apply = (): void => {
+    setParallaxConfig({ enabled: parallaxOn, samples })
+    parallaxChk.checked = parallaxOn
+    samplesInput.value = String(samples)
+    samplesVal.textContent = String(samples)
+    samplesRow.hidden = !parallaxOn
+  }
+  apply()
+  parallaxChk.onchange = () => {
+    parallaxOn = parallaxChk.checked
+    apply()
+    persist()
+    rebuildShown() // the one build-time toggle: 'off' rebuilds to plain PBR (no march compiled in)
+  }
+  // quality is a LIVE global uniform now — drag writes samplesU directly, no rebuild.
+  samplesInput.oninput = () => {
+    samples = parseInt(samplesInput.value, 10)
+    setParallaxConfig({ samples })
+    samplesVal.textContent = String(samples)
+  }
+  samplesInput.onchange = persist // commit just persists the final value
+  btn.onclick = () => {
+    const willOpen = pop.hasAttribute('hidden')
+    pop.toggleAttribute('hidden', !willOpen)
+  }
+  document.addEventListener('pointerdown', (e) => {
+    if (!pop.hasAttribute('hidden') && !$('#render-wrap').contains(e.target as Node)) pop.setAttribute('hidden', '')
+  })
+}
+initRenderPanel()
+
 // #7 modal controls: close (✕) + create/clone/delete (#16). Backdrop click closes.
 ;($('#mgr-close') as HTMLButtonElement).onclick = () => exitMgr()
 ;($('#mat-modal-backdrop') as HTMLElement).onclick = () => exitMgr()
@@ -1453,6 +1527,7 @@ function mgrTuningOf(id: string): MgrTuning | null {
     roughness: t.roughness,
     metalness: t.metalness,
     normalScale: t.normalScale,
+    height: t.height ?? DEFAULT_HEIGHT,
     aoIntensity: t.aoIntensity,
     emissive: t.emissive,
     opacity: t.opacity,
@@ -1520,27 +1595,35 @@ function setMgrTuning(mut: (t: Record<string, unknown>) => void): void {
   }
   mgrDirty = true
   refreshMgrSaveState()
-  // reflect the doc change into the runtime catalog + preview immediately
+  // reflect the doc change into the runtime catalog + preview immediately — LIVE, no rebuild. Continuous
+  // params update uniforms; flat/cutout/double-sided flip in place via applyLiveTuning's needsUpdate.
   setMaterialCatalog(inv.materialCatalog())
-  rebuildMgrPreview()
+  const doc = inv.materialCatalog()[mgrSelId]
+  if (doc) for (const m of mgrMats) applyLiveTuning(m, doc.tuning)
   refreshMgrTuning()
 }
 
 const mgrTuneCb = {
   onNum: (key: string, value: number) => setMgrTuning((t) => (t[key] = value)),
+  // live-drag: write the parameter's uniform directly on the preview material — instant, no rebuild.
+  onNumLive: (key: string, value: number) => {
+    for (const m of mgrMats) setLiveParam(m, key, value)
+  },
   onBool: (key: string, value: boolean) => setMgrTuning((t) => (t[key] = value)),
   onTint: (value: string | null) => setMgrTuning((t) => (t.tint = value)),
-  // live default-tint on drag: recolor the preview material directly (no rebuild).
-  // The preview mesh has no per-slot tint, so its albedo multiply IS the tint.
+  // live default-tint on drag: recolor the preview material's tint uniform directly (no rebuild).
   onTintLive: (value: string) => {
-    for (const m of mgrMats) m.color.set(value)
+    for (const m of mgrMats) setTintLive(m, value)
   },
-  // #27: assign / clear the alpha mask path (single, resolution-independent)
-  onAlphaMap: (value: string | null) =>
+  // #27: assign / clear the alpha mask path. Binding/unbinding a texture is STRUCTURAL, so this one
+  // rebuilds the preview (it's a rare click, not a slider drag).
+  onAlphaMap: (value: string | null) => {
     setMgrTuning((t) => {
       if (value === null) delete t.alphaMap
       else t.alphaMap = value
-    }),
+    })
+    rebuildMgrPreview()
+  },
   textures: () => inv.textures,
 }
 

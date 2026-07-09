@@ -18,7 +18,7 @@
     "body_honey": { "inherit": "coat_honey" },
     "seg1_honey": { "inherit": "coat_honey" },
     "seg2_honey": { "inherit": "coat_honey" },
-    "wing": { "material": "plaster_wall_01", "tint": "#e8f1ff", "uvMode": "stretch" },
+    "wing": { "material": "plaster_wall_01", "uvMode": "stretch" },
     "wing_l": { "inherit": "wing" },
     "wing_r": { "inherit": "wing" },
     "eye": { "material": "plaster_wall_01", "uvMode": "stretch" },
@@ -26,7 +26,7 @@
     "eye_r": { "inherit": "eye" },
     "antenna_l": { "inherit": "eye" },
     "antenna_r": { "inherit": "eye" },
-    "stinger": { "material": "plaster_wall_01", "tint": "#4a4a52", "uvMode": "stretch" }
+    "stinger": { "material": "plaster_wall_01", "uvMode": "stretch" }
   },
   "rig": {
     "root": {

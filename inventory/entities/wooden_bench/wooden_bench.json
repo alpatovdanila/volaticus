@@ -6,17 +6,17 @@
   "tags": ["wood", "furniture"],
   "notes": "Generated low-poly bench: two-plank seat and backrest on side slabs, backrest held by two spine planks rising from the seat. Scenery — no hit reaction.",
   "materials": {
-    "planks": { "material": "wood_02", "flat": true, "uvMode": "fit", "uvScale": 2, "uvProject": "box", "uvRot": 90 },
+    "planks": { "material": "wood_02", "flat": true, "uvMode": "fit", "uvProject": "box", "uvRot": 90 },
     "seat_a": { "inherit": "planks" },
     "seat_b": { "inherit": "planks" },
     "back_top": { "inherit": "planks" },
     "back_bot": { "inherit": "planks" },
-    "legs": { "material": "wood_01", "flat": true, "uvScale": 2, "uvProject": "box" },
+    "legs": { "material": "wood_01", "flat": true, "uvProject": "box" },
     "spine_l": { "inherit": "legs" },
     "spine_r": { "inherit": "legs" },
     "leg_l": { "inherit": "legs" },
     "leg_r": { "inherit": "legs" },
-    "brace": { "inherit": "legs" }
+    "brace": { "inherit": "legs", "uvRot": 90 }
   },
   "rig": {
     "root": {

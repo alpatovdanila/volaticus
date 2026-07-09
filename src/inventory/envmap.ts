@@ -22,11 +22,15 @@ export function getLevelEnvMap(): THREE.Texture | null {
 
 // give one material its opted-in reflection (no-op for envMapIntensity 0)
 export function attachEnv(m: THREE.Material): void {
-  // WebGPU: entity materials are MeshStandardNodeMaterial (isMeshStandardNodeMaterial),
-  // which still honors the legacy `envMap` property (NodeMaterial.setupEnvironment).
   const std = m as THREE.MeshStandardMaterial & { isMeshStandardNodeMaterial?: boolean }
   if (!std.isMeshStandardMaterial && !std.isMeshStandardNodeMaterial) return
-  const want = std.envMapIntensity > 0 ? envTexture : null
+  // WebGPU: assigning `envMap` to a MeshStandardNodeMaterial builds a PMREMNode that throws
+  // "Cannot read properties of null (reading 'isRenderTargetTexture')" during shader build — the whole
+  // material then renders BLACK (this only bites materials that opt in, envMapIntensity > 0). The
+  // material already reflects the scene's IBL environment (scene.environment) — the Manager preview
+  // reflects gorgeously with NO per-material envMap — so opt-in reflection rides scene.environment and
+  // we never set the crashing envMap on a node material. (Legacy MeshStandardMaterial still uses envMap.)
+  const want = std.isMeshStandardNodeMaterial ? null : std.envMapIntensity > 0 ? envTexture : null
   if (std.envMap !== want) {
     std.envMap = want
     std.needsUpdate = true // USE_ENVMAP define changes — recompile

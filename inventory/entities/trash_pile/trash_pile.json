@@ -6,18 +6,18 @@
   "tags": ["debris", "village"],
   "notes": "Small scatter of village debris ~0.8m across: crossed planks, a broken crate corner and a slumped sack. Most pieces are chance-gated so no two piles read alike. Walk-through — no collider.",
   "materials": {
-    "planks": { "material": "wood_planks_14", "flat": true, "uvScale": 0.25 },
+    "planks": { "material": "wood_planks_14", "flat": true },
     "plank_a": { "inherit": "planks" },
-    "plank_b": { "inherit": "planks", "tint": "#d9c6a8" },
+    "plank_b": { "inherit": "planks" },
     "plank_c": { "inherit": "planks" },
     "panel_a": { "inherit": "planks" },
-    "panel_b": { "inherit": "planks", "tint": "#d9c6a8" },
-    "dark_wood": { "material": "wood_planks_18", "flat": true, "uvScale": 0.25 },
+    "panel_b": { "inherit": "planks" },
+    "dark_wood": { "material": "wood_planks_18", "flat": true },
     "corner_post": { "inherit": "dark_wood" },
     "shard": { "inherit": "dark_wood" },
-    "cloth": { "material": "concrete_wall_01", "flat": true, "uvScale": 0.5 },
+    "cloth": { "material": "concrete_wall_01", "flat": true },
     "sack": { "inherit": "cloth" },
-    "knot": { "inherit": "cloth", "tint": "#c7a276" }
+    "knot": { "inherit": "cloth" }
   },
   "rig": {
     "root": {
@@ -98,7 +98,7 @@
           "sub": 2,
           "material": "sack",
           "chance": 0.85,
-          "craft": 0.55,
+          "craft": 0.8,
           "children": {
             "knot": {
               "shape": "sphere",

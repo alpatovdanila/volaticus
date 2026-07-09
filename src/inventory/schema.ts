@@ -414,6 +414,9 @@ export const MaterialTuningSchema = z.object({
   roughness: z.number().min(0).max(2),
   metalness: z.number().min(0).max(1),
   normalScale: z.number().min(0).max(4),
+  // parallax occlusion depth — UV displacement at full height. 0 = flat (no parallax even
+  // when POM is globally on). Only meaningful for materials that ship a height map.
+  height: z.number().min(0).max(0.5).optional(),
   aoIntensity: z.number().min(0).max(2),
   emissive: z.number().min(0).max(4),
   opacity: z.number().min(0).max(1),

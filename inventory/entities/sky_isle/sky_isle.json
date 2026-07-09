@@ -8,10 +8,10 @@
   "materials": {
     "grass": { "material": "grass_02", "flat": true, "uvScale": 0.25 },
     "cap_top": { "inherit": "grass" },
-    "soil": { "material": "ground_with_roots_01", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "soil": { "material": "ground_with_roots_01", "flat": true },
     "cap_side": { "inherit": "soil" },
-    "cap_bottom": { "inherit": "soil", "tint": "#8a7a66" },
-    "rock": { "material": "rock_01", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "cap_bottom": { "inherit": "soil" },
+    "rock": { "material": "rock_01", "flat": true, "uvScale": 0.25, "uvProject": "box", "inherit": "tuft" },
     "ud_core": { "inherit": "rock" },
     "ud_spur": { "inherit": "rock" },
     "us_core": { "inherit": "rock" },
@@ -19,7 +19,7 @@
     "us_tip2": { "inherit": "rock" },
     "outcrop_1": { "inherit": "rock" },
     "outcrop_2": { "inherit": "rock" },
-    "tuft": { "material": "grass_01", "tint": "#6fae4a", "flat": true, "doubleSided": true, "uvMode": "stretch" },
+    "tuft": { "material": "grass_01", "flat": true, "doubleSided": true, "uvMode": "stretch" },
     "tuft_1": { "inherit": "tuft" },
     "tuft_2": { "inherit": "tuft" },
     "tuft_3": { "inherit": "tuft" }
@@ -35,7 +35,6 @@
           "segments": 16,
           "pos": [0, 4, 0],
           "material": { "side": "cap_side", "top": "cap_top", "bottom": "cap_bottom" },
-          "craft": 0.55,
           "sub": 1,
           "craftSeed": 1199401778
         },
@@ -49,7 +48,6 @@
               "pos": [0, 1.75, 0],
               "rot": [180, 0, 0],
               "material": "ud_core",
-              "craft": 0.5,
               "sub": 2,
               "craftSeed": 1199401778
             },
@@ -62,7 +60,6 @@
               "rot": [172, 0, 10],
               "material": "ud_spur",
               "chance": 0.75,
-              "craft": 0.5,
               "sub": 1,
               "craftSeed": 1199401778
             }

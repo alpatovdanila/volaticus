@@ -6,7 +6,7 @@
   "tags": ["neutral", "ambient", "crawler"],
   "notes": "Tiny neutral crawler. oneOf picks the shell: ladybug (red + dots), blue shine beetle, or green beetle.",
   "materials": {
-    "dark": { "material": "plaster_wall_01", "tint": "#2e2a28", "uvMode": "stretch", "flat": true },
+    "dark": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true },
     "spot_a": { "inherit": "dark" },
     "spot_b": { "inherit": "dark" },
     "spot_c": { "inherit": "dark" },
@@ -15,9 +15,9 @@
     "leg_fr": { "inherit": "dark" },
     "leg_bl": { "inherit": "dark" },
     "leg_br": { "inherit": "dark" },
-    "shell_lady": { "material": "plaster_wall_01", "tint": "#c9412f", "uvMode": "stretch", "flat": true },
-    "shell_blue": { "material": "plaster_wall_01", "tint": "#4a6fa8", "uvMode": "stretch", "flat": true },
-    "shell_green": { "material": "plaster_wall_01", "tint": "#5f9b45", "uvMode": "stretch", "flat": true }
+    "shell_lady": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true },
+    "shell_blue": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true },
+    "shell_green": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true }
   },
   "rig": {
     "root": {

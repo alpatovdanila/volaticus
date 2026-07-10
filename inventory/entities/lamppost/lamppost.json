@@ -33,7 +33,7 @@
           "radiusTop": 0.09,
           "radiusBottom": 0.12,
           "height": 0.14,
-          "segments": 8,
+          "segments": 20,
           "pos": [0, 0.07, 0],
           "material": "base",
           "craftSeed": 211005768
@@ -43,7 +43,7 @@
           "radiusTop": 0.045,
           "radiusBottom": 0.07,
           "height": 2.5,
-          "segments": 8,
+          "segments": 16,
           "pos": [0, 1.31, 0],
           "rot": [0, 0, 0.8],
           "rotJitter": [0.5, 0, 1],
@@ -55,7 +55,7 @@
           "radiusTop": 0.06,
           "radiusBottom": 0.08,
           "height": 0.1,
-          "segments": 8,
+          "segments": 16,
           "pos": [0, 2.3, 0],
           "material": "collar",
           "craftSeed": 211005768
@@ -64,7 +64,7 @@
           "shape": "cone",
           "radius": 0.055,
           "height": 0.16,
-          "segments": 6,
+          "segments": 12,
           "pos": [0, 2.63, 0],
           "material": "finial",
           "craftSeed": 211005768
@@ -104,7 +104,7 @@
               "shape": "cylinder",
               "radius": 0.012,
               "height": 0.12,
-              "segments": 6,
+              "segments": 12,
               "pos": [0, 0.14, 0],
               "material": "hang",
               "craftSeed": 211005768

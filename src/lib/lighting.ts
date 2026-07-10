@@ -16,6 +16,7 @@ import {
 } from 'three/webgpu'
 import { uniform, materialEmissive, materialColor } from 'three/tsl'
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js'
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 import { setLevelEnvMap } from '../inventory/envmap'
 
 // TSL ergonomics: the materialColor / materialEmissive accessors surface as the
@@ -27,12 +28,52 @@ const v3n = (n: unknown): Node<'vec3'> => n as Node<'vec3'>
 
 export type ToneMap = 'none' | 'aces' | 'agx'
 
-// selectable HDRIs (resources/HDRI/<id>.exr, served at /HDRI/<id>.exr)
-export const HDRIS: { id: string; name: string }[] = [
-  { id: 'qwantani_noon_puresky_1k', name: 'Qwantani noon (sky, 1k)' },
-  { id: 'qwantani_afternoon_puresky_4k', name: 'Qwantani afternoon (sky)' },
-  { id: 'autumn_hilly_field_4k', name: 'Autumn hilly field' },
-  { id: 'ticknock_02_4k', name: 'Ticknock' },
+// A selectable environment: `hdr` lights the scene (PMREM → IBL); `sky`, when present,
+// is a separate LDR equirect drawn as the visible background (the stylized set ships
+// hand-painted PNG skies next to its .hdr light probes). No `sky` → the light probe
+// itself is the sky (the photographic EXRs).
+export interface HdriEntry {
+  id: string
+  name: string
+  hdr: string // .exr (EXRLoader) or .hdr/RGBE (RGBELoader) — picked by extension
+  sky?: string // LDR equirect PNG for the visible background
+}
+
+// the stylized pack: resources/HDRI/stylized HDRI/HDRI_Files/<id>_HDRI.hdr (+ sibling
+// <id>.png skyboxes one level up for most). false = no PNG twin (HDR doubles as sky).
+const STYLIZED: [string, boolean][] = [
+  ['sky_linekotsi_01', true], ['sky_linekotsi_01_b', true], ['sky_linekotsi_01_c', false],
+  ['sky_linekotsi_02', true], ['sky_linekotsi_02_b', false],
+  ['sky_linekotsi_03', true], ['sky_linekotsi_04', true],
+  ['sky_linekotsi_05', true], ['sky_linekotsi_05_b', true], ['sky_linekotsi_05_c', false],
+  ['sky_linekotsi_06', true],
+  ['sky_linekotsi_07', true], ['sky_linekotsi_07_b', true],
+  ['sky_linekotsi_08', true], ['sky_linekotsi_09', true], ['sky_linekotsi_10', true],
+  ['sky_linekotsi_11', true], ['sky_linekotsi_12', true], ['sky_linekotsi_13', true],
+  ['sky_linekotsi_14', true], ['sky_linekotsi_14_b', true], ['sky_linekotsi_14_c', true],
+  ['sky_linekotsi_15', true], ['sky_linekotsi_15_b', true],
+  ['sky_linekotsi_16', true], ['sky_linekotsi_17', true], ['sky_linekotsi_18', true],
+  ['sky_linekotsi_19', true], ['sky_linekotsi_20', true], ['sky_linekotsi_21', true],
+  ['sky_linekotsi_22', true],
+  ['sky_linekotsi_23', true], ['sky_linekotsi_23_b', true],
+  ['sky_linekotsi_24', true], ['sky_linekotsi_25', true], ['sky_linekotsi_26', true],
+  ['sky_linekotsi_27', true], ['sky_linekotsi_28', true],
+]
+
+const STYLIZED_DIR = encodeURI('/HDRI/stylized HDRI')
+
+export const HDRIS: HdriEntry[] = [
+  { id: 'qwantani_noon_puresky_1k', name: 'Qwantani noon (sky, 1k)', hdr: '/HDRI/qwantani_noon_puresky_1k.exr' },
+  { id: 'qwantani_afternoon_puresky_4k', name: 'Qwantani afternoon (sky)', hdr: '/HDRI/qwantani_afternoon_puresky_4k.exr' },
+  { id: 'autumn_hilly_field_4k', name: 'Autumn hilly field', hdr: '/HDRI/autumn_hilly_field_4k.exr' },
+  { id: 'ticknock_02_4k', name: 'Ticknock', hdr: '/HDRI/ticknock_02_4k.exr' },
+  ...STYLIZED.map(([id, png]): HdriEntry => ({
+    id,
+    // 'sky_linekotsi_05_b' → 'Stylized 05 b'
+    name: 'Stylized ' + id.replace('sky_linekotsi_', '').replace(/_/g, ' '),
+    hdr: `${STYLIZED_DIR}/HDRI_Files/${id}_HDRI.hdr`,
+    sky: png ? `${STYLIZED_DIR}/${id}.png` : undefined,
+  })),
 ]
 
 // The subset of lighting a host reads/writes. The studio persists it to localStorage.
@@ -61,7 +102,7 @@ const TONEMAPS: Record<ToneMap, THREE.ToneMapping> = {
   agx: THREE.AgXToneMapping,
 }
 
-const hdriUrl = (id: string) => `/HDRI/${id}.exr`
+const hdriEntry = (id: string): HdriEntry => HDRIS.find((h) => h.id === id) ?? HDRIS[0]
 
 const num = (v: number, lo: number, hi: number, fb: number): number =>
   Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fb
@@ -112,27 +153,53 @@ export class LightingRig {
     this.ownsGlobalEnv = opts.ownsGlobalEnv !== false
   }
 
-  // Load the selected equirect EXR, PMREM-prefilter it for IBL, and use it as
-  // BOTH the visible sky and the light source. Async; disposes the prior HDRI.
+  // Load the selected environment: the light probe (.exr via EXRLoader, .hdr/RGBE via
+  // RGBELoader) is PMREM-prefiltered for IBL; the visible sky is the entry's PNG skybox
+  // when it ships one (the stylized pack), else the probe equirect itself. Async;
+  // disposes the prior environment.
   private loadHDRI(id: string): void {
     this.loadedHdri = id
-    new EXRLoader().load(hdriUrl(id), (tex) => {
+    const entry = hdriEntry(id)
+    const loader = entry.hdr.toLowerCase().endsWith('.hdr') ? new RGBELoader() : new EXRLoader()
+    loader.load(entry.hdr, (tex) => {
       if (this.loadedHdri !== id) return tex.dispose() // superseded
       tex.mapping = THREE.EquirectangularReflectionMapping
       const pmrem = new PMREMGenerator(this.renderer)
       const envTex = pmrem.fromEquirectangular(tex).texture
       pmrem.dispose()
-      this.curEnv?.dispose()
-      this.curBg?.dispose()
-      this.curEnv = envTex
-      this.curBg = tex
-      this.scene.environment = envTex
-      this.updateBackground() // sky texture, or the flat backdrop if hidden
-      // opt-in metal reflections use the HDRI too — but ONLY the main rig owns this
-      // global pointer (a second-context preview rig must not overwrite it).
-      if (this.ownsGlobalEnv) setLevelEnvMap(envTex)
-      this.onHdriLoaded?.(tex) // host reacts to a ready environment
-      this.applyParams(this.params)
+      const applyBg = (bg: THREE.Texture): void => {
+        this.curEnv?.dispose()
+        this.curBg?.dispose()
+        this.curEnv = envTex
+        this.curBg = bg
+        this.scene.environment = envTex
+        this.updateBackground() // sky texture, or the flat backdrop if hidden
+        // opt-in metal reflections use the HDRI too — but ONLY the main rig owns this
+        // global pointer (a second-context preview rig must not overwrite it).
+        if (this.ownsGlobalEnv) setLevelEnvMap(envTex)
+        this.onHdriLoaded?.(tex) // host reacts to a ready environment
+        this.applyParams(this.params)
+      }
+      if (!entry.sky) return applyBg(tex) // the probe doubles as the sky
+      // hand-painted LDR sky: sRGB equirect PNG; the probe equirect is PMREM-only, so
+      // free it once the sky lands (or fall back to it if the PNG fails to load).
+      new THREE.TextureLoader().load(
+        entry.sky,
+        (skyTex) => {
+          if (this.loadedHdri !== id) {
+            skyTex.dispose()
+            return tex.dispose()
+          }
+          skyTex.mapping = THREE.EquirectangularReflectionMapping
+          skyTex.colorSpace = THREE.SRGBColorSpace
+          applyBg(skyTex)
+          tex.dispose() // probe equirect no longer needed (PMREM captured it)
+        },
+        undefined,
+        () => {
+          if (this.loadedHdri === id) applyBg(tex)
+        },
+      )
     })
   }
 

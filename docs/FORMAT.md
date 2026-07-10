@@ -26,22 +26,37 @@ Conventions: meters, Y-up, entity origin at ground-center. Resource paths are re
                                   // PBR catalog material by id + GEOMETRIC/placement overrides layered on top
     "shell": { "material": "metal_01",     // catalog material id (inventory/materials/<id>.json). Supplies the
                                            // color/normal/roughness/metallic/ao maps AND the roughness/metalness/
-                                           // emissive/opacity/cutout/doubleSided/flat from its `tuning` — see the
+                                           // emissive/opacity/cutout/doubleSided from its `tuning` — see the
                                            // Material catalog section below. (The old per-slot texture/surface/
                                            // opacity/cutout/emissive/roughness/metalness keys are RETIRED —
                                            // a catalog material carries its own maps + tuning for all of that.)
                "tint": "#f2a13c",        // per-slot albedo multiply, ON TOP of the material's own tint (white
                                          // texture + tint = flat color). THE source of "same material, different
                                          // colors" — editor shows a color swatch on every slot chip (white = off)
-               "flat": true,             // flat-shading override (else inherits the material's `tuning.flat`)
+               "flat": true,             // flat (faceted) shading — SLOT-ONLY (the catalog has no flat: shading
+                                         // describes the surface, not the substance). Unset = smooth. Slot chips
+                                         // expose it as "shade: smooth | flat"; smooth is what makes round parts
+                                         // (drums, barrels, rings) read round — see the round-surface gotcha below
                "doubleSided": true,      // render both faces (open shells) — overrides `tuning.doubleSided`;
                                          // kept per-slot so a shared catalog material stays single-sided elsewhere
-               "uvMode": "tile|fit|stretch", "uvScale": 1,  // tile = repeats per meter; fit = whole repeats
+               "uvMode": "tile|fit|stretch" or a "U V" pair, "uvScale": 1,
+                                         // PER-AXIS tiling: one value = both axes; "fit stretch" = whole repeats
+                                         // horizontally, exactly once vertically. Any tile/fit/stretch combination.
+                                         // tile = uvScale repeats/meter; fit = whole repeats over the face (on the
+                                         // wrap axis of a closed surface — "fit tile" on a barrel side — it kills
+                                         // the wrap seam); stretch = once. Axes are TEXTURE u/v, pre-uvRot.
                                          // rounded so motifs never cut mid-pattern; stretch = exactly once.
                                          // uvScale multiplies density in tile/fit (× the material's own default)
                "uvRot": 90,              // texture direction: degrees 0–359 (editor dropdowns offer 15° steps)
                "uvProject": "box" }      // UV re-projection for this part: box|planar|sphere|none.
                                          // THE single source for projection — no node/catalog fallback.
+                                         // Round-surface gotcha: box projection is 4 planar quadrants — the pattern
+                                         // phase-jumps (bricks cut mid-brick) at every quadrant boundary of a curved
+                                         // wall, in every uvMode. Wrong tool there: use "none" + "fit tile" (native
+                                         // wrap-continuous UVs, whole repeats around). A vertical LIGHTING line on a
+                                         // smooth closed round that survives every uvMode is not UVs either: it is
+                                         // old baked normals split at the wrap column (fixed in bake v4, canonical
+                                         // 60° crease-angle welding) — hit "⟲ stale geometry" on that entity.
   },
 ```
 
@@ -109,10 +124,29 @@ Rules and semantics:
                                   // (outer+inner shell + top/bottom annulus caps — thin metal with real
                                   // thickness for barrel bands, bucket walls, rims; radius/radiusTop+
                                   // radiusBottom/height/segments/craft/seed work like post)
+      // shape "decal" — a SPRITE stamped onto the model: a flat size-[w,h] quad (meters, faces +Z
+      // before rot) carrying an image EMBEDDED base64 in this very JSON (self-contained declaration):
+      //   { "shape": "decal", "image": "data:image/png;base64,…", "size": [0.1, 0.1],
+      //     "pos": [0, 0.25, 0.151], "rot": [0, 0, 0] }
+      // The image maps ONCE across the quad (0..1 UVs, never tiled/metered), renders as a hard
+      // alpha CUTOUT (pixels under 50% alpha clip), matte, no material slot. Author decals as
+      // CHILDREN of the part they sit on, offset ~1-2 mm along the outward normal (the material
+      // also carries a polygon offset, but the mm keeps silhouettes clean) — eyes, mouths, labels,
+      // stitches, painted details. Keep sprites small (16-64 px PNGs, a few KB of base64); two
+      // nodes stamping the SAME image share one material/draw. Never jittered by craft.
+      // AUTHORING GOTCHA: verify the sprite actually has OPAQUE pixels before embedding (decode it
+      // and count alpha>128) — a fully transparent PNG decodes/loads fine and renders as NOTHING
+      // (the alpha cutout discards every fragment), which reads as "decals are broken".
       "sub": 3,                   // subdivision levels BEFORE the craft jitter (each level: 4× triangles,
                                   // capped 4). Gives flat/coarse shapes enough vertices to deform — e.g.
-                                  // a plane with sub 3 + craft 0.65 = lumpy tilled soil (garden_bed_large)
-      "craft": 0.5,               // craftsmanship: 1 ≈ machine-perfect, 0 = crooked hand-hewn. Works on ANY
+                                  // a plane with sub 3 + craft 0.65 = lumpy tilled soil (garden_bed_large).
+                                  // INHERITS down the rig tree: a node without its own `sub` uses the
+                                  // nearest ancestor's (groups included — a group's sub is a subtree knob);
+                                  // setting a node's own value (0 counts) overrides for it and its subtree.
+      "craft": 0.5,               // craftsmanship: 1 ≈ machine-perfect, 0 = crooked hand-hewn. INHERITS
+                                  // down the rig tree exactly like `sub` (own ?? nearest ancestor's —
+                                  // set it on a group to crook the whole subtree, override per child;
+                                  // the studio's GEOMETRY tab edits this per node). Works on ANY
                                   // shape — seeded vertex jitter (jitter caps at ~0.6 m reference so big walls
                                   // stay subtle). Palette: rocks/ruins 0.5-0.65, mushrooms/foliage 0.6-0.72,
                                   // furniture 0.78-0.85, house walls 0.9, characters 0.85-0.93 (a whisper).
@@ -248,7 +282,7 @@ and the studio's material manager edits `tuning`. Slots layer only geometry/plac
     "color":     "PBR/wood_planks_20/wood_planks_20_basecolor_1k.png",  // the one guaranteed channel
     "normal":    "PBR/wood_planks_20/wood_planks_20_normal_gl_1k.png",  // GL convention
     "roughness": "PBR/wood_planks_20/wood_planks_20_roughness_1k.png",
-    "height":    "PBR/wood_planks_20/wood_planks_20_height_1k.png",     // linked but NOT bound (parallax removed)
+    "height":    "PBR/wood_planks_20/wood_planks_20_height_1k.png",     // binds only when tuning.parallax opts in (see below)
     "ao":        "PBR/wood_planks_20/wood_planks_20_ambientocclusion_1k.png",
     "metallic":  "PBR/wood_planks_20/wood_planks_20_metallic_1k.png",
     "emissive":  null },
@@ -258,9 +292,14 @@ and the studio's material manager edits `tuning`. Slots layer only geometry/plac
     "normalScale": 1, "aoIntensity": 1,
     "emissive": 0,                // 0..4; the emissive map binds only when this is > 0
     "opacity": 1, "cutout": false,    // opacity < 1 = translucent; cutout = alpha-test (leaves/sprites)
-    "doubleSided": false, "flat": false }
+    "doubleSided": false }        // NO "flat" here — flat/smooth shading is per-ENTITY-SLOT (a surface
+                                  // decision, like projection), never on the catalog material
   // optional tuning keys: "uvScale" (default tiling density), "alphaMap" (one resource
-  // path used as an opacity/cutout mask). Projection is per-ENTITY-SLOT, not on the catalog material.
+  // path used as an opacity/cutout mask), "parallax" (true = this material OPTS INTO parallax
+  // occlusion mapping — its height map marches real view-dependent depth; runs only while the
+  // studio's global Render-panel parallax is also on; absent = flat sampling), "height"
+  // (0..0.5 POM depth — UV displacement at full height; only meaningful with parallax on).
+  // Projection is per-ENTITY-SLOT, not on the catalog material.
 }
 ```
 

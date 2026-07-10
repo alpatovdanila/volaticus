@@ -19,9 +19,9 @@
     "normalScale": 1,
     "aoIntensity": 1,
     "emissive": 0,
-    "opacity": 1,
+    "opacity": 0.53,
     "cutout": false,
-    "doubleSided": false,
-    "flat": false
+    "doubleSided": false
+
   }
 }

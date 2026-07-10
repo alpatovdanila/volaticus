@@ -6,17 +6,19 @@ import { mergeBuiltEntity } from '../inventory/merge'
 import { SceneBatcher, type BatchInput } from '../inventory/sceneBatcher'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
-import { applyLiveTuning, catalogColorPath, catalogDefaultTint, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, setTintLive, type EntityMaterial } from '../inventory/materials'
+import { applyLiveTuning, catalogColorPath, catalogDefaultTint, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, setTintLive, whenTexturesReady, type EntityMaterial } from '../inventory/materials'
 import { MaterialPreview, previewShapeGeometry, PREVIEW_SHAPES, type PreviewShape, type PreviewUvProject } from './matpreview'
 import { preloadEntityMeshes } from '../inventory/meshes'
 import { setParallaxConfig, getParallaxSamples } from '../inventory/parallax'
+import { startBusy, type BusyHandle } from './busy'
 import { EntityPreview } from '../inventory/preview'
 import { Inventory, SETTINGS_PATH, type ItemKind } from '../inventory/registry'
 import { ensureAudio, playSfx, preloadSfx } from '../inventory/sfx'
-import { contextDimsOf, resolveMaterials, walkRig, type EntityDoc, type MaterialCatalogDoc, type MaterialDef } from '../inventory/schema'
+import { contextDimsOf, resolveMaterials, walkRig, type EntityDoc, type MaterialCatalogDoc, type MaterialDef, type NodeDef } from '../inventory/schema'
 import {
   $,
   initMatPicker,
+  renderGeomTree,
   renderItemList,
   renderMgrList,
   renderMgrTuning,
@@ -27,6 +29,7 @@ import {
   setTitle,
   setValidation,
   toast,
+  type GeomNodeInfo,
   type MgrMaps,
   type MgrTuning,
   type OverridableKey,
@@ -36,7 +39,28 @@ import { Viewport, type LightParams, HDRIS } from './viewport'
 import './style.css'
 
 const inv = new Inventory()
-const vp = new Viewport($('#canvas-wrap'))
+
+// Render prefs (parallax + antialiasing) — read BEFORE the Viewport exists because MSAA
+// is a renderer-CREATION option (SSAA render scale applies live; MSAA needs the reload).
+type AAMode = 'off' | 'ssaa2' | 'msaa' | 'msaa_ssaa15'
+const RENDER_KEY = 'volaticus.render'
+const renderPrefs: { parallax: boolean; samples: number; aa: AAMode } = { parallax: false, samples: 24, aa: 'off' }
+try {
+  const raw = localStorage.getItem(RENDER_KEY)
+  if (raw) {
+    const s = JSON.parse(raw) as Partial<typeof renderPrefs>
+    renderPrefs.parallax = !!s.parallax
+    if (typeof s.samples === 'number') renderPrefs.samples = s.samples
+    if (s.aa === 'off' || s.aa === 'ssaa2' || s.aa === 'msaa' || s.aa === 'msaa_ssaa15') renderPrefs.aa = s.aa
+  }
+} catch {
+  /* non-fatal */
+}
+const aaScale = (aa: AAMode): number => (aa === 'ssaa2' ? 2 : aa === 'msaa_ssaa15' ? 1.5 : 1)
+const aaMsaa = (aa: AAMode): boolean => aa.startsWith('msaa')
+
+const vp = new Viewport($('#canvas-wrap'), { antialias: aaMsaa(renderPrefs.aa) })
+vp.setRenderScale(aaScale(renderPrefs.aa))
 ;(window as unknown as Record<string, unknown>).__dbg = {
   get vp() {
     return vp
@@ -84,7 +108,23 @@ const variantsPath = (id: string) => `entities/${id}/${id}.variants.json`
 
 // Persist a freshly-baked geometry set to its sidecar files (studio only). Compact
 // JSON — these are machine data, not hand-edited.
-async function saveBaked(id: string, baked: BakedGeometry): Promise<void> {
+// Bump when the GENERATOR changes (default segment counts, jitter math, new shape
+// behaviour) — folds into rigStamp below, so every sidecar reads as stale and offers
+// the explicit "⟲ stale geometry" regen without touching any entity JSON.
+const GEOM_BAKE_VERSION = 4 // v4: canonical crease-angle (60°) welded normals (v3: first seam-weld pass, v2: raised radial segment defaults)
+
+// Fingerprint of everything the geometry bake READS from the doc (rig + variants config).
+// Stamped into each geom sidecar; a mismatch marks the entity stale in the overlay —
+// regeneration stays an explicit UI action, never part of loading.
+function rigStamp(doc: EntityDoc): string {
+  const s = JSON.stringify({ v: GEOM_BAKE_VERSION, rig: doc.rig, variants: doc.variants ?? null })
+  let h = 5381
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0
+  return (h >>> 0).toString(36) + ':' + s.length
+}
+
+async function saveBaked(id: string, baked: BakedGeometry, doc: EntityDoc): Promise<void> {
+  for (const b of baked) b.rigHash = rigStamp(doc)
   for (let i = 0; i < baked.length; i++) await inv.save(geomPath(id, i), JSON.stringify(baked[i]))
 }
 
@@ -158,12 +198,27 @@ async function loadBaked(id: string, doc: EntityDoc): Promise<BakedGeometry> {
       break
     }
   }
+  // REBAKE POLICY: loading NEVER regenerates. Whatever sidecars exist are used verbatim
+  // — even when their rigHash says they're stale (a hand-edited rig). Regeneration is a
+  // TOOL, run only (a) from explicit UI actions (craft/sub edits, ⟲ reroll, ⟳ variants,
+  // the ⟲ stale button) or (b) right here when NO baked geometry exists yet. The stale
+  // stamp is still read — the overlay shows a re-bake affordance instead of auto-running.
   if (loaded.length === count) return loaded
   const item = inv.entities.get(id)
   if (item?.doc) await persistSeeds(item as never)
   const baked = bakeEntityGeometry(doc, await loadVariants(id, doc))
-  await saveBaked(id, baked)
+  await saveBaked(id, baked, doc)
   return baked
+}
+
+// Is the selection's loaded geometry stale relative to its current rig (hand-edited
+// JSON, or a generator-version bump)? Drives the overlay's explicit "⟲ stale" button —
+// per the rebake policy, staleness NEVER re-bakes by itself.
+function selGeomStale(doc: EntityDoc): boolean {
+  const baked = sel?.baked
+  if (!baked || baked.length === 0) return false
+  const stamp = rigStamp(doc)
+  return baked.some((b) => b.rigHash !== stamp)
 }
 
 // sel-cached: reuse the current selection's baked set across rebuilds, so material/
@@ -191,7 +246,7 @@ async function bakeAndSaveAll(id: string, freshLayouts?: VariantLayout[]): Promi
   const layouts = freshLayouts ?? (await loadVariants(id, item.doc))
   if (freshLayouts) await saveVariants(id, freshLayouts)
   const baked = bakeEntityGeometry(item.doc, layouts)
-  await saveBaked(id, baked)
+  await saveBaked(id, baked, item.doc)
   return baked
 }
 
@@ -201,13 +256,20 @@ async function bakeAndSaveAll(id: string, freshLayouts?: VariantLayout[]): Promi
 async function regen(freshLayouts?: VariantLayout[]): Promise<void> {
   if (!sel || sel.kind !== 'entity') return
   const id = sel.id
-  const baked = await bakeAndSaveAll(id, freshLayouts)
-  // id's files are consistent regardless; only touch the view if still selected
-  if (!baked || sel?.id !== id) return
-  sel.baked = baked
-  sel.dirty = false
-  setTitle(id, false)
-  rebuild()
+  // editor-wide busy while the geometry re-bakes + saves (a craft/sub edit freezes the
+  // doc state until the sidecars land) — rebuild() then runs under its own busy handle.
+  const busy = startBusy('re-baking ' + id + '…')
+  try {
+    const baked = await bakeAndSaveAll(id, freshLayouts)
+    // id's files are consistent regardless; only touch the view if still selected
+    if (!baked || sel?.id !== id) return
+    sel.baked = baked
+    sel.dirty = false
+    setTitle(id, false)
+    rebuild()
+  } finally {
+    busy.end()
+  }
 }
 
 // Regenerate variants (explicit): re-roll the layouts (new oneOf/chance/rotJitter
@@ -228,15 +290,13 @@ async function rerollCraft(): Promise<void> {
   await regen()
 }
 
-// Reroll one part (its whole seam-group, so welded frame corners can't crack) —
-// the per-part ⟲ in the gen bar. `slot` is a material slot; reroll every node on it.
-async function rerollPart(slot: string): Promise<void> {
+// Reroll one rig node (its whole seam-group, so welded frame corners can't
+// crack) — the per-node ⟲ on the geometry tab.
+async function rerollNode(name: string): Promise<void> {
   const id = sel?.id
   const doc = id ? inv.entities.get(id)?.doc : undefined
   if (!id || !doc) return
-  const nodeNames = nodesUsingSlot(doc, slot).map((e) => e.name)
-  if (!nodeNames.length) return
-  rerollPartSeed(doc, nodeNames) // seam-group-aware; regen persists
+  rerollPartSeed(doc, [name]) // seam-group-aware; regen persists
   await regen()
 }
 
@@ -352,7 +412,35 @@ function canShatter(doc: EntityDoc): boolean {
   return JSON.stringify(doc).includes('SCRIPT_EFFECT_SHATTER')
 }
 
+// Pre-compile every pipeline an object graph needs (WebGPU createRenderPipelineAsync under
+// the hood) so the FIRST visible frame doesn't hitch on synchronous shader compilation.
+// Compile failures fall through — they'd surface identically on the first render anyway.
+async function compileShaders(obj: THREE.Object3D): Promise<void> {
+  const r = vp.renderer as unknown as {
+    compileAsync?: (o: THREE.Object3D, c: THREE.Camera, s: THREE.Scene) => Promise<unknown>
+  }
+  if (typeof r.compileAsync !== 'function') return
+  try {
+    await r.compileAsync(obj, vp.camera, vp.scene)
+  } catch {
+    /* surfaced on render */
+  }
+}
+
+// Busy-wrapped shell: the whole build runs under one editor-wide busy handle, ended in
+// the finally — every early return / throw / supersession drops exactly its own handle
+// (ref-counted, so a newer build's handle keeps the overlay up seamlessly).
 async function buildSelectedEntity(doc: EntityDoc, restoreState?: string): Promise<void> {
+  if (!sel) return
+  const busy = startBusy('loading ' + sel.id + '…')
+  try {
+    await buildSelectedEntityInner(doc, restoreState)
+  } finally {
+    busy.end()
+  }
+}
+
+async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): Promise<void> {
   if (!sel) return
   const mySel = sel
   const myToken = ++buildToken
@@ -381,7 +469,14 @@ async function buildSelectedEntity(doc: EntityDoc, restoreState?: string): Promi
   }
   applyEnvReflection(sel.built.group) // surface presets keep their opt-in sheen
   vp.patchEmissive(sel.built.group) // global emissive self-illum lift
+  // Stage HIDDEN: the group enters the scene invisible while its textures decode and its
+  // pipelines compile in the background — the veil covers the wait, and the entity is
+  // revealed in ONE frame fully textured + compiled (no black flash, no first-draw hitch).
+  sel.built.group.visible = false
   vp.root.add(sel.built.group)
+  await Promise.all([whenTexturesReady(), compileShaders(sel.built.group)])
+  if (sel !== mySel || myToken !== buildToken) return // superseded while readying
+  sel.built.group.visible = true
   if (sel.collider) {
     // keep the collider viz in sync with the freshly (re)built entity — here, where
     // sel.built exists (rebuild() kicks this off async, so it can't do it itself)
@@ -462,6 +557,9 @@ function refreshOverlay(): void {
       context: sel.preview?.context,
       variant: doc ? { index: sel.variantIndex, count: variantCount(doc) } : undefined,
       canReroll: hasCraftGeometry(doc),
+      // stale = sidecars were baked from a DIFFERENT rig (hand-edited JSON / generator
+      // version bump). Never auto-rebakes — the overlay offers the explicit button.
+      geomStale: doc ? selGeomStale(doc) : false,
     },
     overlayCb,
   )
@@ -490,6 +588,11 @@ const overlayCb = {
     sel.variantIndex = (sel.variantIndex + 1) % variantCount(inv.entities.get(sel.id)?.doc)
     rebuild()
     refreshOverlay()
+  },
+  // the overlay's "⟲ stale" button: EXPLICIT re-bake of geometry whose rig changed
+  // after baking (the only path that regenerates besides missing sidecars + edits).
+  onRegenGeometry: () => {
+    void regen().then(() => toast('geometry re-baked'))
   },
   onRegenVariants: () => {
     // re-roll the variant LAYOUTS (new oneOf/chance/rotJitter arrangement) into
@@ -576,7 +679,7 @@ function bindingAtPath(obj: unknown, path: (string | number)[]): { effect?: unkn
 
 function setSlotParam(
   slot: string,
-  param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject',
+  param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject' | 'flat',
   value: string,
 ): void {
   if (!sel || sel.kind !== 'entity') return
@@ -609,6 +712,13 @@ function setSlotParam(
         if (inheriting) m.uvProject = 'none'
         else delete m.uvProject
       } else m.uvProject = value
+    } else if (param === 'flat') {
+      // '' = smooth (the default). Same inherit-pinning rule as uvProject:
+      // smooth on an inheriting slot persists an explicit false over a flat parent.
+      if (value === '') {
+        if (inheriting) m.flat = false
+        else delete m.flat
+      } else m.flat = true
     } else {
       const deg = parseInt(value, 10)
       if (deg === 0 && !inheriting) delete m.uvRot
@@ -756,23 +866,11 @@ function setFxRot(key: string, deg: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// per-slot geometry generation (gen bar). The generator runs only here — on
-// explicit request — and pins its decisions (craft/sub/seed) into the JSON.
-
-function nodesUsingSlot(doc: EntityDoc, slot: string): { name: string; node: Record<string, unknown> }[] {
-  const out: { name: string; node: Record<string, unknown> }[] = []
-  walkRig(doc.rig, (name, n) => {
-    if (!n.shape || n.shape === 'mesh' || !n.material) return
-    const slots = typeof n.material === 'string' ? [n.material] : Object.values(n.material)
-    if (slots.includes(slot)) out.push({ name, node: n as unknown as Record<string, unknown> })
-  })
-  return out
-}
-
-// same walk over the RAW json so saves carry the change
-function rawNodesUsingSlot(raw: EntityDoc, slot: string): Record<string, unknown>[] {
-  return nodesUsingSlot(raw, slot).map((e) => e.node)
-}
+// GEOMETRY tab: per-NODE generation options on the real rig tree. craft/sub
+// inherit down the hierarchy (own ?? nearest ancestor's — the bake resolves the
+// same way), any node can override, ↺ deletes the override to re-inherit. The
+// generator runs only from here — on explicit request — and pins its decisions
+// (craft/sub/seed) into the JSON.
 
 // shapes whose geometry is always generated (craft defaults to 0.5 for them —
 // craft 1 still generates, it just means machine-straight lumber)
@@ -780,63 +878,102 @@ function isGeneratedShape(shape: unknown): boolean {
   return shape === 'plank' || shape === 'post' || shape === 'ring' || shape === 'arrow' || shape === 'star'
 }
 
-function isGenerated(node: Record<string, unknown>): boolean {
-  return node.craft !== undefined || isGeneratedShape(node.shape)
-}
-
-// per-part generation state shown inside each chip (null = no shaped nodes).
-// UV projection left this row (#4/#5) — it is now a per-slot material override.
-function slotGenInfo(
-  doc: EntityDoc,
-  slot: string,
-): { craft: number | null; sub: number | null; has: boolean } | null {
-  const nodes = nodesUsingSlot(doc, slot)
-  if (!nodes.length) return null
-  const gen = nodes.filter((e) => isGenerated(e.node))
-  const crafts = gen.map((e) => (e.node.craft as number | undefined) ?? 0.5)
-  const subs = nodes.map((e) => e.node.sub as number | undefined).filter((v) => v !== undefined) as number[]
-  return {
-    craft: crafts.length ? Math.round((crafts.reduce((a, b) => a + b, 0) / crafts.length) * 100) / 100 : null,
-    sub: subs.length ? subs[0] : null,
-    has: gen.length > 0,
+// the rig tree flattened into geometry-tab rows, with own/effective/source
+// resolved by the SAME own-??-ancestor walk the bake (factory bakeParts) runs.
+function geomTreeRows(doc: EntityDoc): GeomNodeInfo[] {
+  const rows: GeomNodeInfo[] = []
+  const walk = (
+    name: string,
+    node: NodeDef,
+    depth: number,
+    inhCraft: number | null,
+    craftFrom: string | null,
+    inhSub: number | null,
+    subFrom: string | null,
+  ): void => {
+    const ownCraft = node.craft ?? null
+    const ownSub = node.sub ?? null
+    const generated = isGeneratedShape(node.shape)
+    const effCraft = ownCraft ?? inhCraft ?? (generated ? 0.5 : null)
+    const effSub = ownSub ?? inhSub
+    rows.push({
+      name,
+      depth,
+      badge: node.shape ?? 'group',
+      // mesh geometry is imported verbatim (never jittered); groups have none at all
+      jitters: !!node.shape && node.shape !== 'mesh' && effCraft !== null,
+      own: { craft: ownCraft, sub: ownSub },
+      eff: { craft: effCraft, sub: effSub },
+      from: {
+        craft: ownCraft === null && inhCraft !== null ? craftFrom : null,
+        sub: ownSub === null && inhSub !== null ? subFrom : null,
+      },
+    })
+    for (const [cn, cd] of Object.entries(node.children ?? {}))
+      walk(cn, cd, depth + 1, ownCraft ?? inhCraft, ownCraft !== null ? name : craftFrom, ownSub ?? inhSub, ownSub !== null ? name : subFrom)
   }
+  for (const [name, node] of Object.entries(doc.rig)) walk(name, node, 0, null, null, null, null)
+  return rows
 }
 
-const genCb = {
-  onGenCraft: (slot: string, value: number) => {
-    if (!sel || sel.kind !== 'entity') return
-    const item = inv.entities.get(sel.id)
-    if (!item?.doc) return
-    for (const target of [item.raw as EntityDoc, item.doc])
-      for (const node of rawNodesUsingSlot(target, slot)) {
-        // 1.0 turns the jitter OFF for plain shapes (delete craft); generated
-        // lumber (plank/post/ring) defaults to 0.5 when craft is absent, so it
-        // must keep the explicit value — deleting would snap the slider back
-        if (value >= 0.995 && !isGeneratedShape(node.shape)) delete node.craft
-        else node.craft = Math.round(value * 100) / 100
-      }
-    sel.dirty = true
-    setTitle(sel.id, true)
-    void regen() // craft changed → re-bake the geometry (one of the two regen triggers)
-  },
-  onGenSub: (slot: string, value: number | null) => {
-    if (!sel || sel.kind !== 'entity') return
-    const item = inv.entities.get(sel.id)
-    if (!item?.doc) return
-    for (const target of [item.raw as EntityDoc, item.doc])
-      for (const node of rawNodesUsingSlot(target, slot)) {
-        if (value === null) delete node.sub
-        else node.sub = value
-      }
-    sel.dirty = true
-    setTitle(sel.id, true)
-    void regen() // subdivision changed → re-bake the geometry
-  },
-  onRegen: (slot: string) => {
-    // per-part reroll: fresh craft seed for this part's node(s) — and their seam-
-    // group, so a welded frame corner can't crack — then re-compose (layouts stay).
-    void rerollPart(slot)
-  },
+// a rig node by name, in whichever tree (doc or raw) — names are entity-unique
+function rigNodeByName(rig: Record<string, NodeDef>, name: string): NodeDef | null {
+  let found: NodeDef | null = null
+  walkRig(rig, (n, node) => {
+    if (n === name) found = node
+  })
+  return found
+}
+
+// write one generation key on one node in BOTH the doc and the raw JSON (so the
+// save carries it), then re-bake. null deletes the key → the node re-inherits.
+function setNodeGenKey(name: string, key: 'craft' | 'sub', value: number | null): void {
+  if (!sel || sel.kind !== 'entity') return
+  const item = inv.entities.get(sel.id)
+  if (!item?.doc) return
+  for (const target of [item.raw as EntityDoc, item.doc]) {
+    const node = rigNodeByName(target.rig, name)
+    if (!node) continue
+    if (value === null) delete node[key]
+    else node[key] = key === 'craft' ? Math.round(value * 100) / 100 : value
+  }
+  sel.dirty = true
+  setTitle(sel.id, true)
+  void regen() // generation input changed → re-bake the geometry
+}
+
+const geomCb = {
+  onNodeCraft: (name: string, value: number | null) => setNodeGenKey(name, 'craft', value),
+  onNodeSub: (name: string, value: number | null) => setNodeGenKey(name, 'sub', value),
+  onNodeRegen: (name: string) => void rerollNode(name),
+}
+
+// geometry | materials tab state (persisted). Viewport picking jumps to the
+// materials tab — that's where the slot chips live.
+const PARTS_TAB_KEY = 'volaticus.partsTab'
+let partsTab: 'geometry' | 'materials' = 'materials'
+try {
+  const v = localStorage.getItem(PARTS_TAB_KEY)
+  if (v === 'geometry' || v === 'materials') partsTab = v
+} catch {
+  /* non-fatal */
+}
+function setPartsTab(tab: 'geometry' | 'materials'): void {
+  partsTab = tab
+  try {
+    localStorage.setItem(PARTS_TAB_KEY, tab)
+  } catch {
+    /* private mode / quota */
+  }
+  $('#tab-geometry').classList.toggle('active', tab === 'geometry')
+  $('#tab-materials').classList.toggle('active', tab === 'materials')
+  refreshSlots()
+}
+function initPartsTabs(): void {
+  ;($('#tab-geometry') as HTMLButtonElement).onclick = () => setPartsTab('geometry')
+  ;($('#tab-materials') as HTMLButtonElement).onclick = () => setPartsTab('materials')
+  $('#tab-geometry').classList.toggle('active', partsTab === 'geometry')
+  $('#tab-materials').classList.toggle('active', partsTab === 'materials')
 }
 
 // Slots now reference a catalog material — resolve its color map as the chip
@@ -880,6 +1017,12 @@ function inheritCandidates(mats: Record<string, MaterialDef>, slot: string): str
 
 function refreshSlots(): void {
   const doc = sel?.kind === 'entity' ? inv.entities.get(sel.id)?.doc : undefined
+  // GEOMETRY tab: the rig-node tree with per-node craft/sub (inherited down the
+  // rig hierarchy). The materials path below stays untouched for its tab.
+  if (partsTab === 'geometry') {
+    renderGeomTree(doc ? geomTreeRows(doc) : [], geomCb)
+    return
+  }
   // item 34: chips display RESOLVED values (inherit chains applied), grouped as
   // a tree — parent chips first, their children indented beneath, collapsible.
   const resolved = doc ? resolveMaterials(doc.materials) : {}
@@ -931,7 +1074,7 @@ function refreshSlots(): void {
         // 'none' (explicit authored-UVs override) displays as the '—' choice;
         // own.uvProject still marks it overridden → the ↺ reset shows.
         uvProject: (m.uvProject === 'none' ? '' : (m.uvProject ?? '')) as '' | 'box' | 'planar' | 'sphere',
-        gen: slotGenInfo(doc, slot),
+        flat: m.flat ?? false, // slot-only; unset = smooth
         inherit: def.inherit ?? null,
         // re-check "inherit" pre-selects the slot's former parent (pre-freeze)
         lastInherit: sel ? (frozenParents.get(frozenKey(sel.id, slot)) ?? null) : null,
@@ -942,6 +1085,7 @@ function refreshSlots(): void {
           uvScale: def.uvScale !== undefined,
           uvRot: def.uvRot !== undefined,
           uvProject: def.uvProject !== undefined,
+          flat: def.flat !== undefined,
         },
         inheritOptions: inheritOpts,
         depth,
@@ -1002,7 +1146,6 @@ function refreshSlots(): void {
         refreshSlots()
       },
       onShowInPicker: showSlotInPicker,
-      ...genCb,
     },
     doc ? Object.keys(doc.materials) : undefined, // fx dropdowns list ALL slots, even collapsed-away
   )
@@ -1069,6 +1212,8 @@ vp.renderer.domElement.addEventListener('pointerup', (e) => {
   sel.pickedSlot = hit.slot
   highlightSlot(hit.slot)
   setPickInfo(`node: ${hit.nodeName}${hit.face !== 'all' ? ' · face: ' + hit.face : ''} · part: ${hit.slot}`)
+  // picking targets a material slot — jump to the materials tab so its chip exists
+  if (partsTab !== 'materials') setPartsTab('materials')
   // item 39 (+34): expand any collapsed ancestor group so the chip exists, then
   // scroll it into view — with 30+ exploded chips it must never be off-screen.
   const doc = inv.entities.get(sel.id)?.doc
@@ -1245,7 +1390,6 @@ function rebuildShown(): void {
   else if (sel?.kind === 'entity') rebuild()
 }
 
-const RENDER_KEY = 'volaticus.render'
 function initRenderPanel(): void {
   const btn = $('#btn-render') as HTMLButtonElement
   const pop = $('#render-pop')
@@ -1253,23 +1397,31 @@ function initRenderPanel(): void {
   const samplesInput = $('#rn-samples') as HTMLInputElement
   const samplesVal = $('#rn-samples-val')
   const samplesRow = $('#rn-samples-row')
-  let parallaxOn = false
-  let samples = getParallaxSamples()
-  try {
-    const raw = localStorage.getItem(RENDER_KEY)
-    if (raw) {
-      const s = JSON.parse(raw) as { parallax?: boolean; samples?: number }
-      parallaxOn = !!s.parallax
-      if (typeof s.samples === 'number') samples = s.samples
-    }
-  } catch {
-    /* non-fatal */
-  }
+  const aaSel = $('#rn-aa') as HTMLSelectElement
+  // module-level renderPrefs was already loaded before the Viewport was created
+  let parallaxOn = renderPrefs.parallax
+  let samples = renderPrefs.samples
   const persist = (): void => {
+    renderPrefs.parallax = parallaxOn
+    renderPrefs.samples = samples
     try {
-      localStorage.setItem(RENDER_KEY, JSON.stringify({ parallax: parallaxOn, samples }))
+      localStorage.setItem(RENDER_KEY, JSON.stringify(renderPrefs))
     } catch {
       /* private mode / quota */
+    }
+  }
+  // Antialiasing: SSAA (render scale) applies LIVE; the MSAA half is a renderer-creation
+  // option, so flipping it persists + reloads (the busy overlay covers the boot).
+  aaSel.value = renderPrefs.aa
+  aaSel.onchange = () => {
+    const next = aaSel.value as AAMode
+    const needsReload = aaMsaa(next) !== aaMsaa(renderPrefs.aa)
+    renderPrefs.aa = next
+    persist()
+    vp.setRenderScale(aaScale(next))
+    if (needsReload) {
+      startBusy('applying MSAA…') // never ended — the reload replaces the page
+      window.location.reload()
     }
   }
   // apply() pushes the build-time config into the material builder + syncs the UI. It does NOT rebuild
@@ -1304,6 +1456,7 @@ function initRenderPanel(): void {
   })
 }
 initRenderPanel()
+initPartsTabs()
 
 // #7 modal controls: close (✕) + create/clone/delete (#16). Backdrop click closes.
 ;($('#mgr-close') as HTMLButtonElement).onclick = () => exitMgr()
@@ -1333,7 +1486,12 @@ const lineupTick = (dt: number) => {
   lineupBatcher?.update() // push animated frame instances to their BatchedMesh
 }
 
+// Monotonic lineup generation: any exitLineup (every select() runs one) or a newer
+// enterLineup stales the in-flight build, which self-disposes at its next check.
+let lineupGen = 0
+
 function exitLineup(): void {
+  lineupGen++ // abort any in-flight enterLineup build
   if (!lineup) return
   if (lineupBatcher) {
     vp.root.remove(lineupBatcher.group)
@@ -1345,10 +1503,27 @@ function exitLineup(): void {
   vp.onUpdate.delete(lineupTick)
 }
 
+// Build the lineup ASYNCHRONOUSLY: entity building and batch feeding run on a per-frame
+// time budget (the UI never freezes), everything stays HIDDEN until every texture has
+// decoded and every pipeline has compiled, then the whole scene reveals in one frame.
+// The veil narrates each stage. Local ownership: entities/batcher are committed to the
+// module-level lineup/lineupBatcher only at the very end — an aborted build disposes
+// its own partial work and exitLineup never sees it.
 async function enterLineup(): Promise<void> {
+  const busy = startBusy('lineup — loading meshes…')
+  try {
+    await enterLineupInner(busy)
+  } finally {
+    busy.end() // ref-counted: a superseding actor's own handle keeps the overlay up
+  }
+}
+
+async function enterLineupInner(busy: BusyHandle): Promise<void> {
   clearSelection()
   exitLineup()
+  const gen = ++lineupGen
   await Promise.all([...inv.entities.values()].filter((i) => i.doc).map((i) => preloadEntityMeshes(i.doc!)))
+  if (gen !== lineupGen) return // superseded while preloading
   localStorage.removeItem('volaticus.sel')
   setTitle('lineup — every entity at real scale', false)
   setValidation([])
@@ -1356,7 +1531,6 @@ async function enterLineup(): Promise<void> {
   refreshSlots()
   renderItemList(inv, listFilter, null, { onSelect: select })
 
-  lineup = []
   const order = ['prop', 'pickup', 'enemy', 'character', 'levelpart']
   const items = [...inv.entities.values()]
     .filter((i) => i.doc)
@@ -1373,12 +1547,32 @@ async function enterLineup(): Promise<void> {
   // folded into a per-instance matrix (below) so the merge's entity-local blobs batch
   // cleanly. The built graphs stay detached from the scene — they're the animation sim
   // only; the SceneBatcher renders their geometry.
+  const entries: { built: BuiltEntity; preview: EntityPreview }[] = []
   const inputs: BatchInput[] = []
   const lineupBox = new THREE.Box3()
+  const abort = (): void => {
+    for (const e of entries) disposeEntity(e.built)
+  }
+  const yieldFrame = (): Promise<void> => new Promise((resolve) => requestAnimationFrame(() => resolve()))
+  let slice = performance.now()
+  let n = 0
   for (const item of items) {
     let built: BuiltEntity
     try {
-      built = buildEntity(item.doc!, bakeEntityGeometry(item.doc!)[0])
+      // REBAKE POLICY: the lineup consumes baked sidecars verbatim — and it shows ONE
+      // variant, so fetch ONLY geom.0 (loadBaked would pull all 6 multi-MB variants per
+      // entity). Missing/unreadable → loadBaked's never-generated path bakes + saves.
+      let variant0: BakedGeometry[number] | null = null
+      const res = await fetch('/__inv/read?path=' + encodeURIComponent(geomPath(item.id, 0)))
+      if (res.ok) {
+        try {
+          variant0 = JSON.parse((await res.json()).content) as BakedGeometry[number]
+        } catch {
+          variant0 = null
+        }
+      }
+      if (!variant0) variant0 = (await loadBaked(item.id, item.doc!))[0]
+      built = buildEntity(item.doc!, variant0)
     } catch {
       continue
     }
@@ -1406,12 +1600,41 @@ async function enterLineup(): Promise<void> {
       hideGeometry: () => {},
       onDespawn: () => {},
     })
-    lineup.push({ built, preview })
+    entries.push({ built, preview })
     inputs.push({ built, doc: item.doc!, id: item.id, placement })
+    n++
+    // budgeted yield: keep building until ~12ms of this frame is spent, then hand the
+    // thread back so the busy spinner animates and input stays live.
+    if (performance.now() - slice > 12) {
+      busy.update(`lineup — building ${n}/${items.length}…`)
+      await yieldFrame()
+      if (gen !== lineupGen) return abort() // superseded at a yield
+      slice = performance.now()
+    }
   }
-  lineupBatcher = new SceneBatcher()
-  lineupBatcher.build(inputs)
-  vp.root.add(lineupBatcher.group)
+  // cross-entity batching, same budgeted-yield contract (buildAsync cleans up after
+  // itself on abort; our entities are ours to dispose).
+  const batcher = new SceneBatcher()
+  const ok = await batcher.buildAsync(inputs, {
+    aborted: () => gen !== lineupGen,
+    onProgress: (p) =>
+      busy.update(`lineup — ${p.phase === 'bucket' ? 'merging' : 'batching'} ${p.done}/${p.total}…`),
+  })
+  if (!ok) return abort()
+  // Stage HIDDEN until textures + pipelines are ready, then reveal the whole lineup
+  // in one frame — no black grid, no first-draw hitch.
+  batcher.group.visible = false
+  vp.root.add(batcher.group)
+  busy.update('lineup — compiling shaders…')
+  await Promise.all([whenTexturesReady(), compileShaders(batcher.group)])
+  if (gen !== lineupGen) {
+    vp.root.remove(batcher.group)
+    batcher.dispose()
+    return abort()
+  }
+  batcher.group.visible = true
+  lineup = entries
+  lineupBatcher = batcher
   vp.onUpdate.add(lineupTick)
   vp.fit(lineupBox)
   if (wireOn) applyWire()
@@ -1528,12 +1751,12 @@ function mgrTuningOf(id: string): MgrTuning | null {
     metalness: t.metalness,
     normalScale: t.normalScale,
     height: t.height ?? DEFAULT_HEIGHT,
+    parallax: t.parallax ?? false, // per-material POM opt-in (absent = off)
     aoIntensity: t.aoIntensity,
     emissive: t.emissive,
     opacity: t.opacity,
     cutout: t.cutout,
     doubleSided: t.doubleSided,
-    flat: t.flat,
     alphaMap: t.alphaMap ?? null, // #27
   }
 }
@@ -1596,7 +1819,7 @@ function setMgrTuning(mut: (t: Record<string, unknown>) => void): void {
   mgrDirty = true
   refreshMgrSaveState()
   // reflect the doc change into the runtime catalog + preview immediately — LIVE, no rebuild. Continuous
-  // params update uniforms; flat/cutout/double-sided flip in place via applyLiveTuning's needsUpdate.
+  // params update uniforms; cutout/double-sided flip in place via applyLiveTuning's needsUpdate.
   setMaterialCatalog(inv.materialCatalog())
   const doc = inv.materialCatalog()[mgrSelId]
   if (doc) for (const m of mgrMats) applyLiveTuning(m, doc.tuning)
@@ -1609,7 +1832,16 @@ const mgrTuneCb = {
   onNumLive: (key: string, value: number) => {
     for (const m of mgrMats) setLiveParam(m, key, value)
   },
-  onBool: (key: string, value: boolean) => setMgrTuning((t) => (t[key] = value)),
+  onBool: (key: string, value: boolean) => {
+    setMgrTuning((t) => {
+      // parallax is an opt-IN — keep the catalog lean by deleting the key when unchecked
+      if (key === 'parallax' && !value) delete t.parallax
+      else t[key] = value
+    })
+    // the POM flag is STRUCTURAL (adds/removes the march node graph) — the live tuning
+    // path can't apply it, so rebuild the preview material (same pattern as onAlphaMap).
+    if (key === 'parallax') rebuildMgrPreview()
+  },
   onTint: (value: string | null) => setMgrTuning((t) => (t.tint = value)),
   // live default-tint on drag: recolor the preview material's tint uniform directly (no rebuild).
   onTintLive: (value: string) => {
@@ -1880,7 +2112,14 @@ function toggleMgr(): void {
 // boot
 
 async function boot(): Promise<void> {
-  await inv.load()
+  // editor-wide busy for the inventory scan/parse — the first thing a user sees is a
+  // narrated loader, not an empty shell (the entity build that follows runs its own).
+  const busy = startBusy('loading inventory…')
+  try {
+    await inv.load()
+  } finally {
+    busy.end()
+  }
   setTexturePack(inv.settings.texturePack, (p) => inv.hasTexture(p))
   setSurfacePresets(inv.settings.surfaces)
   setMaterialCatalog(inv.materialCatalog())

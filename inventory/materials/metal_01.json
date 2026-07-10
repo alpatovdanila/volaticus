@@ -22,7 +22,6 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,
-    "flat": false,
     "height": 0.035
   }
 }

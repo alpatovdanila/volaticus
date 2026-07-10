@@ -3,7 +3,7 @@
   "id": "coin",
   "name": "Coin",
   "category": "pickup",
-  "materials": { "gold": { "material": "metal_02", "uvScale": 0.25 } },
+  "materials": { "gold": { "material": "metal_02" } },
   "rig": {
     "spinner": {
       "pos": [0, 0.42, 0],

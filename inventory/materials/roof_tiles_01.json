@@ -16,12 +16,13 @@
     "tint": null,
     "roughness": 1,
     "metalness": 0,
-    "normalScale": 1,
-    "aoIntensity": 1,
+    "normalScale": 3,
+    "aoIntensity": 0.35,
     "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,
-    "flat": false
+    "height": 0.105,
+    "parallax": true
   }
 }

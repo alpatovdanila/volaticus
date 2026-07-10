@@ -4,7 +4,7 @@
   "name": "Oak Tree",
   "category": "prop",
   "tags": ["vegetation", "nature"],
-  "notes": "oneOf picks the crown silhouette: round / tall / twin. Crown = bush-style faceted leaf blobs (low-seg crafted cutout spheres, two tones). Collider is trunk-only.",
+  "notes": "REAL branching: tapered trunk forks into three base-hinged main branches (pivot at the base — sway swings the whole limb), each carrying its own leaf cluster at the TIP, plus a low chance stub. oneOf still picks the centre-crown silhouette: round / tall / twin. Collider is trunk-only.",
   "materials": {
     "bark": { "material": "bark_02", "uvScale": 0.25, "uvProject": "box" },
     "trunk": { "inherit": "bark" },
@@ -16,69 +16,153 @@
     "blob_t3": { "inherit": "leaves" },
     "blob_w1": { "inherit": "leaves" },
     "blob_w3": { "inherit": "leaves" },
+    "tip_a": { "inherit": "leaves" },
+    "tip_c": { "inherit": "leaves" },
     "leaves_light": { "material": "grass_01", "uvScale": 2, "flat": true },
     "blob_r2": { "inherit": "leaves_light" },
     "blob_t2": { "inherit": "leaves_light" },
-    "blob_w2": { "inherit": "leaves_light" }
+    "blob_w2": { "inherit": "leaves_light" },
+    "tip_b": { "inherit": "leaves_light" }
   },
   "rig": {
     "root": {
       "children": {
         "trunk": {
           "shape": "cylinder",
-          "radius": 0.14,
-          "height": 1.5,
-          "pos": [0, 0.75, 0],
+          "radiusBottom": 0.17,
+          "radiusTop": 0.1,
+          "height": 1.4,
+          "pos": [0, 0.7, 0],
           "rotJitter": [2, 0, 2],
           "material": "trunk",
-          "craft": 0.94,
-          "craftSeed": 237491184
+          "craft": 0.92,
+          "craftSeed": 44893646
         },
-        "branch": {
+        "branch_a": {
           "shape": "cylinder",
-          "radius": 0.055,
-          "height": 0.5,
-          "pos": [0.28, 1.08, 0.05],
-          "rot": [0, 0, -55],
+          "radiusBottom": 0.065,
+          "radiusTop": 0.035,
+          "height": 0.85,
+          "pos": [0.08, 1.66, 0.02],
+          "pivot": [0, -0.42, 0],
+          "rot": [0, 10, -46],
+          "rotJitter": [4, 25, 5],
           "material": "branch",
-          "chance": 0.5,
-          "craft": 0.94,
-          "craftSeed": 237491184
+          "craft": 0.9,
+          "children": {
+            "tip_a": {
+              "shape": "sphere",
+              "radius": 0.44,
+              "segments": 7,
+              "pos": [0, 0.52, 0],
+              "scale": [1, 0.82, 0.95],
+              "material": "tip_a",
+              "sub": 2,
+              "craft": 0.85,
+              "craftSeed": 44893646
+            }
+          },
+          "craftSeed": 44893646
+        },
+        "branch_b": {
+          "shape": "cylinder",
+          "radiusBottom": 0.06,
+          "radiusTop": 0.032,
+          "height": 0.78,
+          "pos": [-0.06, 1.6, -0.03],
+          "pivot": [0, -0.38, 0],
+          "rot": [12, 150, 42],
+          "rotJitter": [4, 25, 5],
+          "material": "branch",
+          "craft": 0.9,
+          "children": {
+            "tip_b": {
+              "shape": "sphere",
+              "radius": 0.4,
+              "segments": 7,
+              "pos": [0, 0.48, 0],
+              "scale": [1, 0.8, 1],
+              "material": "tip_b",
+              "sub": 2,
+              "craft": 0.85,
+              "craftSeed": 44893646
+            }
+          },
+          "craftSeed": 44893646
+        },
+        "branch_c": {
+          "shape": "cylinder",
+          "radiusBottom": 0.055,
+          "radiusTop": 0.03,
+          "height": 0.7,
+          "pos": [0.01, 1.63, -0.05],
+          "pivot": [0, -0.34, 0],
+          "rot": [-40, -95, 18],
+          "rotJitter": [5, 25, 4],
+          "material": "branch",
+          "craft": 0.9,
+          "children": {
+            "tip_c": {
+              "shape": "sphere",
+              "radius": 0.36,
+              "segments": 6,
+              "pos": [0, 0.44, 0],
+              "scale": [1, 0.82, 0.95],
+              "material": "tip_c",
+              "sub": 2,
+              "craft": 0.85,
+              "craftSeed": 44893646
+            }
+          },
+          "craftSeed": 44893646
+        },
+        "stub": {
+          "shape": "cylinder",
+          "radiusBottom": 0.045,
+          "radiusTop": 0.02,
+          "height": 0.42,
+          "pos": [-0.06, 1.12, 0.03],
+          "pivot": [0, -0.2, 0],
+          "rot": [0, -20, 62],
+          "material": "branch",
+          "chance": 0.55,
+          "craft": 0.88,
+          "craftSeed": 44893646
         },
         "crown_round": {
           "children": {
             "blob_r1": {
               "shape": "sphere",
-              "radius": 0.73,
+              "radius": 0.66,
               "segments": 7,
-              "pos": [0, 1.85, 0],
+              "pos": [0, 1.95, 0],
               "scale": [1, 0.85, 0.95],
               "material": "blob_r1",
               "sub": 3,
               "craft": 0.84,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             },
             "blob_r2": {
               "shape": "sphere",
-              "radius": 0.51,
+              "radius": 0.44,
               "segments": 6,
-              "pos": [0.42, 1.55, 0.18],
+              "pos": [0.36, 1.7, 0.16],
               "scale": [1, 0.8, 1],
               "material": "blob_r2",
               "craft": 0.9,
               "sub": 3,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             },
             "blob_r3": {
               "shape": "sphere",
-              "radius": 0.47,
+              "radius": 0.4,
               "segments": 6,
-              "pos": [-0.4, 1.6, -0.14],
+              "pos": [-0.34, 1.74, -0.12],
               "scale": [1, 0.82, 0.95],
               "material": "blob_r3",
               "sub": 3,
               "craft": 0.84,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             }
           }
         },
@@ -86,36 +170,36 @@
           "children": {
             "blob_t1": {
               "shape": "sphere",
-              "radius": 0.63,
+              "radius": 0.56,
               "segments": 7,
-              "pos": [0.05, 1.55, 0.05],
+              "pos": [0.05, 1.8, 0.05],
               "scale": [1, 0.85, 0.95],
               "material": "blob_t1",
               "sub": 3,
               "craft": 0.84,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             },
             "blob_t2": {
               "shape": "sphere",
-              "radius": 0.56,
+              "radius": 0.48,
               "segments": 6,
-              "pos": [0, 2.15, 0],
+              "pos": [0, 2.3, 0],
               "scale": [1, 0.85, 1],
               "material": "blob_t2",
               "craft": 0.9,
               "sub": 3,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             },
             "blob_t3": {
               "shape": "sphere",
-              "radius": 0.35,
+              "radius": 0.3,
               "segments": 6,
-              "pos": [-0.02, 2.6, 0],
+              "pos": [-0.02, 2.68, 0],
               "scale": [1, 0.8, 1],
               "material": "blob_t3",
               "sub": 3,
               "craft": 0.84,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             }
           }
         },
@@ -123,36 +207,36 @@
           "children": {
             "blob_w1": {
               "shape": "sphere",
-              "radius": 0.56,
+              "radius": 0.5,
               "segments": 7,
-              "pos": [0.42, 1.9, 0],
+              "pos": [0.4, 2.05, 0],
               "scale": [1, 0.85, 0.95],
               "material": "blob_w1",
               "sub": 3,
               "craft": 0.84,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             },
             "blob_w2": {
               "shape": "sphere",
-              "radius": 0.53,
+              "radius": 0.47,
               "segments": 7,
-              "pos": [-0.4, 1.8, 0.08],
+              "pos": [-0.38, 1.95, 0.08],
               "scale": [1, 0.82, 1],
               "material": "blob_w2",
               "craft": 0.9,
               "sub": 3,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             },
             "blob_w3": {
               "shape": "sphere",
-              "radius": 0.41,
+              "radius": 0.36,
               "segments": 6,
-              "pos": [0, 1.62, -0.1],
+              "pos": [0, 1.75, -0.1],
               "scale": [1, 0.8, 1],
               "material": "blob_w3",
               "sub": 3,
               "craft": 0.84,
-              "craftSeed": 237491184
+              "craftSeed": 44893646
             }
           }
         }
@@ -177,7 +261,10 @@
           "ease": "sine",
           "keys": [[0, 0], [1.1, 0.8], [2.2, 0], [3.3, -0.8], [4.4, 0]]
         },
-        { "node": "branch", "prop": "rot.z", "ease": "sine", "keys": [[0, 1.5], [2.2, -1.5], [4.4, 1.5]] }
+        { "node": "branch_a", "prop": "rot.z", "ease": "sine", "keys": [[0, 2], [2.2, -2], [4.4, 2]] },
+        { "node": "branch_b", "prop": "rot.z", "ease": "sine", "keys": [[0, -1.6], [2.2, 1.6], [4.4, -1.6]] },
+        { "node": "branch_c", "prop": "rot.x", "ease": "sine", "keys": [[0, 1.4], [2.2, -1.4], [4.4, 1.4]] },
+        { "node": "stub", "prop": "rot.z", "ease": "sine", "keys": [[0, 1.2], [2.2, -1.2], [4.4, 1.2]] }
       ]
     }
   }

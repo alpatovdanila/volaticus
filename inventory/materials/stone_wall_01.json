@@ -21,7 +21,7 @@
     "emissive": 0,
     "opacity": 1,
     "cutout": false,
-    "doubleSided": false,
-    "flat": false
+    "doubleSided": false
+
   }
 }

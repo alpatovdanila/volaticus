@@ -76,11 +76,19 @@ export class Viewport {
   rig!: LightingRig
   private lightParams: LightParams = loadLightPrefs()
 
-  constructor(private container: HTMLElement) {
+  // supersampling factor on top of devicePixelRatio (SSAA) — live-appliable via
+  // setRenderScale; MSAA is a renderer-creation option (opts.antialias) and needs a
+  // page reload to change (the render panel persists + reloads).
+  private renderScale = 1
+
+  constructor(
+    private container: HTMLElement,
+    opts: { antialias?: boolean } = {},
+  ) {
     // WebGPURenderer (auto WebGL2 fallback). trackTimestamp enables the GPU-timer
     // query pool for the perf HUD (resolved via resolveTimestampsAsync →
-    // info.render.timestamp). No antialiasing — that system was removed.
-    this.renderer = new WebGPURenderer({ trackTimestamp: true })
+    // info.render.timestamp). antialias = 4× MSAA render targets (WebGPU default count).
+    this.renderer = new WebGPURenderer({ trackTimestamp: true, antialias: opts.antialias ?? false })
     container.appendChild(this.renderer.domElement)
 
     // Placeholder background: the sky_22 cubemap shows immediately while the 4k
@@ -137,12 +145,19 @@ export class Viewport {
     setInterval(tick, 33)
   }
 
+  // SSAA: render at scale× the display resolution and let the browser downsample —
+  // brute-force antialiasing that composes with MSAA and applies LIVE (no reload).
+  setRenderScale(scale: number): void {
+    this.renderScale = Math.max(0.5, Math.min(2, scale))
+    this.resize()
+  }
+
   private resize(): void {
     const r = this.container.getBoundingClientRect()
     const w = Math.max(2, r.width || this.container.clientWidth || 1280)
     const h = Math.max(2, r.height || this.container.clientHeight || 720)
     this.renderer.setSize(w, h, true)
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2) * this.renderScale)
     this.camera.aspect = w / h
     if (!isFinite(this.camera.aspect) || this.camera.aspect <= 0) this.camera.aspect = 16 / 9
     this.camera.updateProjectionMatrix()
@@ -255,6 +270,14 @@ export class Viewport {
     this.controls.target.copy(center)
     const dir = new THREE.Vector3(0.75, 0.55, 1).normalize()
     this.camera.position.copy(center).addScaledVector(dir, radius * 2.3)
+    // A big box (the 44-entity lineup) backs the camera out beyond the default far plane
+    // (100) and the scene far-clips to near-emptiness. Grow far to comfortably cover the
+    // framed content (never shrink below the default — entity fits keep their precision).
+    const far = Math.max(100, radius * 2.3 + radius * 2)
+    if (this.camera.far < far) {
+      this.camera.far = far
+      this.camera.updateProjectionMatrix()
+    }
     this.controls.update()
   }
 

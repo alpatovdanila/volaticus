@@ -7,7 +7,7 @@
   "notes": "The Old Spire (v1 makeCastleTower port, scaled to ~16m): battered round stone drum on a dark plinth, three proud course rings, crenellated top with gap-toothed merlons (chance), arched doorway (visual only - dark void inset + torus arch), spiraling arrow slits, moss patches and rubble at the base. A small gold bell hangs from a wooden belfry frame above the parapet - the 'ring' event plays a damped +/-25deg swing (1.2s) plus a chime; scripts trigger it later. Collider is the drum cylinder.",
   "materials": {
     "masonry": { "material": "stone_bricks_wall_03", "flat": true, "uvScale": 0.5, "uvProject": "box" },
-    "drum": { "inherit": "masonry" },
+    "drum": { "inherit": "masonry", "uvProject": "none", "uvMode": "fit tile", "flat": false },
     "platform": { "inherit": "masonry" },
     "parapet": { "inherit": "masonry" },
     "merlon_0": { "inherit": "masonry" },
@@ -55,80 +55,80 @@
           "radiusTop": 3.5,
           "radiusBottom": 3.8,
           "height": 1.1,
-          "segments": 18,
+          "segments": 24,
           "pos": [0, 0.55, 0],
           "material": "plinth",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "drum": {
           "shape": "cylinder",
           "radiusTop": 2.85,
           "radiusBottom": 3.35,
           "height": 13.8,
-          "segments": 20,
+          "segments": 24,
           "pos": [0, 7.5, 0],
           "material": "drum",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "course_1": {
           "shape": "ring",
           "radius": 3.3,
           "height": 0.2,
           "thickness": 0.08,
-          "segments": 18,
+          "segments": 24,
           "pos": [0, 4, 0],
           "material": "course_1",
           "craft": 0.6,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "course_2": {
           "shape": "ring",
           "radius": 3.17,
           "height": 0.2,
           "thickness": 0.08,
-          "segments": 18,
+          "segments": 24,
           "pos": [0, 7.6, 0],
           "material": "course_2",
           "craft": 0.6,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "course_3": {
           "shape": "ring",
           "radius": 3.04,
           "height": 0.2,
           "thickness": 0.08,
-          "segments": 18,
+          "segments": 24,
           "pos": [0, 11.2, 0],
           "material": "course_3",
           "craft": 0.6,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "platform": {
           "shape": "cylinder",
           "radius": 2.98,
           "height": 0.4,
-          "segments": 18,
+          "segments": 24,
           "pos": [0, 14.5, 0],
           "material": "platform",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "parapet": {
           "shape": "ring",
           "radius": 3.08,
           "height": 0.6,
           "thickness": 0.2,
-          "segments": 18,
+          "segments": 24,
           "pos": [0, 14.85, 0],
           "material": "parapet",
           "craft": 1,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_0": {
           "shape": "box",
           "size": [0.66, 0.62, 0.36],
           "pos": [0, 15.46, 2.95],
           "material": "merlon_0",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_1": {
           "shape": "box",
@@ -137,7 +137,7 @@
           "rot": [0, 45, 0],
           "material": "merlon_1",
           "chance": 0.75,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_2": {
           "shape": "box",
@@ -146,7 +146,7 @@
           "rot": [0, 90, 0],
           "material": "merlon_2",
           "chance": 0.6,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_3": {
           "shape": "box",
@@ -155,7 +155,7 @@
           "rot": [0, 135, 0],
           "material": "merlon_3",
           "chance": 0.8,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_4": {
           "shape": "box",
@@ -163,7 +163,7 @@
           "pos": [0, 15.46, -2.95],
           "rot": [0, 180, 0],
           "material": "merlon_4",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_5": {
           "shape": "box",
@@ -172,7 +172,7 @@
           "rot": [0, 225, 0],
           "material": "merlon_5",
           "chance": 0.55,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_6": {
           "shape": "box",
@@ -182,7 +182,7 @@
           "rotJitter": [4, 0, 7],
           "material": "merlon_6",
           "chance": 0.7,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "merlon_7": {
           "shape": "box",
@@ -191,7 +191,7 @@
           "rot": [0, 315, 0],
           "material": "merlon_7",
           "chance": 0.65,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "jamb_l": {
           "shape": "box",
@@ -199,7 +199,7 @@
           "pos": [-0.62, 0.95, 3.15],
           "material": "jamb_l",
           "craft": 0.65,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "jamb_r": {
           "shape": "box",
@@ -207,25 +207,25 @@
           "pos": [0.62, 0.95, 3.15],
           "material": "jamb_r",
           "craft": 0.65,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "arch": {
           "shape": "torus",
           "radius": 0.62,
           "tube": 0.16,
-          "segments": 14,
+          "segments": 24,
           "pos": [0, 1.9, 3.38],
           "rot": [90, 0, 0],
           "material": "arch",
           "craft": 0.6,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "door_void": {
           "shape": "box",
           "size": [0.95, 1.75, 0.72],
           "pos": [0, 0.9, 3],
           "material": "door_void",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "slit_1": {
           "shape": "box",
@@ -233,7 +233,7 @@
           "pos": [1.99, 5, 2.37],
           "rot": [0, 40, 0],
           "material": "slit_1",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "slit_2": {
           "shape": "box",
@@ -241,7 +241,7 @@
           "pos": [1.06, 8, -2.91],
           "rot": [0, 160, 0],
           "material": "slit_2",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "slit_3": {
           "shape": "box",
@@ -249,7 +249,7 @@
           "pos": [-3.05, 11, 0.54],
           "rot": [0, 280, 0],
           "material": "slit_3",
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "moss_a": {
           "shape": "box",
@@ -260,7 +260,7 @@
           "chance": 0.6,
           "craft": 0.6,
           "sub": 2,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "moss_b": {
           "shape": "box",
@@ -271,7 +271,7 @@
           "chance": 0.55,
           "craft": 0.6,
           "sub": 2,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "rubble_1": {
           "shape": "box",
@@ -282,7 +282,7 @@
           "chance": 0.7,
           "craft": 0.5,
           "sub": 2,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "rubble_2": {
           "shape": "box",
@@ -293,7 +293,7 @@
           "chance": 0.6,
           "craft": 0.5,
           "sub": 2,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "slab_lean": {
           "shape": "plank",
@@ -303,27 +303,27 @@
           "material": "slab_lean",
           "chance": 0.6,
           "craft": 0.55,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "belfry_post_l": {
           "shape": "post",
           "radius": 0.09,
           "height": 1.25,
-          "segments": 7,
+          "segments": 16,
           "pos": [-0.55, 15.35, 0],
           "material": "belfry_post_l",
           "craft": 1,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "belfry_post_r": {
           "shape": "post",
           "radius": 0.09,
           "height": 1.25,
-          "segments": 7,
+          "segments": 16,
           "pos": [0.55, 15.35, 0],
           "material": "belfry_post_r",
           "craft": 1,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "crossbar": {
           "shape": "plank",
@@ -331,7 +331,7 @@
           "pos": [0, 16, 0],
           "material": "crossbar",
           "craft": 0.8,
-          "craftSeed": 1018091286
+          "craftSeed": 1898750018
         },
         "bell": {
           "pos": [0, 15.9, 0],
@@ -341,18 +341,18 @@
               "size": [0.06, 0.14, 0.06],
               "pos": [0, -0.03, 0],
               "material": "hanger",
-              "craftSeed": 1018091286
+              "craftSeed": 1898750018
             },
             "bell_body": {
               "shape": "cylinder",
               "radiusTop": 0.16,
               "radiusBottom": 0.3,
               "height": 0.42,
-              "segments": 12,
+              "segments": 24,
               "bulge": 0.03,
               "pos": [0, -0.31, 0],
               "material": "bell_body",
-              "craftSeed": 1018091286,
+              "craftSeed": 1898750018,
               "craft": 0.95
             },
             "bell_lip": {
@@ -360,19 +360,19 @@
               "radius": 0.33,
               "height": 0.08,
               "thickness": 0.05,
-              "segments": 12,
+              "segments": 24,
               "pos": [0, -0.53, 0],
               "material": "bell_lip",
               "craft": 0.9,
-              "craftSeed": 1018091286
+              "craftSeed": 1898750018
             },
             "clapper": {
               "shape": "sphere",
               "radius": 0.06,
-              "segments": 8,
+              "segments": 16,
               "pos": [0, -0.58, 0],
               "material": "clapper",
-              "craftSeed": 1018091286
+              "craftSeed": 1898750018
             }
           }
         }

@@ -4,7 +4,7 @@
   "name": "Pine Tree",
   "category": "prop",
   "tags": ["vegetation", "nature"],
-  "notes": "Stacked-cone pine, opaque cores + cutout needle shells; oneOf picks 3 or 4 tiers. Collider is trunk-only.",
+  "notes": "Stacked-cone pine with REAL branching: a whorl of four bare base-hinged branch stubs pokes out beneath the lowest tier (classic pine skirt), two chance mid-stubs between tiers, and a leader spike at the top. oneOf picks 3 or 4 cone tiers. Collider is trunk-only.",
   "materials": {
     "bark": { "material": "bark_02", "uvScale": 0.25 },
     "core": { "material": "concrete_wall_01", "uvScale": 0.25 },
@@ -29,13 +29,103 @@
       "children": {
         "trunk": {
           "shape": "cylinder",
-          "radius": 0.11,
+          "radiusBottom": 0.13,
+          "radiusTop": 0.07,
           "height": 1.9,
           "pos": [0, 0.95, 0],
           "rotJitter": [1.5, 0, 1.5],
           "material": "bark",
           "craft": 0.86,
           "craftSeed": 2066779698
+        },
+        "whorl_a": {
+          "shape": "cylinder",
+          "radiusBottom": 0.035,
+          "radiusTop": 0.015,
+          "height": 0.54,
+          "pos": [0.02, 0.52, 0.02],
+          "pivot": [0, -0.21, 0],
+          "rot": [0, 10, -78],
+          "rotJitter": [3, 20, 4],
+          "material": "bark",
+          "craft": 0.88,
+          "craftSeed": 1050556582
+        },
+        "whorl_b": {
+          "shape": "cylinder",
+          "radiusBottom": 0.035,
+          "radiusTop": 0.015,
+          "height": 0.52,
+          "pos": [-0.02, 0.64, 0.02],
+          "pivot": [0, -0.2, 0],
+          "rot": [0, 100, -80],
+          "rotJitter": [3, 20, 4],
+          "material": "bark",
+          "craft": 0.88,
+          "craftSeed": 580327685
+        },
+        "whorl_c": {
+          "shape": "cylinder",
+          "radiusBottom": 0.033,
+          "radiusTop": 0.014,
+          "height": 0.5,
+          "pos": [-0.02, 0.72, -0.02],
+          "pivot": [0, -0.19, 0],
+          "rot": [0, 195, -76],
+          "rotJitter": [3, 20, 4],
+          "material": "bark",
+          "craft": 0.88,
+          "craftSeed": 861603810
+        },
+        "whorl_d": {
+          "shape": "cylinder",
+          "radiusBottom": 0.033,
+          "radiusTop": 0.014,
+          "height": 0.52,
+          "pos": [0.02, 0.58, -0.02],
+          "pivot": [0, -0.2, 0],
+          "rot": [0, 290, -79],
+          "rotJitter": [3, 20, 4],
+          "material": "bark",
+          "craft": 0.88,
+          "craftSeed": 1203828197
+        },
+        "stub_mid_a": {
+          "shape": "cylinder",
+          "radiusBottom": 0.025,
+          "radiusTop": 0.01,
+          "height": 0.4,
+          "pos": [0.03, 1.68, 0],
+          "pivot": [0, -0.14, 0],
+          "rot": [0, 55, -74],
+          "material": "bark",
+          "chance": 0.5,
+          "craft": 0.88,
+          "craftSeed": 563448806
+        },
+        "stub_mid_b": {
+          "shape": "cylinder",
+          "radiusBottom": 0.022,
+          "radiusTop": 0.01,
+          "height": 0.34,
+          "pos": [-0.03, 1.95, 0],
+          "pivot": [0, -0.12, 0],
+          "rot": [0, 230, -72],
+          "material": "bark",
+          "chance": 0.5,
+          "craft": 0.88,
+          "craftSeed": 1372310543
+        },
+        "leader": {
+          "shape": "cylinder",
+          "radiusBottom": 0.03,
+          "radiusTop": 0.008,
+          "height": 0.35,
+          "pos": [0, 2.75, 0],
+          "rotJitter": [4, 0, 4],
+          "material": "bark",
+          "craft": 0.9,
+          "craftSeed": 778395592
         },
         "tiers_3": {
           "children": {

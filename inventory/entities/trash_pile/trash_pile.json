@@ -92,7 +92,7 @@
         "sack": {
           "shape": "sphere",
           "radius": 0.17,
-          "segments": 8,
+          "segments": 20,
           "scale": [1, 0.66, 0.88],
           "pos": [0.2, 0.1, -0.22],
           "sub": 2,

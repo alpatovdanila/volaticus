@@ -31,6 +31,7 @@
         <div id="render-pop" hidden>
           <div class="light-row"><label title="parallax occlusion mapping — the height map fakes real surface depth that shifts with the viewing angle">parallax</label><input id="rn-parallax" type="checkbox" /></div>
           <div class="light-row" id="rn-samples-row"><label title="POM marching steps — higher = smoother depth silhouettes, more GPU cost">quality</label><input id="rn-samples" type="range" min="4" max="64" step="1" /><span class="light-val" id="rn-samples-val"></span></div>
+          <div class="light-row"><label title="antialiasing — MSAA smooths geometry edges (applies via a quick reload); SSAA renders at a higher resolution and downsamples (applies live, costs GPU fill rate); the combo does both">antialias</label><select id="rn-aa"><option value="off">off</option><option value="msaa">MSAA 4×</option><option value="ssaa2">SSAA 2×</option><option value="msaa_ssaa15">MSAA 4× + SSAA 1.5×</option></select></div>
         </div>
       </div>
       <div class="spacer"></div>
@@ -59,6 +60,11 @@
       <div id="right">
         <div id="slots-panel">
           <h3>Model parts</h3>
+          <!-- geometry = the rig-node tree (craft/sub, inherited down the hierarchy); materials = the slot chips -->
+          <div id="parts-tabs">
+            <button id="tab-geometry" title="generation options per rig node — craft/subdivision inherit down the rig tree, any node can override">geometry</button>
+            <button id="tab-materials" class="active" title="material slots — assignment, tint and UV placement per part">materials</button>
+          </div>
           <div id="slot-chips"></div>
         </div>
       </div>
@@ -69,8 +75,6 @@
           <div class="tex-controls">
             <input id="tex-search" placeholder="search materials…" />
             <select id="tex-folder"></select>
-            <!-- item 36: persisted filter — hides all mc_* materials from the grid + categories -->
-            <label class="chk-hidemc" title="hide the imported minecraft (mc_*) materials from the grid and the category list"><input type="checkbox" id="tex-hidemc" /> hide MC textures</label>
           </div>
           <div id="tex-grid"></div>
         </div>

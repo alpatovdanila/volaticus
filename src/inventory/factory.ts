@@ -2,7 +2,7 @@
 // editor preview and (later) the game — what the editor shows is what ships.
 import * as THREE from 'three'
 import { randRange } from '../lib/rng'
-import { catalogDefaultUvScale, makeSlotMaterial, type EntityMaterial } from './materials'
+import { catalogDefaultUvScale, makeDecalMaterial, makeSlotMaterial, type EntityMaterial } from './materials'
 import { getMeshGeometry } from './meshes'
 import {
   craftAmount,
@@ -28,8 +28,97 @@ function toBufferGeometry(g: GeneratedGeometry): THREE.BufferGeometry {
   geo.setAttribute('uv', new THREE.Float32BufferAttribute(g.uvs, 2))
   geo.setIndex(g.indices)
   for (const grp of g.groups ?? []) geo.addGroup(grp.start, grp.count, grp.materialIndex)
-  geo.computeVertexNormals()
+  computeCreasedNormals(geo)
   return geo
+}
+
+// Crease-angle vertex normals — the INDUSTRY-STANDARD normal computation (the
+// algorithm behind three's BufferGeometryUtils.toCreasedNormals, Blender's
+// smooth-by-angle, assimp's GenSmoothNormals, Unity's import "smoothing angle"):
+// corners are welded by QUANTIZED POSITION (not by index), face normals are
+// accumulated per welded cluster, and a corner only receives the faces within
+// the crease angle of its own patch — so intentional hard edges (box corners,
+// cap rims, ~90°) stay hard while everything smoother welds.
+//
+// Why not plain computeVertexNormals: it averages per INDEX, but closed surfaces
+// carry duplicated vertex columns at their UV wrap (cylinder/tube/sphere u=0|u=N
+// meridian). Each copy then averages only its own side's facets and the meridian
+// renders as a vertical lighting line that no uvMode can hide.
+//
+// Adaptations vs toCreasedNormals (which un-indexes — 3× the sidecar size):
+// the index is KEPT, so the crease test runs between coincident indices' patch
+// normals rather than per face-corner — equivalent here because our sources
+// (three primitives, procgeom) already duplicate vertices at every hard edge.
+// Accumulation stays area-weighted (raw cross products, computeVertexNormals'
+// convention) so smooth interiors shade exactly as before. Non-indexed soup
+// (subdivided crafted shapes) keeps flat per-face normals — that's the look.
+const CREASE_DOT = Math.cos(THREE.MathUtils.degToRad(60)) // 60° = three/Unity default
+function computeCreasedNormals(geo: THREE.BufferGeometry): void {
+  if (!geo.index) {
+    geo.computeVertexNormals()
+    return
+  }
+  const pos = geo.getAttribute('position') as THREE.BufferAttribute
+  const idx = geo.index
+  const n = pos.count
+  // area-weighted accumulation per index (identical to computeVertexNormals)
+  const acc = new Float32Array(n * 3)
+  for (let t = 0; t < idx.count; t += 3) {
+    const a = idx.getX(t), b = idx.getX(t + 1), c = idx.getX(t + 2)
+    const ax = pos.getX(a), ay = pos.getY(a), az = pos.getZ(a)
+    const e1x = pos.getX(b) - ax, e1y = pos.getY(b) - ay, e1z = pos.getZ(b) - az
+    const e2x = pos.getX(c) - ax, e2y = pos.getY(c) - ay, e2z = pos.getZ(c) - az
+    const fx = e1y * e2z - e1z * e2y
+    const fy = e1z * e2x - e1x * e2z
+    const fz = e1x * e2y - e1y * e2x
+    for (const i of [a, b, c]) {
+      acc[i * 3] += fx
+      acc[i * 3 + 1] += fy
+      acc[i * 3 + 2] += fz
+    }
+  }
+  // weld corners by quantized position (||0 folds -0 into 0)
+  const clusters = new Map<string, number[]>()
+  for (let i = 0; i < n; i++) {
+    const key = `${Math.round(pos.getX(i) * 1e4) || 0},${Math.round(pos.getY(i) * 1e4) || 0},${Math.round(pos.getZ(i) * 1e4) || 0}`
+    const list = clusters.get(key)
+    if (list) list.push(i)
+    else clusters.set(key, [i])
+  }
+  const out = new Float32Array(n * 3)
+  out.set(acc)
+  for (const list of clusters.values()) {
+    if (list.length < 2) continue
+    // unit patch normals for the crease test; sums stay area-weighted
+    const unit = list.map((i) => {
+      const x = acc[i * 3], y = acc[i * 3 + 1], z = acc[i * 3 + 2]
+      const inv = 1 / (Math.hypot(x, y, z) || 1)
+      return [x * inv, y * inv, z * inv]
+    })
+    for (let a = 0; a < list.length; a++) {
+      let sx = 0, sy = 0, sz = 0
+      for (let b = 0; b < list.length; b++) {
+        if (unit[a][0] * unit[b][0] + unit[a][1] * unit[b][1] + unit[a][2] * unit[b][2] > CREASE_DOT) {
+          const j = list[b]
+          sx += acc[j * 3]
+          sy += acc[j * 3 + 1]
+          sz += acc[j * 3 + 2]
+        }
+      }
+      const i = list[a]
+      out[i * 3] = sx
+      out[i * 3 + 1] = sy
+      out[i * 3 + 2] = sz
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    const x = out[i * 3], y = out[i * 3 + 1], z = out[i * 3 + 2]
+    const inv = 1 / (Math.hypot(x, y, z) || 1)
+    out[i * 3] = x * inv
+    out[i * 3 + 1] = y * inv
+    out[i * 3 + 2] = z * inv
+  }
+  geo.setAttribute('normal', new THREE.BufferAttribute(out, 3))
 }
 
 // generic "proceduralizator": seeded vertex jitter on any built-in shape.
@@ -63,7 +152,7 @@ function applyCraftJitter(geo: THREE.BufferGeometry, craft: number, matrix: THRE
     pos.setXYZ(i, v.x, v.y, v.z)
   }
   pos.needsUpdate = true
-  geo.computeVertexNormals()
+  computeCreasedNormals(geo)
 }
 
 // Midpoint-subdivide any geometry (group-aware, output non-indexed). Runs
@@ -97,7 +186,9 @@ function subdivideGeometry(geo: THREE.BufferGeometry, levels: number): THREE.Buf
 }
 
 export interface BuiltNode {
-  outer: THREE.Group // animation target, origin at the node's pivot point
+  // animation target, origin at the node's pivot point. A Group for rigid entities,
+  // a Bone for skinned ones (doc.skinned) — identical Object3D interface either way.
+  outer: THREE.Group | THREE.Bone
   inner: THREE.Group // geometry + children live here (offset by -pivot)
   base: { pos: THREE.Vector3; rot: THREE.Euler; scale: THREE.Vector3 }
   defaultVisible: boolean
@@ -143,13 +234,18 @@ export interface BakedNode {
   scale?: number | [number, number, number]
   pivot?: [number, number, number]
   hidden?: boolean
-  shape?: NodeDef['shape'] // drives per-face material mapping + cross/mesh handling at load
+  shape?: NodeDef['shape'] // drives per-face material mapping + cross/mesh/decal handling at load
   material?: NodeDef['material'] // slot name(s) — resolved against the main file's `materials` (which also carry uvProject)
+  image?: string // shape "decal" only: the embedded sprite (base64 data URI), copied so the sidecar stays self-contained
   geom?: BakedNodeGeom // absent on pure-group (shapeless) nodes
   children?: Record<string, BakedNode> // nested subtree (the rig hierarchy, baked in)
 }
 export interface BakedVariant {
   nodes: Record<string, BakedNode> // ROOT nodes; the tree nests via BakedNode.children
+  // studio-stamped fingerprint of the generation INPUTS (rig + variants config) this file
+  // was baked from — loadBaked re-bakes when it doesn't match the current doc, so a
+  // hand-edited entity JSON self-heals its sidecars. The runtime ignores it.
+  rigHash?: string
 }
 export type BakedGeometry = BakedVariant[] // one entry per variant
 
@@ -189,13 +285,30 @@ function groupVerts(geo: THREE.BufferGeometry, start: number, count: number): Se
   return verts
 }
 
+// Split a slot's uvMode into its per-axis modes: a single value applies to both axes,
+// a space-separated pair is "U V" (texture axes, pre-uvRot). See the schema comment.
+type AxisMode = 'tile' | 'fit' | 'stretch'
+function uvModesOf(uvMode: string | undefined): [AxisMode, AxisMode] {
+  const [a, b] = (uvMode ?? 'tile').split(' ')
+  return [a as AxisMode, (b ?? a) as AxisMode]
+}
+
 // Meter one group's uv coords — the UVs must already be in METERS (1 uv unit =
-// 1 world meter). tile = uvScale repeats per meter; fit = whole repeats over the
-// group's uv extent (patterns never cut mid-motif); stretch = exactly once.
+// 1 world meter). FULLY independent per axis (modeU × modeV, any combination):
+//   tile   : uvScale repeats per meter (raw meters × scale)
+//   fit    : whole repeats over the group's uv extent — patterns never cut mid-motif;
+//            on a wrap axis (a barrel side's circumference) the seam tiles seamlessly
+//   stretch: exactly once over the extent
 // Shared by the tiling path AND the uv-projection path so every mode composes
 // with every projection (#32: projection used to be suspected of dropping this).
-function meterGroupUVs(uv: THREE.BufferAttribute, verts: Set<number>, uvMode: string, scale: number): void {
-  if (uvMode === 'tile') {
+function meterGroupUVs(
+  uv: THREE.BufferAttribute,
+  verts: Set<number>,
+  modeU: AxisMode,
+  modeV: AxisMode,
+  scale: number,
+): void {
+  if (modeU === 'tile' && modeV === 'tile') {
     if (scale !== 1) for (const vi of verts) uv.setXY(vi, uv.getX(vi) * scale, uv.getY(vi) * scale)
     return
   }
@@ -209,10 +322,14 @@ function meterGroupUVs(uv: THREE.BufferAttribute, verts: Set<number>, uvMode: st
   }
   const eu = Math.max(maxU - minU, 1e-6)
   const ev = Math.max(maxV - minV, 1e-6)
-  // fit: whole repeats over the extent; stretch: exactly once
-  const ru = uvMode === 'fit' ? Math.max(1, Math.round(eu * scale)) : 1
-  const rv = uvMode === 'fit' ? Math.max(1, Math.round(ev * scale)) : 1
-  for (const vi of verts) uv.setXY(vi, ((uv.getX(vi) - minU) / eu) * ru, ((uv.getY(vi) - minV) / ev) * rv)
+  // repeats over the extent for the normalized modes (fit = whole count, stretch = 1)
+  const ru = modeU === 'fit' ? Math.max(1, Math.round(eu * scale)) : 1
+  const rv = modeV === 'fit' ? Math.max(1, Math.round(ev * scale)) : 1
+  for (const vi of verts) {
+    const u = modeU === 'tile' ? uv.getX(vi) * scale : ((uv.getX(vi) - minU) / eu) * ru
+    const v = modeV === 'tile' ? uv.getY(vi) * scale : ((uv.getY(vi) - minV) / ev) * rv
+    uv.setXY(vi, u, v)
+  }
 }
 
 // Bake the slot's uvRot into the geometry UVs — replaces the per-slot texture
@@ -257,9 +374,11 @@ function aspectSegs(dim: number, minDim: number): number {
   return Math.max(1, Math.min(6, Math.round(dim / Math.max(minDim, 0.01))))
 }
 
-function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceRepeat[] } {
+// effCraft/effSub = the node's EFFECTIVE generation options after rig-tree inheritance
+// (own value ?? nearest ancestor's — resolved by the caller's walk), not node.craft/node.sub.
+function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo: THREE.BufferGeometry; faces: FaceRepeat[] } {
   // deforming nodes get aspect-corrected sources so triangles stay ~uniform
-  const deforms = node.craft !== undefined || (node.sub ?? 0) > 0
+  const deforms = effCraft !== undefined || (effSub ?? 0) > 0
   switch (node.shape) {
     case 'plank': {
       const [w, h, d] = node.size as [number, number, number]
@@ -284,7 +403,7 @@ function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceR
     case 'post': {
       const rt = node.radiusTop ?? node.radius!
       const rb = node.radiusBottom ?? node.radius!
-      const geo = toBufferGeometry(generatePost(rt, rb, node.height!, node.segments ?? 14, 1, 0))
+      const geo = toBufferGeometry(generatePost(rt, rb, node.height!, node.segments ?? 18, 1, 0))
       // groups match cylinder order: side / top / bottom (per-face slots work)
       return {
         geo,
@@ -299,7 +418,7 @@ function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceR
       const rt = node.radiusTop ?? node.radius!
       const rb = node.radiusBottom ?? node.radius!
       const h = node.height!
-      const geo = toBufferGeometry(generateRing(rt, rb, h, node.thickness!, node.segments ?? 16, 1, 0))
+      const geo = toBufferGeometry(generateRing(rt, rb, h, node.thickness!, node.segments ?? 20, 1, 0))
       const r = Math.max(rt, rb)
       return {
         geo,
@@ -333,7 +452,7 @@ function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceR
       const rb = node.radiusBottom ?? node.radius!
       const h = node.height!
       // uniform-density tube: side rings + concentric-ring caps (no dense fans)
-      const geo = toBufferGeometry(generateTube(rt, rb, h, node.segments ?? 20, { open: node.open ?? false, bulge: node.bulge }))
+      const geo = toBufferGeometry(generateTube(rt, rb, h, node.segments ?? 24, { open: node.open ?? false, bulge: node.bulge }))
       const r = Math.max(rt, rb)
       const c = 2 * Math.PI * r
       const sideFaces: FaceRepeat[] = [{ face: 'side', su: c, sv: h }]
@@ -375,7 +494,7 @@ function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceR
     }
     case 'capsule': {
       const r = node.radius!, h = node.height!
-      const geo = new THREE.CapsuleGeometry(r, h, 6, 16)
+      const geo = new THREE.CapsuleGeometry(r, h, 8, node.segments ?? 20)
       return { geo, faces: [{ face: 'all', su: 2 * Math.PI * r, sv: h + Math.PI * r }] }
     }
     case 'plane':
@@ -386,6 +505,12 @@ function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceR
         ? new THREE.PlaneGeometry(w, h, aspectSegs(w, m), aspectSegs(h, m))
         : new THREE.PlaneGeometry(w, h)
       return { geo, faces: [{ face: 'all', su: w, sv: h }] }
+    }
+    case 'decal': {
+      // sprite quad: the embedded image maps ONCE across the face (0..1 UVs — su/sv 1 makes
+      // bakeUvsToMeters a no-op, so it never tiles). Flat, never subdivided/jittered.
+      const [w, h] = node.size as [number, number]
+      return { geo: new THREE.PlaneGeometry(w, h), faces: [{ face: 'all', su: 1, sv: 1 }] }
     }
     case 'disk': {
       // single flat circular face (+Y), no rim/underside — container floors etc.
@@ -409,7 +534,7 @@ function buildGeometry(node: NodeDef): { geo: THREE.BufferGeometry; faces: FaceR
 // the geom tree, buildEntity/loadNodeMeshes drive off the baked node alone and
 // never touch the rig for structure. (Material DEFINITIONS still come from the main
 // file's `materials`, keyed by the slot names carried here.)
-type RenderNode = Pick<NodeDef, 'shape' | 'material'>
+type RenderNode = Pick<NodeDef, 'shape' | 'material' | 'image'>
 
 // group index -> face key mapping for the shapes that carry geometry groups
 function groupFacesOf(node: RenderNode): readonly FaceKey[] {
@@ -485,21 +610,28 @@ export function projectGeometryUv(
       uv.setXY(i, u01 * 2 * Math.PI * r, v01 * Math.PI * r)
     }
   } else {
-    // box: per triangle, project along the dominant axis of its normal
+    // box: per triangle, project along the dominant axis of its normal — SIGNED.
+    // The facing direction picks the u sign so the texture reads left-to-right from
+    // OUTSIDE on every face (+X: u=-z, -X: u=+z, +Z: u=+x, -Z: u=-x; ±Y mirror v).
+    // With a single |abs| convention two of the four side quadrants rendered the
+    // texture horizontally MIRRORED, and every boundary between a correct and a
+    // flipped region showed as a reflect-seam on round box-projected walls.
     for (let t = 0; t + 2 < n; t += 3) {
       const ax = pts[t * 3], ay = pts[t * 3 + 1], az = pts[t * 3 + 2]
       const e1x = pts[(t + 1) * 3] - ax, e1y = pts[(t + 1) * 3 + 1] - ay, e1z = pts[(t + 1) * 3 + 2] - az
       const e2x = pts[(t + 2) * 3] - ax, e2y = pts[(t + 2) * 3 + 1] - ay, e2z = pts[(t + 2) * 3 + 2] - az
-      const nx = Math.abs(e1y * e2z - e1z * e2y)
-      const ny = Math.abs(e1z * e2x - e1x * e2z)
-      const nz = Math.abs(e1x * e2y - e1y * e2x)
+      const snx = e1y * e2z - e1z * e2y
+      const sny = e1z * e2x - e1x * e2z
+      const snz = e1x * e2y - e1y * e2x
+      const nx = Math.abs(snx), ny = Math.abs(sny), nz = Math.abs(snz)
       const axis = nx >= ny && nx >= nz ? 0 : ny >= nz ? 1 : 2
+      const sign = (axis === 0 ? snx : axis === 1 ? sny : snz) < 0 ? -1 : 1
       for (let k = 0; k < 3; k++) {
         const i = t + k
         const x = pts[i * 3], y = pts[i * 3 + 1], z = pts[i * 3 + 2]
-        if (axis === 0) uv.setXY(i, z, y)
-        else if (axis === 1) uv.setXY(i, x, -z)
-        else uv.setXY(i, x, y)
+        if (axis === 0) uv.setXY(i, -sign * z, y)
+        else if (axis === 1) uv.setXY(i, x, -sign * z)
+        else uv.setXY(i, sign * x, y)
       }
     }
   }
@@ -527,7 +659,7 @@ function applyUvProjection(
     if (!def) continue
     const count = grp.count === Infinity ? indexCount(g) - grp.start : grp.count
     const verts = groupVerts(g, grp.start, count)
-    meterGroupUVs(uv, verts, def.uvMode ?? 'tile', effectiveUvScale(def))
+    meterGroupUVs(uv, verts, ...uvModesOf(def.uvMode), effectiveUvScale(def))
     rotateGroupUVs(uv, verts, def.uvRot) // baked texture direction (see rotateGroupUVs)
   }
   uv.needsUpdate = true
@@ -592,7 +724,7 @@ function meterBakedUvs(geo: THREE.BufferGeometry, node: RenderNode, materials: R
     if (!retile && !def.uvRot) continue
     const count = g.count === Infinity ? indexCount(geo) - g.start : g.count
     const verts = groupVerts(geo, g.start, count)
-    if (retile) meterGroupUVs(uv, verts, def.uvMode ?? 'tile', effectiveUvScale(def)) // UVs already in meters
+    if (retile) meterGroupUVs(uv, verts, ...uvModesOf(def.uvMode), effectiveUvScale(def)) // UVs already in meters
     rotateGroupUVs(uv, verts, def.uvRot)
   }
   uv.needsUpdate = true
@@ -624,7 +756,7 @@ function bakedGeomToBuffer(b: BakedNodeGeom): THREE.BufferGeometry {
   if (b.uv.length) geo.setAttribute('uv', new THREE.Float32BufferAttribute(b.uv, 2)) // a UV-less mesh keeps none (matches the old path)
   if (b.index.length) geo.setIndex(b.index)
   for (const [start, count, mi] of b.groups) geo.addGroup(start, count, mi)
-  if (!b.normals.length) geo.computeVertexNormals()
+  if (!b.normals.length) computeCreasedNormals(geo) // legacy sidecar without stored normals
   return geo
 }
 
@@ -683,24 +815,31 @@ function foldBackfaces(geo: THREE.BufferGeometry): THREE.BufferGeometry {
 
 // BAKE one node's geometry (STUDIO/tool only): generate → subdivide → craft
 // jitter (entity-space, seeded per variant) → UVs-to-meters → doubleWall fold →
-// serialize. Returns null for a mesh whose FBX isn't preloaded.
-function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: number): BakedNodeGeom | null {
+// serialize. Returns null for a mesh whose FBX isn't preloaded. effCraft/effSub are
+// the EFFECTIVE generation options after rig-tree inheritance (caller resolves
+// own ?? nearest ancestor down its walk) — this function never reads node.craft/sub.
+function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: number, effCraft?: number, effSub?: number): BakedNodeGeom | null {
   if (node.shape === 'mesh') {
     const g = getMeshGeometry(node.mesh!)
     return g ? extractGeom(g.clone()) : null
   }
-  const built = buildGeometry(node)
+  if (node.shape === 'decal') {
+    // sprite quad, used verbatim: no subdivision, no craft jitter (the image must not warp),
+    // no UV metering (0..1 across the face), no doubleWall.
+    return extractGeom(buildGeometry(node).geo)
+  }
+  const built = buildGeometry(node, effCraft, effSub)
   let geo = built.geo
   const generated = GENERATED_SHAPES.has(node.shape)
   if (!generated) {
-    const sub = node.sub ?? 0
+    const sub = effSub ?? 0
     if (sub > 0) {
       const coarse = geo
       geo = subdivideGeometry(geo, sub)
       coarse.dispose()
     }
   }
-  const craft = node.craft ?? (generated ? 0.5 : undefined)
+  const craft = effCraft ?? (generated ? 0.5 : undefined)
   if (craft !== undefined) applyCraftJitter(geo, craft, matrix, jitterSeed)
   bakeUvsToMeters(geo, built.faces, node)
   if (node.doubleWall) {
@@ -723,6 +862,16 @@ function loadNodeMeshes(
   nodeMatrix: THREE.Matrix4,
 ): THREE.Mesh[] {
   let geo = bakedGeomToBuffer(bakedGeom)
+  // decal: the sprite quad renders its EMBEDDED image with plain 0..1 UVs — no slot
+  // material, no metering/projection (both would re-tile the image), no per-face split.
+  if (node.shape === 'decal') {
+    const uv0 = geo.getAttribute('uv')
+    if (uv0 && !geo.getAttribute('uv2')) geo.setAttribute('uv2', uv0)
+    const mesh = new THREE.Mesh(geo, makeDecalMaterial(node.image ?? ''))
+    mesh.userData.nodeName = nodeName
+    mesh.userData.slotByIndex = ['']
+    return [mesh]
+  }
   const projectMode = effectiveUvProject(node, materials)
   if (projectMode !== undefined) geo = applyUvProjection(geo, node, materials, nodeMatrix, projectMode)
   else meterBakedUvs(geo, node, materials)
@@ -822,15 +971,20 @@ export function bakeVariantLayouts(doc: EntityDoc, n = Math.max(1, doc.variants?
 // any layout. Craft jitter runs in base entity space with the node's craftSeed;
 // seam-group members share a seed so their coincident base-pose vertices seal.
 // (rotJitter is a rigid transform applied later at compose/build, not baked in.)
+// craft/sub INHERIT down the rig tree (like material slot inheritance, but the
+// hierarchy is the rig itself): a node without its own value uses the nearest
+// ancestor's; setting its own overrides for it and its subtree.
 function bakeParts(doc: EntityDoc): Record<string, BakedNodeGeom> {
   const parts: Record<string, BakedNodeGeom> = {}
-  const walk = (name: string, node: NodeDef, parentMatrix: THREE.Matrix4): void => {
+  const walk = (name: string, node: NodeDef, parentMatrix: THREE.Matrix4, inhCraft?: number, inhSub?: number): void => {
     const matrix = composeNodeMatrix(node, node.rot ?? [0, 0, 0], parentMatrix)
+    const craft = node.craft ?? inhCraft
+    const sub = node.sub ?? inhSub
     if (node.shape) {
-      const g = bakeNodeGeometry(node, matrix, node.craftSeed ?? 0)
+      const g = bakeNodeGeometry(node, matrix, node.craftSeed ?? 0, craft, sub)
       if (g) parts[name] = g
     }
-    for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix)
+    for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix, craft, sub)
   }
   const identity = new THREE.Matrix4()
   for (const [name, node] of Object.entries(doc.rig)) walk(name, node, identity)
@@ -843,15 +997,28 @@ function bakeParts(doc: EntityDoc): Record<string, BakedNodeGeom> {
 // its surviving children. A node absent from layout.parts is dropped with its whole
 // subtree. The result needs nothing from the rig at runtime.
 function composeVariant(doc: EntityDoc, parts: Record<string, BakedNodeGeom>, layout: VariantLayout): BakedVariant {
+  // nodes whose layout ABSENCE is meaningful (dropped by the roll) vs. nodes simply
+  // added after the layouts were rolled (see below)
+  const oneOfNames = new Set<string>()
+  for (const group of Object.values(doc.variants?.oneOf ?? {})) for (const n of group) oneOfNames.add(n)
   const build = (name: string, node: NodeDef): BakedNode | null => {
-    const p = layout.parts[name]
-    if (!p) return null // not in this variant (oneOf loser / chance drop)
+    let p = layout.parts[name]
+    if (!p) {
+      // Absent from the stored layout. For a RANDOMIZED node (chance / oneOf member /
+      // rotJitter) that means "dropped by the roll" — stay dropped. A DETERMINISTIC node
+      // was simply authored AFTER the layouts were rolled: compose it at its base pose —
+      // exactly what a fresh roll would emit — so hand-authored additions (decals, new
+      // parts) appear without regenerating (= reshuffling) the stored variants.
+      if (node.chance !== undefined || node.rotJitter !== undefined || oneOfNames.has(name)) return null
+      p = { pos: (node.pos ?? [0, 0, 0]) as [number, number, number], rot: (node.rot ?? [0, 0, 0]) as [number, number, number] }
+    }
     const entry: BakedNode = { pos: p.pos, rot: p.rot }
     if (node.scale !== undefined) entry.scale = node.scale
     if (node.pivot !== undefined) entry.pivot = node.pivot
     if (node.hidden) entry.hidden = true
     if (node.shape !== undefined) entry.shape = node.shape
     if (node.material !== undefined) entry.material = node.material
+    if (node.image !== undefined) entry.image = node.image // decal sprite rides into the sidecar
     if (node.shape && parts[name]) entry.geom = parts[name]
     const children: Record<string, BakedNode> = {}
     for (const [cn, cd] of Object.entries(node.children ?? {})) {
@@ -906,15 +1073,19 @@ export function computeSeamGroups(doc: EntityDoc): string[][] {
     if (ra !== rb) dsu.set(ra, rb)
   }
   const v = new THREE.Vector3()
-  const walk = (name: string, node: NodeDef, parentMatrix: THREE.Matrix4): void => {
+  // carries the same craft/sub rig-tree inheritance as bakeParts, so the pre-jitter
+  // vertices tested here are EXACTLY the ones the bake will jitter.
+  const walk = (name: string, node: NodeDef, parentMatrix: THREE.Matrix4, inhCraft?: number, inhSub?: number): void => {
     const matrix = composeNodeMatrix(node, node.rot ?? [0, 0, 0], parentMatrix)
+    const craft = node.craft ?? inhCraft
+    const sub = node.sub ?? inhSub
     if (node.shape && node.shape !== 'mesh') {
       dsu.set(name, name)
-      const built = buildGeometry(node)
+      const built = buildGeometry(node, craft, sub)
       let geo = built.geo
-      if (!GENERATED_SHAPES.has(node.shape) && (node.sub ?? 0) > 0) {
+      if (!GENERATED_SHAPES.has(node.shape) && (sub ?? 0) > 0) {
         const coarse = geo
-        geo = subdivideGeometry(geo, node.sub ?? 0)
+        geo = subdivideGeometry(geo, sub ?? 0)
         coarse.dispose()
       }
       const pos = geo.getAttribute('position') as THREE.BufferAttribute
@@ -930,7 +1101,7 @@ export function computeSeamGroups(doc: EntityDoc): string[][] {
       }
       geo.dispose()
     }
-    for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix)
+    for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix, craft, sub)
   }
   for (const [name, node] of Object.entries(doc.rig)) walk(name, node, new THREE.Matrix4())
   const groups = new Map<string, string[]>()
@@ -989,11 +1160,28 @@ export function rerollPartSeed(doc: EntityDoc, nodeNames: string[]): Record<stri
 // Build a live THREE tree from a doc + ONE baked variant — the runtime path
 // (studio preview + game). No generation, no rng: which nodes exist, their
 // rotJitter and their geometry all come from `baked`.
+//
+// SKELETAL path (doc.skinned — phase 1, rigid weights): every node's `outer` becomes a
+// THREE.Bone (a plain Object3D, so the anim player drives it unchanged), and instead of
+// parenting rigid meshes each node's geometry is baked to ENTITY space at bind pose,
+// tagged 100% to its node's bone (skinIndex/weight 1), and wrapped in SkinnedMeshes at
+// the group root. Visuals are identical to the rigid build; the skeleton is the door to
+// phase-2 smooth joints (see docs/SKELETAL_ANIMATION_RESEARCH.md).
 export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
+  const skinned = doc.skinned === true
   const group = new THREE.Group()
   group.name = doc.id
   const nodes = new Map<string, BuiltNode>()
   const meshes: THREE.Mesh[] = []
+  const bones: THREE.Bone[] = []
+  interface SkinPart {
+    geo: THREE.BufferGeometry
+    mat: THREE.Material | THREE.Material[]
+    slotByIndex: string[]
+    boneIdx: number
+    nodeName: string
+  }
+  const skinParts: SkinPart[] = []
 
   // item 34: resolve slot inheritance ONCE — every downstream lookup reads it.
   const resolvedMaterials = resolveMaterials(doc.materials)
@@ -1005,7 +1193,7 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
   const buildNode = (name: string, b: BakedNode, parent: THREE.Object3D, parentMatrix: THREE.Matrix4): void => {
     const pivot = b.pivot ?? [0, 0, 0]
     const pos = b.pos
-    const outer = new THREE.Group()
+    const outer = skinned ? new THREE.Bone() : new THREE.Group()
     outer.name = name
     outer.position.set(pos[0] + pivot[0], pos[1] + pivot[1], pos[2] + pivot[2])
     const rot = b.rot
@@ -1022,10 +1210,26 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
     inner.updateMatrix()
     const nodeMatrix = new THREE.Matrix4().multiplyMatrices(parentMatrix, outer.matrix).multiply(inner.matrix)
 
+    const boneIdx = bones.length
+    if (skinned) bones.push(outer as THREE.Bone)
+
     if (b.shape && b.geom) {
       for (const m of loadNodeMeshes(name, b, b.geom, slotMaterials, resolvedMaterials, nodeMatrix)) {
-        inner.add(m)
-        meshes.push(m)
+        if (skinned) {
+          // bake the node-local geometry to ENTITY space (= bind pose) and remember its
+          // bone — the SkinnedMesh assembly below tags + binds it after the walk.
+          m.geometry.applyMatrix4(nodeMatrix)
+          skinParts.push({
+            geo: m.geometry,
+            mat: m.material,
+            slotByIndex: (m.userData.slotByIndex as string[]) ?? [],
+            boneIdx,
+            nodeName: name,
+          })
+        } else {
+          inner.add(m)
+          meshes.push(m)
+        }
       }
     }
 
@@ -1043,6 +1247,34 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
 
   const identity = new THREE.Matrix4()
   for (const [name, b] of Object.entries(baked.nodes)) buildNode(name, b, group, identity)
+
+  if (skinned && skinParts.length) {
+    // Bind pose = the freshly-built hierarchy: compute bone worlds (group as root),
+    // then one SkinnedMesh per part, every vertex weighted 100% to the part's bone.
+    // Per-part meshes keep this dead simple (a character is ~10 parts = ~10 draws);
+    // phase 2 would merge parts and blend weights across joint bones instead.
+    group.updateMatrixWorld(true)
+    const skeleton = new THREE.Skeleton(bones)
+    for (const part of skinParts) {
+      const count = part.geo.getAttribute('position').count
+      const idx = new Uint16Array(count * 4)
+      const wgt = new Float32Array(count * 4)
+      for (let i = 0; i < count; i++) {
+        idx[i * 4] = part.boneIdx
+        wgt[i * 4] = 1
+      }
+      part.geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(idx, 4))
+      part.geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(wgt, 4))
+      const sm = new THREE.SkinnedMesh(part.geo, part.mat)
+      sm.name = part.nodeName
+      sm.userData.nodeName = part.nodeName
+      sm.userData.slotByIndex = part.slotByIndex
+      sm.frustumCulled = false // the bind-pose bounds lie once bones move the verts
+      group.add(sm)
+      sm.bind(skeleton) // bindMatrix = identity in group space; inverses from the bone worlds above
+      meshes.push(sm as unknown as THREE.Mesh)
+    }
+  }
 
   const bounds = new THREE.Box3().setFromObject(group)
   return { group, nodes, meshes, slotMaterials, bounds, seed: 0, tintK: 1 }

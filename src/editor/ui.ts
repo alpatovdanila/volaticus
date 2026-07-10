@@ -71,20 +71,18 @@ export function renderItemList(inv: Inventory, filter: string, selected: string 
 
 // per-key override state for an inheriting slot (item 34): true = the key is
 // set on THIS slot (an override → gets a ↺ reset), false = inherited (ghosted)
-export type OverridableKey = 'material' | 'tint' | 'uvMode' | 'uvScale' | 'uvRot' | 'uvProject'
+export type OverridableKey = 'material' | 'tint' | 'uvMode' | 'uvScale' | 'uvRot' | 'uvProject' | 'flat'
 
 export interface SlotInfo {
   slot: string
   texture: string // catalog color-map path for the chip thumbnail (RESOLVED material)
   material: string // catalog material id (shown on the chip) — RESOLVED
   tint: string | null // '#rrggbb' multiplier or null (white/off) — RESOLVED
-  uvMode: 'tile' | 'fit' | 'stretch'
+  uvMode: string // per-axis pair, schema-validated ("tile", "fit stretch", …)
   uvScale: number
   uvRot: number // degrees (item 35: any angle; the dropdown offers 15° steps)
   uvProject: '' | 'box' | 'planar' | 'sphere' // per-slot projection override ('' = material/authored)
-  // geometry generation for this part (null = no shaped nodes → row hidden).
-  // craft/sub are the part's stored values; has = generated geometry.
-  gen: { craft: number | null; sub: number | null; has: boolean } | null
+  flat: boolean // RESOLVED shading — flat (faceted) vs smooth; slot-only, unset = smooth
   // item 34: persisted inheritance ------------------------------------------
   inherit: string | null // raw inherit target (null = standalone slot)
   lastInherit: string | null // former parent (pre-freeze) — re-check re-binds to it
@@ -108,15 +106,12 @@ export interface FxTextureInfo {
 
 export interface SlotCallbacks {
   onPick(key: string): void
-  onParam(slot: string, param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject', value: string): void
+  onParam(slot: string, param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject' | 'flat', value: string): void
   // live tint while dragging the color picker — applies the color to the built
   // material directly (cheap, no rebuild). onParam still commits on 'change'.
   onTintLive(slot: string, value: string): void
   onFxInherit(key: string, slot: string | null): void
   onFxRot(key: string, deg: string): void
-  onGenCraft(slot: string, value: number): void
-  onGenSub(slot: string, value: number | null): void
-  onRegen(slot: string): void
   onEditMaterial(slot: string): void // #14: right-click preview → edit the slot's material
   // item 34: inheritance row + per-key override resets + group collapse
   onInherit(slot: string, parent: string | null): void // check/uncheck + parent choice
@@ -257,69 +252,124 @@ function openTexturePicker(anchor: HTMLElement, textures: string[], onPick: (pat
   search.focus()
 }
 
-// #24: build the inline geometry ("craft") controls for a chip — a vertical
-// stack appended into the chip's meta column, below the apply-options row. Wraps
-// the full-range slider + bound number (craft), the subdivide selector and ⟲.
-function buildGenControls(s: SlotInfo, cb: SlotCallbacks): HTMLElement {
-  const g = s.gen!
-  const box = el('div', 'slot-gen')
-  box.onclick = (e) => e.stopPropagation() // don't re-pick the slot when tuning
+// ---------------------------------------------------------------------------
+// Geometry tab: the rig-node tree with per-node generation options. craft/sub
+// INHERIT down the rig hierarchy (own value ?? nearest ancestor's) — the same
+// ghost/↺ language the material chips use, but the tree is the REAL rig.
 
-  const craftRow = el('div', 'gen-row')
-  craftRow.appendChild(el('span', 'gen-label', 'craft'))
-  const slider = el('input') as HTMLInputElement
-  slider.type = 'range'
-  // slider spans 0.4 → 1 (values below 0.4 are unusably crooked); the number
-  // input still accepts any 0..1 value the user types.
-  slider.min = '0.4'
-  slider.max = '1'
-  slider.step = '0.01'
-  slider.value = String(Math.max(0.4, Math.min(1, g.craft ?? 1)))
-  slider.title = 'craftsmanship: 1 = machine-perfect (off), 0.4 = crooked hand-hewn'
-  const num = el('input') as HTMLInputElement
-  num.type = 'number'
-  num.min = '0'
-  num.max = '1'
-  num.step = '0.01'
-  num.value = g.craft === null ? '' : String(g.craft)
-  slider.oninput = () => (num.value = parseFloat(slider.value).toFixed(2))
-  slider.onchange = () => cb.onGenCraft(s.slot, parseFloat(slider.value)) // commit on release
-  num.onchange = () => {
-    const v = Math.min(1, Math.max(0, parseFloat(num.value)))
-    if (!Number.isFinite(v)) return
-    slider.value = String(Math.max(0.4, v)) // slider clamps to its 0.4 floor
-    cb.onGenCraft(s.slot, v)
-  }
-  craftRow.appendChild(slider)
-  craftRow.appendChild(num)
-  box.appendChild(craftRow)
+export interface GeomNodeInfo {
+  name: string
+  depth: number // rig nesting depth (indents the row)
+  badge: string // shape name, 'mesh', or 'group' (no geometry of its own — a pure inheritance knob)
+  jitters: boolean // this node's own geometry deforms → the ⟲ reroll applies
+  own: { craft: number | null; sub: number | null } // values stored ON this node
+  eff: { craft: number | null; sub: number | null } // effective after inheritance + defaults (null = off)
+  from: { craft: string | null; sub: string | null } // ancestor supplying the inherited value (null = own/default)
+}
 
-  const row2 = el('div', 'gen-row')
-  const subSel = el('select', 'slot-select') as HTMLSelectElement
-  const subNone = el('option', undefined, 'sub: —') as HTMLOptionElement
-  subNone.value = ''
-  subSel.appendChild(subNone)
-  for (const n of [1, 2, 3]) {
-    const o = el('option', undefined, 'sub: ' + n) as HTMLOptionElement
-    o.value = String(n)
-    subSel.appendChild(o)
+export interface GeomCallbacks {
+  onNodeCraft(name: string, value: number | null): void // null = remove the override → re-inherit
+  onNodeSub(name: string, value: number | null): void // null = remove the override → re-inherit
+  onNodeRegen(name: string): void // fresh craft seed for this node (+ its seam group)
+}
+
+export function renderGeomTree(rows: GeomNodeInfo[], cb: GeomCallbacks): void {
+  const wrap = $('#slot-chips')
+  wrap.innerHTML = ''
+  if (!rows.length) {
+    wrap.appendChild(el('div', 'hint', 'no rig nodes'))
+    return
   }
-  subSel.value = g.sub === null || g.sub === 0 ? '' : String(g.sub)
-  subSel.title = 'subdivision before jitter (4× triangles per step) — for flat/coarse shapes'
-  subSel.onchange = () => cb.onGenSub(s.slot, subSel.value === '' ? null : parseInt(subSel.value, 10))
-  row2.appendChild(subSel)
-  const regen = el('button', 'btn-regen', '⟲') as HTMLButtonElement
-  regen.disabled = !g.has
-  regen.title = g.has
-    ? 'regenerate this part with a new stored seed'
-    : 'nothing generated here — lower craft first'
-  regen.onclick = (e) => {
-    e.stopPropagation()
-    cb.onRegen(s.slot)
+  for (const r of rows) {
+    const row = el('div', 'geom-row')
+    if (r.depth) row.style.marginLeft = Math.min(r.depth, 4) * 14 + 'px'
+
+    const nameRow = el('div', 'geom-name-row')
+    nameRow.appendChild(el('span', 'geom-name', r.name))
+    nameRow.appendChild(el('span', 'geom-badge', r.badge))
+    row.appendChild(nameRow)
+
+    const box = el('div', 'slot-gen')
+
+    // craft — slider + number; ghosted while inherited, ↺ to drop the override
+    const craftRow = el('div', 'gen-row')
+    craftRow.appendChild(el('span', 'gen-label', 'craft'))
+    const slider = el('input') as HTMLInputElement
+    slider.type = 'range'
+    // slider spans 0.8 → 1 (below 0.8 is unusably crooked); the number input
+    // still accepts any 0..1 value the user types (old docs carry lower values).
+    slider.min = '0.8'
+    slider.max = '1'
+    slider.step = '0.01'
+    slider.value = String(Math.max(0.8, Math.min(1, r.eff.craft ?? 1)))
+    const num = el('input') as HTMLInputElement
+    num.type = 'number'
+    num.min = '0'
+    num.max = '1'
+    num.step = '0.01'
+    num.value = r.eff.craft === null ? '' : String(r.eff.craft)
+    const craftSrc =
+      r.own.craft !== null ? 'set on this node' : r.from.craft ? `inherited from "${r.from.craft}"` : r.eff.craft !== null ? 'shape default' : 'off (machine-perfect)'
+    slider.title = `craftsmanship: 1 = machine-perfect (off), 0.4 = crooked hand-hewn — ${craftSrc}; propagates to children unless they set their own`
+    num.title = slider.title
+    slider.oninput = () => (num.value = parseFloat(slider.value).toFixed(2))
+    slider.onchange = () => cb.onNodeCraft(r.name, parseFloat(slider.value)) // commit on release → override here
+    num.onchange = () => {
+      const v = Math.min(1, Math.max(0, parseFloat(num.value)))
+      if (!Number.isFinite(v)) return
+      slider.value = String(Math.max(0.8, v)) // slider clamps to its 0.8 floor
+      cb.onNodeCraft(r.name, v)
+    }
+    craftRow.appendChild(slider)
+    craftRow.appendChild(num)
+    if (r.own.craft !== null) {
+      const rst = el('button', 'ovr-reset', '↺') as HTMLButtonElement
+      rst.title = r.from.craft !== null || r.depth > 0 ? 'craft is set on this node — reset to inherit from the parent chain' : 'craft is set on this node — remove it'
+      rst.onclick = () => cb.onNodeCraft(r.name, null)
+      craftRow.appendChild(rst)
+    } else {
+      slider.classList.add('ghosted')
+      num.classList.add('ghosted')
+    }
+    box.appendChild(craftRow)
+
+    // sub — '—' = inherit; explicit 0 overrides an inherited subdivision back to none
+    const row2 = el('div', 'gen-row')
+    const subSel = el('select', 'slot-select') as HTMLSelectElement
+    const subNone = el('option', undefined, r.eff.sub !== null && r.own.sub === null ? `sub: (${r.eff.sub})` : 'sub: —') as HTMLOptionElement
+    subNone.value = ''
+    subSel.appendChild(subNone)
+    for (const n of [0, 1, 2, 3]) {
+      const o = el('option', undefined, 'sub: ' + n) as HTMLOptionElement
+      o.value = String(n)
+      subSel.appendChild(o)
+    }
+    subSel.value = r.own.sub === null ? '' : String(r.own.sub)
+    const subSrc = r.own.sub !== null ? 'set on this node' : r.from.sub ? `inherited from "${r.from.sub}"` : 'none'
+    subSel.title = `subdivision before jitter (4× triangles per step) — ${subSrc}; propagates to children unless they set their own`
+    if (r.own.sub === null) subSel.classList.add('ghosted')
+    subSel.onchange = () => cb.onNodeSub(r.name, subSel.value === '' ? null : parseInt(subSel.value, 10))
+    row2.appendChild(subSel)
+    if (r.own.sub !== null) {
+      const rst = el('button', 'ovr-reset', '↺') as HTMLButtonElement
+      rst.title = 'sub is set on this node — reset to inherit from the parent chain'
+      rst.onclick = () => cb.onNodeSub(r.name, null)
+      row2.appendChild(rst)
+    }
+    const regen = el('button', 'btn-regen', '⟲') as HTMLButtonElement
+    regen.disabled = !r.jitters
+    regen.title = r.jitters
+      ? 'regenerate this node with a new stored seed (its seam-group rerolls with it)'
+      : r.badge === 'group'
+        ? 'a group has no geometry of its own — its craft/sub apply to descendants'
+        : 'nothing generated here — lower craft first'
+    regen.onclick = () => cb.onNodeRegen(r.name)
+    row2.appendChild(regen)
+    box.appendChild(row2)
+
+    row.appendChild(box)
+    wrap.appendChild(row)
   }
-  row2.appendChild(regen)
-  box.appendChild(row2)
-  return box
 }
 
 export function renderSlotChips(
@@ -451,16 +501,36 @@ export function renderSlotChips(
       meta.appendChild(inhRow)
     }
     const controls = el('div', 'slot-controls')
-    const uvSel = el('select', 'slot-select') as HTMLSelectElement
-    for (const m of ['tile', 'fit', 'stretch']) {
-      const o = el('option', undefined, m) as HTMLOptionElement
-      o.value = m
-      uvSel.appendChild(o)
+    // Per-AXIS tiling: ↔ (texture U) and ↕ (texture V) each pick tile/fit/stretch —
+    // fully independent (e.g. fit ↔ + stretch ↕). Both compose into the ONE uvMode
+    // value: equal halves collapse to a single word, else "U V" space-separated.
+    const [modeU, modeV] = (() => {
+      const [a, b] = (s.uvMode || 'tile').split(' ')
+      return [a, b ?? a]
+    })()
+    const mkAxisSel = (axis: string, val: string): HTMLSelectElement => {
+      const sel = el('select', 'slot-select') as HTMLSelectElement
+      for (const m of ['tile', 'fit', 'stretch']) {
+        const o = el('option', undefined, `${axis} ${m}`) as HTMLOptionElement
+        o.value = m
+        sel.appendChild(o)
+      }
+      sel.value = val
+      sel.title =
+        'per-axis tiling — tile: repeats by surface size · fit: whole repeats only (fit ↔ kills the wrap seam around barrels/cylinders) · stretch: once over the face'
+      sel.onclick = (e) => e.stopPropagation()
+      return sel
     }
-    uvSel.value = s.uvMode
-    uvSel.title = 'tile: repeats by surface size · fit: whole repeats only (patterns never cut) · stretch: once over the face'
-    uvSel.onclick = (e) => e.stopPropagation()
-    uvSel.onchange = () => cb.onParam(s.slot, 'uvMode', uvSel.value)
+    const uSel = mkAxisSel('↔', modeU)
+    const vSel = mkAxisSel('↕', modeV)
+    const commitUvMode = (): void => {
+      cb.onParam(s.slot, 'uvMode', uSel.value === vSel.value ? uSel.value : `${uSel.value} ${vSel.value}`)
+    }
+    uSel.onchange = commitUvMode
+    vSel.onchange = commitUvMode
+    const uvWrap = el('span', 'uv-axes')
+    uvWrap.appendChild(uSel)
+    uvWrap.appendChild(vSel)
     const scaleSel = el('select', 'slot-select') as HTMLSelectElement
     for (const v of ['0.25', '0.5', '1', '2', '4']) {
       const o = el('option', undefined, '×' + v) as HTMLOptionElement
@@ -475,7 +545,7 @@ export function renderSlotChips(
       scaleSel.value = String(s.uvScale)
     }
     scaleSel.title = 'texture density (repeats per meter, tile/fit modes)'
-    scaleSel.disabled = s.uvMode === 'stretch'
+    scaleSel.disabled = modeU === 'stretch' && modeV === 'stretch' // scale only matters while an axis tiles/fits
     scaleSel.onclick = (e) => e.stopPropagation()
     scaleSel.onchange = () => cb.onParam(s.slot, 'uvScale', scaleSel.value)
     const rotSel = el('select', 'slot-select') as HTMLSelectElement
@@ -513,12 +583,29 @@ export function renderSlotChips(
     // reads only the slot), so it always changes the model — no node/catalog fallback.
     projSel.title =
       'UV projection for this part: box = per-face planar, planar = from above, sphere = around center (— = no projection; on an inheriting part, choosing — PINS no-projection over the parent’s projection — ↺ to re-follow the parent)'
-    decorate(uvSel, 'uvMode', controls)
+    decorate(uvWrap, 'uvMode', controls)
     decorate(scaleSel, 'uvScale', controls)
     decorate(rotSel, 'uvRot', controls)
     decorate(projSel, 'uvProject', controls)
     meta.appendChild(controls)
     const surf = el('div', 'slot-controls')
+    // flat/smooth shading — a SURFACE decision, so it lives here (per slot), not in
+    // the material catalog. '' = smooth (the default), 'flat' = faceted.
+    const shadeSel = el('select', 'slot-select') as HTMLSelectElement
+    for (const [val, label] of [
+      ['', 'shade: smooth'],
+      ['flat', 'shade: flat'],
+    ]) {
+      const o = el('option', undefined, label) as HTMLOptionElement
+      o.value = val
+      shadeSel.appendChild(o)
+    }
+    shadeSel.value = s.flat ? 'flat' : ''
+    shadeSel.title =
+      'shading for this part: smooth = interpolated normals (round things read round), flat = one normal per facet (the chunky low-poly look). On an inheriting part, choosing smooth PINS it over a flat parent — ↺ to re-follow the parent'
+    shadeSel.onclick = (e) => e.stopPropagation()
+    shadeSel.onchange = () => cb.onParam(s.slot, 'flat', shadeSel.value)
+    decorate(shadeSel, 'flat', surf)
     // tint: the color multiplied over the texture — THE source of "same texture,
     // different color". Rendered as our own square swatch (the native color-input
     // chrome is too small to read); the hidden input only supplies the picker.
@@ -545,13 +632,9 @@ export function renderSlotChips(
     decorate(tintWrap, 'tint', surf)
     // surface/cutout/opacity moved to the material (tuning) — phase 4's Material
     // Manager. The chip keeps only per-slot placement overrides (tint + uv).
+    // Geometry generation (craft/sub/⟲) moved to the GEOMETRY tab — per rig node,
+    // inherited down the rig tree — so the chip is purely material concerns now.
     meta.appendChild(surf)
-    // #24: geometry / craft ("musher") controls now sit INLINE below the apply
-    // options — a vertical stack within the same chip (craft slider + number,
-    // subdivide selector, ⟲ regen). No popup. The generator only runs from here
-    // (or a prompted edit) — results are pinned by stored seeds and replayed
-    // verbatim on every build.
-    if (s.gen) meta.appendChild(buildGenControls(s, cb))
     chip.appendChild(meta)
     chip.onclick = () => cb.onPick(s.slot)
     wrap.appendChild(chip)
@@ -640,18 +723,12 @@ export interface MatPickerState {
   onEdit(materialId: string): void // #37: right-click a tile → Edit material
 }
 
-// item 36: "hide MC textures" — persisted; filters mc_* out of the grid AND
-// the category dropdown. Default unchecked (mc visible).
-const HIDE_MC_KEY = 'volaticus.hideMc'
-
 export function initMatPicker(state: MatPickerState): { refresh(): void; reveal(id: string): void } {
   const search = $('#tex-search') as HTMLInputElement
   const catSel = $('#tex-folder') as HTMLSelectElement
   const grid = $('#tex-grid')
-  const hideMc = $('#tex-hidemc') as HTMLInputElement
-  hideMc.checked = localStorage.getItem(HIDE_MC_KEY) === '1'
 
-  const visible = () => state.materials.filter((m) => !(hideMc.checked && m.id.startsWith('mc_')))
+  const visible = () => state.materials
 
   const buildCats = () => {
     const cats = [...new Set(visible().map((m) => m.category))].sort()
@@ -699,16 +776,11 @@ export function initMatPicker(state: MatPickerState): { refresh(): void; reveal(
   }
 
   // #38: reset filters so the target tile is guaranteed rendered (its own
-  // category dodges the 800-tile cap; un-hide MC for mc_ targets), scroll the
-  // grid to it and flash-highlight.
+  // category dodges the 800-tile cap), scroll the grid to it and flash-highlight.
   const reveal = (id: string) => {
     const m = state.materials.find((x) => x.id === id)
     if (!m) return
     search.value = ''
-    if (hideMc.checked && id.startsWith('mc_')) {
-      hideMc.checked = false
-      localStorage.setItem(HIDE_MC_KEY, '0')
-    }
     state.category = m.category
     buildCats()
     refresh()
@@ -737,11 +809,6 @@ export function initMatPicker(state: MatPickerState): { refresh(): void; reveal(
   search.oninput = () => refresh()
   catSel.onchange = () => {
     state.category = catSel.value
-    refresh()
-  }
-  hideMc.onchange = () => {
-    localStorage.setItem(HIDE_MC_KEY, hideMc.checked ? '1' : '0')
-    buildCats()
     refresh()
   }
   refresh()
@@ -807,12 +874,13 @@ export interface MgrTuning {
   metalness: number
   normalScale: number
   height: number // parallax occlusion depth (0 = flat)
+  parallax: boolean // per-material POM opt-in (effective only while the global Render toggle is on)
   aoIntensity: number
   emissive: number
   opacity: number
   cutout: boolean
   doubleSided: boolean
-  flat: boolean
+  // no flat here — shading is a per-slot (surface) decision, not a material one
   alphaMap: string | null // #27: alpha/opacity MASK texture path (single, res-independent)
 }
 
@@ -833,7 +901,7 @@ export interface MgrTuningCallbacks {
   // live update while dragging a numeric slider — writes the param's uniform on the preview material
   // directly (no rebuild). onNum still commits the value to the doc on release.
   onNumLive(key: 'roughness' | 'metalness' | 'normalScale' | 'height' | 'aoIntensity' | 'emissive' | 'opacity', value: number): void
-  onBool(key: 'cutout' | 'doubleSided' | 'flat', value: boolean): void
+  onBool(key: 'cutout' | 'doubleSided' | 'parallax', value: boolean): void
   onTint(value: string | null): void
   // live default-tint while dragging — applies to the preview material directly
   // (no rebuild); onTint still commits the value on 'change'.
@@ -955,10 +1023,10 @@ export function renderMgrTuning(
   if (maps.normal)
     slider('normalScale', 'normalScale', 0, 3, 0.01, t.normalScale,
       'Strength of the normal map — how much the baked surface bumps catch light. 0 = flat, 3 = strongly exaggerated relief.')
-  // parallax occlusion depth — only meaningful with a height map + POM enabled in Render options
+  // parallax occlusion depth — only meaningful with a height map + both parallax switches on
   if (maps.height)
     slider('height', 'height', 0, 0.3, 0.005, t.height,
-      'Parallax occlusion depth — how deep the height map recesses the surface. Requires "parallax" ON in the Render options panel. 0 = flat.', true)
+      'Parallax occlusion depth — how deep the height map recesses the surface. Takes effect when the "parallax (POM)" flag below AND the global Render-panel parallax are both on. 0 = flat.', true)
   if (maps.ao)
     slider('aoIntensity', 'aoIntensity', 0, 2, 0.01, t.aoIntensity,
       'Ambient-occlusion map strength — darkens crevices under indirect (skybox/IBL) light. 0 = off, 1 = baked strength, 2 = deepened. (Uses the mesh uv2.)')
@@ -1000,7 +1068,7 @@ export function renderMgrTuning(
   alphaRow.appendChild(alphaClear)
   wrap.appendChild(alphaRow)
 
-  const check = (label: string, key: 'cutout' | 'doubleSided' | 'flat', val: boolean, hint: string) => {
+  const check = (label: string, key: 'cutout' | 'doubleSided' | 'parallax', val: boolean, hint: string) => {
     const row = el('div', 'tune-row chk')
     const box = el('input') as HTMLInputElement
     box.type = 'checkbox'
@@ -1016,12 +1084,16 @@ export function renderMgrTuning(
     wrap.appendChild(row)
   }
   wrap.appendChild(el('div', 'tune-sep', 'flags'))
+  // per-material POM opt-in — only offered when the material ships a height map
+  if (maps.height)
+    check('parallax (POM)', 'parallax', t.parallax,
+      'Parallax occlusion mapping for THIS material — the height map recesses the surface with real view-dependent depth. Runs only while the global Render-panel parallax is also on. Costs GPU per pixel; enable where the relief sells (bricks, cobbles, bark).')
   check('cutout (alphaTest)', 'cutout', t.cutout,
     'Alpha cutout — pixels below 50% alpha are discarded (hard edges, no blending). For leaves, flags, fences. Cheaper than opacity blending.')
   check('double-sided', 'doubleSided', t.doubleSided,
     'Render both faces (disables back-face culling). For thin planes/cards seen from both sides.')
-  check('flat shading', 'flat', t.flat,
-    'Flat (faceted) shading — one normal per triangle, the low-poly look. Off = smooth (interpolated) normals. A per-slot flat can still override per part.')
+  // (flat shading is deliberately NOT here — it describes the surface, not the
+  // substance, so it lives on the entity slot chips: "shade: smooth | flat".)
 }
 
 // ---------------------------------------------------------------------------
@@ -1035,6 +1107,7 @@ export interface OverlayCallbacks {
   onNextVariant(): void
   onRegenVariants(): void // re-roll the layouts in <id>.variants.json, then re-compose (arrangement changes)
   onRerollCraft(): void // re-roll every part's craft seed (crookedness changes; layout stays)
+  onRegenGeometry(): void // explicit re-bake of STALE geometry (rig edited after baking) — never automatic
   onCollider(show: boolean): void
   onResetCam(): void
   onContext(dim: string, value: string | null): void
@@ -1053,6 +1126,7 @@ export function renderOverlay(
     context?: Record<string, string>
     variant?: { index: number; count: number } // baked variant set (<id>.geom.{i}.json + layouts)
     canReroll?: boolean // entity has craft geometry → offer the "reroll craft" button
+    geomStale?: boolean // sidecars baked from a different rig → offer the explicit "⟲ stale" button
   } | null,
   cb: OverlayCallbacks,
 ): void {
@@ -1117,6 +1191,14 @@ export function renderOverlay(
       rc.title = "re-roll every part's craft seed → fresh crookedness; the layout/arrangement stays put"
       rc.onclick = () => cb.onRerollCraft()
       top.appendChild(rc)
+    }
+    // REBAKE POLICY: staleness never re-bakes on its own — this explicit button is
+    // the tool for geometry whose rig JSON changed after it was baked.
+    if (item.geomStale) {
+      const rs = el('button', 'btn-stale', '⟲ stale geometry')
+      rs.title = 'the rig was edited after this geometry was baked (or the generator version changed) — click to re-bake now; loading NEVER re-bakes automatically'
+      rs.onclick = () => cb.onRegenGeometry()
+      top.appendChild(rs)
     }
     const colWrap = el('label', 'chk')
     const chk = el('input') as HTMLInputElement

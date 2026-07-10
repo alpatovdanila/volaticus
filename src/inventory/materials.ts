@@ -158,6 +158,20 @@ export function resolveTexturePath(id: string): string {
   return id
 }
 
+// Every in-flight texture decode, as a self-removing promise. whenTexturesReady() gates a
+// scene reveal on "no map is still imageless" — an imageless bound map samples BLACK, which
+// is exactly the black-geometry flash on entity load. Errors settle too (a missing file
+// must not veil the scene forever); the texture then just stays imageless.
+const pendingTextureLoads = new Set<Promise<void>>()
+
+// Resolves when every texture load in flight RIGHT NOW (and any that start while waiting —
+// the drain loops until the set is empty) has decoded or failed. Call right after building
+// materials: their loadTexture calls have already queued everything the build needs.
+export function whenTexturesReady(): Promise<void> {
+  if (pendingTextureLoads.size === 0) return Promise.resolve()
+  return Promise.allSettled([...pendingTextureLoads]).then(() => whenTexturesReady())
+}
+
 function loadTexture(path: string, srgb: boolean, linear = false): THREE.Texture {
   // `linear` gets its own cache entry so a path used elsewhere as a crisp (Nearest) map can also
   // be loaded smoothly here. Height and normal maps are CONTINUOUS data (a scalar field / packed
@@ -166,7 +180,16 @@ function loadTexture(path: string, srgb: boolean, linear = false): THREE.Texture
   const key = linear ? path + '#lin' : path
   let tex = texCache.get(key)
   if (tex) return tex
-  tex = loader.load('/' + encodeURI(path))
+  let settle!: () => void
+  const pending = new Promise<void>((resolve) => (settle = resolve))
+  pendingTextureLoads.add(pending)
+  const done = (): void => {
+    pendingTextureLoads.delete(pending)
+    settle()
+  }
+  // loader.load's own onLoad still sets needsUpdate (upload once the image exists);
+  // these callbacks only maintain the readiness set.
+  tex = loader.load('/' + encodeURI(path), done, undefined, done)
   tex.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.magFilter = linear ? THREE.LinearFilter : THREE.NearestFilter // Nearest = crisp pixel art
@@ -187,6 +210,64 @@ export function getTexture(id: string): THREE.Texture {
   return loadTexture(resolveTexturePath(id), true)
 }
 
+// ---------------------------------------------------------------------------
+// Decal (sprite) materials — shape "decal" rig nodes carry their image EMBEDDED as a
+// base64 data URI (the entity JSON stays a full self-contained declaration). One cached
+// material per distinct image: two nodes stamping the same sprite share it (and the
+// merge folds them into one draw — materialKey hashes the map's uuid).
+const decalCache = new Map<string, EntityMaterial>()
+
+export function makeDecalMaterial(dataUri: string): EntityMaterial {
+  let mat = decalCache.get(dataUri)
+  if (mat) return mat
+  mat = new MeshStandardNodeMaterial()
+  // Convert the data URI to a blob: URL and load through THE texture loader — byte-for-
+  // byte the catalog-map path (decode registered with the readiness gate, version-0
+  // reset, same filters), so decals inherit every texture behaviour the app already has.
+  // NOTE for sprite authors: a decal whose pixels are all transparent renders as NOTHING
+  // (alphaTest discards every fragment) — sanity-check the sprite has opaque content.
+  try {
+    const [head, b64] = dataUri.split(',', 2)
+    const mime = /data:([^;]+)/.exec(head)?.[1] ?? 'image/png'
+    const bin = atob(b64)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    const url = URL.createObjectURL(new Blob([bytes], { type: mime }))
+    let settle!: () => void
+    const pending = new Promise<void>((resolve) => (settle = resolve))
+    pendingTextureLoads.add(pending)
+    const done = (): void => {
+      URL.revokeObjectURL(url)
+      pendingTextureLoads.delete(pending)
+      settle()
+    }
+    const tex = loader.load(url, done, undefined, done)
+    tex.colorSpace = THREE.SRGBColorSpace
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping // decal UVs never leave 0..1
+    tex.magFilter = THREE.NearestFilter // crisp pixel-art edges, same spirit as the base maps
+    tex.minFilter = THREE.NearestMipmapLinearFilter
+    if (!tex.image) tex.version = 0 // see loadTexture: no imageless upload attempts
+    mat.map = tex
+  } catch {
+    // malformed data URI — flat magenta like a missing catalog material, so the gap is
+    // visible rather than an invisible quad
+    mat.color.set('#ff00ff')
+  }
+  mat.name = 'decal'
+  mat.alphaTest = 0.5 // hard-edged cutout: transparent sprite pixels clip, no blend sorting
+  mat.roughness = 1 // matte sticker look —
+  mat.metalness = 0 // — and never reflective
+  mat.envMapIntensity = 0
+  // sits a hair above its parent surface without z-fighting even at glancing depths
+  mat.polygonOffset = true
+  mat.polygonOffsetFactor = -1
+  mat.polygonOffsetUnits = -1
+  mat.userData.slot = 'decal'
+  mat.userData.baseEmissiveIntensity = 0
+  decalCache.set(dataUri, mat)
+  return mat
+}
+
 // How many of a catalog material's bound maps have finished decoding (image
 // present) vs. total. A material is "still loading" while loaded < total — the
 // editor uses this to show a spinner instead of a black preview mesh. texCache is
@@ -197,18 +278,23 @@ export function materialLoadState(materialId: string): { total: number; loaded: 
   if (!doc) return { total: 0, loaded: 0 }
   // Mirror makeCatalogMaterial's CONDITIONAL loads exactly, or a map that is never
   // bound keeps loaded < total forever (spinner + poll-interval never clear):
-  // emissive loads only when tuning.emissive > 0. (height maps are no longer bound.)
+  // emissive loads only when tuning.emissive > 0; height only when the material
+  // opts into parallax AND the global toggle is on (that's when the march binds it).
   const kinds: MapKind[] = ['color', 'normal', 'roughness', 'metallic', 'ao']
   if (doc.tuning.emissive > 0) kinds.push('emissive')
+  if (doc.tuning.parallax && isParallaxEnabled()) kinds.push('height')
   let total = 0
   let loaded = 0
-  const tally = (p: string | null | undefined): void => {
+  // `linear` maps are cached under path+'#lin' (loadTexture's separate smooth-filter entry) —
+  // tally the SAME key the material actually binds, or the map never counts as loaded and the
+  // spinner runs forever (that was the parallax/height infinite loader).
+  const tally = (p: string | null | undefined, linear = false): void => {
     if (!p) return
     total++
-    const tex = texCache.get(p)
+    const tex = texCache.get(linear ? p + '#lin' : p)
     if (tex && tex.image) loaded++
   }
-  for (const k of kinds) tally(resolveCatalogMap(doc, k))
+  for (const k of kinds) tally(resolveCatalogMap(doc, k), k === 'height')
   tally(doc.tuning.alphaMap)
   return { total, loaded }
 }
@@ -221,8 +307,8 @@ export function makeSlotMaterial(slot: string, def: ResolvedMaterialDef): Entity
 }
 
 // Build a MeshStandardMaterial from a named catalog material at the active res.
-// Per-slot overrides honored: tint (× material.color), flat (overrides
-// tuning.flat). uvMode/uvScale/uvRot never reach the material — the factory
+// Per-slot properties honored: tint (× material.color), flat (slot-only — the
+// catalog has no flat). uvMode/uvScale/uvRot never reach the material — the factory
 // bakes all three into geometry UVs (metering + rotateGroupUVs), so every slot
 // binds the SHARED cache textures. opacity/cutout/doubleSided come from tuning.
 function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMaterial {
@@ -271,13 +357,15 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     mat.aoMapIntensity = t.aoIntensity
   }
 
-  // Parallax occlusion mapping: only the global ON/OFF is BUILD-TIME. When POM is on and the material
-  // ships a height map, replace every base-UV map with a march node; otherwise it stays the plain PBR
-  // built above (classic maps, no march) — 'off' compiles NO parallax shader (no gray, no cost). Depth,
-  // the value band, tint and the PBR scalars are LIVE per-material uniforms and quality is a LIVE global
-  // uniform, so editing any of them updates the render with no rebuild (see applyLiveTuning).
+  // Parallax occlusion mapping: opt-in at TWO levels, both BUILD-TIME — the material's own
+  // tuning.parallax flag AND the global Render-panel toggle (shipping a height map alone does
+  // nothing). When both are on, replace every base-UV map with a march node; otherwise the material
+  // stays the plain PBR built above (classic maps, no march) — 'off' compiles NO parallax shader
+  // (no gray, no cost). Depth, the value band, tint and the PBR scalars are LIVE per-material
+  // uniforms and quality is a LIVE global uniform, so editing those updates with no rebuild
+  // (see applyLiveTuning); toggling either parallax switch rebuilds.
   const heightPath = resolveCatalogMap(doc, 'height')
-  if (heightPath && isParallaxEnabled()) {
+  if (heightPath && isParallaxEnabled() && t.parallax) {
     const tintU = uniform(mat.color.clone())
     const roughnessU = uniform(t.roughness)
     const metalnessU = uniform(t.metalness)
@@ -333,8 +421,9 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     mat.emissiveIntensity = t.emissive
   }
 
-  // per-slot flat overrides the material's default flat-shading
-  mat.flatShading = def.flat ?? t.flat
+  // flat/smooth is a per-SLOT decision (a surface property, not a substance one);
+  // unset = smooth — the catalog has no say
+  mat.flatShading = def.flat ?? false
 
   // #27: alpha MASK (single resolution-independent path). three.js reads its green
   // channel; a linear (NoColorSpace), NearestFilter texture — loadTexture(_, false)
@@ -410,7 +499,7 @@ export function applyLiveTuning(mat: EntityMaterial, t: MaterialTuning): void {
   mat.userData.baseEmissiveIntensity = t.emissive
   mat.emissiveIntensity = t.emissive
   mat.opacity = t.opacity
-  const flat = sd.flat ?? t.flat
+  const flat = sd.flat ?? false // flat is slot-only; live catalog edits must not disturb it
   if (mat.flatShading !== flat) {
     mat.flatShading = flat
     mat.needsUpdate = true

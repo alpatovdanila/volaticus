@@ -6,7 +6,7 @@
   "tags": ["village", "nature", "farm"],
   "notes": "Tilled crop bed; oneOf picks the crop (wheat or carrots), individual plants appear by chance.",
   "materials": {
-    "frame": { "material": "wood_planks_13", "flat": true, "uvProject": "box", "uvScale": 0.25, "uvRot": 90 },
+    "frame": { "material": "wood_planks_13", "flat": true, "uvProject": "box", "uvRot": 90 },
     "rail_f": { "inherit": "frame" },
     "rail_b": { "inherit": "frame" },
     "rail_l": { "inherit": "frame" },

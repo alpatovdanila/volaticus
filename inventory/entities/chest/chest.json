@@ -6,7 +6,7 @@
   "tags": ["wood", "loot"],
   "notes": "Low-poly hollow chest with a chamfered two-tier lid, dark iron straps and a gold clasp. Lid hinges just behind the back wall.",
   "materials": {
-    "wood": { "material": "wood_planks_20", "flat": true, "uvScale": 0.25 },
+    "wood": { "material": "wood_planks_20", "flat": true, "uvScale": 2 },
     "floor": { "inherit": "wood", "material": "wood_planks_20", "uvRot": 90 },
     "wall_f": { "inherit": "wood" },
     "wall_b": { "inherit": "wood" },

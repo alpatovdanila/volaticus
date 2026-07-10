@@ -29,6 +29,14 @@ export interface BatchInput {
   placement: THREE.Matrix4
 }
 
+// buildAsync progress: 'bucket' = merging entities into (frame, material) blobs,
+// 'batch' = feeding blobs into the pooled BatchedMesh buffers.
+export interface BatchProgress {
+  phase: 'bucket' | 'batch'
+  done: number
+  total: number
+}
+
 interface Instance {
   batch: THREE.BatchedMesh
   id: number // instance id within the batch
@@ -64,62 +72,118 @@ export class SceneBatcher {
 
   // Build all batches from the given entities. One-shot: call dispose() then build()
   // again to rebuild (the preview does this on every edit; the lineup once on enter).
+  // Synchronous drain of buildSteps — the game/preview path, unchanged behaviour.
   build(inputs: BatchInput[]): void {
+    const steps = this.buildSteps(inputs)
+    while (!steps.next().done) {
+      /* drain */
+    }
+  }
+
+  // ASYNC build: the same steps, drained on a per-frame time budget so the main thread
+  // never freezes — bucketing/feeding a 44-entity lineup yields back to the frame loop
+  // every ~budgetMs. `aborted()` is polled at every step (exit/reselect mid-build);
+  // an abort cleans up everything fed so far (buildSteps' finally) and resolves false.
+  // The caller keeps `group` hidden until this resolves true AND shaders/textures are
+  // ready — that's the "render only when everything is ready" contract.
+  async buildAsync(
+    inputs: BatchInput[],
+    opts: { aborted?: () => boolean; onProgress?: (p: BatchProgress) => void; budgetMs?: number } = {},
+  ): Promise<boolean> {
+    const budget = opts.budgetMs ?? 12
+    const steps = this.buildSteps(inputs)
+    let sliceStart = performance.now()
+    for (;;) {
+      if (opts.aborted?.()) {
+        steps.return(undefined) // runs buildSteps' finally → disposes partial work
+        return false
+      }
+      const r = steps.next()
+      if (r.done) return true
+      opts.onProgress?.(r.value)
+      if (performance.now() - sliceStart > budget) {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+        sliceStart = performance.now()
+      }
+    }
+  }
+
+  // The build machinery as resumable STEPS (one yield per entity bucketed, then one per
+  // blob fed into a batch) — build() drains it synchronously, buildAsync() with yields.
+  // The finally block makes early termination (generator .return on abort) safe: every
+  // batch created and every un-fed bucket geometry is disposed, leaving the batcher empty.
+  private *buildSteps(inputs: BatchInput[]): Generator<BatchProgress, void, void> {
     interface Group {
       mat: EntityMaterial
       items: { bucket: MergeBucket; input: BatchInput }[]
       verts: number
     }
-    // 1. bucket every entity; group buckets across entities by materialKey; sum sizes.
     const groups = new Map<string, Group>()
-    for (const input of inputs) {
-      const { buckets } = computeMergeBuckets(input.built, input.doc)
-      for (const bucket of buckets) {
-        const key = materialKey(bucket.mat)
-        let g = groups.get(key)
-        if (!g) groups.set(key, (g = { mat: bucket.mat, items: [], verts: 0 }))
-        g.items.push({ bucket, input })
-        g.verts += bucket.geo.getAttribute('position').count
+    let finished = false
+    try {
+      // 1. bucket every entity; group buckets across entities by materialKey; sum sizes.
+      let bucketed = 0
+      for (const input of inputs) {
+        const { buckets } = computeMergeBuckets(input.built, input.doc)
+        for (const bucket of buckets) {
+          const key = materialKey(bucket.mat)
+          let g = groups.get(key)
+          if (!g) groups.set(key, (g = { mat: bucket.mat, items: [], verts: 0 }))
+          g.items.push({ bucket, input })
+          g.verts += bucket.geo.getAttribute('position').count
+        }
+        yield { phase: 'bucket', done: ++bucketed, total: inputs.length }
+      }
+
+      // 2. one exact-sized BatchedMesh per key (geometry is non-indexed → 0 index space);
+      //    the FIRST material seen for a key is the shared/canonical material for its batch.
+      const animEntities = new Set<BuiltEntity>()
+      const totalItems = [...groups.values()].reduce((n, g) => n + g.items.length, 0)
+      let fed = 0
+      for (const [key, g] of groups) {
+        const batch = new THREE.BatchedMesh(g.items.length, g.verts, 0, g.mat)
+        batch.name = 'batch:' + key
+        batch.frustumCulled = false // never cull the whole batch (its bounds span the scene)
+        // per-instance culling defaults ON but needs reliable per-geometry bounds; until
+        // that's wired it wrongly culls in-view instances, so keep it OFF during bring-up.
+        batch.perObjectFrustumCulled = false
+        this.batches.set(key, batch)
+        this.group.add(batch)
+
+        for (const { bucket, input } of g.items) {
+          const geoId = batch.addGeometry(bucket.geo)
+          const id = batch.addInstance(geoId)
+          bucket.geo.dispose() // fully copied into the batch's pooled buffer by addGeometry
+          const frame = bucket.frame ? (input.built.nodes.get(bucket.frame) ?? null) : null
+          const inst: Instance = {
+            batch,
+            id,
+            frame,
+            placement: input.placement,
+            built: input.built,
+            entityId: input.id,
+            node: bucket.frame,
+            slotRanges: bucket.slotRanges,
+          }
+          this.setMatrix(inst)
+          this.instances.push(inst)
+          if (frame) {
+            this.animated.push(inst)
+            animEntities.add(input.built)
+          }
+          yield { phase: 'batch', done: ++fed, total: totalItems }
+        }
+      }
+      this.animatedEntities = [...animEntities]
+      finished = true
+    } finally {
+      if (!finished) {
+        // aborted mid-build: dispose every bucket geometry (double-dispose of already-fed
+        // ones is harmless — they were never rendered) and every partial batch.
+        for (const g of groups.values()) for (const { bucket } of g.items) bucket.geo.dispose()
+        this.dispose()
       }
     }
-
-    // 2. one exact-sized BatchedMesh per key (geometry is non-indexed → 0 index space);
-    //    the FIRST material seen for a key is the shared/canonical material for its batch.
-    const animEntities = new Set<BuiltEntity>()
-    for (const [key, g] of groups) {
-      const batch = new THREE.BatchedMesh(g.items.length, g.verts, 0, g.mat)
-      batch.name = 'batch:' + key
-      batch.frustumCulled = false // never cull the whole batch (its bounds span the scene)
-      // per-instance culling defaults ON but needs reliable per-geometry bounds; until
-      // that's wired it wrongly culls in-view instances, so keep it OFF during bring-up.
-      batch.perObjectFrustumCulled = false
-      this.batches.set(key, batch)
-      this.group.add(batch)
-
-      for (const { bucket, input } of g.items) {
-        const geoId = batch.addGeometry(bucket.geo)
-        const id = batch.addInstance(geoId)
-        bucket.geo.dispose() // fully copied into the batch's pooled buffer by addGeometry
-        const frame = bucket.frame ? (input.built.nodes.get(bucket.frame) ?? null) : null
-        const inst: Instance = {
-          batch,
-          id,
-          frame,
-          placement: input.placement,
-          built: input.built,
-          entityId: input.id,
-          node: bucket.frame,
-          slotRanges: bucket.slotRanges,
-        }
-        this.setMatrix(inst)
-        this.instances.push(inst)
-        if (frame) {
-          this.animated.push(inst)
-          animEntities.add(input.built)
-        }
-      }
-    }
-    this.animatedEntities = [...animEntities]
   }
 
   // world matrix for one instance from the sim graph + placement (see file header).

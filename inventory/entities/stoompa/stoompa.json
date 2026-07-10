@@ -1,0 +1,315 @@
+{
+  "format": 1,
+  "id": "stoompa",
+  "name": "Stoompa",
+  "category": "enemy",
+  "tags": ["chaser", "walker", "puncher"],
+  "notes": "A living clenched FIST on stubby legs: runs toward its target and delivers a devastating punch. Four curled fingers with knuckle bumps face forward, thumb wraps the right side, wrist stub behind. Notices the target (alert ~1s), sprints to punch, runs out of breath and rests. Forward = +Z (knuckles end).",
+  "materials": {
+    "skin": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true, "tint": "#f2c79c" },
+    "skin_dark": { "inherit": "skin", "tint": "#e0b184" },
+    "knuckle": { "inherit": "skin", "flat": false },
+    "leg": { "material": "metal_01", "uvScale": 4, "tint": "#2f2b26" },
+    "boot": { "material": "bark_11", "flat": true, "uvScale": 2, "tint": "#5a3d28" }
+  },
+  "rig": {
+    "body": {
+      "pos": [0, 0.34, 0],
+      "children": {
+        "palm": {
+          "shape": "box",
+          "size": [0.36, 0.3, 0.26],
+          "pos": [0, 0.02, -0.05],
+          "material": "skin",
+          "sub": 1,
+          "craft": 0.88,
+          "craftSeed": 1074148599
+        },
+        "wrist": {
+          "shape": "box",
+          "size": [0.26, 0.22, 0.12],
+          "pos": [0, 0, -0.21],
+          "material": "skin_dark",
+          "sub": 1,
+          "craft": 0.9,
+          "craftSeed": 1074148599
+        },
+        "finger_1": {
+          "shape": "box",
+          "size": [0.082, 0.24, 0.14],
+          "pos": [-0.13, 0.03, 0.11],
+          "rot": [-4, 0, 2],
+          "material": "skin",
+          "sub": 1,
+          "craft": 0.86,
+          "children": {
+            "knuckle_1": {
+              "shape": "sphere",
+              "radius": 0.041,
+              "pos": [0, 0.12, 0.02],
+              "material": "knuckle",
+              "craftSeed": 1074148599,
+              "craft": 1
+            }
+          },
+          "craftSeed": 1074148599
+        },
+        "finger_2": {
+          "shape": "box",
+          "size": [0.082, 0.26, 0.15],
+          "pos": [-0.044, 0.045, 0.12],
+          "rot": [-2, 0, 0],
+          "material": "skin",
+          "sub": 1,
+          "craft": 0.86,
+          "children": {
+            "knuckle_2": {
+              "shape": "sphere",
+              "radius": 0.043,
+              "pos": [0, 0.13, 0.02],
+              "material": "knuckle",
+              "craftSeed": 1074148599,
+              "craft": 1
+            }
+          },
+          "craftSeed": 1074148599
+        },
+        "finger_3": {
+          "shape": "box",
+          "size": [0.082, 0.25, 0.15],
+          "pos": [0.044, 0.04, 0.12],
+          "rot": [-2, 0, -1],
+          "material": "skin",
+          "sub": 1,
+          "craft": 0.86,
+          "children": {
+            "knuckle_3": {
+              "shape": "sphere",
+              "radius": 0.041,
+              "pos": [0, 0.125, 0.02],
+              "material": "knuckle",
+              "craftSeed": 1074148599,
+              "craft": 1
+            }
+          },
+          "craftSeed": 1074148599
+        },
+        "finger_4": {
+          "shape": "box",
+          "size": [0.08, 0.22, 0.14],
+          "pos": [0.128, 0.02, 0.11],
+          "rot": [-4, 0, -3],
+          "material": "skin",
+          "sub": 1,
+          "craft": 0.86,
+          "children": {
+            "knuckle_4": {
+              "shape": "sphere",
+              "radius": 0.039,
+              "pos": [0, 0.11, 0.02],
+              "material": "knuckle",
+              "craftSeed": 1074148599,
+              "craft": 1
+            }
+          },
+          "craftSeed": 1074148599
+        },
+        "fingers_lower": {
+          "shape": "box",
+          "size": [0.34, 0.1, 0.13],
+          "pos": [0, -0.115, 0.115],
+          "rot": [8, 0, 0],
+          "material": "skin_dark",
+          "sub": 1,
+          "craft": 0.88,
+          "craftSeed": 1074148599
+        },
+        "thumb_a": {
+          "shape": "box",
+          "size": [0.1, 0.13, 0.2],
+          "pos": [0.185, -0.06, 0.03],
+          "rot": [0, -18, -14],
+          "material": "skin",
+          "sub": 1,
+          "craft": 0.87,
+          "craftSeed": 1074148599
+        },
+        "thumb_b": {
+          "shape": "box",
+          "size": [0.085, 0.11, 0.1],
+          "pos": [0.16, -0.09, 0.15],
+          "rot": [10, -30, -10],
+          "material": "skin_dark",
+          "sub": 1,
+          "craft": 0.87,
+          "craftSeed": 1074148599
+        },
+        "leg_l": {
+          "shape": "box",
+          "size": [0.06, 0.15, 0.06],
+          "pos": [-0.09, -0.24, -0.02],
+          "pivot": [0, 0.07, 0],
+          "material": "leg",
+          "craft": 0.95,
+          "children": {
+            "foot_l": {
+              "shape": "box",
+              "size": [0.095, 0.06, 0.13],
+              "pos": [0, -0.1, 0.015],
+              "material": "boot",
+              "craft": 0.88,
+              "children": {
+                "toe_l": {
+                  "shape": "box",
+                  "size": [0.085, 0.05, 0.06],
+                  "pos": [0, -0.002, 0.085],
+                  "material": "boot",
+                  "craft": 0.88,
+                  "craftSeed": 1074148599
+                }
+              },
+              "craftSeed": 1074148599
+            }
+          },
+          "craftSeed": 1074148599
+        },
+        "leg_r": {
+          "shape": "box",
+          "size": [0.06, 0.15, 0.06],
+          "pos": [0.09, -0.24, -0.02],
+          "pivot": [0, 0.07, 0],
+          "material": "leg",
+          "craft": 0.95,
+          "children": {
+            "foot_r": {
+              "shape": "box",
+              "size": [0.095, 0.06, 0.13],
+              "pos": [0, -0.1, 0.015],
+              "material": "boot",
+              "craft": 0.88,
+              "children": {
+                "toe_r": {
+                  "shape": "box",
+                  "size": [0.085, 0.05, 0.06],
+                  "pos": [0, -0.002, 0.085],
+                  "material": "boot",
+                  "craft": 0.88,
+                  "craftSeed": 1074148599
+                }
+              },
+              "craftSeed": 1074148599
+            }
+          },
+          "craftSeed": 1074148599
+        }
+      }
+    }
+  },
+  "physics": {
+    "body": "kinematicCharacter",
+    "collider": { "shape": "capsule", "radius": 0.24, "height": 0.1, "offset": [0, 0.32, 0] }
+  },
+  "props": {
+    "health": 2,
+    "walkSpeed": 1.2,
+    "runSpeed": 4.2,
+    "aggroRadius": 7,
+    "alertTime": 1,
+    "staminaTime": 3.5,
+    "restTime": 2.5,
+    "damage": 1
+  },
+  "states": {
+    "initial": "idle",
+    "idle": { "anim": "bob" },
+    "walking": { "anim": "waddle" },
+    "alert": { "anim": "startle", "enter": { "effect": "angry_pop" } },
+    "running": { "anim": "sprint", "cues": { "0.03": { "byContext": { "surface=grass": { "effect": "grass_puff" } } } } },
+    "resting": { "anim": "pant", "cues": { "0.7": { "effect": "sweat_drip" } } }
+  },
+  "anims": {
+    "bob": {
+      "loop": true,
+      "duration": 2.8,
+      "tracks": [
+        { "node": "body", "prop": "pos.y", "ease": "sine", "keys": [[0, 0], [1.4, 0.025], [2.8, 0]] },
+        { "node": "body", "prop": "scale", "ease": "sine", "keys": [[0, 1], [1.4, 1.02], [2.8, 1]] },
+        { "node": "thumb_a", "prop": "rot.z", "ease": "sine", "keys": [[0, -2], [1.4, 3], [2.8, -2]] },
+        { "node": "body", "prop": "rot.x", "ease": "sine", "keys": [[0, 0], [1.4, -2], [2.8, 0]] }
+      ]
+    },
+    "waddle": {
+      "loop": true,
+      "duration": 0.8,
+      "tracks": [
+        { "node": "leg_l", "prop": "rot.x", "ease": "sine", "keys": [[0, 34], [0.4, -34], [0.8, 34]] },
+        { "node": "leg_r", "prop": "rot.x", "ease": "sine", "keys": [[0, -34], [0.4, 34], [0.8, -34]] },
+        { "node": "body", "prop": "rot.z", "ease": "sine", "keys": [[0, 4], [0.4, -4], [0.8, 4]] },
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [[0, 0.015], [0.2, 0], [0.4, 0.015], [0.6, 0], [0.8, 0.015]]
+        }
+      ]
+    },
+    "startle": {
+      "duration": 1,
+      "tracks": [
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "ease": "quadOut",
+          "keys": [[0, 0], [0.12, 0.2], [0.3, 0], [0.38, 0.05], [0.46, 0]]
+        },
+        {
+          "node": "body",
+          "prop": "scale",
+          "ease": "quadOut",
+          "keys": [[0, 1], [0.1, 1.15], [0.3, 1], [0.75, 1.05], [1, 1.02]]
+        },
+        {
+          "node": "body",
+          "prop": "rot.z",
+          "ease": "linear",
+          "keys": [[0.5, 0], [0.57, -4], [0.64, 4], [0.71, -4], [0.78, 4], [0.85, -3], [0.92, 2], [1, 0]]
+        },
+        { "node": "finger_2", "prop": "rot.x", "ease": "quadOut", "keys": [[0, 0], [0.12, -14], [0.5, 0]] },
+        { "node": "finger_3", "prop": "rot.x", "ease": "quadOut", "keys": [[0, 0], [0.12, -14], [0.5, 0]] },
+        { "node": "thumb_a", "prop": "rot.z", "ease": "quadOut", "keys": [[0, 0], [0.12, -12], [0.5, 0]] }
+      ]
+    },
+    "sprint": {
+      "loop": true,
+      "duration": 0.32,
+      "tracks": [
+        { "node": "leg_l", "prop": "rot.x", "ease": "sine", "keys": [[0, 58], [0.16, -58], [0.32, 58]] },
+        { "node": "leg_r", "prop": "rot.x", "ease": "sine", "keys": [[0, -58], [0.16, 58], [0.32, -58]] },
+        { "node": "body", "prop": "rot.x", "keys": [[0, 12]] },
+        { "node": "body", "prop": "rot.z", "ease": "sine", "keys": [[0, -2], [0.16, 2], [0.32, -2]] },
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [[0, 0.02], [0.08, 0], [0.16, 0.02], [0.24, 0], [0.32, 0.02]]
+        }
+      ]
+    },
+    "pant": {
+      "loop": true,
+      "duration": 1.2,
+      "tracks": [
+        { "node": "body", "prop": "pos.y", "keys": [[0, -0.09]] },
+        { "node": "body", "prop": "rot.x", "keys": [[0, -8]] },
+        { "node": "leg_l", "prop": "rot.x", "keys": [[0, -22]] },
+        { "node": "leg_r", "prop": "rot.x", "keys": [[0, -22]] },
+        { "node": "body", "prop": "scale", "ease": "sine", "keys": [[0, 0.98], [0.6, 1.07], [1.2, 0.98]] },
+        { "node": "thumb_a", "prop": "rot.z", "ease": "sine", "keys": [[0, -6], [0.6, 4], [1.2, -6]] }
+      ]
+    }
+  },
+  "events": {
+    "hit": { "effect": "poof", "anim": "startle" },
+    "died": { "effect": "SCRIPT_EFFECT_SHATTER", "hideGeometry": true }
+  }
+}

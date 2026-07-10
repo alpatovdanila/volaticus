@@ -22,7 +22,7 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,
-    "flat": false,
-    "height": 0.09
+    "height": 0.09,
+    "parallax": true
   }
 }

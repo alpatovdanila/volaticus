@@ -6,11 +6,11 @@
   "tags": ["wood", "container"],
   "notes": "Slatted low-poly crate: corner posts + rails frame an inset panel, diagonal braces by chance. oneOf damage variant.",
   "materials": {
-    "panel": { "material": "wood_planks_20", "flat": true, "uvScale": 0.25 },
+    "panel": { "material": "wood_planks_20", "flat": true },
     "panel_2": { "inherit": "panel", "uvRot": 90 },
     "hole_split_a": { "inherit": "panel" },
     "hole_split_b": { "inherit": "panel" },
-    "frame": { "material": "bark_11", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "frame": { "material": "bark_11", "flat": true, "uvProject": "box" },
     "post_a": { "inherit": "frame" },
     "post_b": { "inherit": "frame", "uvMode": "tile" },
     "post_c": { "inherit": "frame" },
@@ -36,7 +36,6 @@
           "size": [0.56, 0.56, 0.56],
           "pos": [0, 0.31, 0],
           "material": "panel_2",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "post_a": {
@@ -44,7 +43,6 @@
           "size": [0.11, 0.66, 0.11],
           "pos": [-0.28, 0.33, 0.28],
           "material": "post_a",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "post_b": {
@@ -52,7 +50,6 @@
           "size": [0.11, 0.66, 0.11],
           "pos": [0.28, 0.33, 0.28],
           "material": "post_b",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "post_c": {
@@ -60,7 +57,6 @@
           "size": [0.11, 0.66, 0.11],
           "pos": [-0.28, 0.33, -0.28],
           "material": "post_c",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "post_d": {
@@ -68,7 +64,6 @@
           "size": [0.11, 0.66, 0.11],
           "pos": [0.28, 0.33, -0.28],
           "material": "post_d",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "rail_top_f": {
@@ -76,7 +71,6 @@
           "size": [0.56, 0.1, 0.1],
           "pos": [0, 0.61, 0.28],
           "material": "rail_top_f",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "rail_top_b": {
@@ -84,7 +78,6 @@
           "size": [0.56, 0.1, 0.1],
           "pos": [0, 0.61, -0.28],
           "material": "rail_top_b",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "rail_top_l": {
@@ -92,7 +85,6 @@
           "size": [0.1, 0.1, 0.46],
           "pos": [-0.28, 0.61, 0],
           "material": "rail_top_l",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "rail_top_r": {
@@ -100,7 +92,6 @@
           "size": [0.1, 0.1, 0.46],
           "pos": [0.28, 0.61, 0],
           "material": "rail_top_r",
-          "craft": 0.95,
           "craftSeed": 1144721472
         },
         "rail_bot_f": {
@@ -191,7 +182,8 @@
             }
           }
         }
-      }
+      },
+      "craft": 1
     }
   },
   "physics": {

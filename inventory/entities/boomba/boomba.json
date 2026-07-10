@@ -4,135 +4,422 @@
   "name": "Boomba",
   "category": "enemy",
   "tags": ["bomb", "walker"],
-  "notes": "Round walking bomb. Sleeps until approached; chases and swells, then explodes.",
+  "notes": "Walking crate FULL of dynamite on stubby booted legs, silly googly face painted on the front (decal). Sleeps until approached; chases, fuse catches, swells and explodes. Forward = +Z (face side).",
   "materials": {
-    "shell": { "material": "metal_01", "uvScale": 0.25 },
-    "body": { "inherit": "shell" },
-    "leg_l": { "inherit": "shell" },
-    "leg_r": { "inherit": "shell" },
-    "eye": { "material": "concrete_wall_04", "uvScale": 0.25 },
-    "eye_l": { "inherit": "eye" },
-    "eye_r": { "inherit": "eye" },
-    "pupil": { "material": "concrete_ground_01", "uvScale": 0.25 },
-    "pupil_l": { "inherit": "pupil" },
-    "pupil_r": { "inherit": "pupil" },
-    "fuse": { "material": "bark_02", "uvScale": 0.25, "uvProject": "box" },
-    "feet": { "material": "metal_01", "uvScale": 0.25 },
-    "foot_l": { "inherit": "feet" },
-    "toe_l": { "inherit": "feet" },
-    "foot_r": { "inherit": "feet" },
-    "toe_r": { "inherit": "feet" }
+    "panel": { "material": "wood_planks_20", "flat": true, "uvScale": 2 },
+    "frame": { "material": "bark_11", "flat": true, "uvScale": 2, "uvProject": "box" },
+    "interior": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true, "tint": "#4a3b2a" },
+    "dynamite": { "material": "plaster_wall_01", "flat": true, "tint": "#c03227", "uvScale": 2 },
+    "band": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true, "tint": "#33302b" },
+    "rope": { "material": "bark_02", "uvScale": 4, "uvProject": "box" },
+    "leg": { "material": "metal_01", "tint": "#2f2b26" },
+    "boot": { "material": "bark_11", "flat": true, "tint": "#8a5a33" }
   },
   "rig": {
     "body": {
-      "shape": "sphere",
-      "radius": 0.3,
       "pos": [0, 0.36, 0],
-      "material": "body",
       "children": {
-        "eye_l": {
+        "interior": {
           "shape": "box",
-          "size": [0.09, 0.13, 0.03],
-          "pos": [-0.113, 0.052, 0.278],
-          "rot": [-10, -22, 0],
-          "material": "eye_l",
-          "craftSeed": 2110570518
+          "size": [0.42, 0.3, 0.42],
+          "pos": [0, 0.04, 0],
+          "material": "interior",
+          "craftSeed": 1146518157
         },
-        "eye_r": {
-          "shape": "box",
-          "size": [0.09, 0.13, 0.03],
-          "pos": [0.113, 0.052, 0.278],
-          "rot": [-10, 22, 0],
-          "material": "eye_r",
-          "craftSeed": 2110570518
+        "panel_f": {
+          "shape": "plank",
+          "size": [0.44, 0.3, 0.035],
+          "pos": [0, 0.02, 0.215],
+          "material": "panel",
+          "craft": 0.95,
+          "children": {
+            "face_decal": {
+              "shape": "decal",
+              "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAYAAAChS3wfAAABkUlEQVR4AeyYPa7CMAyA0ze/gYEd2BjZOA1n4jTsDFwAiYENBkYkGNhBHSxZFlXsxEndYiQraeL457Mbif6FH/85AGsNMJ38v3NFkpN3QIxWbjXo+Zg/2L9ezkEqcFYyDrID5otloCJJGuuyAUirQfWxU805+Em1yQaQ6sD6ucEDgFchFfTgAaQmDudUAUA16AjOLI6qAGiCuRcUtQfPYBePsCcdiwKQBtOHflEA8Cr0kRjXZ1EA3CD61DMLALpHMnJAUh2zAGigpZ5VAeBbGc8lwd+fryZXJP5UAUgcW9F1ANxKSC6jb7pcP7X1vANixHMvJHo+5q/2vndAbeLW/HkHWKtI7Xi8A7SIw/f/1+P27hLQ0Rxz4/cOyCU49POj74BYgRxAjJB0/9sfIViT2qqhb64DdqtVwLKdzUMreK2da8ExB0ArMa4dB8AlNVY974CxVpabl1oH0C8/qc/cwME+V79LTw1AlwPr6w7AeoVKx+cdUJqwdfvmOmC9PzRYNsdT0wpea+daYM0ByE1Mev4DAAD//x+99SMAAAAGSURBVAMATxWlcOyNew4AAAAASUVORK5CYII=",
+              "size": [0.34, 0.26],
+              "pos": [0, -0.01, 0.021],
+              "craftSeed": 1146518157
+            }
+          },
+          "craftSeed": 1146518157
         },
-        "pupil_l": {
-          "shape": "box",
-          "size": [0.05, 0.07, 0.02],
-          "pos": [-0.115, 0.031, 0.302],
-          "rot": [-6, -21, 0],
-          "material": "pupil_l",
-          "craftSeed": 2110570518
+        "panel_b": {
+          "shape": "plank",
+          "size": [0.44, 0.3, 0.035],
+          "pos": [0, 0.02, -0.215],
+          "material": "panel",
+          "craft": 0.95,
+          "craftSeed": 1146518157
         },
-        "pupil_r": {
-          "shape": "box",
-          "size": [0.05, 0.07, 0.02],
-          "pos": [0.115, 0.031, 0.302],
-          "rot": [-6, 21, 0],
-          "material": "pupil_r",
-          "craftSeed": 2110570518
+        "panel_l": {
+          "shape": "plank",
+          "size": [0.035, 0.3, 0.44],
+          "pos": [-0.215, 0.02, 0],
+          "material": "panel",
+          "craft": 0.95,
+          "craftSeed": 1146518157
         },
-        "fuse": {
+        "panel_r": {
+          "shape": "plank",
+          "size": [0.035, 0.3, 0.44],
+          "pos": [0.215, 0.02, 0],
+          "material": "panel",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "post_a": {
+          "shape": "plank",
+          "size": [0.075, 0.42, 0.075],
+          "pos": [-0.225, 0.01, 0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "post_b": {
+          "shape": "plank",
+          "size": [0.075, 0.42, 0.075],
+          "pos": [0.225, 0.01, 0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "post_c": {
+          "shape": "plank",
+          "size": [0.075, 0.42, 0.075],
+          "pos": [-0.225, 0.01, -0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "post_d": {
+          "shape": "plank",
+          "size": [0.075, 0.42, 0.075],
+          "pos": [0.225, 0.01, -0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_top_f": {
+          "shape": "plank",
+          "size": [0.46, 0.06, 0.06],
+          "pos": [0, 0.19, 0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_top_b": {
+          "shape": "plank",
+          "size": [0.46, 0.06, 0.06],
+          "pos": [0, 0.19, -0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_top_l": {
+          "shape": "plank",
+          "size": [0.06, 0.06, 0.46],
+          "pos": [-0.225, 0.19, 0],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_top_r": {
+          "shape": "plank",
+          "size": [0.06, 0.06, 0.46],
+          "pos": [0.225, 0.19, 0],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_bot_f": {
+          "shape": "plank",
+          "size": [0.46, 0.06, 0.06],
+          "pos": [0, -0.15, 0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_bot_b": {
+          "shape": "plank",
+          "size": [0.46, 0.06, 0.06],
+          "pos": [0, -0.15, -0.225],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_bot_l": {
+          "shape": "plank",
+          "size": [0.06, 0.06, 0.46],
+          "pos": [-0.225, -0.15, 0],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "rail_bot_r": {
+          "shape": "plank",
+          "size": [0.06, 0.06, 0.46],
+          "pos": [0.225, -0.15, 0],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "brace_l": {
+          "shape": "plank",
+          "size": [0.44, 0.055, 0.028],
+          "pos": [-0.238, 0.02, 0],
+          "rot": [0, 90, 38],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "brace_r": {
+          "shape": "plank",
+          "size": [0.44, 0.055, 0.028],
+          "pos": [0.238, 0.02, 0],
+          "rot": [0, 90, -38],
+          "material": "frame",
+          "craft": 0.95,
+          "craftSeed": 1146518157
+        },
+        "stick_1": {
           "shape": "cylinder",
-          "radius": 0.035,
-          "height": 0.16,
-          "pos": [0, 0.34, 0],
-          "rot": [0, 0, 10],
-          "material": "fuse",
-          "craft": 0.91,
-          "craftSeed": 2110570518
+          "radius": 0.05,
+          "height": 0.24,
+          "pos": [-0.11, 0.24, -0.09],
+          "rot": [-8, 0, 7],
+          "rotJitter": [4, 30, 4],
+          "material": "dynamite",
+          "children": {
+            "band_1": {
+              "shape": "cylinder",
+              "radius": 0.054,
+              "height": 0.035,
+              "pos": [0, 0.06, 0],
+              "material": "band",
+              "craftSeed": 1146518157
+            },
+            "rope_1": {
+              "shape": "cylinder",
+              "radius": 0.012,
+              "height": 0.07,
+              "pos": [0.02, 0.15, 0],
+              "rot": [0, 0, -38],
+              "material": "rope",
+              "craft": 0.85,
+              "craftSeed": 1146518157
+            }
+          },
+          "craftSeed": 1146518157
+        },
+        "stick_2": {
+          "shape": "cylinder",
+          "radius": 0.05,
+          "height": 0.26,
+          "pos": [0.1, 0.26, -0.11],
+          "rot": [7, 0, -11],
+          "rotJitter": [4, 30, 4],
+          "material": "dynamite",
+          "children": {
+            "band_2": {
+              "shape": "cylinder",
+              "radius": 0.054,
+              "height": 0.035,
+              "pos": [0, 0.07, 0],
+              "material": "band",
+              "craftSeed": 1146518157
+            },
+            "rope_2": {
+              "shape": "cylinder",
+              "radius": 0.012,
+              "height": 0.075,
+              "pos": [-0.02, 0.16, 0.01],
+              "rot": [14, 0, 33],
+              "material": "rope",
+              "craft": 0.85,
+              "craftSeed": 1146518157
+            }
+          },
+          "craftSeed": 1146518157
+        },
+        "stick_3": {
+          "shape": "cylinder",
+          "radius": 0.052,
+          "height": 0.3,
+          "pos": [-0.01, 0.3, 0.01],
+          "rot": [-3, 0, 3],
+          "rotJitter": [3, 30, 3],
+          "material": "dynamite",
+          "children": {
+            "band_3": {
+              "shape": "cylinder",
+              "radius": 0.056,
+              "height": 0.04,
+              "pos": [0, 0.08, 0],
+              "material": "band",
+              "craftSeed": 1146518157
+            },
+            "fuse": {
+              "shape": "cylinder",
+              "radius": 0.013,
+              "height": 0.11,
+              "pos": [0.025, 0.19, 0],
+              "rot": [0, 0, -34],
+              "material": "rope",
+              "craft": 0.82,
+              "craftSeed": 1146518157
+            }
+          },
+          "craftSeed": 1146518157
+        },
+        "stick_4": {
+          "shape": "cylinder",
+          "radius": 0.048,
+          "height": 0.22,
+          "pos": [0.13, 0.23, 0.07],
+          "rot": [11, 0, 9],
+          "rotJitter": [4, 30, 4],
+          "material": "dynamite",
+          "children": {
+            "band_4": {
+              "shape": "cylinder",
+              "radius": 0.052,
+              "height": 0.032,
+              "pos": [0, 0.055, 0],
+              "material": "band",
+              "craftSeed": 1146518157
+            },
+            "rope_4": {
+              "shape": "cylinder",
+              "radius": 0.011,
+              "height": 0.065,
+              "pos": [0.015, 0.14, -0.01],
+              "rot": [-20, 0, -30],
+              "material": "rope",
+              "craft": 0.85,
+              "craftSeed": 1146518157
+            }
+          },
+          "craftSeed": 1146518157
+        },
+        "stick_5": {
+          "shape": "cylinder",
+          "radius": 0.05,
+          "height": 0.23,
+          "pos": [-0.14, 0.22, 0.1],
+          "rot": [5, 0, -15],
+          "rotJitter": [4, 30, 4],
+          "material": "dynamite",
+          "children": {
+            "band_5": {
+              "shape": "cylinder",
+              "radius": 0.054,
+              "height": 0.035,
+              "pos": [0, 0.055, 0],
+              "material": "band",
+              "craftSeed": 1146518157
+            },
+            "rope_5": {
+              "shape": "cylinder",
+              "radius": 0.012,
+              "height": 0.07,
+              "pos": [-0.02, 0.145, 0],
+              "rot": [0, 0, 36],
+              "material": "rope",
+              "craft": 0.85,
+              "craftSeed": 1146518157
+            }
+          },
+          "craftSeed": 1146518157
+        },
+        "stick_6": {
+          "shape": "cylinder",
+          "radius": 0.046,
+          "height": 0.2,
+          "pos": [0.02, 0.21, -0.01],
+          "rot": [2, 0, -4],
+          "rotJitter": [4, 30, 4],
+          "material": "dynamite",
+          "children": {
+            "band_6": {
+              "shape": "cylinder",
+              "radius": 0.05,
+              "height": 0.03,
+              "pos": [0, 0.05, 0],
+              "material": "band",
+              "craftSeed": 1146518157
+            },
+            "rope_6": {
+              "shape": "cylinder",
+              "radius": 0.011,
+              "height": 0.06,
+              "pos": [0.01, 0.125, 0.015],
+              "rot": [24, 0, -26],
+              "material": "rope",
+              "craft": 0.85,
+              "craftSeed": 1146518157
+            }
+          },
+          "craftSeed": 1146518157
         },
         "leg_l": {
           "shape": "box",
-          "size": [0.11, 0.19, 0.11],
-          "pos": [-0.13, -0.3, 0],
-          "pivot": [0, 0.1, 0],
-          "material": "leg_l",
+          "size": [0.07, 0.17, 0.07],
+          "pos": [-0.12, -0.26, 0],
+          "pivot": [0, 0.08, 0],
+          "material": "leg",
+          "craft": 0.96,
           "children": {
             "foot_l": {
               "shape": "box",
-              "size": [0.13, 0.08, 0.11],
-              "pos": [0, -0.12, -0.02],
-              "material": "foot_l",
-              "craft": 0.85,
+              "size": [0.115, 0.075, 0.13],
+              "pos": [0, -0.11, 0.01],
+              "material": "boot",
+              "craft": 0.88,
               "children": {
                 "toe_l": {
                   "shape": "box",
-                  "size": [0.15, 0.06, 0.1],
-                  "pos": [0, -0.01, 0.095],
-                  "material": "toe_l",
-                  "craft": 0.85,
-                  "craftSeed": 2110570518
+                  "size": [0.1, 0.062, 0.07],
+                  "pos": [0, -0.005, 0.09],
+                  "material": "boot",
+                  "craft": 0.88,
+                  "craftSeed": 1146518157
                 }
               },
-              "craftSeed": 2110570518
+              "craftSeed": 1146518157
             }
           },
-          "craft": 0.96,
-          "craftSeed": 2110570518
+          "craftSeed": 1146518157
         },
         "leg_r": {
           "shape": "box",
-          "size": [0.11, 0.19, 0.11],
-          "pos": [0.13, -0.3, 0],
-          "pivot": [0, 0.1, 0],
-          "material": "leg_r",
+          "size": [0.07, 0.17, 0.07],
+          "pos": [0.12, -0.26, 0],
+          "pivot": [0, 0.08, 0],
+          "material": "leg",
+          "craft": 0.96,
           "children": {
             "foot_r": {
               "shape": "box",
-              "size": [0.13, 0.08, 0.11],
-              "pos": [0, -0.12, -0.02],
-              "material": "foot_r",
-              "craft": 0.85,
+              "size": [0.115, 0.075, 0.13],
+              "pos": [0, -0.11, 0.01],
+              "material": "boot",
+              "craft": 0.88,
               "children": {
                 "toe_r": {
                   "shape": "box",
-                  "size": [0.15, 0.06, 0.1],
-                  "pos": [0, -0.01, 0.095],
-                  "material": "toe_r",
-                  "craft": 0.85,
-                  "craftSeed": 2110570518
+                  "size": [0.1, 0.062, 0.07],
+                  "pos": [0, -0.005, 0.09],
+                  "material": "boot",
+                  "craft": 0.88,
+                  "craftSeed": 1146518157
                 }
               },
-              "craftSeed": 2110570518
+              "craftSeed": 1146518157
             }
           },
-          "craft": 0.96,
-          "craftSeed": 2110570518
+          "craftSeed": 1146518157
         }
-      },
-      "craft": 0.96,
-      "craftSeed": 2110570518
+      }
     }
   },
   "physics": {
@@ -150,6 +437,7 @@
     "explodeRadius": 2.4,
     "damage": 2
   },
+  "variants": { "count": 3 },
   "states": {
     "initial": "sleeping",
     "sleeping": { "anim": "sleep" },

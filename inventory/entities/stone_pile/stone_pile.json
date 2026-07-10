@@ -4,7 +4,7 @@
   "name": "Stone Pile",
   "category": "prop",
   "tags": ["stone", "nature"],
-  "notes": "Cairn of rounded rocks (v1 makeStonePile) — four squashed boulders always, three more by chance (4-7 total, ~1.5 m mound), plus a chance moss blob tucked in the top. Low cylinder collider — scenery bump, not a platform.",
+  "notes": "Cairn of rounded rocks (v1 makeStonePile) — four squashed boulders always, three more by chance (4-7 total, ~1.5 m mound), plus a chance moss blob tucked in the top. Low cylinder collider — scenery bump, not a platform. oneOf crown: stacked / twin / slab top; chance pebbles + a tiny mushroom.",
   "materials": {
     "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
     "stone_dark": { "inherit": "stone", "material": "cliff_rocks_06" },
@@ -83,20 +83,6 @@
           "craft": 0.6,
           "craftSeed": 1230498331
         },
-        "rock_top": {
-          "shape": "sphere",
-          "radius": 0.28,
-          "segments": 6,
-          "segmentsY": 5,
-          "pos": [-0.05, 0.55, 0.05],
-          "rot": [0, 50, 0],
-          "scale": [1, 0.75, 0.9],
-          "material": "rock_top",
-          "chance": 0.6,
-          "sub": 1,
-          "craft": 0.62,
-          "craftSeed": 1230498331
-        },
         "rock_f": {
           "shape": "sphere",
           "radius": 0.2,
@@ -121,6 +107,120 @@
           "sub": 2,
           "craft": 0.7,
           "craftSeed": 1230498331
+        },
+        "crown_stack": {
+          "children": {
+            "cs_a": {
+              "shape": "sphere",
+              "radius": 0.28,
+              "segments": 6,
+              "segmentsY": 5,
+              "pos": [-0.05, 0.55, 0.05],
+              "rot": [0, 50, 0],
+              "scale": [1, 0.75, 0.9],
+              "material": "rock_top",
+              "sub": 1,
+              "craft": 0.62,
+              "craftSeed": 1230498331
+            },
+            "cs_b": {
+              "shape": "sphere",
+              "radius": 0.18,
+              "segments": 6,
+              "pos": [-0.02, 0.78, 0.02],
+              "scale": [1, 0.8, 1],
+              "material": "rock_top",
+              "craft": 0.62,
+              "craftSeed": 61371208
+            }
+          }
+        },
+        "crown_twin": {
+          "children": {
+            "ct_a": {
+              "shape": "sphere",
+              "radius": 0.28,
+              "segments": 6,
+              "segmentsY": 5,
+              "pos": [0.18, 0.52, 0.1],
+              "rot": [0, 50, 0],
+              "scale": [1, 0.75, 0.9],
+              "material": "rock_top",
+              "sub": 1,
+              "craft": 0.62,
+              "craftSeed": 1230498331
+            },
+            "ct_b": {
+              "shape": "sphere",
+              "radius": 0.22,
+              "segments": 6,
+              "segmentsY": 5,
+              "pos": [-0.22, 0.5, -0.05],
+              "rot": [0, 50, 0],
+              "scale": [1, 0.75, 0.9],
+              "material": "rock_top",
+              "sub": 1,
+              "craft": 0.62,
+              "craftSeed": 1230498331
+            }
+          }
+        },
+        "crown_slab": {
+          "children": {
+            "sl_a": {
+              "shape": "box",
+              "size": [0.55, 0.14, 0.42],
+              "pos": [0, 0.56, 0],
+              "rot": [4, 25, -3],
+              "material": "rock_top",
+              "sub": 1,
+              "craft": 0.82,
+              "craftSeed": 811748075
+            }
+          }
+        },
+        "pebble_a": {
+          "shape": "sphere",
+          "radius": 0.09,
+          "segments": 6,
+          "pos": [0.62, 0.07, 0.1],
+          "material": "rock_f",
+          "chance": 0.6,
+          "craft": 0.8,
+          "craftSeed": 1271437761
+        },
+        "pebble_b": {
+          "shape": "sphere",
+          "radius": 0.07,
+          "segments": 5,
+          "pos": [-0.3, 0.06, 0.55],
+          "material": "rock_f",
+          "chance": 0.5,
+          "craft": 0.8,
+          "craftSeed": 1178993513
+        },
+        "shroom": {
+          "shape": "cylinder",
+          "radius": 0.02,
+          "height": 0.07,
+          "pos": [-0.5, 0.42, 0.18],
+          "rot": [0, 0, 12],
+          "material": "moss_blob",
+          "chance": 0.35,
+          "craft": 0.95,
+          "children": {
+            "shroom_cap": {
+              "shape": "sphere",
+              "radius": 0.045,
+              "segments": 8,
+              "pos": [0, 0.05, 0],
+              "scale": [1, 0.6, 1],
+              "material": "moss_blob",
+              "craft": 0.9,
+              "craftSeed": 705953285
+            }
+          },
+          "craftSeed": 1856672743
         }
       }
     }
@@ -129,5 +229,5 @@
     "body": "fixed",
     "collider": { "shape": "cylinder", "radius": 0.8, "height": 0.6, "offset": [0, 0.3, 0] }
   },
-  "variants": { "count": 6 }
+  "variants": { "count": 6, "oneOf": { "crown": ["crown_stack", "crown_twin", "crown_slab"] } }
 }

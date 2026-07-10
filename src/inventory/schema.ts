@@ -45,10 +45,21 @@ export const MaterialSchema = z.object({
   // by open shells (barrel body) so the far interior wall isn't backface-culled;
   // kept per-slot so a shared catalog material stays single-sided on solid props.
   doubleSided: z.boolean().optional(),
-  // tile (default): repeats scale with surface size (uvScale repeats per meter) — for seamless textures.
-  // fit: like tile but rounded to WHOLE repeats per face, so patterns never cut off mid-motif.
-  // stretch: the texture exactly once over the face — for one-shot motifs (lids, doors, signs).
-  uvMode: z.enum(['tile', 'fit', 'stretch']).optional(),
+  // Per-AXIS tiling mode. A single value applies to both axes; a space-separated pair is
+  // "U V" (texture axes, pre-uvRot) — e.g. "fit stretch" = whole repeats horizontally,
+  // exactly once vertically. Modes:
+  //   tile (default): uvScale repeats per meter — for seamless textures.
+  //   fit: whole repeats over the face extent — patterns never cut mid-motif; on a closed
+  //        surface's wrap axis (a barrel side's circumference) it kills the wrap seam.
+  //   stretch: the texture exactly once over the face — one-shot motifs (lids, doors, signs).
+  uvMode: z
+    .enum([
+      'tile', 'fit', 'stretch',
+      'tile fit', 'tile stretch',
+      'fit tile', 'fit stretch',
+      'stretch tile', 'stretch fit',
+    ])
+    .optional(),
   uvScale: z.number().positive().optional(), // density: repeats per meter in tile/fit modes (default 1)
   uvRot: z.number().min(0).max(359).optional(), // texture direction, degrees CCW (UI offers 15° steps)
   // UV projection for the geometry using this slot (box | planar | sphere), applied
@@ -141,8 +152,9 @@ const faceMaterial = z.union([
 ])
 
 export type NodeDef = {
-  shape?: 'box' | 'cylinder' | 'sphere' | 'capsule' | 'cone' | 'plane' | 'disk' | 'cross' | 'torus' | 'mesh' | 'plank' | 'post' | 'ring' | 'arrow' | 'star'
+  shape?: 'box' | 'cylinder' | 'sphere' | 'capsule' | 'cone' | 'plane' | 'disk' | 'cross' | 'torus' | 'mesh' | 'plank' | 'post' | 'ring' | 'arrow' | 'star' | 'decal'
   mesh?: string
+  image?: string
   craft?: number
   sub?: number
   size?: number[]
@@ -176,9 +188,15 @@ export type NodeDef = {
 export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
   z.object({
     shape: z
-      .enum(['box', 'cylinder', 'sphere', 'capsule', 'cone', 'plane', 'disk', 'cross', 'torus', 'mesh', 'plank', 'post', 'ring', 'arrow', 'star'])
+      .enum(['box', 'cylinder', 'sphere', 'capsule', 'cone', 'plane', 'disk', 'cross', 'torus', 'mesh', 'plank', 'post', 'ring', 'arrow', 'star', 'decal'])
       .optional(),
     mesh: z.string().optional(), // external model path relative to resources/ (fbx)
+    // shape "decal" ONLY: the sprite itself, EMBEDDED as a base64 data URI (data:image/png;base64,…)
+    // — the entity JSON stays a full self-contained declaration, no sidecar files. A decal is a flat
+    // w×h quad (size, meters, facing +Z pre-rot) carrying this image once (0..1 UVs, never tiled),
+    // alpha-cutout, no material slot. Author it as a CHILD of the part it sits on, offset ~1-2 mm
+    // along the surface normal so it can't z-fight (eyes, faces, labels, little painted details).
+    image: z.string().optional(),
     craft: z.number().min(0).max(1).optional(), // craftsmanship: 1 = machine-perfect, 0 = crooked (any shape)
     sub: z.number().int().min(0).max(4).optional(), // subdivision levels before craft jitter (4^n triangles)
     size: z.array(z.number().positive()).min(2).max(3).optional(),
@@ -341,6 +359,11 @@ export const EntitySchema = z.object({
   category: z.enum(['prop', 'pickup', 'enemy', 'character', 'levelpart']),
   tags: z.array(z.string()).optional(),
   notes: z.string().optional(),
+  // SKELETAL assembly (phase 1, rigid weights — see docs/SKELETAL_ANIMATION_RESEARCH.md):
+  // build this entity as bones + SkinnedMesh instead of rigid groups. Node names become
+  // bone names 1:1, so the anim tracks drive bones unchanged. Opt-in per entity —
+  // skinned entities skip the per-entity merge (BatchedMesh cannot skin).
+  skinned: z.boolean().optional(),
   materials: z.record(MaterialSchema),
   rig: z.record(NodeSchema),
   physics: z
@@ -417,12 +440,18 @@ export const MaterialTuningSchema = z.object({
   // parallax occlusion depth — UV displacement at full height. 0 = flat (no parallax even
   // when POM is globally on). Only meaningful for materials that ship a height map.
   height: z.number().min(0).max(0.5).optional(),
+  // per-material parallax opt-IN: this material marches POM only when this is true AND the
+  // global Render-panel parallax is on. Absent/false = plain flat sampling — shipping a
+  // height map alone does NOT enable it. The studio deletes the key when unchecked.
+  parallax: z.boolean().optional(),
   aoIntensity: z.number().min(0).max(2),
   emissive: z.number().min(0).max(4),
   opacity: z.number().min(0).max(1),
   cutout: z.boolean(),
   doubleSided: z.boolean(),
-  flat: z.boolean(),
+  // NOTE: no `flat` here — flat/smooth shading describes the SURFACE (how a shape
+  // approximates curvature), not the substance, so it lives per-SLOT only
+  // (MaterialDefSchema.flat). Unset = smooth.
   // optional: the importer does not write it (default density is 1); the studio /
   // hand-tuning may still set a per-material tiling density. factory reads it via
   // catalogDefaultUvScale (`?? 1`).
@@ -613,10 +642,15 @@ function checkShapeParams(name: string, node: NodeDef, issues: string[]): void {
     if (node.material) issues.push(`rig.${name}: material on a shapeless group node`)
     return
   }
-  if (!node.material) issues.push(`rig.${name}: shape without material`)
+  // a decal carries its own embedded image — the ONE shape with no material slot
+  if (!node.material && s !== 'decal') issues.push(`rig.${name}: shape without material`)
+  if (s === 'decal' && node.material) issues.push(`rig.${name}: decal carries its own image — material slot is ignored`)
+  if (s === 'decal' && !node.image?.startsWith('data:image/'))
+    issues.push(`rig.${name}: decal needs image (a data:image/…;base64 URI)`)
   if ((s === 'box' || s === 'plank' || s === 'arrow') && node.size?.length !== 3)
     issues.push(`rig.${name}: ${s} needs size [w,h,d]`)
-  if ((s === 'plane' || s === 'cross') && node.size?.length !== 2) issues.push(`rig.${name}: ${s} needs size [w,h]`)
+  if ((s === 'plane' || s === 'cross' || s === 'decal') && node.size?.length !== 2)
+    issues.push(`rig.${name}: ${s} needs size [w,h]`)
   if (s === 'mesh' && !node.mesh) issues.push(`rig.${name}: mesh needs a mesh path`)
   if ((s === 'cylinder' || s === 'post' || s === 'ring') && !(node.radius || (node.radiusTop && node.radiusBottom)))
     issues.push(`rig.${name}: ${s} needs radius (or radiusTop+radiusBottom)`)

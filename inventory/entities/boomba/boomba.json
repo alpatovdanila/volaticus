@@ -6,14 +6,14 @@
   "tags": ["bomb", "walker"],
   "notes": "Walking crate FULL of dynamite on stubby booted legs, silly googly face painted on the front (decal). Sleeps until approached; chases, fuse catches, swells and explodes. Forward = +Z (face side).",
   "materials": {
-    "panel": { "material": "wood_planks_20", "flat": true, "uvScale": 2 },
-    "frame": { "material": "bark_11", "flat": true, "uvScale": 2, "uvProject": "box" },
-    "interior": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true, "tint": "#4a3b2a" },
-    "dynamite": { "material": "plaster_wall_01", "flat": true, "tint": "#c03227", "uvScale": 2 },
-    "band": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true, "tint": "#33302b" },
+    "panel": { "material": "wood_planks_20", "uvScale": 2 },
+    "frame": { "material": "bark_11", "uvScale": 2, "uvProject": "box" },
+    "interior": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#4a3b2a" },
+    "dynamite": { "material": "plaster_wall_01", "tint": "#c03227", "uvScale": 2 },
+    "band": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#33302b" },
     "rope": { "material": "bark_02", "uvScale": 4, "uvProject": "box" },
     "leg": { "material": "metal_01", "tint": "#2f2b26" },
-    "boot": { "material": "bark_11", "flat": true, "tint": "#8a5a33" }
+    "boot": { "material": "bark_11", "tint": "#8a5a33" }
   },
   "rig": {
     "body": {

@@ -6,13 +6,13 @@
   "tags": ["vegetation", "nature"],
   "notes": "Generated low-poly bush: faceted leaf blobs on stub trunks; blobs appear by chance. Rustles when hit. No collider.",
   "materials": {
-    "leaves": { "flat": true, "inherit": "leaves_light" },
+    "leaves": { "inherit": "leaves_light" },
     "blob_a": { "inherit": "leaves_light" },
     "blob_c": { "inherit": "leaves_light" },
-    "leaves_light": { "material": "leaves", "uvRot": 90, "flat": true },
+    "leaves_light": { "material": "leaves", "uvRot": 90 },
     "blob_b": { "inherit": "leaves_light" },
     "blob_top": { "inherit": "leaves_light" },
-    "trunk": { "material": "bark_05", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "trunk": { "material": "bark_05", "uvScale": 0.25, "uvProject": "box" },
     "stub_a": { "inherit": "trunk" },
     "stub_b": { "inherit": "trunk" }
   },

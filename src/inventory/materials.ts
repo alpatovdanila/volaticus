@@ -311,6 +311,15 @@ export function makeSlotMaterial(slot: string, def: ResolvedMaterialDef): Entity
 // catalog has no flat). uvMode/uvScale/uvRot never reach the material — the factory
 // bakes all three into geometry UVs (metering + rotateGroupUVs), so every slot
 // binds the SHARED cache textures. opacity/cutout/doubleSided come from tuning.
+// GLOBAL shading mode — smooth (false) by default; the Light panel's "flat
+// shading" checkbox flips it. Build-time default for new materials; the editor
+// also flips LIVE materials in place (userData.catalogMat marks them). Part of
+// materialKey via flatShading, and globally uniform → merge buckets stay consistent.
+let flatShadingOn = false
+export function setFlatShadingEnabled(on: boolean): void {
+  flatShadingOn = on
+}
+
 function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMaterial {
   const mat = new MeshStandardNodeMaterial()
   mat.name = slot
@@ -421,9 +430,11 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     mat.emissiveIntensity = t.emissive
   }
 
-  // flat/smooth is a per-SLOT decision (a surface property, not a substance one);
-  // unset = smooth — the catalog has no say
-  mat.flatShading = def.flat ?? false
+  // shading is a GLOBAL artistic choice (Light panel "flat shading" checkbox) —
+  // per-slot/per-material flat was retired; v8 bakes give every shape real smooth
+  // normals, so the global flag alone decides the look
+  mat.flatShading = flatShadingOn
+  mat.userData.catalogMat = true // the global-flat live flip targets these
 
   // #27: alpha MASK (single resolution-independent path). three.js reads its green
   // channel; a linear (NoColorSpace), NearestFilter texture — loadTexture(_, false)
@@ -464,7 +475,7 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
 
   mat.userData.slot = slot
   mat.userData.materialId = def.material // catalog id — lets a Manager edit find this instance to live-update
-  mat.userData.slotDef = { tint: def.tint, flat: def.flat, doubleSided: def.doubleSided } // per-slot overrides
+  mat.userData.slotDef = { tint: def.tint, doubleSided: def.doubleSided } // per-slot overrides
   mat.userData.baseEmissiveIntensity = emissivePath && t.emissive > 0 ? t.emissive : 0
   return mat
 }
@@ -472,12 +483,13 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
 type MaterialTuning = MaterialCatalogDoc['tuning']
 
 // Push a catalog material's tuning onto a LIVE material with NO rebuild. Continuous params update their
-// uniforms (parallax path) or three's built-in uniforms (plain PBR) instantly. The three structural flags
-// (flat, double-sided, cutout/alphaTest, transparent) can't be a uniform value — they change the shader/
+// uniforms (parallax path) or three's built-in uniforms (plain PBR) instantly. The structural flags
+// (double-sided, cutout/alphaTest, transparent) can't be a uniform value — they change the shader/
 // pipeline — so they flip via needsUpdate ONLY when they actually change: an in-place recompile of just
-// this material, no re-merge, no geometry rebuild. Slot overrides (tint/flat/doubleSided) layer on top.
+// this material, no re-merge, no geometry rebuild. Slot overrides (tint/doubleSided) layer on top.
+// (flatShading is the GLOBAL Light-panel switch — deliberately untouched here.)
 export function applyLiveTuning(mat: EntityMaterial, t: MaterialTuning): void {
-  const sd = (mat.userData.slotDef ?? {}) as { tint?: string; flat?: boolean; doubleSided?: boolean }
+  const sd = (mat.userData.slotDef ?? {}) as { tint?: string; doubleSided?: boolean }
   const u = mat.userData.tuningU as Record<string, { value: number | THREE.Color }> | undefined
   const tint = new THREE.Color('#ffffff')
   if (t.tint) tint.set(t.tint)
@@ -499,11 +511,6 @@ export function applyLiveTuning(mat: EntityMaterial, t: MaterialTuning): void {
   mat.userData.baseEmissiveIntensity = t.emissive
   mat.emissiveIntensity = t.emissive
   mat.opacity = t.opacity
-  const flat = sd.flat ?? false // flat is slot-only; live catalog edits must not disturb it
-  if (mat.flatShading !== flat) {
-    mat.flatShading = flat
-    mat.needsUpdate = true
-  }
   const side = (sd.doubleSided ?? t.doubleSided) ? THREE.DoubleSide : THREE.FrontSide
   if (mat.side !== side) {
     mat.side = side

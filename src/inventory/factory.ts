@@ -51,11 +51,13 @@ function toBufferGeometry(g: GeneratedGeometry): THREE.BufferGeometry {
 // (three primitives, procgeom) already duplicate vertices at every hard edge.
 // Accumulation stays area-weighted (raw cross products, computeVertexNormals'
 // convention) so smooth interiors shade exactly as before. Non-indexed soup
-// (subdivided crafted shapes) keeps flat per-face normals — that's the look.
+// (subdivided crafted / generated shapes) gets the per-corner variant below, so
+// SMOOTH normals exist everywhere — whether a part renders faceted or smooth is
+// then purely the slot's `flat` flag, and the toggle works on every geometry.
 const CREASE_DOT = Math.cos(THREE.MathUtils.degToRad(60)) // 60° = three/Unity default
 function computeCreasedNormals(geo: THREE.BufferGeometry): void {
   if (!geo.index) {
-    geo.computeVertexNormals()
+    computeCreasedNormalsSoup(geo)
     return
   }
   const pos = geo.getAttribute('position') as THREE.BufferAttribute
@@ -121,6 +123,66 @@ function computeCreasedNormals(geo: THREE.BufferGeometry): void {
   geo.setAttribute('normal', new THREE.BufferAttribute(out, 3))
 }
 
+// Non-indexed triangle soup (subdivided crafted shapes, generated planks/posts/
+// rings): every corner is its own vertex, so this is the CLASSIC per-corner
+// creased-normals pass (exactly three's toCreasedNormals): weld corners by
+// quantized position, then each corner sums the area-weighted normals of the
+// cluster's faces that lie within the crease angle of its OWN face. Coplanar
+// facets of one surface weld smooth; bevels/corners past 60° stay hard.
+function computeCreasedNormalsSoup(geo: THREE.BufferGeometry): void {
+  const pos = geo.getAttribute('position') as THREE.BufferAttribute
+  const n = pos.count
+  const triCount = (n / 3) | 0
+  // area-weighted face normals + unit copies for the crease test
+  const face = new Float32Array(triCount * 3)
+  const faceUnit = new Float32Array(triCount * 3)
+  for (let t = 0; t < triCount; t++) {
+    const a = t * 3, b = a + 1, c = a + 2
+    const ax = pos.getX(a), ay = pos.getY(a), az = pos.getZ(a)
+    const e1x = pos.getX(b) - ax, e1y = pos.getY(b) - ay, e1z = pos.getZ(b) - az
+    const e2x = pos.getX(c) - ax, e2y = pos.getY(c) - ay, e2z = pos.getZ(c) - az
+    const fx = e1y * e2z - e1z * e2y
+    const fy = e1z * e2x - e1x * e2z
+    const fz = e1x * e2y - e1y * e2x
+    face[t * 3] = fx
+    face[t * 3 + 1] = fy
+    face[t * 3 + 2] = fz
+    const inv = 1 / (Math.hypot(fx, fy, fz) || 1)
+    faceUnit[t * 3] = fx * inv
+    faceUnit[t * 3 + 1] = fy * inv
+    faceUnit[t * 3 + 2] = fz * inv
+  }
+  // weld corners by quantized position (||0 folds -0 into 0)
+  const clusters = new Map<string, number[]>()
+  for (let i = 0; i < n; i++) {
+    const key = `${Math.round(pos.getX(i) * 1e4) || 0},${Math.round(pos.getY(i) * 1e4) || 0},${Math.round(pos.getZ(i) * 1e4) || 0}`
+    const list = clusters.get(key)
+    if (list) list.push(i)
+    else clusters.set(key, [i])
+  }
+  const out = new Float32Array(n * 3)
+  for (const list of clusters.values()) {
+    for (const i of list) {
+      const f = (i / 3) | 0
+      const nx = faceUnit[f * 3], ny = faceUnit[f * 3 + 1], nz = faceUnit[f * 3 + 2]
+      let sx = 0, sy = 0, sz = 0
+      for (const j of list) {
+        const g = ((j / 3) | 0) * 3
+        if (nx * faceUnit[g] + ny * faceUnit[g + 1] + nz * faceUnit[g + 2] > CREASE_DOT) {
+          sx += face[g]
+          sy += face[g + 1]
+          sz += face[g + 2]
+        }
+      }
+      const inv = 1 / (Math.hypot(sx, sy, sz) || 1)
+      out[i * 3] = sx * inv
+      out[i * 3 + 1] = sy * inv
+      out[i * 3 + 2] = sz * inv
+    }
+  }
+  geo.setAttribute('normal', new THREE.BufferAttribute(out, 3))
+}
+
 // generic "proceduralizator": seeded vertex jitter on any built-in shape.
 // Positions are hashed in ENTITY space (the node's BASE-pose transform chain),
 // with the node's stored craftSeed — so coincident vertices of DIFFERENT nodes
@@ -180,7 +242,7 @@ function subdivideGeometry(geo: THREE.BufferGeometry, levels: number): THREE.Buf
   }
   out.setAttribute('position', new THREE.Float32BufferAttribute(outPos, 3))
   out.setAttribute('uv', new THREE.Float32BufferAttribute(outUv, 2))
-  out.computeVertexNormals()
+  computeCreasedNormalsSoup(out) // smooth-capable normals even when no craft pass follows
   if (src !== geo) src.dispose()
   return out
 }
@@ -221,6 +283,8 @@ export interface BakedNodeGeom {
   uv: number[] // meters, pre-metering
   index: number[] // empty = non-indexed
   groups: [number, number, number][] // [start, count, materialIndex]
+  // (bake v5–v6 stored per-vertex AO here as `ao: number[]` — retired; sidecars
+  // baked in that window may still carry the inert key, the loader ignores it.)
 }
 // A node in the baked SCENE TREE. It mirrors the rig node's render-relevant fields
 // (shape/material/pivot/scale/hidden) + the resolved transform + geometry + nested
@@ -1039,6 +1103,8 @@ function composeVariant(doc: EntityDoc, parts: Record<string, BakedNodeGeom>, la
 // Compose the full baked geometry set (STUDIO/tool): parts baked once × the given
 // layouts (or freshly rolled ones — the lineup path passes none). Deterministic in
 // (craftSeeds, layouts): re-baking after a craft edit reproduces it exactly.
+// (Per-vertex AO baking lived here in bake v5–v6 — retired in favor of GTAO; the
+// tracer/BVH survives in ao.ts for future baked-map/lightmap work.)
 export function bakeEntityGeometry(doc: EntityDoc, layouts?: VariantLayout[]): BakedGeometry {
   const parts = bakeParts(doc)
   return (layouts ?? bakeVariantLayouts(doc)).map((l) => composeVariant(doc, parts, l))

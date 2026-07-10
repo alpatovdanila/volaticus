@@ -1,8 +1,11 @@
 import * as THREE from 'three'
-import { WebGPURenderer, MeshBasicNodeMaterial } from 'three/webgpu'
-import { positionLocal, normalLocal, vec3 } from 'three/tsl'
+import { WebGPURenderer, MeshBasicNodeMaterial, RenderPipeline } from 'three/webgpu'
+import { positionLocal, normalLocal, vec3, vec4, float, pass, mrt, output, normalView } from 'three/tsl'
+import { ao } from 'three/addons/tsl/display/GTAONode.js'
+import { denoise } from 'three/addons/tsl/display/DenoiseNode.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { setLevelEnvMap } from '../inventory/envmap'
+import { setFlatShadingEnabled } from '../inventory/materials'
 import { EffectSystem } from '../inventory/effects'
 import { loadSkybox } from './skybox'
 import {
@@ -81,6 +84,15 @@ export class Viewport {
   // page reload to change (the render panel persists + reloads).
   private renderScale = 1
 
+  // GTAO prototype (screen-space AO): when enabled, frames render through a
+  // RenderPipeline chain (scene pass with MRT normals → GTAO → denoise → multiply)
+  // instead of the direct renderer.render. Built lazily by setGtao; the GTAO node
+  // is public so its uniforms (radius/thickness/scale…) can be tuned live.
+  private post: RenderPipeline | null = null
+  gtao: ReturnType<typeof ao> | null = null
+  private gtaoStrength = this.lightParams.ao // AO intensity rides the lighting prefs
+  private gtaoRes = 1 // AO buffer resolution scale (1 = full, 0.5 = quarter cost)
+
   constructor(
     private container: HTMLElement,
     opts: { antialias?: boolean } = {},
@@ -113,6 +125,7 @@ export class Viewport {
 
     // shared HDRI environment rig (IBL lighting only).
     this.rig = new LightingRig(this.renderer, this.scene)
+    setFlatShadingEnabled(this.lightParams.flat) // global shading mode, before anything builds materials
 
     this.scene.add(this.root)
     this.effects = new EffectSystem(this.scene)
@@ -152,6 +165,55 @@ export class Viewport {
     this.resize()
   }
 
+  // GTAO on/off — swaps the frame path between direct render and the post chain.
+  // Applies live; the chain tracks renderer size/pixelRatio on its own. NOTE the
+  // canvas MSAA sample count does not reach the pass's internal target, so GTAO
+  // pairs best with the SSAA antialias modes.
+  setGtao(on: boolean): void {
+    if (on === !!this.post) return
+    if (!on) {
+      this.post?.dispose()
+      this.post = null
+      this.gtao = null
+      return
+    }
+    const scenePass = pass(this.scene, this.camera)
+    scenePass.setMRT(mrt({ output, normal: normalView }))
+    const scenePassColor = scenePass.getTextureNode('output')
+    const scenePassNormal = scenePass.getTextureNode('normal')
+    const scenePassDepth = scenePass.getTextureNode('depth')
+    const aoPass = ao(scenePassDepth, scenePassNormal, this.camera)
+    aoPass.radius.value = 0.3 // view-space meters — sized to our ~0.5–2m props
+    aoPass.scale.value = this.gtaoStrength
+    aoPass.resolutionScale = this.gtaoRes
+    this.gtao = aoPass
+    // GTAO is spatially noisy per pixel — the companion denoiser makes it presentable
+    const aoDenoised = denoise(aoPass.getTextureNode(), scenePassDepth, scenePassNormal, this.camera)
+    this.post = new RenderPipeline(this.renderer)
+    // AO rides the RED channel (RedFormat target) — float() takes .x, vec3 splats it
+    // to gray. (as never: DenoiseNode's .d.ts lacks the fluent node typing.)
+    this.post.outputNode = scenePassColor.mul(vec4(vec3(float(aoDenoised as never)), 1))
+  }
+
+  gtaoEnabled(): boolean {
+    return !!this.post
+  }
+
+  // AO intensity — the GTAO power curve (0 = effect off, 1 = neutral, >1 = deeper).
+  // A pure shader uniform: applies to the live chain instantly, nothing rebuilds.
+  setGtaoStrength(v: number): void {
+    this.gtaoStrength = Math.max(0, Math.min(3, v))
+    if (this.gtao) this.gtao.scale.value = this.gtaoStrength
+  }
+
+  // AO buffer resolution scale — GTAO cost is per-PIXEL of its buffer, so 0.5 =
+  // quarter cost (the denoiser hides most of the softening). Applies live: the
+  // node re-sizes its render targets on the next frame's setSize.
+  setGtaoResolution(scale: number): void {
+    this.gtaoRes = Math.max(0.25, Math.min(1, scale))
+    if (this.gtao) this.gtao.resolutionScale = this.gtaoRes
+  }
+
   private resize(): void {
     const r = this.container.getBoundingClientRect()
     const w = Math.max(2, r.width || this.container.clientWidth || 1280)
@@ -179,7 +241,8 @@ export class Viewport {
       this.shake *= Math.max(0, 1 - dt * 6)
     }
     const t0 = performance.now()
-    this.renderer.render(this.scene, this.camera) // direct to canvas
+    if (this.post) this.post.render() // GTAO chain: scene pass → AO → denoise → multiply
+    else this.renderer.render(this.scene, this.camera) // direct to canvas
     const t1 = performance.now()
     this.readGpuTime()
     this.updatePerfHud(t0, t1)
@@ -241,6 +304,8 @@ export class Viewport {
   setLights(p: Partial<LightParams>): LightParams {
     this.lightParams = clampLightParams({ ...this.lightParams, ...p })
     this.rig.applyParams(this.lightParams)
+    this.setGtaoStrength(this.lightParams.ao) // AO depth rides the lighting params
+    this.applyFlatShading(this.lightParams.flat)
     saveLightPrefs(this.lightParams)
     return this.getLights()
   }
@@ -249,12 +314,32 @@ export class Viewport {
   resetLights(): LightParams {
     this.lightParams = { ...LIGHT_DEFAULTS }
     this.rig.applyParams(this.lightParams)
+    this.setGtaoStrength(this.lightParams.ao)
+    this.applyFlatShading(this.lightParams.flat)
     try {
       localStorage.removeItem(LIGHTS_KEY)
     } catch {
       /* non-fatal */
     }
     return this.getLights()
+  }
+
+  // GLOBAL flat/faceted shading — sets the build-time default for future materials
+  // and flips every LIVE catalog material in place (one cached pipeline swap each;
+  // geometry untouched, so toggling back is instant).
+  private applyFlatShading(on: boolean): void {
+    setFlatShadingEnabled(on)
+    this.scene.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!(mesh as unknown as { isMesh?: boolean }).isMesh) return
+      for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+        const sm = m as THREE.MeshStandardMaterial
+        if (m?.userData?.catalogMat && sm.flatShading !== on) {
+          sm.flatShading = on
+          sm.needsUpdate = true
+        }
+      }
+    })
   }
 
   // global emissive self-illum lift — apply to each built entity's materials.

@@ -3,7 +3,7 @@
   "id": "star",
   "name": "Star",
   "category": "pickup",
-  "materials": { "star": { "material": "metal_02", "flat": true } },
+  "materials": { "star": { "material": "metal_02" } },
   "rig": {
     "spinner": {
       "pos": [0, 0.55, 0],

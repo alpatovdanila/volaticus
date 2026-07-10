@@ -54,10 +54,10 @@
     "keel": { "inherit": "hilt" },
     "sword_grip": { "inherit": "hilt" },
     "sword_guard": { "inherit": "hilt" },
-    "sail": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true },
+    "sail": { "material": "plaster_wall_01", "uvMode": "stretch" },
     "sail_l": { "inherit": "sail" },
     "sail_r": { "inherit": "sail" },
-    "sail_trim": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true },
+    "sail_trim": { "material": "plaster_wall_01", "uvMode": "stretch" },
     "sail_tip_l": { "inherit": "sail_trim" },
     "sail_tip_r": { "inherit": "sail_trim" }
   },

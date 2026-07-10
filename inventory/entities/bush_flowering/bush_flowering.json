@@ -6,17 +6,11 @@
   "tags": ["vegetation", "nature"],
   "notes": "Low-poly bush dotted with stemless blossom heads sitting directly on the main blob's surface (positions computed on the blob ellipsoid); oneOf picks pink or white blossoms.",
   "materials": {
-    "leaves": { "material": "grass_01", "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "leaves": { "material": "grass_01", "uvScale": 0.25, "uvProject": "box" },
     "blob_a": { "inherit": "leaves" },
     "blob_c": { "inherit": "leaves" },
-    "leaves_light": { "material": "grass_01", "flat": true, "inherit": "leaves" },
-    "petal_pink": {
-      "material": "concrete_wall_01",
-      "uvMode": "stretch",
-      "uvRot": 90,
-      "flat": true,
-      "inherit": "petal_white"
-    },
+    "leaves_light": { "material": "grass_01", "inherit": "leaves" },
+    "petal_pink": { "material": "concrete_wall_01", "uvMode": "stretch", "uvRot": 90, "inherit": "petal_white" },
     "fp_a": { "inherit": "petal_pink", "uvProject": "planar" },
     "fp_b": { "inherit": "petal_pink", "uvProject": "planar" },
     "fp_c": { "inherit": "petal_pink", "uvProject": "planar" },
@@ -25,7 +19,7 @@
     "fp_f": { "inherit": "petal_pink", "uvProject": "planar" },
     "fp_g": { "inherit": "petal_pink", "uvProject": "planar" },
     "fp_h": { "inherit": "petal_pink", "uvProject": "planar" },
-    "petal_white": { "material": "concrete_wall_01", "uvMode": "stretch", "uvRot": 90, "flat": true },
+    "petal_white": { "material": "concrete_wall_01", "uvMode": "stretch", "uvRot": 90 },
     "fw_a": { "inherit": "petal_white" },
     "fw_b": { "inherit": "petal_white" },
     "fw_c": { "inherit": "petal_white" },
@@ -33,7 +27,7 @@
     "fw_e": { "inherit": "petal_white" },
     "fw_f": { "inherit": "petal_white" },
     "fw_g": { "inherit": "petal_white" },
-    "fw_h": { "flat": true, "inherit": "petal_white" }
+    "fw_h": { "inherit": "petal_white" }
   },
   "rig": {
     "root": {

@@ -40,7 +40,8 @@ export const MaterialSchema = z.object({
   // value. Parent slots referenced by no geometry are legal group knobs.
   inherit: z.string().min(1).optional(),
   tint: hexColor.optional(), // per-slot albedo multiply (over the material's own tint)
-  flat: z.boolean().optional(), // flat shading override — the low-poly look
+  // NOTE: no `flat` — shading is a GLOBAL artistic choice (Light panel "flat
+  // shading"); v8 bakes carry crease-welded smooth normals on every shape.
   // render both faces for this slot (overrides catalog tuning.doubleSided). Needed
   // by open shells (barrel body) so the far interior wall isn't backface-culled;
   // kept per-slot so a shared catalog material stays single-sided on solid props.

@@ -44,7 +44,7 @@ const inv = new Inventory()
 // is a renderer-CREATION option (SSAA render scale applies live; MSAA needs the reload).
 type AAMode = 'off' | 'ssaa2' | 'msaa' | 'msaa_ssaa15'
 const RENDER_KEY = 'volaticus.render'
-const renderPrefs: { parallax: boolean; samples: number; aa: AAMode } = { parallax: false, samples: 24, aa: 'off' }
+const renderPrefs: { parallax: boolean; samples: number; aa: AAMode; gtao: boolean; gtaoRes: number } = { parallax: false, samples: 24, aa: 'off', gtao: false, gtaoRes: 1 }
 try {
   const raw = localStorage.getItem(RENDER_KEY)
   if (raw) {
@@ -52,6 +52,8 @@ try {
     renderPrefs.parallax = !!s.parallax
     if (typeof s.samples === 'number') renderPrefs.samples = s.samples
     if (s.aa === 'off' || s.aa === 'ssaa2' || s.aa === 'msaa' || s.aa === 'msaa_ssaa15') renderPrefs.aa = s.aa
+    renderPrefs.gtao = s.gtao === true // default OFF (per-frame cost — opt-in)
+    if (s.gtaoRes === 1 || s.gtaoRes === 0.75 || s.gtaoRes === 0.5) renderPrefs.gtaoRes = s.gtaoRes
   }
 } catch {
   /* non-fatal */
@@ -61,6 +63,8 @@ const aaMsaa = (aa: AAMode): boolean => aa.startsWith('msaa')
 
 const vp = new Viewport($('#canvas-wrap'), { antialias: aaMsaa(renderPrefs.aa) })
 vp.setRenderScale(aaScale(renderPrefs.aa))
+vp.setGtaoResolution(renderPrefs.gtaoRes)
+vp.setGtao(renderPrefs.gtao) // AO intensity itself rides the LIGHT prefs (LightParams.ao)
 ;(window as unknown as Record<string, unknown>).__dbg = {
   get vp() {
     return vp
@@ -111,7 +115,7 @@ const variantsPath = (id: string) => `entities/${id}/${id}.variants.json`
 // Bump when the GENERATOR changes (default segment counts, jitter math, new shape
 // behaviour) — folds into rigStamp below, so every sidecar reads as stale and offers
 // the explicit "⟲ stale geometry" regen without touching any entity JSON.
-const GEOM_BAKE_VERSION = 4 // v4: canonical crease-angle (60°) welded normals (v3: first seam-weld pass, v2: raised radial segment defaults)
+const GEOM_BAKE_VERSION = 8 // v8: crease-welded normals for non-indexed soup too — smooth/flat toggle works on every shape (v7: vertex-AO retired)
 
 // Fingerprint of everything the geometry bake READS from the doc (rig + variants config).
 // Stamped into each geom sidecar; a mismatch marks the entity stale in the overlay —
@@ -679,7 +683,7 @@ function bindingAtPath(obj: unknown, path: (string | number)[]): { effect?: unkn
 
 function setSlotParam(
   slot: string,
-  param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject' | 'flat',
+  param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject',
   value: string,
 ): void {
   if (!sel || sel.kind !== 'entity') return
@@ -712,13 +716,6 @@ function setSlotParam(
         if (inheriting) m.uvProject = 'none'
         else delete m.uvProject
       } else m.uvProject = value
-    } else if (param === 'flat') {
-      // '' = smooth (the default). Same inherit-pinning rule as uvProject:
-      // smooth on an inheriting slot persists an explicit false over a flat parent.
-      if (value === '') {
-        if (inheriting) m.flat = false
-        else delete m.flat
-      } else m.flat = true
     } else {
       const deg = parseInt(value, 10)
       if (deg === 0 && !inheriting) delete m.uvRot
@@ -776,7 +773,7 @@ function setSlotInherit(slot: string, parent: string | null): void {
       m.inherit = parent
     } else {
       delete m.inherit
-      for (const k of ['material', 'tint', 'uvMode', 'uvScale', 'uvRot', 'uvProject', 'flat'] as const) {
+      for (const k of ['material', 'tint', 'uvMode', 'uvScale', 'uvRot', 'uvProject'] as const) {
         const v = (resolved as Record<string, unknown>)[k]
         if (v !== undefined && m[k] === undefined) m[k] = v
       }
@@ -1074,7 +1071,6 @@ function refreshSlots(): void {
         // 'none' (explicit authored-UVs override) displays as the '—' choice;
         // own.uvProject still marks it overridden → the ↺ reset shows.
         uvProject: (m.uvProject === 'none' ? '' : (m.uvProject ?? '')) as '' | 'box' | 'planar' | 'sphere',
-        flat: m.flat ?? false, // slot-only; unset = smooth
         inherit: def.inherit ?? null,
         // re-check "inherit" pre-selects the slot's former parent (pre-freeze)
         lastInherit: sel ? (frozenParents.get(frozenKey(sel.id, slot)) ?? null) : null,
@@ -1085,7 +1081,6 @@ function refreshSlots(): void {
           uvScale: def.uvScale !== undefined,
           uvRot: def.uvRot !== undefined,
           uvProject: def.uvProject !== undefined,
-          flat: def.flat !== undefined,
         },
         inheritOptions: inheritOpts,
         depth,
@@ -1328,6 +1323,7 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
   const hdriSel = $(cfg.fp + 'hdri') as HTMLSelectElement
   const toneSel = $(cfg.fp + 'tonemap') as HTMLSelectElement
   const hideBgChk = $(cfg.fp + 'hidebg') as HTMLInputElement
+  const flatChk2 = $(cfg.fp + 'flat') as HTMLInputElement
   for (const h of HDRIS) {
     const o = document.createElement('option')
     o.value = h.id
@@ -1335,11 +1331,11 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
     hdriSel.appendChild(o)
   }
   const fields: {
-    key: 'rotation' | 'intensity' | 'emissive'
+    key: 'rotation' | 'intensity' | 'emissive' | 'ao'
     input: HTMLInputElement
     val: HTMLElement
     fmt(n: number): string
-  }[] = (['rotation', 'intensity', 'emissive'] as const).map((key) => ({
+  }[] = (['rotation', 'intensity', 'emissive', 'ao'] as const).map((key) => ({
     key,
     input: $(cfg.fp + key) as HTMLInputElement,
     val: $(cfg.fp + key + '-val'),
@@ -1349,6 +1345,7 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
     hdriSel.value = p.hdri
     toneSel.value = p.tonemap
     hideBgChk.checked = p.hideBg
+    flatChk2.checked = p.flat
     for (const f of fields) {
       f.input.value = String(p[f.key])
       f.val.textContent = f.fmt(p[f.key])
@@ -1358,6 +1355,7 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
   hdriSel.onchange = () => applyLightsEverywhere({ hdri: hdriSel.value })
   toneSel.onchange = () => applyLightsEverywhere({ tonemap: toneSel.value as LightParams['tonemap'] })
   hideBgChk.onchange = () => applyLightsEverywhere({ hideBg: hideBgChk.checked })
+  flatChk2.onchange = () => applyLightsEverywhere({ flat: flatChk2.checked })
   for (const f of fields) f.input.oninput = () => applyLightsEverywhere({ [f.key]: parseFloat(f.input.value) })
   ;($(cfg.reset) as HTMLButtonElement).onclick = () => pushLightsToAll(vp.resetLights())
   btn.onclick = () => {
@@ -1410,6 +1408,29 @@ function initRenderPanel(): void {
       /* private mode / quota */
     }
   }
+  // GTAO on/off: swaps the frame path through the post chain — applies live. The
+  // AO intensity knob lives in the LIGHT panel (it's tuned against the sky); the
+  // resolution scale here is the cost lever (per-pixel cost × res²).
+  const gtaoChk = $('#rn-gtao') as HTMLInputElement
+  const gtaoResRow = $('#rn-gtao-res-row')
+  const gtaoResSel = $('#rn-gtao-res') as HTMLSelectElement
+  const syncGtaoRes = (): void => {
+    gtaoResSel.value = String(renderPrefs.gtaoRes)
+    gtaoResRow.hidden = !renderPrefs.gtao
+  }
+  gtaoChk.checked = renderPrefs.gtao
+  gtaoChk.onchange = () => {
+    renderPrefs.gtao = gtaoChk.checked
+    persist()
+    vp.setGtao(gtaoChk.checked)
+    syncGtaoRes()
+  }
+  gtaoResSel.onchange = () => {
+    renderPrefs.gtaoRes = parseFloat(gtaoResSel.value)
+    persist()
+    vp.setGtaoResolution(renderPrefs.gtaoRes)
+  }
+  syncGtaoRes()
   // Antialiasing: SSAA (render scale) applies LIVE; the MSAA half is a renderer-creation
   // option, so flipping it persists + reloads (the busy overlay covers the boot).
   aaSel.value = renderPrefs.aa

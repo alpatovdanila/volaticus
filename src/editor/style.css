@@ -68,6 +68,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 #light-pop[hidden], #render-pop[hidden] { display: none; }
 #render-pop .light-row label { width: auto; }
 #rn-samples-row[hidden] { display: none; }
+#rn-gtao-res-row[hidden] { display: none; }
 .light-row { display: flex; align-items: center; gap: 8px; }
 .light-row label { width: 58px; flex: none; color: var(--dim); font-size: 12px; }
 .light-row input[type='range'] { flex: 1; min-width: 0; accent-color: var(--accent); }

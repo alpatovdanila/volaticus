@@ -6,7 +6,7 @@
   "tags": ["stone", "nature"],
   "notes": "Cairn of rounded rocks (v1 makeStonePile) — four squashed boulders always, three more by chance (4-7 total, ~1.5 m mound), plus a chance moss blob tucked in the top. Low cylinder collider — scenery bump, not a platform. oneOf crown: stacked / twin / slab top; chance pebbles + a tiny mushroom.",
   "materials": {
-    "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
+    "stone": { "material": "cliff_rocks_07", "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
     "stone_dark": { "inherit": "stone", "material": "cliff_rocks_06" },
     "rock_a": { "inherit": "stone" },
     "rock_b": { "inherit": "stone_dark" },
@@ -15,7 +15,7 @@
     "rock_e": { "inherit": "stone" },
     "rock_top": { "inherit": "stone_dark" },
     "rock_f": { "inherit": "stone" },
-    "moss_blob": { "material": "grass_01", "flat": true, "uvScale": 0.25 }
+    "moss_blob": { "material": "grass_01", "uvScale": 0.25 }
   },
   "rig": {
     "root": {

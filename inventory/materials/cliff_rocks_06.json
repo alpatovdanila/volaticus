@@ -21,7 +21,8 @@
     "emissive": 0,
     "opacity": 1,
     "cutout": false,
-    "doubleSided": false
-
+    "doubleSided": false,
+    "height": 0.115,
+    "parallax": true
   }
 }

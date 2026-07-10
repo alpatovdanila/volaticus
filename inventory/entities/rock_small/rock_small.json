@@ -6,10 +6,10 @@
   "tags": ["stone", "carryable"],
   "notes": "Pickable low-poly pebble — faceted low-segment spheres, flat shading. oneOf picks the shape.",
   "materials": {
-    "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25 },
+    "stone": { "material": "cliff_rocks_07", "uvScale": 0.25 },
     "pebble_round": { "inherit": "stone" },
     "pebble_flat": { "inherit": "stone" },
-    "stone_dark": { "material": "cliff_rocks_06", "flat": true, "uvScale": 2 }
+    "stone_dark": { "material": "cliff_rocks_06", "uvScale": 2 }
   },
   "rig": {
     "root": {

@@ -6,7 +6,7 @@
   "tags": ["village", "light", "metal"],
   "notes": "Slender iron village lamppost with a bracket arm and a hanging four-ribbed lantern box. The glowstone glass reads lit without any runtime light. Lantern sways gently (±2°) on its hook.",
   "materials": {
-    "iron": { "material": "metal_01", "flat": true, "uvScale": 0.25 },
+    "iron": { "material": "metal_01", "uvScale": 0.25 },
     "base": { "inherit": "iron" },
     "post": { "inherit": "iron" },
     "arm": { "inherit": "iron" },
@@ -20,10 +20,10 @@
     "rib_d": { "inherit": "iron" },
     "base_plate": { "inherit": "iron" },
     "knob": { "inherit": "iron" },
-    "wood": { "material": "bark_02", "flat": true, "uvScale": 0.25 },
+    "wood": { "material": "bark_02", "uvScale": 0.25 },
     "collar": { "inherit": "wood" },
     "finial": { "inherit": "wood" },
-    "glass": { "material": "concrete_wall_01", "uvMode": "stretch", "flat": true }
+    "glass": { "material": "concrete_wall_01", "uvMode": "stretch" }
   },
   "rig": {
     "root": {

@@ -85,6 +85,15 @@ export interface LightParams {
   emissive: number // global self-illumination 0..1: adds emissive*albedo to every
   // surface, lifting dark areas toward the WYSIWYG flat color (0 = pure HDRI lighting)
   hideBg: boolean // hide the HDRI sky (flat backdrop) but KEEP its lighting
+  // ambient-occlusion intensity — the GTAO darkness curve (0 = off, 1 = neutral,
+  // >1 = deeper contact shading). Lives WITH the lighting because AO depth is an
+  // artistic call made against the current sky. The rig itself ignores it: the
+  // viewport feeds it to the GTAO chain; effective only while Render → GTAO is on.
+  ao: number
+  // GLOBAL flat (faceted) shading — the retro low-poly look. Default OFF = smooth
+  // everywhere (v8 bakes give every shape crease-welded smooth normals). Another
+  // rig-ignored artistic flag: the viewport flips every catalog material in place.
+  flat: boolean
 }
 
 export const LIGHT_DEFAULTS: LightParams = {
@@ -94,6 +103,8 @@ export const LIGHT_DEFAULTS: LightParams = {
   intensity: 1,
   emissive: 0,
   hideBg: false,
+  ao: 1,
+  flat: false,
 }
 
 const TONEMAPS: Record<ToneMap, THREE.ToneMapping> = {
@@ -116,6 +127,8 @@ export function clampLightParams(p: Partial<LightParams>): LightParams {
     intensity: num(p.intensity as number, 0, 3, d.intensity),
     emissive: num(p.emissive as number, 0, 1, d.emissive),
     hideBg: p.hideBg ?? d.hideBg,
+    ao: num(p.ao as number, 0, 3, d.ao),
+    flat: p.flat ?? d.flat,
   }
 }
 

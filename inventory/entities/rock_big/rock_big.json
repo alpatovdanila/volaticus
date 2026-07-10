@@ -6,19 +6,19 @@
   "tags": ["stone", "scenery"],
   "notes": "Low-poly boulder cluster — faceted low-segment spheres, flat shading. oneOf silhouette; moss cap and companion pebble by chance.",
   "materials": {
-    "stone": { "material": "cliff_rocks_07", "uvRot": 15, "flat": true, "uvScale": 0.25, "uvProject": "box" },
+    "stone": { "material": "cliff_rocks_07", "uvRot": 15, "uvScale": 0.25, "uvProject": "box" },
     "br_main": { "inherit": "stone" },
     "br_small": { "inherit": "stone" },
     "bs_a": { "inherit": "stone" },
     "bs_c": { "inherit": "stone" },
     "sp_tip": { "inherit": "stone" },
     "sp_side": { "inherit": "stone" },
-    "stone_dark": { "flat": true, "inherit": "stone" },
+    "stone_dark": { "inherit": "stone" },
     "br_side": { "inherit": "stone" },
-    "bs_b": { "flat": true, "inherit": "stone" },
+    "bs_b": { "inherit": "stone" },
     "sp_base": { "inherit": "stone" },
     "companion": { "inherit": "stone" },
-    "moss": { "material": "grass_01", "flat": true }
+    "moss": { "material": "grass_01" }
   },
   "rig": {
     "root": {

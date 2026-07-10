@@ -6,7 +6,7 @@
   "tags": ["stone", "nature", "climbable"],
   "notes": "Tall flat-faced quarry slab (v1 makeRockSlab, 1.4:13:7 proportions at ~3.5 m). Faceted box plus bevel prisms on the narrow ends; the wide ±X faces stay flat for wall-jump chimneys and the top is a walkable ledge. Instances scale up for big spans — variants.scale allows 0.8-1.6.",
   "materials": {
-    "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
+    "stone": { "material": "cliff_rocks_07", "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
     "slab_main": { "inherit": "stone" },
     "bevel_front": { "inherit": "stone" },
     "bevel_back": { "inherit": "stone", "material": "cliff_rocks_06" },

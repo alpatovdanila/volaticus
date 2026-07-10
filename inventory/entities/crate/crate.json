@@ -6,11 +6,11 @@
   "tags": ["wood", "container"],
   "notes": "Slatted low-poly crate: corner posts + rails frame an inset panel, diagonal braces by chance. oneOf damage variant.",
   "materials": {
-    "panel": { "material": "wood_planks_20", "flat": true },
+    "panel": { "material": "wood_planks_20" },
     "panel_2": { "inherit": "panel", "uvRot": 90 },
     "hole_split_a": { "inherit": "panel" },
     "hole_split_b": { "inherit": "panel" },
-    "frame": { "material": "bark_11", "flat": true, "uvProject": "box" },
+    "frame": { "material": "bark_11", "uvProject": "box" },
     "post_a": { "inherit": "frame" },
     "post_b": { "inherit": "frame", "uvMode": "tile" },
     "post_c": { "inherit": "frame" },
@@ -24,7 +24,7 @@
     "brace_f": { "inherit": "frame" },
     "brace_b": { "inherit": "frame" },
     "chip_board": { "inherit": "frame" },
-    "interior": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true },
+    "interior": { "material": "plaster_wall_01", "uvMode": "stretch" },
     "chip_opening": { "inherit": "interior" },
     "hole_opening": { "inherit": "interior" }
   },

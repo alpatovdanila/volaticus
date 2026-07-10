@@ -33,10 +33,10 @@ Conventions: meters, Y-up, entity origin at ground-center. Resource paths are re
                "tint": "#f2a13c",        // per-slot albedo multiply, ON TOP of the material's own tint (white
                                          // texture + tint = flat color). THE source of "same material, different
                                          // colors" — editor shows a color swatch on every slot chip (white = off)
-               "flat": true,             // flat (faceted) shading — SLOT-ONLY (the catalog has no flat: shading
-                                         // describes the surface, not the substance). Unset = smooth. Slot chips
-                                         // expose it as "shade: smooth | flat"; smooth is what makes round parts
-                                         // (drums, barrels, rings) read round — see the round-surface gotcha below
+               // (NO per-slot "flat" — shading is GLOBAL: the Light panel's "flat shading"
+               // checkbox flips every entity between smooth (default) and faceted at once.
+               // v8+ bakes carry crease-welded smooth normals on every shape, so both looks
+               // work everywhere; the retired slot key was stripped from all entities.)
                "doubleSided": true,      // render both faces (open shells) — overrides `tuning.doubleSided`;
                                          // kept per-slot so a shared catalog material stays single-sided elsewhere
                "uvMode": "tile|fit|stretch" or a "U V" pair, "uvScale": 1,
@@ -63,7 +63,7 @@ Conventions: meters, Y-up, entity origin at ground-center. Resource paths are re
 ### Slot inheritance (`"inherit"`)
 
 A slot may declare `"inherit": "<parentSlot>"` instead of (or in addition to) its own keys.
-Every property that is UNSET on the slot — `material`, `tint`, `flat`, `doubleSided`, `uvMode`,
+Every property that is UNSET on the slot — `material`, `tint`, `doubleSided`, `uvMode`,
 `uvScale`, `uvRot`, `uvProject` — resolves from the parent, recursively (chains allowed). Own keys are
 **overrides**; **reset = delete the override key**, which falls straight back to the live
 parent value. The single shared resolver (`resolveMaterials` in `src/inventory/schema.ts`)
@@ -204,6 +204,9 @@ Rules and semantics:
   //                          supplies material DEFINITIONS (by slot name) + anims (by
   //                          node name). Re-composed on a craft/sub edit, a reroll, or
   //                          "⟳ variants" — deterministically. Any runtime cycles them (🎲).
+  //                          (Bakes v5–v6 stored per-vertex AO in an `ao` key — RETIRED
+  //                          in favor of screen-space GTAO (Render panel); files from
+  //                          that window may carry the inert key, the loader ignores it.)
   // NOTE: variants derive their variety from LAYOUT (oneOf/chance/rotJitter). If
   // `count` exceeds the distinct layouts an entity can produce, some geom files are
   // identical — set count to the number of meaningful compositions.
@@ -292,8 +295,8 @@ and the studio's material manager edits `tuning`. Slots layer only geometry/plac
     "normalScale": 1, "aoIntensity": 1,
     "emissive": 0,                // 0..4; the emissive map binds only when this is > 0
     "opacity": 1, "cutout": false,    // opacity < 1 = translucent; cutout = alpha-test (leaves/sprites)
-    "doubleSided": false }        // NO "flat" here — flat/smooth shading is per-ENTITY-SLOT (a surface
-                                  // decision, like projection), never on the catalog material
+    "doubleSided": false }        // NO "flat" here — flat/smooth shading is GLOBAL (Light panel),
+                                  // never on the catalog material or the entity slot
   // optional tuning keys: "uvScale" (default tiling density), "alphaMap" (one resource
   // path used as an opacity/cutout mask), "parallax" (true = this material OPTS INTO parallax
   // occlusion mapping — its height map marches real view-dependent depth; runs only while the

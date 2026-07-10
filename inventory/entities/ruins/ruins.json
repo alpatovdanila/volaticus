@@ -6,7 +6,7 @@
   "tags": ["stone", "ancient", "scenery"],
   "notes": "Very old ruins; oneOf picks one of five layouts: broken columns / arch / crumbling wall / corner with window / raised floor. Moss and rubble by chance.",
   "materials": {
-    "stone": { "material": "concrete_wall_10", "flat": true, "uvScale": 2 },
+    "stone": { "material": "concrete_wall_10", "uvScale": 2 },
     "col_tall": { "inherit": "stone" },
     "col_broken": { "inherit": "stone" },
     "col_fallen": { "inherit": "stone" },
@@ -22,7 +22,7 @@
     "floor_slab": { "inherit": "stone", "uvMode": "tile", "uvScale": 2, "uvProject": "box", "material": "concrete_wall_10" },
     "floor_stump_a": { "inherit": "stone", "material": "concrete_pillar_02" },
     "floor_stump_c": { "inherit": "stone", "material": "concrete_pillar_01", "uvProject": "box" },
-    "stone_dark": { "material": "concrete_wall_10", "uvScale": 2, "flat": true },
+    "stone_dark": { "material": "concrete_wall_10", "uvScale": 2 },
     "cap_tall": { "inherit": "stone_dark" },
     "break_top": { "inherit": "stone_dark" },
     "col_stump": { "inherit": "stone_dark" },
@@ -36,7 +36,7 @@
     "floor_step_a": { "inherit": "stone_dark", "material": "concrete_wall_10" },
     "floor_stump_b": { "inherit": "stone_dark", "material": "concrete_pillar_02" },
     "floor_crack_block": { "inherit": "stone_dark" },
-    "moss": { "material": "grass_01", "uvMode": "stretch", "flat": true },
+    "moss": { "material": "grass_01", "uvMode": "stretch" },
     "moss_a": { "inherit": "moss" },
     "moss_b": { "inherit": "moss" }
   },

@@ -6,10 +6,10 @@
   "tags": ["stone", "nature", "platform"],
   "notes": "Flat-topped ford stone (v1 makeSteppingStone) — a tapered puck ~1.2 m across and ~0.5 m tall, top standable. Stagger a run of them for river fords or a rising stair (the v1 elevator replacement). Chance moss patch and side pebble.",
   "materials": {
-    "stone": { "material": "cliff_rocks_07", "flat": true, "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
+    "stone": { "material": "cliff_rocks_07", "uvScale": 0.25, "uvRot": 15, "uvProject": "box" },
     "puck": { "inherit": "stone" },
     "pebble": { "inherit": "stone", "material": "cliff_rocks_06" },
-    "moss_patch": { "material": "grass_01", "flat": true, "uvScale": 0.25 }
+    "moss_patch": { "material": "grass_01", "uvScale": 0.25 }
   },
   "rig": {
     "root": {

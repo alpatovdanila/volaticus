@@ -71,7 +71,7 @@ export function renderItemList(inv: Inventory, filter: string, selected: string 
 
 // per-key override state for an inheriting slot (item 34): true = the key is
 // set on THIS slot (an override → gets a ↺ reset), false = inherited (ghosted)
-export type OverridableKey = 'material' | 'tint' | 'uvMode' | 'uvScale' | 'uvRot' | 'uvProject' | 'flat'
+export type OverridableKey = 'material' | 'tint' | 'uvMode' | 'uvScale' | 'uvRot' | 'uvProject'
 
 export interface SlotInfo {
   slot: string
@@ -82,7 +82,6 @@ export interface SlotInfo {
   uvScale: number
   uvRot: number // degrees (item 35: any angle; the dropdown offers 15° steps)
   uvProject: '' | 'box' | 'planar' | 'sphere' // per-slot projection override ('' = material/authored)
-  flat: boolean // RESOLVED shading — flat (faceted) vs smooth; slot-only, unset = smooth
   // item 34: persisted inheritance ------------------------------------------
   inherit: string | null // raw inherit target (null = standalone slot)
   lastInherit: string | null // former parent (pre-freeze) — re-check re-binds to it
@@ -106,7 +105,7 @@ export interface FxTextureInfo {
 
 export interface SlotCallbacks {
   onPick(key: string): void
-  onParam(slot: string, param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject' | 'flat', value: string): void
+  onParam(slot: string, param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject', value: string): void
   // live tint while dragging the color picker — applies the color to the built
   // material directly (cheap, no rebuild). onParam still commits on 'change'.
   onTintLive(slot: string, value: string): void
@@ -589,23 +588,6 @@ export function renderSlotChips(
     decorate(projSel, 'uvProject', controls)
     meta.appendChild(controls)
     const surf = el('div', 'slot-controls')
-    // flat/smooth shading — a SURFACE decision, so it lives here (per slot), not in
-    // the material catalog. '' = smooth (the default), 'flat' = faceted.
-    const shadeSel = el('select', 'slot-select') as HTMLSelectElement
-    for (const [val, label] of [
-      ['', 'shade: smooth'],
-      ['flat', 'shade: flat'],
-    ]) {
-      const o = el('option', undefined, label) as HTMLOptionElement
-      o.value = val
-      shadeSel.appendChild(o)
-    }
-    shadeSel.value = s.flat ? 'flat' : ''
-    shadeSel.title =
-      'shading for this part: smooth = interpolated normals (round things read round), flat = one normal per facet (the chunky low-poly look). On an inheriting part, choosing smooth PINS it over a flat parent — ↺ to re-follow the parent'
-    shadeSel.onclick = (e) => e.stopPropagation()
-    shadeSel.onchange = () => cb.onParam(s.slot, 'flat', shadeSel.value)
-    decorate(shadeSel, 'flat', surf)
     // tint: the color multiplied over the texture — THE source of "same texture,
     // different color". Rendered as our own square swatch (the native color-input
     // chrome is too small to read); the hidden input only supplies the picker.

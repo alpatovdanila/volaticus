@@ -6,11 +6,11 @@
   "tags": ["chaser", "walker", "puncher"],
   "notes": "A living clenched FIST on stubby legs: runs toward its target and delivers a devastating punch. Four curled fingers with knuckle bumps face forward, thumb wraps the right side, wrist stub behind. Notices the target (alert ~1s), sprints to punch, runs out of breath and rests. Forward = +Z (knuckles end).",
   "materials": {
-    "skin": { "material": "plaster_wall_01", "uvMode": "stretch", "flat": true, "tint": "#f2c79c" },
+    "skin": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#f2c79c" },
     "skin_dark": { "inherit": "skin", "tint": "#e0b184" },
-    "knuckle": { "inherit": "skin", "flat": false },
+    "knuckle": { "inherit": "skin" },
     "leg": { "material": "metal_01", "uvScale": 4, "tint": "#2f2b26" },
-    "boot": { "material": "bark_11", "flat": true, "uvScale": 2, "tint": "#5a3d28" }
+    "boot": { "material": "bark_11", "uvScale": 2, "tint": "#5a3d28" }
   },
   "rig": {
     "body": {

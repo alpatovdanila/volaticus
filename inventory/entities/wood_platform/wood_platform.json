@@ -6,10 +6,10 @@
   "tags": ["wood", "structure", "platform"],
   "notes": "Round plank platform on a center post with three splayed strut legs (v1 makePlatformWood). Deck top sits at ~2.2 m and is standable — the box collider matches the deck footprint (legs are pass-through). variants.scale spans 0.9-2.1: pick a tall variant for the ~4.6 m placements.",
   "materials": {
-    "deck": { "material": "wood_planks_14", "flat": true, "uvRot": 90, "uvProject": "box" },
-    "wood_dark": { "material": "wood_planks_20", "flat": true, "uvProject": "box" },
+    "deck": { "material": "wood_planks_14", "uvRot": 90, "uvProject": "box" },
+    "wood_dark": { "material": "wood_planks_20", "uvProject": "box" },
     "rim": { "inherit": "wood_dark" },
-    "post": { "material": "wood_planks_18", "flat": true, "uvRot": 90, "uvProject": "box" },
+    "post": { "material": "wood_planks_18", "uvRot": 90, "uvProject": "box" },
     "collar": { "inherit": "wood_dark" },
     "strut_a": { "inherit": "wood_dark", "uvRot": 90 },
     "strut_b": { "inherit": "wood_dark", "uvRot": 90 },

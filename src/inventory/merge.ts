@@ -56,17 +56,27 @@ function keepSeparateNodes(doc: EntityDoc): Set<string> {
 // m.map/normalMap/… all read '_' here — without the parallaxKey line they'd hash
 // identically and distinct materials would collapse into one wrong bucket. materials.ts
 // publishes their node-texture identity on userData.parallaxKey for exactly this test.
-export function materialKey(m: EntityMaterial): string {
+function keyOf(m: EntityMaterial, withColor: boolean): string {
   const u = (t: THREE.Texture | null): string => (t ? t.uuid : '_')
   return [
     u(m.map), u(m.normalMap), u(m.roughnessMap), u(m.metalnessMap),
     u(m.aoMap), u(m.emissiveMap), u(m.bumpMap), u(m.alphaMap),
-    m.color.getHexString(), m.emissive.getHexString(),
+    withColor ? m.color.getHexString() : '_', m.emissive.getHexString(),
     m.roughness, m.metalness, m.aoMapIntensity, m.bumpScale, m.emissiveIntensity, m.envMapIntensity,
     m.normalScale ? `${m.normalScale.x},${m.normalScale.y}` : '_',
     m.flatShading ? 1 : 0, m.side, m.transparent ? 1 : 0, m.opacity, m.alphaTest, m.vertexColors ? 1 : 0,
     (m.userData.parallaxKey as string | undefined) ?? '_',
   ].join('|')
+}
+export function materialKey(m: EntityMaterial): string {
+  return keyOf(m, true)
+}
+// The SceneBatcher's coarser bucket key: tint (material.color) is EXCLUDED because
+// batches paint it per instance via setColorAt — slots differing only by tint share
+// one BatchedMesh (and one pipeline). The per-entity merge (mergeBuiltEntity) keeps
+// using materialKey: a plain THREE.Mesh has no per-instance color.
+export function batchMaterialKey(m: EntityMaterial): string {
+  return keyOf(m, false)
 }
 
 function visibleInTree(o: THREE.Object3D): boolean {
@@ -78,20 +88,50 @@ function visibleInTree(o: THREE.Object3D): boolean {
   return true
 }
 
-// slice a vertex range [start, start+count) of a NON-indexed geometry into a
-// standalone geometry carrying position/normal/uv (all a merge needs).
+// slice a corner range [start, start+count) — index entries when `src` is indexed,
+// vertices when it's soup — into a standalone INDEXED geometry carrying
+// position/normal/uv (all a merge needs). Indexed sources keep their vertex
+// sharing (referenced verts are remapped compactly); soup gets an identity index
+// so every sub is uniformly indexed for mergeGeometries/BatchedMesh.
 function sliceGroup(src: THREE.BufferGeometry, start: number, count: number): THREE.BufferGeometry {
   const sub = new THREE.BufferGeometry()
-  const cut = (name: string, size: number): void => {
-    const a = src.getAttribute(name) as THREE.BufferAttribute | undefined
-    if (!a) return
-    sub.setAttribute(name, new THREE.Float32BufferAttribute((a.array as Float32Array).slice(start * size, (start + count) * size), size))
+  const idx = src.getIndex()
+  let remap: Uint32Array | null = null // compact-vertex id per slice corner (indexed source)
+  let vertCount = count
+  if (idx) {
+    const map = new Map<number, number>()
+    remap = new Uint32Array(count)
+    for (let i = 0; i < count; i++) {
+      const v = idx.getX(start + i)
+      let m = map.get(v)
+      if (m === undefined) map.set(v, (m = map.size))
+      remap[i] = m
+    }
+    vertCount = map.size
+    const cut = (name: string, size: number): void => {
+      const a = src.getAttribute(name) as THREE.BufferAttribute | undefined
+      if (!a) return
+      const out = new Float32Array(vertCount * size)
+      for (const [from, to] of map) for (let k = 0; k < size; k++) out[to * size + k] = a.array[from * size + k] as number
+      sub.setAttribute(name, new THREE.BufferAttribute(out, size))
+    }
+    cut('position', 3)
+    cut('normal', 3)
+    cut('uv', 2)
+    sub.setIndex(new THREE.BufferAttribute(remap, 1))
+  } else {
+    const cut = (name: string, size: number): void => {
+      const a = src.getAttribute(name) as THREE.BufferAttribute | undefined
+      if (!a) return
+      sub.setAttribute(name, new THREE.Float32BufferAttribute((a.array as Float32Array).slice(start * size, (start + count) * size), size))
+    }
+    cut('position', 3)
+    cut('normal', 3)
+    cut('uv', 2)
+    sub.setIndex([...Array(count).keys()])
   }
-  cut('position', 3)
-  cut('normal', 3)
-  cut('uv', 2)
   if (!sub.getAttribute('normal')) sub.computeVertexNormals()
-  if (!sub.getAttribute('uv')) sub.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array((count) * 2), 2))
+  if (!sub.getAttribute('uv')) sub.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(vertCount * 2), 2))
   return sub
 }
 
@@ -149,25 +189,24 @@ export function computeMergeBuckets(
     const frame = frameOf(mesh)
     const localToFrame = new THREE.Matrix4().copy(frame.parent.matrixWorld).invert().multiply(mesh.matrixWorld)
     const geo = mesh.geometry
-    const nonIdx = geo.index ? geo.toNonIndexed() : geo.clone()
-    const vertCount = nonIdx.getAttribute('position').count
-    const groups = nonIdx.groups.length ? nonIdx.groups : [{ start: 0, count: vertCount, materialIndex: 0 }]
+    // corner domain: index entries when indexed, raw verts when soup (sliceGroup handles both)
+    const cornerCount = geo.index ? geo.index.count : geo.getAttribute('position').count
+    const groups = geo.groups.length ? geo.groups : [{ start: 0, count: cornerCount, materialIndex: 0 }]
     const slotByIndex = (mesh.userData.slotByIndex as string[]) ?? []
     const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
 
     for (const g of groups) {
-      const count = g.count === Infinity ? vertCount - g.start : g.count
+      const count = g.count === Infinity ? cornerCount - g.start : g.count
       if (count <= 0) continue
       const mi = g.materialIndex ?? 0
       const mat = (mats[mi] ?? mats[0]) as EntityMaterial
-      const sub = sliceGroup(nonIdx, g.start, count)
+      const sub = sliceGroup(geo, g.start, count)
       sub.applyMatrix4(localToFrame) // bake node transform into the geometry (position + normal)
       const key = frame.name + ' ' + materialKey(mat)
       let b = raw.get(key)
       if (!b) raw.set(key, (b = { mat, frame: frame.name, subs: [] }))
       b.subs.push({ geo: sub, slot: slotByIndex[mi] ?? slotByIndex[0] ?? '', tris: count / 3 })
     }
-    nonIdx.dispose()
     replaced.push(mesh)
   }
 
@@ -180,8 +219,6 @@ export function computeMergeBuckets(
       continue
     }
     if (geos.length > 1) for (const g of geos) g.dispose() // merge copied them
-    const uv = mergedGeo.getAttribute('uv')
-    if (uv && !mergedGeo.getAttribute('uv2')) mergedGeo.setAttribute('uv2', uv) // aoMap samples uv2
     // faceIndex → slot map, so the editor can still pick a material slot on a bucket
     let tri = 0
     const slotRanges = b.subs.map((s) => {

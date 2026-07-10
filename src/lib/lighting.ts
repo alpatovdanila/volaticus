@@ -41,8 +41,11 @@ export interface HdriEntry {
   sky?: string // LDR equirect PNG for the visible background
 }
 
-// the stylized pack: resources/HDRI/stylized HDRI/HDRI_Files/<id>_HDRI.hdr (+ sibling
-// <id>.png skyboxes one level up for most). false = no PNG twin (HDR doubles as sky).
+// the stylized pack: resources/HDRI/stylized HDRI/HDRI_Files/<id>_HDRI_1k.hdr light
+// probes (downsampled from the shipped 4k masters — IBL after PMREM can't tell, and
+// fetch+prefilter is ~16× cheaper) + sibling <id>.webp skyboxes one level up for most
+// (2k WebP re-encodes of the 4k PNG masters: ~100× smaller files, ¼ the VRAM).
+// false = no sky twin (the HDR doubles as sky).
 const STYLIZED: [string, boolean][] = [
   ['sky_linekotsi_01', true], ['sky_linekotsi_01_b', true], ['sky_linekotsi_01_c', false],
   ['sky_linekotsi_02', true], ['sky_linekotsi_02_b', false],
@@ -73,8 +76,8 @@ export const HDRIS: HdriEntry[] = [
     id,
     // 'sky_linekotsi_05_b' → 'Stylized 05 b'
     name: 'Stylized ' + id.replace('sky_linekotsi_', '').replace(/_/g, ' '),
-    hdr: `${STYLIZED_DIR}/HDRI_Files/${id}_HDRI.hdr`,
-    sky: png ? `${STYLIZED_DIR}/${id}.png` : undefined,
+    hdr: `${STYLIZED_DIR}/HDRI_Files/${id}_HDRI_1k.hdr`,
+    sky: png ? `${STYLIZED_DIR}/${id}.webp` : undefined,
   })),
 ]
 
@@ -109,7 +112,7 @@ export interface LightParams {
 }
 
 export const LIGHT_DEFAULTS: LightParams = {
-  hdri: 'qwantani_afternoon_puresky_4k',
+  hdri: 'qwantani_noon_puresky_1k', // 1k probe default — 5MB boot fetch instead of 70MB; IBL after PMREM reads the same
   tonemap: 'agx',
   rotation: 0,
   intensity: 1,

@@ -1011,7 +1011,7 @@ export function renderMgrTuning(
       'Parallax occlusion depth — how deep the height map recesses the surface. Takes effect when the "parallax (POM)" flag below AND the global Render-panel parallax are both on. 0 = flat.', true)
   if (maps.ao)
     slider('aoIntensity', 'aoIntensity', 0, 2, 0.01, t.aoIntensity,
-      'Ambient-occlusion map strength — darkens crevices under indirect (skybox/IBL) light. 0 = off, 1 = baked strength, 2 = deepened. (Uses the mesh uv2.)')
+      'Ambient-occlusion map strength — darkens crevices under indirect (skybox/IBL) light. 0 = off, 1 = baked strength, 2 = deepened.')
   if (maps.emissive)
     slider('emissive', 'emissive', 0, 3, 0.05, t.emissive,
       'Emissive (glow) intensity from the emissive map — the material appears self-lit.')

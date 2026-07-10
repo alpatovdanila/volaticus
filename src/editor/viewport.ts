@@ -1,8 +1,9 @@
 import * as THREE from 'three'
 import { WebGPURenderer, MeshBasicNodeMaterial, RenderPipeline, ShadowNodeMaterial } from 'three/webgpu'
-import { positionLocal, normalLocal, vec3, vec4, float, pass, mrt, output, normalView } from 'three/tsl'
+import { positionLocal, normalLocal, vec2, vec3, vec4, float, pass, mrt, output, normalView, rtt, screenUV, uniform, mix, smoothstep } from 'three/tsl'
 import { ao } from 'three/addons/tsl/display/GTAONode.js'
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js'
+import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { setLevelEnvMap } from '../inventory/envmap'
 import { setFlatShadingEnabled } from '../inventory/materials'
@@ -90,17 +91,20 @@ export class Viewport {
   // is public so its uniforms (radius/thickness/scale…) can be tuned live.
   private post: RenderPipeline | null = null
   gtao: ReturnType<typeof ao> | null = null
+  private gtaoDenoiseRtt: ReturnType<typeof rtt> | null = null // denoise's own scaled target
   private gtaoStrength = this.lightParams.ao // AO intensity rides the lighting prefs
   private gtaoRes = 1 // AO buffer resolution scale (1 = full, 0.5 = quarter cost)
 
   constructor(
     private container: HTMLElement,
-    opts: { antialias?: boolean } = {},
+    opts: { antialias?: boolean; perfTimestamps?: boolean } = {},
   ) {
     // WebGPURenderer (auto WebGL2 fallback). trackTimestamp enables the GPU-timer
     // query pool for the perf HUD (resolved via resolveTimestampsAsync →
-    // info.render.timestamp). antialias = 4× MSAA render targets (WebGPU default count).
-    this.renderer = new WebGPURenderer({ trackTimestamp: true, antialias: opts.antialias ?? false })
+    // info.render.timestamp) — opt-out for hosts that ship no HUD (the game): the
+    // query pool writes ride EVERY pass even when nothing resolves them.
+    // antialias = 4× MSAA render targets (WebGPU default count).
+    this.renderer = new WebGPURenderer({ trackTimestamp: opts.perfTimestamps ?? true, antialias: opts.antialias ?? false })
     container.appendChild(this.renderer.domElement)
 
     // Placeholder background: the sky_22 cubemap shows immediately while the 4k
@@ -125,6 +129,7 @@ export class Viewport {
     // and line pixels carry no meaningful normals — they'd AO to black.
     ;(grid.material as THREE.Material).depthWrite = false
     this.scene.add(grid)
+    this.grid = grid
 
     // shared HDRI environment rig (IBL lighting only).
     this.rig = new LightingRig(this.renderer, this.scene)
@@ -173,37 +178,94 @@ export class Viewport {
   // canvas MSAA sample count does not reach the pass's internal target, so GTAO
   // pairs best with the SSAA antialias modes.
   setGtao(on: boolean): void {
-    if (on === !!this.post) return
-    if (!on) {
-      this.post?.dispose()
-      this.post = null
-      this.gtao = null
-      return
-    }
-    const scenePass = pass(this.scene, this.camera)
-    scenePass.setMRT(mrt({ output, normal: normalView }))
-    const scenePassColor = scenePass.getTextureNode('output')
-    const scenePassNormal = scenePass.getTextureNode('normal')
-    const scenePassDepth = scenePass.getTextureNode('depth')
-    const aoPass = ao(scenePassDepth, scenePassNormal, this.camera)
-    aoPass.radius.value = 0.25 // view-space meters — sized to our ~0.5–2m props
-    // thin-surface halo mitigation: GTAO assumes every depth sample extends
-    // `thickness` into the screen — lower = less phantom occlusion smearing
-    // BEHIND objects as the camera orbits (inherent SS artifact, tunable not fixable)
-    aoPass.thickness.value = 0.35
-    aoPass.scale.value = this.gtaoStrength
-    aoPass.resolutionScale = this.gtaoRes
-    this.gtao = aoPass
-    // GTAO is spatially noisy per pixel — the companion denoiser makes it presentable
-    const aoDenoised = denoise(aoPass.getTextureNode(), scenePassDepth, scenePassNormal, this.camera)
-    this.post = new RenderPipeline(this.renderer)
-    // AO rides the RED channel (RedFormat target) — float() takes .x, vec3 splats it
-    // to gray. (as never: DenoiseNode's .d.ts lacks the fluent node typing.)
-    this.post.outputNode = scenePassColor.mul(vec4(vec3(float(aoDenoised as never)), 1))
+    if (on === this.gtaoOn) return
+    this.gtaoOn = on
+    this.rebuildPost()
   }
 
+  // Tilt-shift (miniature/diorama look): a horizontal band around screen center stays
+  // sharp, everything toward the top/bottom edges blends into a gaussian blur.
+  // On/off rebuilds the chain (off compiles no blur passes); strength is a LIVE uniform.
+  setTiltShift(on: boolean): void {
+    if (on === this.tiltShiftOn) return
+    this.tiltShiftOn = on
+    this.rebuildPost()
+  }
+
+  setTiltShiftStrength(v: number): void {
+    this.tiltStrengthU.value = Math.max(0, Math.min(1, v))
+  }
+
+  // (Re)build the post chain for the current gtao/tilt-shift combination — the frame
+  // renders through it whenever either effect is on, direct to canvas otherwise.
+  private rebuildPost(): void {
+    this.post?.dispose()
+    this.post = null
+    this.gtao = null
+    this.gtaoDenoiseRtt = null
+    if (!this.gtaoOn && !this.tiltShiftOn) return
+    // samples: 0 — the pass target must NOT inherit the canvas MSAA sample count
+    // (multisampling an intermediate that feeds per-pixel post math is pure bandwidth;
+    // the post effects pair with the SSAA antialias modes instead).
+    const scenePass = pass(this.scene, this.camera, { samples: 0 })
+    let color: unknown
+    if (this.gtaoOn) {
+      scenePass.setMRT(mrt({ output, normal: normalView }))
+      const scenePassColor = scenePass.getTextureNode('output')
+      const scenePassNormal = scenePass.getTextureNode('normal')
+      const scenePassDepth = scenePass.getTextureNode('depth')
+      const aoPass = ao(scenePassDepth, scenePassNormal, this.camera)
+      aoPass.radius.value = 0.25 // view-space meters — sized to our ~0.5–2m props
+      // thin-surface halo mitigation: GTAO assumes every depth sample extends
+      // `thickness` into the screen — lower = less phantom occlusion smearing
+      // BEHIND objects as the camera orbits (inherent SS artifact, tunable not fixable)
+      aoPass.thickness.value = 0.35
+      aoPass.scale.value = this.gtaoStrength
+      aoPass.resolutionScale = this.gtaoRes
+      this.gtao = aoPass
+      // GTAO is spatially noisy per pixel — the companion denoiser makes it presentable.
+      // The 5×5-tap denoise renders into its OWN target at the AO buffer's resolution
+      // (rtt + setResolutionScale) — inline it ran per FULL-RES output pixel, paying
+      // 25 taps/pixel at canvas res even when the AO buffer was half/quarter size.
+      const denoised = rtt(denoise(aoPass.getTextureNode(), scenePassDepth, scenePassNormal, this.camera) as never)
+      denoised.setResolutionScale(this.gtaoRes)
+      this.gtaoDenoiseRtt = denoised
+      // AO rides the RED channel (RedFormat target) — float() takes .x, vec3 splats it
+      // to gray. (as never: DenoiseNode's .d.ts lacks the fluent node typing.)
+      color = scenePassColor.mul(vec4(vec3(float(denoised as never)), 1))
+    } else {
+      color = scenePass.getTextureNode('output')
+    }
+    if (this.tiltShiftOn) {
+      // blur SOURCE must be a texture node (the gaussian samples it at offsets) — the
+      // ao-multiplied color is a computed node, so park it in its own target first.
+      const sharp = this.gtaoOn ? rtt(color as never) : (color as ReturnType<typeof rtt>)
+      // half-res two-pass gaussian; the live strength uniform scales the tap offsets
+      // (0 = no spread). sigma fixes the tap count at compile time.
+      const blurred = gaussianBlur(sharp as never, vec2(this.tiltStrengthU, this.tiltStrengthU).mul(2) as never, 6, {
+        resolutionScale: 0.5,
+      })
+      // the blur's internal targets default to 8-bit — force half-float or the linear
+      // HDR scene clips at 1.0 inside the blur and the out-of-focus zones wash out
+      // under the filmic output transform (rtt() already defaults to half-float).
+      const b = blurred as unknown as { _horizontalRT: THREE.RenderTarget; _verticalRT: THREE.RenderTarget }
+      b._horizontalRT.texture.type = THREE.HalfFloatType
+      b._verticalRT.texture.type = THREE.HalfFloatType
+      // focus band: sharp within ~12% of screen center, fully blurred past ~45%.
+      // NOTE the function form — method sugar (`d.smoothstep(a,b)`) binds the node as
+      // smoothstep's FIRST parameter (the low edge), which inverts the whole mask.
+      const band = smoothstep(float(0.12), float(0.45), screenUV.y.sub(0.5).abs())
+      color = mix(sharp as never, blurred as never, band as never)
+    }
+    this.post = new RenderPipeline(this.renderer)
+    this.post.outputNode = color as never
+  }
+  private gtaoOn = false
+  private tiltShiftOn = false
+  private tiltStrengthU = uniform(0.5)
+
   gtaoEnabled(): boolean {
-    return !!this.post
+    return this.gtaoOn
   }
 
   // AO intensity — the GTAO power curve (0 = effect off, 1 = neutral, >1 = deeper).
@@ -214,11 +276,13 @@ export class Viewport {
   }
 
   // AO buffer resolution scale — GTAO cost is per-PIXEL of its buffer, so 0.5 =
-  // quarter cost (the denoiser hides most of the softening). Applies live: the
-  // node re-sizes its render targets on the next frame's setSize.
+  // quarter cost (the denoiser hides most of the softening). The denoise target
+  // rides the same scale. Applies live: the nodes re-size their render targets on
+  // the next frame's setSize.
   setGtaoResolution(scale: number): void {
     this.gtaoRes = Math.max(0.25, Math.min(1, scale))
     if (this.gtao) this.gtao.resolutionScale = this.gtaoRes
+    this.gtaoDenoiseRtt?.setResolutionScale(this.gtaoRes)
   }
 
   private resize(): void {
@@ -232,8 +296,24 @@ export class Viewport {
     this.camera.updateProjectionMatrix()
   }
 
+  // Freeze the frame loop (ref-counted). Used by the shader precompile gate: the staged
+  // group must be VISIBLE while renderer.compileAsync walks it (an invisible root is
+  // skipped = nothing compiles), and no frame may render mid-pulse or the half-compiled
+  // group flashes on screen. Returns a release fn (idempotent).
+  suspend(): () => void {
+    this.suspended++
+    let done = false
+    return () => {
+      if (!done) {
+        done = true
+        this.suspended--
+      }
+    }
+  }
+  private suspended = 0
+
   frame(): void {
-    if (!this.ready) return // WebGPU device still initialising — nothing to render yet
+    if (!this.ready || this.suspended > 0) return // device initialising / compile gate holding the loop
     const dt = Math.min(this.clock.getDelta(), 0.1)
     // renderer.info.autoReset (WebGPU default) resets counts at each render() — the HUD
     // reads the last (main scene) render below, so no manual reset is needed.
@@ -252,9 +332,15 @@ export class Viewport {
     else this.renderer.render(this.scene, this.camera) // direct to canvas
     this.rig.settleShadow() // cached-shadow pulse: freeze the map again after this render
     const t1 = performance.now()
-    this.readGpuTime()
+    // GPU timestamp RESOLVE is a readback round-trip — pay it at HUD cadence (~5/s,
+    // and only with a HUD to show it in), not per frame.
+    if (this.perfHud && t1 - this.gpuReadT > 200) {
+      this.gpuReadT = t1
+      this.readGpuTime()
+    }
     this.updatePerfHud(t0, t1)
   }
+  private gpuReadT = 0
 
   // WebGPU GPU timing: renderer.trackTimestamp fills info.render.timestamp (ms) once
   // resolveTimestampsAsync completes (a few frames late). Fire-and-forget, then smooth.
@@ -336,6 +422,18 @@ export class Viewport {
   // biggest shadow (onto the ground) would fall into the void. A ShadowNodeMaterial
   // disc at y=0 renders ONLY the received shadow — invisible when nothing shadows it.
   private shadowCatcher: THREE.Mesh | null = null
+  private grid!: THREE.GridHelper
+  private catcherHidden = false
+
+  // Hide/show the helper floor (grid + shadow-catcher overlay). A host that brings its
+  // own REAL ground (the lineup's grass plane) turns both off: the ground writes depth,
+  // receives the sun shadow through the shared albedo-darkening graft, and grounds GTAO
+  // properly — the overlays would double-darken on top of it.
+  setHelperFloorVisible(on: boolean): void {
+    this.grid.visible = on
+    this.catcherHidden = !on
+    if (this.shadowCatcher) this.shadowCatcher.visible = on
+  }
 
   // Re-frame + re-render the cached sun shadow map around new scene content.
   // Call after content changes (entity rebuild, lineup batch) — the depth pass
@@ -353,6 +451,7 @@ export class Viewport {
       this.shadowCatcher.receiveShadow = true
       this.scene.add(this.shadowCatcher)
     }
+    this.shadowCatcher.visible = !this.catcherHidden
     const c = bounds.getCenter(new THREE.Vector3())
     const r = Math.max(1, bounds.getSize(new THREE.Vector3()).length())
     this.shadowCatcher.position.set(c.x, 0.001, c.z) // a hair above the grid plane

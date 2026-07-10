@@ -207,6 +207,10 @@ Rules and semantics:
   //                          (Bakes v5–v6 stored per-vertex AO in an `ao` key — RETIRED
   //                          in favor of screen-space GTAO (Render panel); files from
   //                          that window may carry the inert key, the loader ignores it.)
+  //                          Since bake v9 geometry is stored INDEXED: corners welded on
+  //                          the exact quantized (pos, normal, uv) tuple per group, coords
+  //                          at ≤5 decimals. Pre-v9 non-indexed sidecars still load (an
+  //                          empty `index` means soup) — regen normalizes them.
   // NOTE: variants derive their variety from LAYOUT (oneOf/chance/rotJitter). If
   // `count` exceeds the distinct layouts an entity can produce, some geom files are
   // identical — set count to the number of meaningful compositions.

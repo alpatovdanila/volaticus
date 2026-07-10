@@ -237,8 +237,9 @@ function subdivideGeometry(geo: THREE.BufferGeometry, levels: number): THREE.Buf
       levels,
     )
     out.addGroup(outPos.length / 3, sub.positions.length / 3, g.materialIndex ?? 0)
-    outPos.push(...sub.positions)
-    outUv.push(...sub.uvs)
+    // no spread-push: subdivided parts run to 100k+ elements, past the arg-count limit
+    for (const p of sub.positions) outPos.push(p)
+    for (const u of sub.uvs) outUv.push(u)
   }
   out.setAttribute('position', new THREE.Float32BufferAttribute(outPos, 3))
   out.setAttribute('uv', new THREE.Float32BufferAttribute(outUv, 2))
@@ -409,7 +410,7 @@ function meterGroupUVs(
 // exact affine map into the uv attribute AFTER metering (the shader applied it to
 // the final metered UVs too). Affine per-vertex transforms commute with barycentric
 // interpolation, so rasterized UVs — and every channel-0 map (color/normal/rough/
-// metal/alpha/emissive) plus uv2 (same buffer) — land on identical texels.
+// metal/alpha/emissive/ao) — land on identical texels.
 function rotateGroupUVs(uv: THREE.BufferAttribute, verts: Set<number>, uvRot: number | undefined): void {
   if (!uvRot) return
   const rad = THREE.MathUtils.degToRad(uvRot)
@@ -727,6 +728,13 @@ function applyUvProjection(
     rotateGroupUVs(uv, verts, def.uvRot) // baked texture direction (see rotateGroupUVs)
   }
   uv.needsUpdate = true
+  // box mode passed through non-indexed soup (per-triangle axis pick) — re-weld to
+  // indexed now that the final UVs are written, so the merge/batch pool stays compact
+  if (!g.getIndex()) {
+    const welded = weldedToBuffer(weldGeometryExact(g), !!g.getAttribute('normal'), true)
+    g.dispose()
+    return welded
+  }
   return g
 }
 
@@ -794,24 +802,75 @@ function meterBakedUvs(geo: THREE.BufferGeometry, node: RenderNode, materials: R
   uv.needsUpdate = true
 }
 
-// serialize a built geometry into the stored form / rebuild it back.
-function extractGeom(geo: THREE.BufferGeometry): BakedNodeGeom {
+// Exact weld: collapse corners with a fully identical quantized (pos, normal, uv)
+// tuple into shared indexed vertices — lossless (nothing visually distinct merges)
+// and coordinates settle to ≤5 decimals instead of float64 round-trip noise. The
+// weld is scoped PER GROUP: UV metering mutates uvs group-by-group (meterGroupUVs),
+// so a vertex may never be shared across two groups. Output group ranges are
+// corner-domain (= index entries), corners repacked in group-iteration order.
+// Used by the BAKE (extractGeom → sidecar) and by box UV projection at load, which
+// has to pass through non-indexed soup (per-triangle axis pick) and re-welds after.
+const Q_POS = 1e5 // 0.01 mm
+const Q_NRM = 1e4
+const quant = (v: number, s: number) => Math.round(v * s) / s || 0 // ||0 folds -0
+interface WeldedArrays {
+  positions: number[]
+  normals: number[]
+  uvs: number[]
+  index: number[]
+  groups: [number, number, number][]
+}
+function weldGeometryExact(geo: THREE.BufferGeometry): WeldedArrays {
   const pos = geo.getAttribute('position') as THREE.BufferAttribute
   const nrm = geo.getAttribute('normal') as THREE.BufferAttribute | undefined
   const uv = geo.getAttribute('uv') as THREE.BufferAttribute | undefined
   const idx = geo.getIndex()
-  const vertCount = idx ? idx.count : pos.count
-  return {
-    positions: Array.from(pos.array as Float32Array),
-    normals: nrm ? Array.from(nrm.array as Float32Array) : [],
-    uv: uv ? Array.from(uv.array as Float32Array) : [],
-    index: idx ? Array.from(idx.array as ArrayLike<number>) : [],
-    groups: (geo.groups.length ? geo.groups : [{ start: 0, count: vertCount, materialIndex: 0 }]).map((g) => [
-      g.start,
-      g.count === Infinity ? vertCount - g.start : g.count,
-      g.materialIndex ?? 0,
-    ]),
+  const corners = idx ? idx.count : pos.count
+  const srcGroups = (geo.groups.length ? geo.groups : [{ start: 0, count: corners, materialIndex: 0 }]).map(
+    (g) => [g.start, g.count === Infinity ? corners - g.start : g.count, g.materialIndex ?? 0] as [number, number, number],
+  )
+  const positions: number[] = []
+  const normals: number[] = []
+  const uvs: number[] = []
+  const index: number[] = []
+  const groups: [number, number, number][] = []
+  for (const [start, count, mi] of srcGroups) {
+    groups.push([index.length, count, mi])
+    const seen = new Map<string, number>()
+    for (let c = start; c < start + count; c++) {
+      const i = idx ? idx.getX(c) : c
+      const px = quant(pos.getX(i), Q_POS), py = quant(pos.getY(i), Q_POS), pz = quant(pos.getZ(i), Q_POS)
+      const nx = nrm ? quant(nrm.getX(i), Q_NRM) : 0, ny = nrm ? quant(nrm.getY(i), Q_NRM) : 0, nz = nrm ? quant(nrm.getZ(i), Q_NRM) : 0
+      const tu = uv ? quant(uv.getX(i), Q_POS) : 0, tv = uv ? quant(uv.getY(i), Q_POS) : 0
+      const key = `${px},${py},${pz},${nx},${ny},${nz},${tu},${tv}`
+      let vi = seen.get(key)
+      if (vi === undefined) {
+        vi = positions.length / 3
+        seen.set(key, vi)
+        positions.push(px, py, pz)
+        if (nrm) normals.push(nx, ny, nz)
+        if (uv) uvs.push(tu, tv)
+      }
+      index.push(vi)
+    }
   }
+  return { positions, normals, uvs, index, groups }
+}
+function weldedToBuffer(w: WeldedArrays, hasNrm: boolean, hasUv: boolean): THREE.BufferGeometry {
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(w.positions, 3))
+  if (hasNrm) geo.setAttribute('normal', new THREE.Float32BufferAttribute(w.normals, 3))
+  if (hasUv) geo.setAttribute('uv', new THREE.Float32BufferAttribute(w.uvs, 2))
+  geo.setIndex(w.index)
+  for (const [start, count, mi] of w.groups) geo.addGroup(start, count, mi)
+  return geo
+}
+
+// serialize a built geometry into the stored form / rebuild it back. Bake v9
+// sidecars are the welded indexed form.
+function extractGeom(geo: THREE.BufferGeometry): BakedNodeGeom {
+  const w = weldGeometryExact(geo)
+  return { positions: w.positions, normals: w.normals, uv: w.uvs, index: w.index, groups: w.groups }
 }
 function bakedGeomToBuffer(b: BakedNodeGeom): THREE.BufferGeometry {
   const geo = new THREE.BufferGeometry()
@@ -916,7 +975,7 @@ function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: numb
 
 // LOAD one node's render meshes from its BAKED geometry (runtime + studio): the
 // cheap live steps only — UV metering/projection + uvRot (so material edits show
-// without a re-bake), uv2, and per-face material assignment. "cross" → two meshes.
+// without a re-bake) and per-face material assignment. "cross" → two meshes.
 function loadNodeMeshes(
   nodeName: string,
   node: RenderNode,
@@ -929,8 +988,6 @@ function loadNodeMeshes(
   // decal: the sprite quad renders its EMBEDDED image with plain 0..1 UVs — no slot
   // material, no metering/projection (both would re-tile the image), no per-face split.
   if (node.shape === 'decal') {
-    const uv0 = geo.getAttribute('uv')
-    if (uv0 && !geo.getAttribute('uv2')) geo.setAttribute('uv2', uv0)
     const mesh = new THREE.Mesh(geo, makeDecalMaterial(node.image ?? ''))
     mesh.userData.nodeName = nodeName
     mesh.userData.slotByIndex = ['']
@@ -939,9 +996,6 @@ function loadNodeMeshes(
   const projectMode = effectiveUvProject(node, materials)
   if (projectMode !== undefined) geo = applyUvProjection(geo, node, materials, nodeMatrix, projectMode)
   else meterBakedUvs(geo, node, materials)
-
-  const uv = geo.getAttribute('uv')
-  if (uv && !geo.getAttribute('uv2')) geo.setAttribute('uv2', uv)
 
   const slotFor = (face: FaceKey) => slotMaterials.get(resolveFaceSlot(node.material, face))!
   let material: THREE.Material | THREE.Material[]
@@ -1355,7 +1409,9 @@ export function disposeEntity(built: BuiltEntity): void {
   built.group.traverse((o) => {
     if (o instanceof THREE.Mesh) o.geometry.dispose()
   })
-  for (const m of built.slotMaterials.values()) m.dispose()
+  // slot materials are SHARED via the materials.ts cache (one instance per resolved
+  // def across all entities) — never disposed per entity. The cache owns them for
+  // the session; setMaterialCatalog turns the generation over.
 }
 
 // Wireframe visualization of the physics collider.

@@ -12,6 +12,12 @@
       <button id="btn-materials" class="tb-btn" title="material manager: tune the PBR catalog materials"><span class="tb-ic">◆</span> Materials</button>
       <button id="btn-wire" class="tb-btn" title="toggle wireframe on the current build"><span class="tb-ic">▦</span> Wireframe</button>
       <button id="btn-lineup" class="tb-btn" title="all entities in one scene, real scale"><span class="tb-ic">▤</span> Lineup</button>
+      <!-- lineup-only: grass ground texture density (repeats per meter; lower = larger tiles) -->
+      <span id="ground-ctl" class="tb-inline" hidden>
+        <label for="ground-scale" title="ground texture density — repeats per meter (lower = larger tiles)">ground</label>
+        <input id="ground-scale" type="range" min="0.05" max="2" step="0.05" />
+        <span id="ground-scale-val"></span>
+      </span>
       <!-- Pure-HDRI light controls — the environment map is the only light
            source; sliders drive its yaw and lighting strength. -->
       <div id="light-wrap">
@@ -38,6 +44,9 @@
           <div class="light-row" id="rn-gtao-res-row"><label title="AO buffer resolution — GTAO cost scales with its pixel count, so half res = quarter cost; the denoiser hides most of the quality loss (the standard shipping trade). Full res = crispest contacts">ao res</label><select id="rn-gtao-res"><option value="1">full</option><option value="0.75">3/4</option><option value="0.5">half</option></select></div>
           <div class="light-row" id="rn-samples-row"><label title="POM marching steps — higher = smoother depth silhouettes, more GPU cost">quality</label><input id="rn-samples" type="range" min="4" max="64" step="1" /><span class="light-val" id="rn-samples-val"></span></div>
           <div class="light-row"><label title="antialiasing — MSAA smooths geometry edges (applies via a quick reload); SSAA renders at a higher resolution and downsamples (applies live, costs GPU fill rate); the combo does both">antialias</label><select id="rn-aa"><option value="off">off</option><option value="msaa">MSAA 4×</option><option value="ssaa2">SSAA 2×</option><option value="msaa_ssaa15">MSAA 4× + SSAA 1.5×</option></select></div>
+          <div class="light-row"><label title="anisotropic filtering — sharpens textures seen at grazing angles (the ground!). WebGPU applies it to linearly-filtered maps (normal/height); the crisp Nearest color maps are unaffected by design. Nearly free on modern GPUs">anisotropy</label><select id="rn-aniso"><option value="1">off</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option><option value="16">16×</option></select></div>
+          <div class="light-row"><label title="tilt-shift — the miniature/diorama look: a horizontal band at screen center stays in focus, the top and bottom blur away. Applies live">tilt-shift</label><input id="rn-tilt" type="checkbox" /></div>
+          <div class="light-row" id="rn-tilt-row"><label title="blur reach — how strongly the out-of-focus zones smear (live)">strength</label><input id="rn-tilt-str" type="range" min="0" max="1" step="0.05" /><span class="light-val" id="rn-tilt-str-val"></span></div>
         </div>
       </div>
       <div class="spacer"></div>

@@ -79,6 +79,24 @@ export type EntityMaterial = MeshStandardNodeMaterial
 const texCache = new Map<string, THREE.Texture>()
 const loader = new THREE.TextureLoader()
 
+// Global anisotropic filtering level (render setting). Applies at texture creation +
+// live to everything cached. NOTE the WebGPU rule: anisotropy only takes effect on
+// samplers whose min/mag/mip filters are ALL linear — three's backend guards this —
+// so it sharpens the linearly-filtered data maps (normal/height); the crisp Nearest
+// albedo look is untouched by design.
+let anisotropyLevel = 1
+export function setAnisotropy(n: number): void {
+  anisotropyLevel = Math.max(1, Math.min(16, Math.round(n)))
+  for (const tex of texCache.values()) {
+    if (tex.anisotropy === anisotropyLevel) continue
+    tex.anisotropy = anisotropyLevel
+    // sampler rebuild rides the texture-update path; imageless textures pick the
+    // new level up at their first real upload (bumping them would re-trigger the
+    // "no image data" warn burst — see loadTexture's version reset)
+    if (tex.image) tex.needsUpdate = true
+  }
+}
+
 // NOTE: entity materials NEVER clone cache textures. uvScale bakes into geometry
 // UVs (factory metering) and uvRot now does too (factory rotateGroupUVs), so the
 // shared cache texture serves every slot regardless of direction/density — and
@@ -107,6 +125,7 @@ let materialCatalog: Record<string, MaterialCatalogDoc> = {}
 
 export function setMaterialCatalog(catalog: Record<string, MaterialCatalogDoc>): void {
   materialCatalog = catalog
+  bumpMaterialCacheGen() // structural change: cached materials were built from the old docs
 }
 
 // Resolve one map kind's path. Maps are single-resolution now (one path per kind).
@@ -194,6 +213,7 @@ function loadTexture(path: string, srgb: boolean, linear = false): THREE.Texture
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.magFilter = linear ? THREE.LinearFilter : THREE.NearestFilter // Nearest = crisp pixel art
   tex.minFilter = linear ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter
+  tex.anisotropy = anisotropyLevel // effective on the linear samplers only (WebGPU rule)
   // Leftover gap #3: EACH of the setters above (colorSpace/wrap/filter) bumps the
   // texture's `version`, so the still-imageless base texture gets marked for upload
   // and the renderer warns "no image data found" EVERY FRAME until the async load
@@ -294,7 +314,7 @@ export function materialLoadState(materialId: string): { total: number; loaded: 
     const tex = texCache.get(linear ? p + '#lin' : p)
     if (tex && tex.image) loaded++
   }
-  for (const k of kinds) tally(resolveCatalogMap(doc, k), k === 'height')
+  for (const k of kinds) tally(resolveCatalogMap(doc, k), k === 'height' || k === 'normal')
   tally(doc.tuning.alphaMap)
   return { total, loaded }
 }
@@ -302,8 +322,34 @@ export function materialLoadState(materialId: string): { total: number; loaded: 
 // Every entity slot references a named PBR catalog material (post-migration).
 // Callers pass RESOLVED defs (schema.resolveMaterials output) — a slot that only
 // inherits has its parent's values merged in before it reaches here.
+//
+// MATERIAL CACHE: slots resolving to the same render-relevant inputs share ONE
+// material instance — (catalog id, slot tint, slot doubleSided) is everything a
+// resolved def contributes (uvScale/uvRot/uvMode/uvProject bake into geometry UVs);
+// the catalog doc's own contribution is keyed by the cache GENERATION, bumped on
+// every setMaterialCatalog (structural catalog edits reload the catalog). The global
+// build-time switches (flat shading, parallax) key in directly. Sharing is what the
+// live-edit paths want anyway: applyLiveTuning/setTintLive by materialId now reach
+// every user through one instance, and merge/batch buckets stop depending on N
+// identical materials hashing alike.
+let matCacheGen = 0
+const matCache = new Map<string, EntityMaterial>()
+export function bumpMaterialCacheGen(): void {
+  matCacheGen++
+  matCache.clear()
+}
 export function makeSlotMaterial(slot: string, def: ResolvedMaterialDef): EntityMaterial {
-  return makeCatalogMaterial(slot, def)
+  const key = [
+    matCacheGen,
+    def.material ?? '_',
+    def.tint ?? '_',
+    def.doubleSided === undefined ? '_' : def.doubleSided ? 1 : 0,
+    flatShadingOn ? 1 : 0,
+    isParallaxEnabled() ? 1 : 0,
+  ].join('|')
+  let mat = matCache.get(key)
+  if (!mat) matCache.set(key, (mat = makeCatalogMaterial(slot, def)))
+  return mat
 }
 
 // Build a MeshStandardMaterial from a named catalog material at the active res.
@@ -346,10 +392,13 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
   mat.roughness = t.roughness
   mat.metalness = t.metalness
 
-  // normal (GL convention, linear), strength from tuning
+  // normal (GL convention, linear color space), strength from tuning. Filter policy:
+  // normals are CONTINUOUS packed directions — always bilinear (`linear=true`), the
+  // same cache entry the parallax path binds. (Nearest here read back faceted texel
+  // steps AND double-cached every normal map used by both a plain and a POM material.)
   const normalPath = resolveCatalogMap(doc, 'normal')
   if (normalPath) {
-    mat.normalMap = loadTexture(normalPath, false)
+    mat.normalMap = loadTexture(normalPath, false, true)
     mat.normalScale.set(t.normalScale, t.normalScale)
   }
 
@@ -359,10 +408,12 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
   const metalPath = resolveCatalogMap(doc, 'metallic')
   if (metalPath) mat.metalnessMap = loadTexture(metalPath, false)
 
-  // AO needs a uv2 (factory sets it). aoMapIntensity from tuning.
+  // AO samples the base uv set (channel 0) — geometry carries a single uv attribute;
+  // there is no uv2 (it only ever aliased uv, and doubled the pooled batch buffers).
   const aoPath = resolveCatalogMap(doc, 'ao')
   if (aoPath) {
     mat.aoMap = loadTexture(aoPath, false)
+    mat.aoMap.channel = 0
     mat.aoMapIntensity = t.aoIntensity
   }
 

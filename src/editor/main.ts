@@ -6,7 +6,7 @@ import { mergeBuiltEntity } from '../inventory/merge'
 import { SceneBatcher, type BatchInput } from '../inventory/sceneBatcher'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
-import { applyLiveTuning, catalogColorPath, catalogDefaultTint, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, setTintLive, whenTexturesReady, type EntityMaterial } from '../inventory/materials'
+import { applyLiveTuning, catalogColorPath, catalogDefaultTint, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setAnisotropy, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, setTintLive, whenTexturesReady, type EntityMaterial } from '../inventory/materials'
 import { MaterialPreview, previewShapeGeometry, PREVIEW_SHAPES, type PreviewShape, type PreviewUvProject } from './matpreview'
 import { preloadEntityMeshes } from '../inventory/meshes'
 import { setParallaxConfig, getParallaxSamples } from '../inventory/parallax'
@@ -44,7 +44,9 @@ const inv = new Inventory()
 // is a renderer-CREATION option (SSAA render scale applies live; MSAA needs the reload).
 type AAMode = 'off' | 'ssaa2' | 'msaa' | 'msaa_ssaa15'
 const RENDER_KEY = 'volaticus.render'
-const renderPrefs: { parallax: boolean; samples: number; aa: AAMode; gtao: boolean; gtaoRes: number } = { parallax: false, samples: 24, aa: 'off', gtao: false, gtaoRes: 1 }
+const renderPrefs: { parallax: boolean; samples: number; aa: AAMode; gtao: boolean; gtaoRes: number; aniso: number; tilt: boolean; tiltStrength: number } = {
+  parallax: false, samples: 24, aa: 'off', gtao: false, gtaoRes: 1, aniso: 1, tilt: false, tiltStrength: 0.5,
+}
 try {
   const raw = localStorage.getItem(RENDER_KEY)
   if (raw) {
@@ -54,17 +56,23 @@ try {
     if (s.aa === 'off' || s.aa === 'ssaa2' || s.aa === 'msaa' || s.aa === 'msaa_ssaa15') renderPrefs.aa = s.aa
     renderPrefs.gtao = s.gtao === true // default OFF (per-frame cost — opt-in)
     if (s.gtaoRes === 1 || s.gtaoRes === 0.75 || s.gtaoRes === 0.5) renderPrefs.gtaoRes = s.gtaoRes
+    if ([1, 2, 4, 8, 16].includes(s.aniso as number)) renderPrefs.aniso = s.aniso as number
+    renderPrefs.tilt = s.tilt === true
+    if (typeof s.tiltStrength === 'number' && s.tiltStrength >= 0 && s.tiltStrength <= 1) renderPrefs.tiltStrength = s.tiltStrength
   }
 } catch {
   /* non-fatal */
 }
 const aaScale = (aa: AAMode): number => (aa === 'ssaa2' ? 2 : aa === 'msaa_ssaa15' ? 1.5 : 1)
 const aaMsaa = (aa: AAMode): boolean => aa.startsWith('msaa')
+setAnisotropy(renderPrefs.aniso) // before anything builds materials — creation-time level
 
 const vp = new Viewport($('#canvas-wrap'), { antialias: aaMsaa(renderPrefs.aa) })
 vp.setRenderScale(aaScale(renderPrefs.aa))
 vp.setGtaoResolution(renderPrefs.gtaoRes)
 vp.setGtao(renderPrefs.gtao) // AO intensity itself rides the LIGHT prefs (LightParams.ao)
+vp.setTiltShiftStrength(renderPrefs.tiltStrength)
+vp.setTiltShift(renderPrefs.tilt)
 ;(window as unknown as Record<string, unknown>).__dbg = {
   get vp() {
     return vp
@@ -74,6 +82,16 @@ vp.setGtao(renderPrefs.gtao) // AO intensity itself rides the LIGHT prefs (Light
   },
   get mgrPreview() {
     return mgrPreview
+  },
+  // bulk re-bake (console tooling for bake-version bumps) — same explicit-regen
+  // policy as the ⟲ button, just over many entities. Returns ids as they finish.
+  async regenAll(ids?: string[]): Promise<string[]> {
+    const all = ids ?? [...inv.entities.keys()]
+    const done: string[] = []
+    for (const id of all) {
+      if (await bakeAndSaveAll(id)) done.push(id)
+    }
+    return done
   },
 }
 
@@ -115,7 +133,7 @@ const variantsPath = (id: string) => `entities/${id}/${id}.variants.json`
 // Bump when the GENERATOR changes (default segment counts, jitter math, new shape
 // behaviour) — folds into rigStamp below, so every sidecar reads as stale and offers
 // the explicit "⟲ stale geometry" regen without touching any entity JSON.
-const GEOM_BAKE_VERSION = 8 // v8: crease-welded normals for non-indexed soup too — smooth/flat toggle works on every shape (v7: vertex-AO retired)
+const GEOM_BAKE_VERSION = 9 // v9: sidecars welded to indexed + coords quantized to ≤5 decimals (v8: crease-welded normals everywhere)
 
 // Fingerprint of everything the geometry bake READS from the doc (rig + variants config).
 // Stamped into each geom sidecar; a mismatch marks the entity stale in the overlay —
@@ -418,16 +436,26 @@ function canShatter(doc: EntityDoc): boolean {
 
 // Pre-compile every pipeline an object graph needs (WebGPU createRenderPipelineAsync under
 // the hood) so the FIRST visible frame doesn't hitch on synchronous shader compilation.
-// Compile failures fall through — they'd surface identically on the first render anyway.
+// The graph arrives STAGED INVISIBLE (the reveal contract) — but compileAsync's object
+// walk skips invisible roots, which silently compiled NOTHING. So: freeze the frame loop,
+// pulse the root visible for the compile (nothing renders while frozen — no flash of the
+// half-ready graph), then restore. Compile failures fall through — they'd surface
+// identically on the first render anyway.
 async function compileShaders(obj: THREE.Object3D): Promise<void> {
   const r = vp.renderer as unknown as {
     compileAsync?: (o: THREE.Object3D, c: THREE.Camera, s: THREE.Scene) => Promise<unknown>
   }
   if (typeof r.compileAsync !== 'function') return
+  const resume = vp.suspend()
+  const wasVisible = obj.visible
+  obj.visible = true
   try {
     await r.compileAsync(obj, vp.camera, vp.scene)
   } catch {
     /* surfaced on render */
+  } finally {
+    obj.visible = wasVisible
+    resume()
   }
 }
 
@@ -1434,6 +1462,39 @@ function initRenderPanel(): void {
     vp.setGtaoResolution(renderPrefs.gtaoRes)
   }
   syncGtaoRes()
+  // Anisotropic filtering: a texture-sampler property — applies live to every cached
+  // map (the loaded ones re-upload once; a settings flip, not a per-frame cost).
+  const anisoSel = $('#rn-aniso') as HTMLSelectElement
+  anisoSel.value = String(renderPrefs.aniso)
+  anisoSel.onchange = () => {
+    renderPrefs.aniso = parseInt(anisoSel.value, 10)
+    persist()
+    setAnisotropy(renderPrefs.aniso)
+  }
+  // Tilt-shift: on/off swaps the post chain (off compiles no blur); strength is live.
+  const tiltChk = $('#rn-tilt') as HTMLInputElement
+  const tiltRow = $('#rn-tilt-row')
+  const tiltStr = $('#rn-tilt-str') as HTMLInputElement
+  const tiltStrVal = $('#rn-tilt-str-val')
+  const syncTilt = (): void => {
+    tiltChk.checked = renderPrefs.tilt
+    tiltStr.value = String(renderPrefs.tiltStrength)
+    tiltStrVal.textContent = renderPrefs.tiltStrength.toFixed(2)
+    tiltRow.hidden = !renderPrefs.tilt
+  }
+  tiltChk.onchange = () => {
+    renderPrefs.tilt = tiltChk.checked
+    persist()
+    vp.setTiltShift(renderPrefs.tilt)
+    syncTilt()
+  }
+  tiltStr.oninput = () => {
+    renderPrefs.tiltStrength = parseFloat(tiltStr.value)
+    persist()
+    vp.setTiltShiftStrength(renderPrefs.tiltStrength)
+    tiltStrVal.textContent = renderPrefs.tiltStrength.toFixed(2)
+  }
+  syncTilt()
   // Antialiasing: SSAA (render scale) applies LIVE; the MSAA half is a renderer-creation
   // option, so flipping it persists + reloads (the busy overlay covers the boot).
   aaSel.value = renderPrefs.aa
@@ -1497,6 +1558,18 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && mgrMode) {
     e.preventDefault()
     exitMgr()
+    return
+  }
+  // Esc leaves the lineup (also aborts a build still in flight) and returns to the
+  // entity selected before entering it — panels come back via exitLineup/select.
+  if (e.key === 'Escape' && document.body.classList.contains('lineup-mode')) {
+    e.preventDefault()
+    exitLineup()
+    if (lineupPrevSel) select(lineupPrevSel.kind, lineupPrevSel.id)
+    else {
+      setTitle('', false)
+      renderItemList(inv, listFilter, null, { onSelect: select })
+    }
   }
 })
 
@@ -1505,22 +1578,96 @@ window.addEventListener('keydown', (e) => {
 
 let lineup: { built: BuiltEntity; preview: EntityPreview }[] | null = null
 let lineupBatcher: SceneBatcher | null = null
+let lineupGround: THREE.Mesh | null = null // grass floor under the lineup (helper grid/catcher hide while it's up)
 const lineupTick = (dt: number) => {
   if (lineup) for (const l of lineup) l.preview.update(dt) // advance each entity's anim sim
   lineupBatcher?.update() // push animated frame instances to their BatchedMesh
 }
 
+// The lineup's REAL ground: one big plane wearing a catalog material exactly the way an
+// entity slot would (same makeSlotMaterial cache, same tile-mode UV metering, same
+// shadow/emissive grafts via patchEmissive). Replaces the helper grid + shadow-catcher
+// overlay while the lineup is up — real geometry writes depth, so GTAO and the sun
+// shadow ground the props properly.
+//
+// Texture density is the toolbar "ground" slider (repeats per meter, an editor pref) —
+// the catalog deliberately carries no uvScale (that's per-SLOT on entities), so the
+// ground's density knob lives with the ground.
+const LINEUP_GROUND_MAT = 'grass_02'
+const GROUND_KEY = 'volaticus.ground'
+const groundPrefs = { uvScale: 0.25 }
+try {
+  const s = JSON.parse(localStorage.getItem(GROUND_KEY) ?? '{}') as { uvScale?: number }
+  if (typeof s.uvScale === 'number' && s.uvScale >= 0.05 && s.uvScale <= 2) groundPrefs.uvScale = s.uvScale
+} catch {
+  /* fresh profile */
+}
+
+// tile-mode metering from POSITIONS (single code path for build + live re-meter):
+// uv = local meters from the plane corner × density — same meters×scale convention
+// entity faces use.
+function meterGroundUv(mesh: THREE.Mesh, scale: number): void {
+  const size = mesh.userData.groundSize as number
+  const pos = mesh.geometry.getAttribute('position') as THREE.BufferAttribute
+  const uv = mesh.geometry.getAttribute('uv') as THREE.BufferAttribute
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, (pos.getX(i) + size / 2) * scale, (pos.getZ(i) + size / 2) * scale)
+  uv.needsUpdate = true
+}
+
+function buildLineupGround(box: THREE.Box3): THREE.Mesh {
+  const c = box.getCenter(new THREE.Vector3())
+  const s = box.getSize(new THREE.Vector3())
+  const size = Math.max(150, Math.max(s.x, s.z) * 3)
+  const geo = new THREE.PlaneGeometry(size, size).rotateX(-Math.PI / 2)
+  const mesh = new THREE.Mesh(geo, makeSlotMaterial('lineup-ground', { material: LINEUP_GROUND_MAT }))
+  mesh.userData.groundSize = size
+  meterGroundUv(mesh, groundPrefs.uvScale)
+  // exactly y=0 — entities stand ON it (their bottom faces are downward-facing and
+  // never render from above, so the coplanar plane can't shimmer against them)
+  mesh.position.set(c.x, 0, c.z)
+  mesh.receiveShadow = true
+  mesh.castShadow = false
+  applyEnvReflection(mesh)
+  vp.patchEmissive(mesh) // same albedo shadow-darkening + emissive lift every slot gets
+  return mesh
+}
+
+// toolbar "ground" slider (visible in lineup mode only): live re-meter + persist.
+const groundCtl = $('#ground-ctl') as HTMLElement
+const groundSlider = $('#ground-scale') as HTMLInputElement
+const groundVal = $('#ground-scale-val') as HTMLElement
+groundSlider.value = String(groundPrefs.uvScale)
+groundVal.textContent = '×' + groundPrefs.uvScale
+groundSlider.oninput = () => {
+  groundPrefs.uvScale = Number(groundSlider.value)
+  groundVal.textContent = '×' + groundPrefs.uvScale
+  localStorage.setItem(GROUND_KEY, JSON.stringify(groundPrefs))
+  if (lineupGround) meterGroundUv(lineupGround, groundPrefs.uvScale)
+}
+
 // Monotonic lineup generation: any exitLineup (every select() runs one) or a newer
 // enterLineup stales the in-flight build, which self-disposes at its next check.
 let lineupGen = 0
+// what was selected when the lineup was entered — Escape returns to it
+let lineupPrevSel: { kind: ItemKind; id: string } | null = null
 
 function exitLineup(): void {
   lineupGen++ // abort any in-flight enterLineup build
+  // UI restore runs unconditionally — a mid-build escape has no `lineup` yet, but the
+  // panels are already hidden and the ground slider may be up.
+  document.body.classList.remove('lineup-mode')
+  groundCtl.hidden = true
+  vp.setHelperFloorVisible(true) // grid + shadow-catcher come back for the selection view
   if (!lineup) return
   if (lineupBatcher) {
     vp.root.remove(lineupBatcher.group)
     lineupBatcher.dispose()
     lineupBatcher = null
+  }
+  if (lineupGround) {
+    vp.root.remove(lineupGround)
+    lineupGround.geometry.dispose() // material stays — it's the shared cache instance
+    lineupGround = null
   }
   for (const l of lineup) disposeEntity(l.built)
   lineup = null
@@ -1543,8 +1690,12 @@ async function enterLineup(): Promise<void> {
 }
 
 async function enterLineupInner(busy: BusyHandle): Promise<void> {
+  if (sel) lineupPrevSel = { kind: sel.kind, id: sel.id } // escape returns here
   clearSelection()
   exitLineup()
+  // full-viewport mode: the side panels (prop selector / Model parts / Materials)
+  // hide for the whole lineup stay — Escape (or selecting anything) restores them.
+  document.body.classList.add('lineup-mode')
   const gen = ++lineupGen
   await Promise.all([...inv.entities.values()].filter((i) => i.doc).map((i) => preloadEntityMeshes(i.doc!)))
   if (gen !== lineupGen) return // superseded while preloading
@@ -1655,20 +1806,30 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
   })
   if (!ok) return abort()
   // Stage HIDDEN until textures + pipelines are ready, then reveal the whole lineup
-  // in one frame — no black grid, no first-draw hitch.
+  // in one frame — no black grid, no first-draw hitch. The grass ground stages the
+  // same way (its maps ride the same texture-readiness gate).
   batcher.group.visible = false
   vp.root.add(batcher.group)
+  const ground = buildLineupGround(lineupBox)
+  ground.visible = false
+  vp.root.add(ground)
   busy.update('lineup — compiling shaders…')
-  await Promise.all([whenTexturesReady(), compileShaders(batcher.group)])
+  await Promise.all([whenTexturesReady(), compileShaders(batcher.group), compileShaders(ground)])
   if (gen !== lineupGen) {
     vp.root.remove(batcher.group)
     batcher.dispose()
+    vp.root.remove(ground)
+    ground.geometry.dispose()
     return abort()
   }
   batcher.group.visible = true
+  ground.visible = true
+  groundCtl.hidden = false // the density slider only makes sense while the ground exists
+  vp.setHelperFloorVisible(false) // the grass IS the floor — grid + catcher would double up
   vp.updateShadows(lineupBox) // cached sun shadow framed over the whole lineup, pre-reveal
   lineup = entries
   lineupBatcher = batcher
+  lineupGround = ground
   vp.onUpdate.add(lineupTick)
   vp.fit(lineupBox)
   if (wireOn) applyWire()
@@ -1748,16 +1909,13 @@ function rebuildMgrPreview(): void {
   // tiling by BAKING them into THIS geometry's UVs — exactly like the factory meters
   // entity UVs. Critically we do NOT touch texture.repeat: the cache textures are
   // SHARED with the entity scene, so a .repeat there would leak the viewing tiling
-  // onto every real prop. uv2 (AO) mirrors uv.
+  // onto every real prop. AO samples the same uv (channel 0 — no uv2 anywhere).
   const geo = previewShapeGeometry(mgrPreview.shape)
   const projGeo = proj ? projectGeometryUv(geo, new THREE.Matrix4(), proj) : geo
   const uv = projGeo.getAttribute('uv') as THREE.BufferAttribute | undefined
-  if (uv) {
-    if (uvScale !== 1) {
-      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * uvScale, uv.getY(i) * uvScale)
-      uv.needsUpdate = true
-    }
-    projGeo.setAttribute('uv2', uv) // AO reads uv2 = the (scaled/projected) uv
+  if (uv && uvScale !== 1) {
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * uvScale, uv.getY(i) * uvScale)
+    uv.needsUpdate = true
   }
 
   const mat = makeSlotMaterial('preview', { material: mgrSelId })

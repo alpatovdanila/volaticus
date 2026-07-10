@@ -29,6 +29,16 @@ body {
 .spacer { flex: 1; }
 /* #25: icon-forward toolbar buttons — icon glyph + compact label */
 .tb-btn { display: inline-flex; align-items: center; gap: 7px; }
+/* inline toolbar control group (lineup ground-density slider) */
+.tb-inline { display: inline-flex; align-items: center; gap: 7px; }
+.tb-inline label { font-size: 12px; color: var(--dim); }
+.tb-inline input[type='range'] { width: 110px; accent-color: var(--accent); }
+.tb-inline span { font-size: 11px; color: var(--dim); min-width: 34px; }
+/* lineup = full-viewport mode: only the top bar stays; the prop selector,
+   Model parts and Materials columns hide until Escape / a selection */
+body.lineup-mode #left,
+body.lineup-mode #right,
+body.lineup-mode #mat-col { display: none; }
 .tb-ic { font-size: 13px; line-height: 1; color: var(--dim); }
 .tb-btn:hover .tb-ic, .tb-btn.active .tb-ic { color: var(--accent); }
 .pack-label .tb-ic { color: var(--dim); }

@@ -246,9 +246,9 @@ export class MaterialPreview {
   }
 }
 
-// #17: build the geometry for a single preview shape, with clean even UVs and a
-// uv2 (= uv) for the AO map. Each shape is centered at the origin so the
-// world-fixed light and the auto-rotation read consistently.
+// #17: build the geometry for a single preview shape with clean even UVs (AO
+// samples the same uv set, channel 0). Each shape is centered at the origin so
+// the world-fixed light and the auto-rotation read consistently.
 //  ball     — smooth sphere (equirect UVs)
 //  wall     — vertical plane facing +Z
 //  floor    — horizontal plane in the XZ ground plane
@@ -278,7 +278,5 @@ export function previewShapeGeometry(shape: PreviewShape): THREE.BufferGeometry 
       g = new THREE.BoxGeometry(1.1, 1.1, 1.1)
       break
   }
-  const uv = g.getAttribute('uv')
-  if (uv && !g.getAttribute('uv2')) g.setAttribute('uv2', uv)
   return g
 }

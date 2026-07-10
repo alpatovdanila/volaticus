@@ -934,7 +934,7 @@ function loadNodeMeshes(
     const mesh = new THREE.Mesh(geo, makeDecalMaterial(node.image ?? ''))
     mesh.userData.nodeName = nodeName
     mesh.userData.slotByIndex = ['']
-    return [mesh]
+    return [mesh] // decals: stickers on a surface — no shadow casting/receiving
   }
   const projectMode = effectiveUvProject(node, materials)
   if (projectMode !== undefined) geo = applyUvProjection(geo, node, materials, nodeMatrix, projectMode)
@@ -967,6 +967,8 @@ function loadNodeMeshes(
     if (i === 1) mesh.rotation.y = Math.PI / 2
     mesh.userData.nodeName = nodeName
     mesh.userData.slotByIndex = slotByIndex
+    mesh.castShadow = true
+    mesh.receiveShadow = true
     meshes.push(mesh)
   }
   return meshes
@@ -1335,6 +1337,8 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
       sm.name = part.nodeName
       sm.userData.nodeName = part.nodeName
       sm.userData.slotByIndex = part.slotByIndex
+      sm.castShadow = true
+      sm.receiveShadow = true
       sm.frustumCulled = false // the bind-pose bounds lie once bones move the verts
       group.add(sm)
       sm.bind(skeleton) // bindMatrix = identity in group space; inverses from the bone worlds above

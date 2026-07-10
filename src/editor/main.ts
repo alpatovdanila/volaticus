@@ -481,6 +481,9 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
   await Promise.all([whenTexturesReady(), compileShaders(sel.built.group)])
   if (sel !== mySel || myToken !== buildToken) return // superseded while readying
   sel.built.group.visible = true
+  // cached sun shadow: frame + render the depth map on the SAME frame the entity
+  // reveals — part of the loading gate, so shadows never pop in afterwards
+  vp.updateShadows(sel.built.bounds)
   if (sel.collider) {
     // keep the collider viz in sync with the freshly (re)built entity — here, where
     // sel.built exists (rebuild() kicks this off async, so it can't do it itself)
@@ -1331,15 +1334,15 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
     hdriSel.appendChild(o)
   }
   const fields: {
-    key: 'rotation' | 'intensity' | 'emissive' | 'ao'
+    key: 'rotation' | 'intensity' | 'emissive' | 'ao' | 'shadowSoft' | 'shadow'
     input: HTMLInputElement
     val: HTMLElement
     fmt(n: number): string
-  }[] = (['rotation', 'intensity', 'emissive', 'ao'] as const).map((key) => ({
+  }[] = (['rotation', 'intensity', 'emissive', 'ao', 'shadowSoft', 'shadow'] as const).map((key) => ({
     key,
     input: $(cfg.fp + key) as HTMLInputElement,
     val: $(cfg.fp + key + '-val'),
-    fmt: (n: number) => (key === 'rotation' ? n.toFixed(0) + '°' : n.toFixed(2)),
+    fmt: (n: number) => (key === 'rotation' ? n.toFixed(0) + '°' : key === 'shadowSoft' ? n.toFixed(0) : n.toFixed(2)),
   }))
   const sync = (p: LightParams) => {
     hdriSel.value = p.hdri
@@ -1574,7 +1577,16 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
   const abort = (): void => {
     for (const e of entries) disposeEntity(e.built)
   }
-  const yieldFrame = (): Promise<void> => new Promise((resolve) => requestAnimationFrame(() => resolve()))
+  // rAF-based, but hidden tabs suspend rAF (the Claude Preview runs that way) —
+  // race a timeout so the budgeted build keeps flowing without a visible frame.
+  const yieldFrame = (): Promise<void> =>
+    new Promise((resolve) => {
+      const t = window.setTimeout(resolve, 50)
+      requestAnimationFrame(() => {
+        window.clearTimeout(t)
+        resolve()
+      })
+    })
   let slice = performance.now()
   let n = 0
   for (const item of items) {
@@ -1654,6 +1666,7 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
     return abort()
   }
   batcher.group.visible = true
+  vp.updateShadows(lineupBox) // cached sun shadow framed over the whole lineup, pre-reveal
   lineup = entries
   lineupBatcher = batcher
   vp.onUpdate.add(lineupTick)

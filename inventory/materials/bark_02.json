@@ -14,7 +14,7 @@
   },
   "tuning": {
     "tint": null,
-    "roughness": 0.85,
+    "roughness": 1,
     "metalness": 0,
     "normalScale": 0.8,
     "aoIntensity": 1,
@@ -22,7 +22,6 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,
-    "height": 0.13,
-    "parallax": true
+    "height": 0.13
   }
 }

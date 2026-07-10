@@ -208,6 +208,8 @@ export function mergeBuiltEntity(built: BuiltEntity, doc: EntityDoc, opts: { kee
     mesh.userData.merged = true
     mesh.userData.nodeName = parent.name || built.group.name
     mesh.userData.slotRanges = b.slotRanges
+    mesh.castShadow = true
+    mesh.receiveShadow = true
     parent.add(mesh)
     mergedMeshes.push(mesh)
   }

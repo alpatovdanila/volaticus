@@ -6,8 +6,8 @@
   "tags": ["wood", "landmark"],
   "notes": "Scenery — no hit reaction. Boards are generated arrow planks (one end sawn to a point); lower board appears by chance; boards swing to random angles; the post leans.",
   "materials": {
-    "post": { "material": "bark_02", "uvScale": 0.25 },
-    "board": { "material": "bark_02", "uvScale": 0.25, "uvRot": 90 },
+    "post": { "material": "bark_02", "uvMode": "fit tile" },
+    "board": { "material": "bark_02", "uvRot": 90 },
     "board_top": { "inherit": "board" },
     "board_bot": { "inherit": "board" }
   },
@@ -18,7 +18,7 @@
       "height": 1.5,
       "pos": [0, 0.75, 0],
       "material": "post",
-      "craft": 0.81,
+      "craft": 0.88,
       "craftSeed": 1588404509
     },
     "board_top": {
@@ -28,7 +28,7 @@
       "rot": [0, -12, 0],
       "rotJitter": [0, 14, 2],
       "material": "board_top",
-      "craft": 0.4,
+      "craft": 0.88,
       "craftSeed": 1588404509
     },
     "board_bot": {
@@ -39,7 +39,7 @@
       "rotJitter": [0, 16, 2],
       "material": "board_bot",
       "chance": 0.75,
-      "craft": 0.4,
+      "craft": 0.88,
       "craftSeed": 1588404509
     }
   },

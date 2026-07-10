@@ -6,17 +6,17 @@
   "tags": ["wood", "container"],
   "notes": "Low-poly faceted barrel: ONE open-ended shell (20-segment, curved via cylinder bulge 0.05 for the cask belly with ~9 vertical loops) baked doubleWall so it reads two-sided with a single-sided material and merges with the lip/lid wood (one fewer draw), floor+content is ONE flat disk plane (no volume). Two thin gray straps, thin top lip. oneOf lid: flush / deep inside (open look) / ajar. Detail chances: a metal spigot tap low on the front, a coiled rope resting on the lid.",
   "materials": {
-    "planks": { "material": "wood_planks_20", "uvRot": 90, "uvScale": 2 },
-    "shell": { "inherit": "planks", "uvProject": "sphere", "uvMode": "fit tile" },
+    "planks": { "material": "wood_planks_20", "uvRot": 90, "uvMode": "fit tile" },
+    "shell": { "inherit": "planks" },
     "floor": { "inherit": "interior", "uvProject": "planar" },
-    "lip": { "inherit": "planks", "uvMode": "tile", "uvProject": "none" },
+    "lip": { "inherit": "planks", "uvProject": "none", "uvRot": 0 },
     "lid_flush": { "inherit": "lid" },
     "lid_deep": { "inherit": "lid" },
     "lid_ajar": { "inherit": "lid" },
-    "band": { "material": "metal_01", "uvRot": 90, "uvScale": 2 },
+    "band": { "material": "metal_01", "uvRot": 90, "uvMode": "fit tile" },
     "band_top": { "inherit": "band" },
     "band_bot": { "inherit": "band" },
-    "lid": { "uvScale": 2, "uvProject": "planar", "inherit": "planks", "uvRot": 0 },
+    "lid": { "inherit": "planks" },
     "lid_flush_2": { "inherit": "lid" },
     "lid_flush_top": { "inherit": "lid_flush_2" },
     "lid_flush_bottom": { "inherit": "lid_flush_2" },
@@ -44,7 +44,7 @@
           "pos": [0, 0.4, 0],
           "material": "shell",
           "craftSeed": 131636343,
-          "craft": 1
+          "craft": 0.98
         },
         "floor": {
           "shape": "disk",
@@ -61,7 +61,8 @@
           "segments": 24,
           "pos": [0, 0.79, 0],
           "material": "lip",
-          "craftSeed": 1343812577
+          "craftSeed": 1343812577,
+          "craft": 0.89
         },
         "band_top": {
           "shape": "ring",
@@ -72,7 +73,8 @@
           "segments": 24,
           "pos": [0, 0.66, 0],
           "material": "band_top",
-          "craftSeed": 1343812577
+          "craftSeed": 1343812577,
+          "craft": 0.87
         },
         "band_bot": {
           "shape": "ring",
@@ -84,7 +86,7 @@
           "pos": [0, 0.14, 0],
           "material": "band_bot",
           "craftSeed": 1343812577,
-          "craft": 1
+          "craft": 0.88
         },
         "lid_flush": {
           "shape": "cylinder",

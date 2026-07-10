@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { WebGPURenderer, MeshBasicNodeMaterial, RenderPipeline } from 'three/webgpu'
+import { WebGPURenderer, MeshBasicNodeMaterial, RenderPipeline, ShadowNodeMaterial } from 'three/webgpu'
 import { positionLocal, normalLocal, vec3, vec4, float, pass, mrt, output, normalView } from 'three/tsl'
 import { ao } from 'three/addons/tsl/display/GTAONode.js'
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js'
@@ -121,6 +121,9 @@ export class Viewport {
     const grid = new THREE.GridHelper(10, 20, 0x3a70b5, 0x4080c8)
     ;(grid.material as THREE.Material).transparent = true
     ;(grid.material as THREE.Material).opacity = 0.6
+    // helpers must NOT write depth: the GTAO pass reads the depth/normal buffers,
+    // and line pixels carry no meaningful normals — they'd AO to black.
+    ;(grid.material as THREE.Material).depthWrite = false
     this.scene.add(grid)
 
     // shared HDRI environment rig (IBL lighting only).
@@ -183,7 +186,11 @@ export class Viewport {
     const scenePassNormal = scenePass.getTextureNode('normal')
     const scenePassDepth = scenePass.getTextureNode('depth')
     const aoPass = ao(scenePassDepth, scenePassNormal, this.camera)
-    aoPass.radius.value = 0.3 // view-space meters — sized to our ~0.5–2m props
+    aoPass.radius.value = 0.25 // view-space meters — sized to our ~0.5–2m props
+    // thin-surface halo mitigation: GTAO assumes every depth sample extends
+    // `thickness` into the screen — lower = less phantom occlusion smearing
+    // BEHIND objects as the camera orbits (inherent SS artifact, tunable not fixable)
+    aoPass.thickness.value = 0.35
     aoPass.scale.value = this.gtaoStrength
     aoPass.resolutionScale = this.gtaoRes
     this.gtao = aoPass
@@ -243,6 +250,7 @@ export class Viewport {
     const t0 = performance.now()
     if (this.post) this.post.render() // GTAO chain: scene pass → AO → denoise → multiply
     else this.renderer.render(this.scene, this.camera) // direct to canvas
+    this.rig.settleShadow() // cached-shadow pulse: freeze the map again after this render
     const t1 = performance.now()
     this.readGpuTime()
     this.updatePerfHud(t0, t1)
@@ -322,6 +330,33 @@ export class Viewport {
       /* non-fatal */
     }
     return this.getLights()
+  }
+
+  // Shadow-catcher "ground": the editor floats entities over a grid, so their
+  // biggest shadow (onto the ground) would fall into the void. A ShadowNodeMaterial
+  // disc at y=0 renders ONLY the received shadow — invisible when nothing shadows it.
+  private shadowCatcher: THREE.Mesh | null = null
+
+  // Re-frame + re-render the cached sun shadow map around new scene content.
+  // Call after content changes (entity rebuild, lineup batch) — the depth pass
+  // runs once on the next frame, BEFORE the reveal paints (no shadow pop).
+  updateShadows(bounds: THREE.Box3): void {
+    this.rig.fitShadow(bounds)
+    if (!this.shadowCatcher) {
+      const mat = new ShadowNodeMaterial()
+      mat.opacity = 0.35
+      mat.transparent = true
+      // no depth writes: the catcher is an overlay, not scene geometry — writing
+      // depth would feed its plane into the GTAO buffers and halo the grid.
+      mat.depthWrite = false
+      this.shadowCatcher = new THREE.Mesh(new THREE.CircleGeometry(1, 64).rotateX(-Math.PI / 2), mat)
+      this.shadowCatcher.receiveShadow = true
+      this.scene.add(this.shadowCatcher)
+    }
+    const c = bounds.getCenter(new THREE.Vector3())
+    const r = Math.max(1, bounds.getSize(new THREE.Vector3()).length())
+    this.shadowCatcher.position.set(c.x, 0.001, c.z) // a hair above the grid plane
+    this.shadowCatcher.scale.setScalar(Math.max(40, r * 4)) // generous floor — shadows rarely clip it
   }
 
   // GLOBAL flat/faceted shading — sets the build-time default for future materials

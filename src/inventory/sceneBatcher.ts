@@ -102,7 +102,15 @@ export class SceneBatcher {
       if (r.done) return true
       opts.onProgress?.(r.value)
       if (performance.now() - sliceStart > budget) {
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+        // rAF yield, but hidden tabs suspend rAF (headless/preview) — race a
+        // timeout so the build keeps flowing without a visible frame.
+        await new Promise<void>((resolve) => {
+          const t = setTimeout(resolve, 50)
+          requestAnimationFrame(() => {
+            clearTimeout(t)
+            resolve()
+          })
+        })
         sliceStart = performance.now()
       }
     }
@@ -147,6 +155,8 @@ export class SceneBatcher {
         // per-instance culling defaults ON but needs reliable per-geometry bounds; until
         // that's wired it wrongly culls in-view instances, so keep it OFF during bring-up.
         batch.perObjectFrustumCulled = false
+        batch.castShadow = true
+        batch.receiveShadow = true
         this.batches.set(key, batch)
         this.group.add(batch)
 

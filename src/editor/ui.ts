@@ -1,5 +1,5 @@
 // DOM panels. Pure view layer — all behavior arrives via callbacks from main.ts.
-import { resolveTexturePath } from '../inventory/materials'
+import { thumbnailUrl } from '../inventory/materials'
 import type { Inventory, Item, ItemKind } from '../inventory/registry'
 
 export const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector(sel) as T
@@ -226,7 +226,7 @@ function openTexturePicker(anchor: HTMLElement, textures: string[], onPick: (pat
       if (shown++ >= MAX) break
       const tile = el('div', 'tex-tile')
       const img = el('img') as HTMLImageElement
-      img.src = '/' + encodeURI(resolveTexturePath(path))
+      img.src = thumbnailUrl(path)
       img.loading = 'lazy'
       tile.title = path
       tile.appendChild(img)
@@ -416,7 +416,7 @@ export function renderSlotChips(
       (s.tint ? ` · tinted ${s.tint}` : '') +
       (inheriting && !s.own.material ? ` (inherited from ${s.inherit})` : '')
     const img = el('img') as HTMLImageElement
-    img.src = '/' + encodeURI(resolveTexturePath(s.texture))
+    img.src = thumbnailUrl(s.texture)
     img.loading = 'lazy'
     thumb.appendChild(img)
     // item 34: an inheriting slot that OVERRIDES the material shows ↺ on the
@@ -627,7 +627,7 @@ export function renderSlotChips(
     const thumb = el('div', 'slot-thumb')
     thumb.style.background = f.tint ?? '#ffffff'
     const img = el('img') as HTMLImageElement
-    if (f.texture) img.src = '/' + encodeURI(resolveTexturePath(f.texture))
+    if (f.texture) img.src = thumbnailUrl(f.texture)
     img.loading = 'lazy'
     thumb.appendChild(img)
     chip.appendChild(thumb)
@@ -739,7 +739,7 @@ export function initMatPicker(state: MatPickerState): { refresh(): void; reveal(
       const tile = el('div', 'tex-tile' + (state.current === m.id ? ' current' : ''))
       tile.dataset.id = m.id // #38: reveal() finds the tile by material id
       const img = el('img') as HTMLImageElement
-      if (m.color) img.src = '/' + encodeURI(resolveTexturePath(m.color))
+      if (m.color) img.src = thumbnailUrl(m.color)
       img.loading = 'lazy'
       tile.title = m.id + ' · ' + m.category
       tile.appendChild(img)
@@ -830,7 +830,7 @@ export function renderMgrList(
       total++
       const row = el('div', 'mgr-item' + (selected === e.id ? ' selected' : ''))
       const img = el('img') as HTMLImageElement
-      if (e.color) img.src = '/' + encodeURI(resolveTexturePath(e.color))
+      if (e.color) img.src = thumbnailUrl(e.color)
       img.loading = 'lazy'
       row.appendChild(img)
       row.appendChild(el('div', 'mgr-item-name', e.id))
@@ -1035,7 +1035,7 @@ export function renderMgrTuning(
   const alphaThumb = el('span', 'alpha-thumb' + (t.alphaMap ? '' : ' none'))
   if (t.alphaMap) {
     const im = el('img') as HTMLImageElement
-    im.src = '/' + encodeURI(resolveTexturePath(t.alphaMap))
+    im.src = thumbnailUrl(t.alphaMap)
     alphaThumb.appendChild(im)
     alphaThumb.title = t.alphaMap
   }

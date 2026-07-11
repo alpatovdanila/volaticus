@@ -152,8 +152,28 @@ const faceMaterial = z.union([
   }),
 ])
 
+// a boolean modifier: a generated shape (same params as a node, geometry-only) placed
+// relative to the OWNER node's local space, combined into it at bake time (CSG)
+export type BooleanMod = {
+  op: 'subtract' | 'union' | 'intersect'
+  shape: 'box' | 'cylinder' | 'sphere' | 'capsule' | 'cone' | 'torus' | 'halfSphere' | 'quarterSphere' | 'halfCylinder' | 'arch' | 'halfTorus' | 'quarterTorus'
+  size?: number[]
+  radius?: number
+  radiusTop?: number
+  radiusBottom?: number
+  height?: number
+  tube?: number
+  thickness?: number
+  segments?: number
+  segmentsY?: number
+  bulge?: number
+  pos?: [number, number, number]
+  rot?: [number, number, number]
+  scale?: number | [number, number, number]
+}
+
 export type NodeDef = {
-  shape?: 'box' | 'cylinder' | 'sphere' | 'capsule' | 'cone' | 'plane' | 'disk' | 'cross' | 'torus' | 'mesh' | 'plank' | 'post' | 'ring' | 'arrow' | 'star' | 'decal'
+  shape?: 'box' | 'cylinder' | 'sphere' | 'capsule' | 'cone' | 'plane' | 'disk' | 'cross' | 'torus' | 'mesh' | 'plank' | 'post' | 'ring' | 'arrow' | 'star' | 'decal' | 'halfSphere' | 'quarterSphere' | 'halfCylinder' | 'arch' | 'halfTorus' | 'quarterTorus' | 'tree'
   mesh?: string
   image?: string
   craft?: number
@@ -173,7 +193,12 @@ export type NodeDef = {
   segmentsY?: number
   open?: boolean
   bulge?: number
+  arc?: number
+  lushness?: number
+  spread?: number
+  leafSize?: number
   doubleWall?: boolean
+  booleans?: BooleanMod[]
   pos?: [number, number, number]
   rot?: [number, number, number]
   scale?: number | [number, number, number]
@@ -186,10 +211,30 @@ export type NodeDef = {
   children?: Record<string, NodeDef>
 }
 
+// boolean modifiers (CSG at bake): geometry-only shape defs — no children, no material
+// (the cut inherits the owner node's single slot), no craft/sub of their own.
+export const BooleanModSchema = z.object({
+  op: z.enum(['subtract', 'union', 'intersect']),
+  shape: z.enum(['box', 'cylinder', 'sphere', 'capsule', 'cone', 'torus', 'halfSphere', 'quarterSphere', 'halfCylinder', 'arch', 'halfTorus', 'quarterTorus']),
+  size: z.array(z.number().positive()).min(2).max(3).optional(),
+  radius: z.number().positive().optional(),
+  radiusTop: z.number().positive().optional(),
+  radiusBottom: z.number().positive().optional(),
+  height: z.number().positive().optional(),
+  tube: z.number().positive().optional(),
+  thickness: z.number().positive().optional(),
+  segments: z.number().int().min(3).max(32).optional(),
+  segmentsY: z.number().int().min(2).max(32).optional(),
+  bulge: z.number().optional(),
+  pos: vec3.optional(),
+  rot: vec3.optional(),
+  scale: z.union([z.number().positive(), vec3]).optional(),
+})
+
 export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
   z.object({
     shape: z
-      .enum(['box', 'cylinder', 'sphere', 'capsule', 'cone', 'plane', 'disk', 'cross', 'torus', 'mesh', 'plank', 'post', 'ring', 'arrow', 'star', 'decal'])
+      .enum(['box', 'cylinder', 'sphere', 'capsule', 'cone', 'plane', 'disk', 'cross', 'torus', 'mesh', 'plank', 'post', 'ring', 'arrow', 'star', 'decal', 'halfSphere', 'quarterSphere', 'halfCylinder', 'arch', 'halfTorus', 'quarterTorus', 'tree'])
       .optional(),
     mesh: z.string().optional(), // external model path relative to resources/ (fbx)
     // shape "decal" ONLY: the sprite itself, EMBEDDED as a base64 data URI (data:image/png;base64,…)
@@ -213,8 +258,20 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
     depth: z.number().positive().optional(), // star ONLY: extrusion depth (default radius*0.35)
     segments: z.number().int().min(3).max(32).optional(), // cylinder/cone radial segments (4 + rot 45 = pyramid)
     segmentsY: z.number().int().min(2).max(32).optional(), // sphere ONLY: vertical rows (default segments/2)
-    open: z.boolean().optional(), // cylinder without end caps (hollow tube)
+    open: z.boolean().optional(), // cylinder/halfCylinder without end caps (hollow tube / open trough)
     bulge: z.number().optional(), // cylinder ONLY: barrel-belly, +meters of radius at mid-height (0 at rims)
+    // arch/halfTorus/quarterTorus: sweep angle in degrees (default 180 / 180 / 90) —
+    // lets an arch stop short or a torus segment wrap further without new shapes
+    arc: z.number().min(10).max(360).optional(),
+    // shape "tree" (recursive trunk/branch/twig generator + leaf blobs, seeded by
+    // craftSeed): height + radius set the trunk; the rest shape the species.
+    lushness: z.number().min(0).max(1).optional(), // branch counts + twig recursion (birch high)
+    spread: z.number().min(10).max(85).optional(), // branch angle from vertical, deg (oak wide)
+    leafSize: z.number().min(0).max(2).optional(), // terminal blob radius (0 = bare)
+    // half/quarter sphere + halfCylinder: wall thickness in meters. Absent = solid
+    // (flat caps close the shape); present = hollow shell with rim faces.
+    // (`thickness` is shared with shape "ring" — same meaning there.)
+    booleans: z.array(BooleanModSchema).optional(),
     // BAKE the back-faces in as real geometry (duplicate triangles, reversed winding + flipped
     // normals) so an open/thin surface reads from BOTH sides with a SINGLE-SIDED material — which
     // then merges with the part's other single-sided same-material parts (one fewer draw). Trades

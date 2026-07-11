@@ -4,11 +4,11 @@
   "name": "Bricks Wall 12",
   "category": "bricks_wall",
   "maps": {
-    "color": "PBR/bricks_wall_12/bricks_wall_12_basecolor_1k.png",
-    "normal": "PBR/bricks_wall_12/bricks_wall_12_normal_gl_1k.png",
-    "roughness": "PBR/bricks_wall_12/bricks_wall_12_roughness_1k.png",
-    "height": "PBR/bricks_wall_12/bricks_wall_12_height_1k.png",
-    "ao": "PBR/bricks_wall_12/bricks_wall_12_ambientocclusion_1k.png",
+    "color": "PBR/bricks_wall_12/bricks_wall_12_basecolor_1k.ktx2",
+    "normal": "PBR/bricks_wall_12/bricks_wall_12_normal_gl_1k.ktx2",
+    "roughness": "PBR/bricks_wall_12/bricks_wall_12_roughness_1k.ktx2",
+    "height": "PBR/bricks_wall_12/bricks_wall_12_height_1k.ktx2",
+    "ao": "PBR/bricks_wall_12/bricks_wall_12_ambientocclusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },

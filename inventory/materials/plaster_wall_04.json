@@ -4,9 +4,9 @@
   "name": "Plaster Wall 04",
   "category": "plaster_wall",
   "maps": {
-    "color": "PBR/plaster_wall_04/plaster_wall_02_basecolor_1k.png",
-    "normal": "PBR/plaster_wall_04/plaster_wall_02_normal_gl_1k.png",
-    "roughness": "PBR/plaster_wall_04/plaster_wall_02_roughness_1k.png",
+    "color": "PBR/plaster_wall_04/plaster_wall_02_basecolor_1k.ktx2",
+    "normal": "PBR/plaster_wall_04/plaster_wall_02_normal_gl_1k.ktx2",
+    "roughness": "PBR/plaster_wall_04/plaster_wall_02_roughness_1k.ktx2",
     "height": null,
     "ao": null,
     "metallic": null,
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

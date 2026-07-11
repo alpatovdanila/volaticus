@@ -111,5 +111,5 @@
     }
   },
   "physics": { "body": "fixed", "collider": "auto" },
-  "variants": { "count": 6 }
+  "variants": { "count": 4 }
 }

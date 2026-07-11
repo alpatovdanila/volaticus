@@ -121,8 +121,9 @@ function devApi(): Plugin {
             if (!texCache || Date.now() - texCache.at > 5000)
               texCache = {
                 at: Date.now(),
-                // .png = minecraft packs + legacy slots; .jpg = a few freestylized catalog maps
-                list: [...walkFiles(RES_DIR, '.png'), ...walkFiles(RES_DIR, '.jpg')],
+                // .png = minecraft packs + legacy slots; .jpg = a few freestylized catalog
+                // maps; .ktx2 = the compressed PBR catalog (UI thumbnails read PNG siblings)
+                list: [...walkFiles(RES_DIR, '.png'), ...walkFiles(RES_DIR, '.jpg'), ...walkFiles(RES_DIR, '.ktx2')],
                 animated: walkFiles(RES_DIR, '.png.mcmeta').map((p) => p.replace(/\.mcmeta$/, '')),
                 sounds: [...walkFiles(RES_DIR, '.wav'), ...walkFiles(RES_DIR, '.ogg'), ...walkFiles(RES_DIR, '.mp3')],
                 models: [...walkFiles(RES_DIR, '.fbx'), ...walkFiles(RES_DIR, '.glb')],

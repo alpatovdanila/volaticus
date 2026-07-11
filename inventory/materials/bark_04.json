@@ -4,12 +4,12 @@
   "name": "Bark 04",
   "category": "bark",
   "maps": {
-    "color": "PBR/bark_04/bark_04_baseColor_1k.png",
-    "normal": "PBR/bark_04/bark_04_normal_gl_1k.png",
-    "roughness": "PBR/bark_04/bark_04_roughness_1k.png",
-    "height": "PBR/bark_04/bark_04_height_1k.png",
-    "ao": "PBR/bark_04/bark_04_ambientOcclusion_1k.png",
-    "metallic": "PBR/bark_04/bark_04_metallic_1k.png",
+    "color": "PBR/bark_04/bark_04_baseColor_1k.ktx2",
+    "normal": "PBR/bark_04/bark_04_normal_gl_1k.ktx2",
+    "roughness": "PBR/bark_04/bark_04_roughness_1k.ktx2",
+    "height": "PBR/bark_04/bark_04_height_1k.ktx2",
+    "ao": "PBR/bark_04/bark_04_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/bark_04/bark_04_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

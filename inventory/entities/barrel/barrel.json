@@ -4,30 +4,17 @@
   "name": "Barrel",
   "category": "prop",
   "tags": ["wood", "container"],
-  "notes": "Low-poly faceted barrel: ONE open-ended shell (20-segment, curved via cylinder bulge 0.05 for the cask belly with ~9 vertical loops) baked doubleWall so it reads two-sided with a single-sided material and merges with the lip/lid wood (one fewer draw), floor+content is ONE flat disk plane (no volume). Two thin gray straps, thin top lip. oneOf lid: flush / deep inside (open look) / ajar. Detail chances: a metal spigot tap low on the front, a coiled rope resting on the lid.",
+  "notes": "Low-poly faceted barrel: ONE open-ended shell (24-segment, cask belly via bulge) baked doubleWall, floor disk inside, two metal bands, thin top lip. Exactly 3 variants via oneOf lid: open (no lid), flush lid, ajar lid.",
   "materials": {
     "planks": { "material": "wood_planks_20", "uvRot": 90, "uvMode": "fit tile" },
     "shell": { "inherit": "planks" },
     "floor": { "inherit": "interior", "uvProject": "planar" },
     "lip": { "inherit": "planks", "uvProject": "none", "uvRot": 0 },
-    "lid_flush": { "inherit": "lid" },
-    "lid_deep": { "inherit": "lid" },
-    "lid_ajar": { "inherit": "lid" },
+    "lid": { "inherit": "planks" },
     "band": { "material": "metal_01", "uvRot": 90, "uvMode": "fit tile" },
     "band_top": { "inherit": "band" },
     "band_bot": { "inherit": "band" },
-    "lid": { "inherit": "planks" },
-    "lid_flush_2": { "inherit": "lid" },
-    "lid_flush_top": { "inherit": "lid_flush_2" },
-    "lid_flush_bottom": { "inherit": "lid_flush_2" },
-    "lid_deep_3": { "inherit": "lid" },
-    "lid_ajar_2": { "inherit": "lip" },
-    "lid_ajar_top": { "inherit": "lid" },
-    "lid_ajar_bottom": { "inherit": "lid_ajar_2" },
-    "interior": { "material": "desert_ground_01" },
-    "lid_deep_2": { "inherit": "lid" },
-    "tap": { "material": "metal_01", "uvScale": 4 },
-    "rope_coil": { "material": "bark_02", "uvScale": 4, "uvProject": "box" }
+    "interior": { "material": "desert_ground_01" }
   },
   "rig": {
     "root": {
@@ -88,22 +75,14 @@
           "craftSeed": 1343812577,
           "craft": 0.88
         },
+        "lid_none": {},
         "lid_flush": {
           "shape": "cylinder",
           "radius": 0.262,
           "height": 0.045,
           "segments": 24,
           "pos": [0, 0.745, 0],
-          "material": { "side": "lid_flush", "top": "lid_flush_top", "bottom": "lid_flush_bottom" },
-          "craftSeed": 1343812577
-        },
-        "lid_deep": {
-          "shape": "cylinder",
-          "radius": 0.262,
-          "height": 0.045,
-          "segments": 24,
-          "pos": [0, 0.34, 0],
-          "material": { "side": "lid_deep", "top": "lid_deep_2", "bottom": "lid_deep_3" },
+          "material": "lid",
           "craftSeed": 1343812577
         },
         "lid_ajar": {
@@ -113,40 +92,8 @@
           "segments": 24,
           "pos": [0.09, 0.83, -0.03],
           "rot": [11, 0, 14],
-          "material": { "side": "lid_ajar", "top": "lid_ajar_top", "bottom": "lid_ajar_bottom" },
+          "material": "lid",
           "craftSeed": 1343812577
-        },
-        "tap": {
-          "shape": "cylinder",
-          "radius": 0.022,
-          "height": 0.09,
-          "pos": [0, 0.18, 0.29],
-          "rot": [90, 0, 0],
-          "material": "tap",
-          "chance": 0.45,
-          "craft": 0.97,
-          "children": {
-            "tap_knob": {
-              "shape": "box",
-              "size": [0.05, 0.016, 0.03],
-              "pos": [0, 0.055, 0],
-              "material": "tap",
-              "craft": 0.97,
-              "craftSeed": 525629283
-            }
-          },
-          "craftSeed": 882969648
-        },
-        "rope": {
-          "shape": "torus",
-          "radius": 0.13,
-          "tube": 0.028,
-          "pos": [0.06, 0.845, -0.04],
-          "rotJitter": [0, 180, 0],
-          "material": "rope_coil",
-          "chance": 0.4,
-          "craft": 0.9,
-          "craftSeed": 1681407247
         }
       },
       "craft": 1
@@ -158,7 +105,7 @@
     "mass": 18
   },
   "props": { "health": 2 },
-  "variants": { "count": 6, "oneOf": { "lid": ["lid_flush", "lid_deep", "lid_ajar"] } },
+  "variants": { "count": 3, "oneOf": { "lid": ["lid_none", "lid_flush", "lid_ajar"] } },
   "anims": {
     "wobble": {
       "duration": 0.42,

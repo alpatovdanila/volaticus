@@ -4,12 +4,12 @@
   "name": "Rock Stone Wall 02",
   "category": "rock_stone_wall",
   "maps": {
-    "color": "PBR/rock_stone_wall_02/rock_stone_wall_02_color_1k.png",
-    "normal": "PBR/rock_stone_wall_02/rock_stone_wall_02_normal_gl_1k.png",
-    "roughness": "PBR/rock_stone_wall_02/rock_stone_wall_02_roughness_1k.png",
-    "height": "PBR/rock_stone_wall_02/rock_stone_wall_02_height_1k.png",
-    "ao": "PBR/rock_stone_wall_02/rock_stone_wall_02_ambient_occlusion_1k.png",
-    "metallic": "PBR/rock_stone_wall_02/rock_stone_wall_02_metallic_1k.png",
+    "color": "PBR/rock_stone_wall_02/rock_stone_wall_02_color_1k.ktx2",
+    "normal": "PBR/rock_stone_wall_02/rock_stone_wall_02_normal_gl_1k.ktx2",
+    "roughness": "PBR/rock_stone_wall_02/rock_stone_wall_02_roughness_1k.ktx2",
+    "height": "PBR/rock_stone_wall_02/rock_stone_wall_02_height_1k.ktx2",
+    "ao": "PBR/rock_stone_wall_02/rock_stone_wall_02_ambient_occlusion_1k.ktx2",
+    "metallic": "PBR/rock_stone_wall_02/rock_stone_wall_02_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

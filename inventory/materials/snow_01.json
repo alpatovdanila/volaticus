@@ -4,11 +4,11 @@
   "name": "Snow 01",
   "category": "snow",
   "maps": {
-    "color": "PBR/snow_01/snow_01_color_1k.png",
-    "normal": "PBR/snow_01/snow_01_normal_gl_1k.png",
-    "roughness": "PBR/snow_01/snow_01_roughness_1k.png",
-    "height": "PBR/snow_01/snow_01_height_1k.png",
-    "ao": "PBR/snow_01/snow_01_ambient_occlusion_1k.png",
+    "color": "PBR/snow_01/snow_01_color_1k.ktx2",
+    "normal": "PBR/snow_01/snow_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/snow_01/snow_01_roughness_1k.ktx2",
+    "height": "PBR/snow_01/snow_01_height_1k.ktx2",
+    "ao": "PBR/snow_01/snow_01_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

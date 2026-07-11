@@ -4,13 +4,13 @@
   "name": "Window 01",
   "category": "window",
   "maps": {
-    "color": "PBR/window_01/window_01_baseColor_1k.png",
-    "normal": "PBR/window_01/window_01_normal_gl_1k.png",
-    "roughness": "PBR/window_01/window_01_roughness_1k.png",
-    "height": "PBR/window_01/window_01_height_1k.png",
-    "ao": "PBR/window_01/window_01_ambientOcclusion_1k.png",
-    "metallic": "PBR/window_01/window_01_metallic_1k.png",
-    "emissive": "PBR/window_01/window_01_emissive_1k.png"
+    "color": "PBR/window_01/window_01_baseColor_1k.ktx2",
+    "normal": "PBR/window_01/window_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/window_01/window_01_roughness_1k.ktx2",
+    "height": "PBR/window_01/window_01_height_1k.ktx2",
+    "ao": "PBR/window_01/window_01_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/window_01/window_01_metallic_1k.ktx2",
+    "emissive": "PBR/window_01/window_01_emissive_1k.ktx2"
   },
   "tuning": {
     "tint": null,
@@ -22,6 +22,5 @@
     "opacity": 0.53,
     "cutout": false,
     "doubleSided": false
-
   }
 }

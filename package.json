@@ -11,7 +11,7 @@
   "dependencies": {
     "three": "^0.185.1",
     "three-bvh-csg": "^0.0.18",
-    "three-mesh-bvh": "0.9.10",
+    "three-mesh-bvh": "^0.9.10",
     "zod": "^3.25.0"
   },
   "devDependencies": {

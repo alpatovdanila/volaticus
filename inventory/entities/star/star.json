@@ -11,10 +11,10 @@
         "body": {
           "shape": "star",
           "radius": 0.28,
-          "innerRatio": 0.48,
+          "innerRatio": 0.45,
           "points": 5,
-          "depth": 0.09,
-          "craft": 0.92,
+          "depth": 0.15,
+          "craft": 1,
           "material": "star",
           "craftSeed": 1970237395
         }

@@ -4,11 +4,11 @@
   "name": "Desert Rocks 01",
   "category": "desert_rocks",
   "maps": {
-    "color": "PBR/desert_rocks_01/desert_rocks_01_color_1k.png",
-    "normal": "PBR/desert_rocks_01/desert_rocks_01_normal_gl_1k.png",
-    "roughness": "PBR/desert_rocks_01/desert_rocks_01_roughness_1k.png",
-    "height": "PBR/desert_rocks_01/desert_rocks_01_height_1k.png",
-    "ao": "PBR/desert_rocks_01/desert_rocks_01_ambient_occlusion_1k.png",
+    "color": "PBR/desert_rocks_01/desert_rocks_01_color_1k.ktx2",
+    "normal": "PBR/desert_rocks_01/desert_rocks_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/desert_rocks_01/desert_rocks_01_roughness_1k.ktx2",
+    "height": "PBR/desert_rocks_01/desert_rocks_01_height_1k.ktx2",
+    "ao": "PBR/desert_rocks_01/desert_rocks_01_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

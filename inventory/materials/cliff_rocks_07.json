@@ -4,12 +4,12 @@
   "name": "Cliff Rocks 07",
   "category": "cliff_rocks",
   "maps": {
-    "color": "PBR/cliff_rocks_07/cliff_rocks_07_basecolor_1k.png",
-    "normal": "PBR/cliff_rocks_07/cliff_rocks_07_normal_gl_1k.png",
-    "roughness": "PBR/cliff_rocks_07/cliff_rocks_07_roughness_1k.png",
-    "height": "PBR/cliff_rocks_07/cliff_rocks_07_height_1k.png",
-    "ao": "PBR/cliff_rocks_07/cliff_rocks_07_ambientocclusion_1k.png",
-    "metallic": "PBR/cliff_rocks_07/cliff_rocks_07_metallic_1k.png",
+    "color": "PBR/cliff_rocks_07/cliff_rocks_07_basecolor_1k.ktx2",
+    "normal": "PBR/cliff_rocks_07/cliff_rocks_07_normal_gl_1k.ktx2",
+    "roughness": "PBR/cliff_rocks_07/cliff_rocks_07_roughness_1k.ktx2",
+    "height": "PBR/cliff_rocks_07/cliff_rocks_07_height_1k.ktx2",
+    "ao": "PBR/cliff_rocks_07/cliff_rocks_07_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/cliff_rocks_07/cliff_rocks_07_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,7 +22,6 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,
-    "parallax": true,
     "height": 0.105
   }
 }

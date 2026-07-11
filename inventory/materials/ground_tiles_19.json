@@ -4,12 +4,12 @@
   "name": "Ground Tiles 19",
   "category": "ground_tiles",
   "maps": {
-    "color": "PBR/ground_tiles_19/ground_tiles_19_baseColor_1k.png",
-    "normal": "PBR/ground_tiles_19/ground_tiles_19_normal_gl_1k.png",
-    "roughness": "PBR/ground_tiles_19/ground_tiles_19_roughness_1k.png",
-    "height": "PBR/ground_tiles_19/ground_tiles_19_height_1k.png",
-    "ao": "PBR/ground_tiles_19/ground_tiles_19_ambientOcclusion_1k.png",
-    "metallic": "PBR/ground_tiles_19/ground_tiles_19_metallic_1k.png",
+    "color": "PBR/ground_tiles_19/ground_tiles_19_baseColor_1k.ktx2",
+    "normal": "PBR/ground_tiles_19/ground_tiles_19_normal_gl_1k.ktx2",
+    "roughness": "PBR/ground_tiles_19/ground_tiles_19_roughness_1k.ktx2",
+    "height": "PBR/ground_tiles_19/ground_tiles_19_height_1k.ktx2",
+    "ao": "PBR/ground_tiles_19/ground_tiles_19_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/ground_tiles_19/ground_tiles_19_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

@@ -4,150 +4,195 @@
   "name": "Chest",
   "category": "prop",
   "tags": ["wood", "loot"],
-  "notes": "Low-poly hollow chest with a chamfered two-tier lid, dark iron straps and a gold clasp. Lid hinges just behind the back wall.",
+  "notes": "Rounded-lid chest, banded construction: the lid is a full-width halfCylinder shell with INSCRIBED half-circle boards plugging the butt ends and three thin arches (both ends + center) reinforcing it; the body is one solid floor with four walls raised from it, front/back walls carrying vertical bars that line up with the lid arches — the center band runs front bar → lid arch → back bar. A thin vertical metal hasp plate hangs from the lid over the front center bar, with a half-ring staple protruding at its lower third (the future lock hangs there).",
   "materials": {
     "wood": { "material": "wood_planks_20", "uvScale": 2 },
-    "floor": { "inherit": "wood", "material": "wood_planks_20", "uvRot": 90 },
-    "wall_f": { "inherit": "wood" },
-    "wall_b": { "inherit": "wood" },
-    "wall_l": { "inherit": "wood", "uvRot": 90 },
-    "wall_r": { "inherit": "wood", "uvRot": 90, "material": "wood_planks_20" },
-    "wood_dark": { "material": "wood_planks_20", "uvRot": 0, "inherit": "wood" },
-    "lid_lower": { "inherit": "wood_dark" },
-    "lid_upper": { "inherit": "wood_dark" },
-    "strap": { "material": "metal_01", "uvScale": 0.25, "uvProject": "box", "uvRot": 90 },
-    "strap_lf": { "inherit": "strap" },
-    "strap_lb": { "inherit": "strap" },
-    "strap_rf": { "inherit": "strap" },
-    "strap_rb": { "inherit": "strap" },
-    "lid_strap_l": { "inherit": "strap" },
-    "lid_strap_r": { "inherit": "strap" },
-    "latch": { "material": "metal_02", "uvScale": 0.25 },
-    "interior": { "material": "wood_planks_20", "uvScale": 0.25 },
-    "floor_2": { "inherit": "interior" },
-    "wall_f_2": { "inherit": "interior" },
-    "wall_b_2": { "inherit": "interior" },
-    "wall_l_2": { "inherit": "interior" },
-    "wall_r_2": { "inherit": "interior" },
-    "lid_lower_2": { "inherit": "interior" }
+    "floor": { "inherit": "wood", "uvRot": 90 },
+    "lid_wood": { "inherit": "wood", "uvProject": "box", "uvScale": 2 },
+    "lid_end": { "inherit": "lid_wood" },
+    "band": { "material": "bark_11", "uvProject": "box", "uvScale": 0.5 },
+    "plate": { "material": "metal_01", "uvScale": 0.25 },
+    "staple": { "material": "metal_01", "uvScale": 0.25 }
   },
   "rig": {
     "root": {
       "children": {
         "floor": {
           "shape": "box",
-          "size": [0.84, 0.1, 0.54],
-          "pos": [0, 0.05, 0],
-          "material": { "all": "floor", "top": "floor_2" },
+          "size": [0.9, 0.06, 0.56],
+          "pos": [0, 0.03, 0],
+          "material": "floor",
           "craftSeed": 39210134
         },
         "wall_f": {
           "shape": "box",
-          "size": [0.84, 0.4, 0.06],
-          "pos": [0, 0.3, 0.24],
-          "material": { "all": "wall_f", "back": "wall_f_2" },
+          "size": [0.9, 0.44, 0.05],
+          "pos": [0, 0.28, 0.235],
+          "material": "wood",
           "craftSeed": 39210134
         },
         "wall_b": {
           "shape": "box",
-          "size": [0.84, 0.4, 0.06],
-          "pos": [0, 0.3, -0.24],
-          "material": { "all": "wall_b", "front": "wall_b_2" },
+          "size": [0.9, 0.44, 0.05],
+          "pos": [0, 0.28, -0.235],
+          "material": "wood",
           "craftSeed": 39210134
         },
         "wall_l": {
           "shape": "box",
-          "size": [0.06, 0.4, 0.4],
-          "pos": [-0.39, 0.3, 0],
-          "material": { "all": "wall_l", "right": "wall_l_2" },
+          "size": [0.05, 0.44, 0.46],
+          "pos": [-0.425, 0.28, 0],
+          "material": "wood",
           "craftSeed": 39210134
         },
         "wall_r": {
           "shape": "box",
-          "size": [0.06, 0.4, 0.4],
-          "pos": [0.39, 0.3, 0],
-          "material": { "all": "wall_r", "left": "wall_r_2" },
+          "size": [0.05, 0.44, 0.46],
+          "pos": [0.425, 0.28, 0],
+          "material": "wood",
           "craftSeed": 39210134
         },
-        "strap_lf": {
+        "bar_fl": {
           "shape": "box",
-          "size": [0.09, 0.46, 0.05],
-          "pos": [-0.26, 0.27, 0.265],
-          "material": "strap_lf",
-          "craft": 0.85,
+          "size": [0.06, 0.47, 0.03],
+          "pos": [-0.42, 0.265, 0.272],
+          "material": "band",
+          "craft": 0.95,
           "craftSeed": 39210134
         },
-        "strap_lb": {
+        "bar_fc": {
           "shape": "box",
-          "size": [0.09, 0.46, 0.05],
-          "pos": [-0.26, 0.27, -0.265],
-          "material": "strap_lb",
-          "craft": 0.85,
+          "size": [0.06, 0.47, 0.03],
+          "pos": [0, 0.265, 0.272],
+          "material": "band",
+          "craft": 0.95,
           "craftSeed": 39210134
         },
-        "strap_rf": {
+        "bar_fr": {
           "shape": "box",
-          "size": [0.09, 0.46, 0.05],
-          "pos": [0.26, 0.27, 0.265],
-          "material": "strap_rf",
-          "craft": 0.85,
+          "size": [0.06, 0.47, 0.03],
+          "pos": [0.42, 0.265, 0.272],
+          "material": "band",
+          "craft": 0.95,
           "craftSeed": 39210134
         },
-        "strap_rb": {
+        "bar_bl": {
           "shape": "box",
-          "size": [0.09, 0.46, 0.05],
-          "pos": [0.26, 0.27, -0.265],
-          "material": "strap_rb",
-          "craft": 0.85,
+          "size": [0.06, 0.47, 0.03],
+          "pos": [-0.42, 0.265, -0.272],
+          "material": "band",
+          "craft": 0.95,
+          "craftSeed": 39210134
+        },
+        "bar_bc": {
+          "shape": "box",
+          "size": [0.06, 0.47, 0.03],
+          "pos": [0, 0.265, -0.272],
+          "material": "band",
+          "craft": 0.95,
+          "craftSeed": 39210134
+        },
+        "bar_br": {
+          "shape": "box",
+          "size": [0.06, 0.47, 0.03],
+          "pos": [0.42, 0.265, -0.272],
+          "material": "band",
+          "craft": 0.95,
           "craftSeed": 39210134
         },
         "lid": {
           "pos": [0, 0.5, 0],
-          "pivot": [0, 0, -0.3],
+          "pivot": [0, 0, -0.26],
           "children": {
-            "lid_lower": {
-              "shape": "box",
-              "size": [0.86, 0.13, 0.56],
-              "pos": [0, 0.065, 0],
-              "material": { "all": "lid_lower", "bottom": "lid_lower_2" },
+            "lid_shell": {
+              "shape": "halfCylinder",
+              "radius": 0.26,
+              "height": 0.9,
+              "thickness": 0.04,
+              "segments": 20,
+              "rot": [0, 0, 90],
+              "pos": [0, 0, 0],
+              "material": "lid_wood",
               "craftSeed": 39210134
             },
-            "lid_upper": {
-              "shape": "box",
-              "size": [0.7, 0.11, 0.42],
-              "pos": [0, 0.18, 0],
-              "material": "lid_upper",
+            "lid_end_l": {
+              "shape": "halfCylinder",
+              "radius": 0.215,
+              "height": 0.04,
+              "segments": 20,
+              "rot": [0, 0, 90],
+              "pos": [-0.41, 0, 0],
+              "material": "lid_end",
               "craftSeed": 39210134
             },
-            "lid_strap_l": {
-              "shape": "box",
-              "size": [0.09, 0.14, 0.58],
-              "pos": [-0.26, 0.065, 0],
-              "material": "lid_strap_l",
-              "craft": 0.85,
+            "lid_end_r": {
+              "shape": "halfCylinder",
+              "radius": 0.215,
+              "height": 0.04,
+              "segments": 20,
+              "rot": [0, 0, 90],
+              "pos": [0.41, 0, 0],
+              "material": "lid_end",
               "craftSeed": 39210134
             },
-            "lid_strap_r": {
-              "shape": "box",
-              "size": [0.09, 0.14, 0.58],
-              "pos": [0.26, 0.065, 0],
-              "material": "lid_strap_r",
-              "craft": 0.85,
+            "arch_l": {
+              "shape": "arch",
+              "radius": 0.27,
+              "size": [0.045, 0.06],
+              "segments": 20,
+              "rot": [0, 90, 0],
+              "pos": [-0.42, 0, 0],
+              "material": "band",
+              "craft": 0.95,
               "craftSeed": 39210134
             },
-            "latch": {
-              "shape": "box",
-              "size": [0.13, 0.18, 0.06],
-              "pos": [0, 0.02, 0.29],
-              "material": "latch",
+            "arch_c": {
+              "shape": "arch",
+              "radius": 0.27,
+              "size": [0.045, 0.06],
+              "segments": 20,
+              "rot": [0, 90, 0],
+              "pos": [0, 0, 0],
+              "material": "band",
+              "craft": 0.95,
               "craftSeed": 39210134
+            },
+            "arch_r": {
+              "shape": "arch",
+              "radius": 0.27,
+              "size": [0.045, 0.06],
+              "segments": 20,
+              "rot": [0, 90, 0],
+              "pos": [0.42, 0, 0],
+              "material": "band",
+              "craft": 0.95,
+              "craftSeed": 39210134
+            },
+            "hasp_plate": {
+              "shape": "box",
+              "size": [0.06, 0.18, 0.012],
+              "pos": [0, -0.075, 0.296],
+              "material": "plate",
+              "craftSeed": 39210134,
+              "children": {
+                "hasp_ring": {
+                  "shape": "halfTorus",
+                  "radius": 0.028,
+                  "tube": 0.008,
+                  "segments": 14,
+                  "rot": [90, 90, 0],
+                  "pos": [0, -0.045, 0.01],
+                  "material": "staple",
+                  "craftSeed": 39210134
+                }
+              }
             }
           }
         }
       }
     }
   },
-  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [0.86, 0.79, 0.56], "offset": [0, 0.395, 0] } },
+  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [0.9, 0.8, 0.56], "offset": [0, 0.4, 0] } },
   "props": { "loot": "coin", "lootCount": 5 },
   "states": { "initial": "closed", "closed": {}, "open": { "anim": "open_lid" } },
   "anims": {

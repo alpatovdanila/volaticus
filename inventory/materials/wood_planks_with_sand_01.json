@@ -4,11 +4,11 @@
   "name": "Wood Planks With Sand 01",
   "category": "wood_planks_with_sand",
   "maps": {
-    "color": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_color_1k.png",
-    "normal": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_normal_gl_1k.png",
-    "roughness": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_roughness_1k.png",
-    "height": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_height_1k.png",
-    "ao": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_ambient_occlusion_1k.png",
+    "color": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_color_1k.ktx2",
+    "normal": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_roughness_1k.ktx2",
+    "height": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_height_1k.ktx2",
+    "ao": "PBR/wood_planks_with_sand_01/wood_planks_with_sand_01_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

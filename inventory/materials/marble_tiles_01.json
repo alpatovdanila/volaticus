@@ -4,12 +4,12 @@
   "name": "Marble Tiles 01",
   "category": "marble_tiles",
   "maps": {
-    "color": "PBR/marble_tiles_01/marble_tiles_01_color_1k.png",
-    "normal": "PBR/marble_tiles_01/marble_tiles_01_normal_gl_1k.png",
-    "roughness": "PBR/marble_tiles_01/marble_tiles_01_roughness_1k.png",
-    "height": "PBR/marble_tiles_01/marble_tiles_01_height_1k.png",
-    "ao": "PBR/marble_tiles_01/marble_tiles_01_ambient_occlussion_1k.png",
-    "metallic": "PBR/marble_tiles_01/marble_tiles_01_metallic_1k.png",
+    "color": "PBR/marble_tiles_01/marble_tiles_01_color_1k.ktx2",
+    "normal": "PBR/marble_tiles_01/marble_tiles_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/marble_tiles_01/marble_tiles_01_roughness_1k.ktx2",
+    "height": "PBR/marble_tiles_01/marble_tiles_01_height_1k.ktx2",
+    "ao": "PBR/marble_tiles_01/marble_tiles_01_ambient_occlussion_1k.ktx2",
+    "metallic": "PBR/marble_tiles_01/marble_tiles_01_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

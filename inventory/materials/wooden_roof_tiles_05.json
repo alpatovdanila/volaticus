@@ -4,12 +4,12 @@
   "name": "Wooden Roof Tiles 05",
   "category": "wooden_roof_tiles",
   "maps": {
-    "color": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_basecolor_1k.png",
-    "normal": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_normal_gl_1k.png",
-    "roughness": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_roughness_1k.png",
-    "height": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_height_1k.png",
-    "ao": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_ambientocclusion_1k.png",
-    "metallic": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_metallic_1k.png",
+    "color": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_basecolor_1k.ktx2",
+    "normal": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_normal_gl_1k.ktx2",
+    "roughness": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_roughness_1k.ktx2",
+    "height": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_height_1k.ktx2",
+    "ao": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/wooden_roof_tiles_05/wooden_roof_tiles_05_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

@@ -10,8 +10,17 @@
       "children": {
         "disc": {
           "shape": "cylinder",
-          "radius": 0.19,
+          "radius": 0.172,
           "height": 0.05,
+          "rot": [90, 0, 0],
+          "material": "gold",
+          "craftSeed": 1225490936
+        },
+        "rim": {
+          "shape": "torus",
+          "radius": 0.18,
+          "tube": 0.026,
+          "segments": 20,
           "rot": [90, 0, 0],
           "material": "gold",
           "craftSeed": 1225490936

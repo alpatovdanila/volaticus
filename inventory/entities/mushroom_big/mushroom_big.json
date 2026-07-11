@@ -4,11 +4,11 @@
   "name": "Bouncy Mushroom",
   "category": "prop",
   "tags": ["vegetation", "interactive"],
-  "notes": "Big trampoline mushroom. Idle breathes; the game fires the 'bounced' event when something lands on the cap — deep squash, spring back, spore puff and a boing.",
+  "notes": "Big trampoline mushroom. Cap is TWO stitched halfSpheres sharing the rim edge loop — a tall rounded top and a nearly flat underside — so the two read as separate styleable surfaces. Idle breathes; 'bounced' squashes and springs.",
   "materials": {
-    "stem": { "material": "concrete_wall_01", "uvRot": 90, "uvScale": 0.25 },
-    "cap": { "material": "concrete_wall_01", "uvScale": 0.25, "uvProject": "box" },
-    "gills": { "material": "concrete_wall_01", "uvMode": "stretch" },
+    "stem": { "material": "concrete_wall_02", "uvRot": 90 },
+    "cap_top": { "material": "concrete_wall_05", "uvScale": 0.25, "uvProject": "box" },
+    "cap_bottom": { "material": "concrete_wall_01", "uvMode": "stretch" },
     "dot": { "material": "plaster_wall_01", "uvMode": "stretch" },
     "dot_a": { "inherit": "dot" },
     "dot_b": { "inherit": "dot" },
@@ -22,86 +22,77 @@
           "shape": "cylinder",
           "radiusBottom": 0.34,
           "radiusTop": 0.24,
-          "height": 0.62,
+          "height": 0.72,
           "segments": 24,
-          "pos": [0, 0.31, 0],
+          "pos": [0, 0.36, 0],
           "material": "stem",
           "craft": 0.91,
           "craftSeed": 1896896128
         },
         "cap": {
-          "shape": "sphere",
-          "radius": 0.78,
-          "segments": 24,
-          "segmentsY": 7,
-          "pos": [0, 0.82, 0],
-          "scale": [1, 0.46, 1],
-          "pivot": [0, -0.2, 0],
-          "material": "cap",
+          "pos": [0, 0.86, 0],
+          "pivot": [0, -0.14, 0],
           "children": {
-            "gills": {
-              "shape": "cylinder",
-              "radiusBottom": 0.52,
-              "radiusTop": 0.62,
-              "height": 0.14,
+            "cap_top": {
+              "shape": "halfSphere",
+              "radius": 0.78,
               "segments": 24,
-              "open": true,
-              "pos": [0, -0.16, 0],
-              "material": "gills",
+              "segmentsY": 7,
+              "scale": [1, 0.62, 1],
+              "pos": [0, 0, 0],
+              "material": "cap_top",
+              "craft": 0.93,
+              "craftSeed": 1896896128
+            },
+            "cap_bottom": {
+              "shape": "halfSphere",
+              "radius": 0.78,
+              "segments": 24,
+              "segmentsY": 4,
+              "scale": [1, 0.16, 1],
+              "pos": [0, 0, 0],
+              "rot": [180, 0, 0],
+              "material": "cap_bottom",
+              "craft": 0.93,
               "craftSeed": 1896896128
             },
             "dot_a": {
               "shape": "sphere",
               "radius": 0.13,
               "segments": 6,
-              "pos": [0.3, 0.3, 0.2],
+              "pos": [0.3, 0.26, 0.2],
               "scale": [1, 0.35, 1],
               "material": "dot_a",
-              "chance": 0.85,
               "craftSeed": 1896896128
             },
             "dot_b": {
               "shape": "sphere",
               "radius": 0.11,
               "segments": 6,
-              "pos": [-0.32, 0.32, -0.1],
+              "pos": [-0.32, 0.24, -0.1],
               "scale": [1, 0.35, 1],
               "material": "dot_b",
-              "chance": 0.85,
               "craftSeed": 1896896128
             },
             "dot_c": {
               "shape": "sphere",
               "radius": 0.09,
               "segments": 6,
-              "pos": [0.05, 0.38, -0.32],
+              "pos": [0.05, 0.32, -0.32],
               "scale": [1, 0.35, 1],
               "material": "dot_c",
-              "chance": 0.7,
-              "craftSeed": 1896896128
-            },
-            "dot_d": {
-              "shape": "sphere",
-              "radius": 0.08,
-              "segments": 6,
-              "pos": [-0.1, 0.36, 0.34],
-              "scale": [1, 0.35, 1],
-              "material": "dot_d",
-              "chance": 0.6,
               "craftSeed": 1896896128
             }
-          },
-          "craftSeed": 1896896128
+          }
         }
       }
     }
   },
   "physics": {
     "body": "fixed",
-    "collider": { "shape": "cylinder", "radius": 0.72, "height": 1.05, "offset": [0, 0.525, 0] }
+    "collider": { "shape": "cylinder", "radius": 0.72, "height": 1.15, "offset": [0, 0.575, 0] }
   },
   "props": { "bounciness": 14 },
-  "variants": { "count": 6 },
   "states": { "initial": "idle", "idle": { "anim": "breathe" } },
   "anims": {
     "breathe": {

@@ -4,12 +4,12 @@
   "name": "Concrete Wall 06",
   "category": "concrete_wall",
   "maps": {
-    "color": "PBR/concrete_wall_06/concrete_wall_06_basecolor_1k.png",
-    "normal": "PBR/concrete_wall_06/concrete_wall_06_normal_gl_1k.png",
-    "roughness": "PBR/concrete_wall_06/concrete_wall_06_roughness_1k.png",
-    "height": "PBR/concrete_wall_06/concrete_wall_06_height_1k.png",
-    "ao": "PBR/concrete_wall_06/concrete_wall_06_ambientocclusion_1k.png",
-    "metallic": "PBR/concrete_wall_06/concrete_wall_06_metallic_1k.png",
+    "color": "PBR/concrete_wall_06/concrete_wall_06_basecolor_1k.ktx2",
+    "normal": "PBR/concrete_wall_06/concrete_wall_06_normal_gl_1k.ktx2",
+    "roughness": "PBR/concrete_wall_06/concrete_wall_06_roughness_1k.ktx2",
+    "height": "PBR/concrete_wall_06/concrete_wall_06_height_1k.ktx2",
+    "ao": "PBR/concrete_wall_06/concrete_wall_06_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/concrete_wall_06/concrete_wall_06_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

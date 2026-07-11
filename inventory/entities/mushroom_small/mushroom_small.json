@@ -4,20 +4,20 @@
   "name": "Small Mushroom",
   "category": "prop",
   "tags": ["vegetation", "nature"],
-  "notes": "Decorative low-poly toadstool; oneOf picks red or brown cap, white dots by chance. No collider.",
+  "notes": "Decorative toadstool. Caps are two stitched halfSpheres (rounded top + near-flat underside). Exactly 4 variants: red with baby, red alone, brown with baby, brown alone. No collider.",
   "materials": {
     "stem": { "material": "concrete_wall_01", "uvProject": "box", "uvScale": 0.25 },
     "stem_2": { "inherit": "stem", "uvRot": 90 },
     "baby": { "inherit": "stem" },
-    "cap_red": { "material": "concrete_wall_01", "uvProject": "box", "uvScale": 0.25 },
-    "cap_r": { "inherit": "cap_red" },
-    "baby_cap": { "inherit": "cap_red" },
-    "cap_brown": { "material": "concrete_wall_01", "uvScale": 0.25 },
+    "cap_red": { "material": "concrete_wall_01", "uvProject": "box", "uvScale": 0.25, "tint": "#c94034" },
+    "cap_red_under": { "inherit": "cap_red", "tint": "#e8ded2" },
+    "baby_cap": { "inherit": "cap_red", "tint": "#c94034" },
+    "cap_brown": { "material": "concrete_wall_01", "uvScale": 0.25, "tint": "#96683f" },
+    "cap_brown_under": { "inherit": "cap_brown", "tint": "#e8ddc9" },
     "dot": { "material": "plaster_wall_01", "uvScale": 0.25 },
     "dot_r1": { "inherit": "dot" },
     "dot_r2": { "inherit": "dot" },
-    "dot_r3": { "inherit": "dot" },
-    "dot_b1": { "inherit": "dot" }
+    "dot_r3": { "inherit": "dot" }
   },
   "rig": {
     "root": {
@@ -34,67 +34,82 @@
           "craftSeed": 765069250
         },
         "cap_r": {
-          "shape": "sphere",
-          "radius": 0.17,
-          "segments": 20,
-          "pos": [0, 0.26, 0],
-          "scale": [1, 0.62, 1],
-          "material": "cap_r",
+          "pos": [0, 0.24, 0],
           "children": {
+            "cap_r_top": {
+              "shape": "halfSphere",
+              "radius": 0.17,
+              "segments": 20,
+              "scale": [1, 0.72, 1],
+              "material": "cap_red",
+              "craft": 0.91,
+              "craftSeed": 765069250
+            },
+            "cap_r_under": {
+              "shape": "halfSphere",
+              "radius": 0.17,
+              "segments": 20,
+              "segmentsY": 3,
+              "scale": [1, 0.16, 1],
+              "rot": [180, 0, 0],
+              "material": "cap_red_under",
+              "craft": 0.91,
+              "craftSeed": 765069250
+            },
             "dot_r1": {
               "shape": "sphere",
               "radius": 0.035,
               "segments": 5,
-              "pos": [0.08, 0.06, 0.05],
+              "pos": [0.08, 0.07, 0.05],
               "scale": [1, 0.4, 1],
               "material": "dot_r1",
-              "chance": 0.8,
               "craftSeed": 765069250
             },
             "dot_r2": {
               "shape": "sphere",
               "radius": 0.03,
               "segments": 5,
-              "pos": [-0.07, 0.07, -0.03],
+              "pos": [-0.07, 0.08, -0.03],
               "scale": [1, 0.4, 1],
               "material": "dot_r2",
-              "chance": 0.8,
               "craftSeed": 765069250
             },
             "dot_r3": {
               "shape": "sphere",
               "radius": 0.026,
               "segments": 5,
-              "pos": [0, 0.08, -0.09],
+              "pos": [0, 0.09, -0.09],
               "scale": [1, 0.4, 1],
               "material": "dot_r3",
-              "chance": 0.6,
               "craftSeed": 765069250
             }
           },
-          "craft": 0.91,
           "craftSeed": 765069250
         },
         "cap_b": {
-          "shape": "sphere",
-          "radius": 0.16,
-          "segments": 20,
-          "pos": [0, 0.25, 0],
-          "scale": [1, 0.55, 1],
-          "material": "cap_brown",
+          "pos": [0, 0.23, 0],
           "children": {
-            "dot_b1": {
-              "shape": "sphere",
-              "radius": 0.03,
-              "segments": 5,
-              "pos": [0.07, 0.05, 0.04],
-              "scale": [1, 0.4, 1],
-              "material": "dot_b1",
-              "chance": 0.5,
+            "cap_b_top": {
+              "shape": "halfSphere",
+              "radius": 0.16,
+              "segments": 20,
+              "scale": [1, 0.6, 1],
+              "material": "cap_brown",
+              "craft": 0.91,
+              "craftSeed": 765069250
+            },
+            "cap_b_under": {
+              "shape": "halfSphere",
+              "radius": 0.16,
+              "segments": 20,
+              "segmentsY": 3,
+              "scale": [1, 0.15, 1],
+              "rot": [180, 0, 0],
+              "material": "cap_brown_under",
+              "craft": 0.91,
               "craftSeed": 765069250
             }
           },
-          "craft": 0.91,
           "craftSeed": 765069250
         },
         "baby": {
@@ -106,26 +121,26 @@
           "pos": [0.18, 0.05, 0.08],
           "rot": [0, 0, -10],
           "material": "baby",
-          "chance": 0.5,
+          "craft": 0.6,
           "children": {
             "baby_cap": {
-              "shape": "sphere",
+              "shape": "halfSphere",
               "radius": 0.07,
-              "segments": 6,
-              "pos": [0, 0.06, 0],
-              "scale": [1, 0.6, 1],
+              "segments": 12,
+              "scale": [1, 0.62, 1],
+              "pos": [0, 0.05, 0],
               "material": "baby_cap",
               "craft": 0.91,
               "craftSeed": 765069250
             }
           },
-          "craft": 0.6,
-          "craftSeed": 765069250
+          "craftSeed": 765069250,
+          "chance": 0.5
         }
       }
     }
   },
-  "variants": { "count": 6, "oneOf": { "cap": ["cap_r", "cap_b"] } },
+  "variants": { "count": 4, "oneOf": { "cap": ["cap_r", "cap_b"] } },
   "craft": 0.96,
   "sub": 1
 }

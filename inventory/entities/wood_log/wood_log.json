@@ -4,7 +4,7 @@
   "name": "Wood Log",
   "category": "prop",
   "tags": ["wood", "nature"],
-  "notes": "Fallen log lying on its side. oneOf picks the dressing: plain / mushrooms / mossy top. Branch stub by chance.",
+  "notes": "Fallen log; moss variants drape thin halfCylinder shells BENT over the bark contour (jitter-rough edges), shroom variant keeps its crosses.",
   "materials": {
     "bark": { "material": "bark_05" },
     "trunk": { "inherit": "bark" },
@@ -68,25 +68,33 @@
         "log_mossy": {
           "children": {
             "moss_a": {
-              "shape": "box",
-              "size": [0.6, 0.07, 0.4],
-              "pos": [-0.2, 0.45, 0],
-              "rot": [0, 6, 4],
+              "shape": "halfCylinder",
+              "radius": 0.26,
+              "height": 0.55,
+              "thickness": 0.012,
+              "open": true,
+              "segments": 12,
+              "pos": [-0.1, 0.24, 0],
+              "rot": [0, 0, 90],
               "material": "moss_a",
-              "sub": 2,
-              "craft": 0.41,
-              "craftSeed": 1328148735
+              "craft": 0.55,
+              "sub": 1,
+              "craftSeed": 424242421
             },
             "moss_b": {
-              "shape": "box",
-              "size": [0.35, 0.06, 0.34],
-              "pos": [0.35, 0.44, 0.03],
-              "rot": [0, -12, -3],
+              "shape": "halfCylinder",
+              "radius": 0.258,
+              "height": 0.32,
+              "thickness": 0.01,
+              "open": true,
+              "segments": 10,
+              "pos": [0.35, 0.24, 0],
+              "rot": [0, 12, 90],
               "material": "moss_b",
               "chance": 0.7,
-              "sub": 2,
-              "craft": 0.4,
-              "craftSeed": 1328148735
+              "craft": 0.5,
+              "sub": 1,
+              "craftSeed": 424242422
             }
           }
         }
@@ -94,5 +102,5 @@
     }
   },
   "physics": { "body": "fixed", "collider": { "shape": "box", "size": [1.5, 0.48, 0.48], "offset": [0, 0.24, 0] } },
-  "variants": { "count": 6, "oneOf": { "dressing": ["log_plain", "log_shrooms", "log_mossy"] } }
+  "variants": { "count": 4, "oneOf": { "dressing": ["log_plain", "log_shrooms", "log_mossy"] } }
 }

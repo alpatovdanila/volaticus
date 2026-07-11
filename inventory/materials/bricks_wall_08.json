@@ -4,11 +4,11 @@
   "name": "Bricks Wall 08",
   "category": "bricks_wall",
   "maps": {
-    "color": "PBR/bricks_wall_08/bricks_wall_08_basecolor_1k.png",
-    "normal": "PBR/bricks_wall_08/bricks_wall_08_normal_gl_1k.png",
-    "roughness": "PBR/bricks_wall_08/bricks_wall_08_roughness_1k.png",
-    "height": "PBR/bricks_wall_08/bricks_wall_08_height_1k.png",
-    "ao": "PBR/bricks_wall_08/bricks_wall_08_ambientocclusion_1k.png",
+    "color": "PBR/bricks_wall_08/bricks_wall_08_basecolor_1k.ktx2",
+    "normal": "PBR/bricks_wall_08/bricks_wall_08_normal_gl_1k.ktx2",
+    "roughness": "PBR/bricks_wall_08/bricks_wall_08_roughness_1k.ktx2",
+    "height": "PBR/bricks_wall_08/bricks_wall_08_height_1k.ktx2",
+    "ao": "PBR/bricks_wall_08/bricks_wall_08_ambientocclusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

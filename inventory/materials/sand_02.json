@@ -4,11 +4,11 @@
   "name": "Sand 02",
   "category": "sand",
   "maps": {
-    "color": "PBR/sand_02/sand_02_color_1k.png",
-    "normal": "PBR/sand_02/sand_02_normal_gl_1k.png",
-    "roughness": "PBR/sand_02/sand_02_roughness_1k.png",
-    "height": "PBR/sand_02/sand_02_height_1k.png",
-    "ao": "PBR/sand_02/sand_02_ambient_occlusion_1k.png",
+    "color": "PBR/sand_02/sand_02_color_1k.ktx2",
+    "normal": "PBR/sand_02/sand_02_normal_gl_1k.ktx2",
+    "roughness": "PBR/sand_02/sand_02_roughness_1k.ktx2",
+    "height": "PBR/sand_02/sand_02_height_1k.ktx2",
+    "ao": "PBR/sand_02/sand_02_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

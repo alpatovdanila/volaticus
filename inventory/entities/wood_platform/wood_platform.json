@@ -2,120 +2,224 @@
   "format": 1,
   "id": "wood_platform",
   "name": "Wood Platform",
-  "category": "prop",
-  "tags": ["wood", "structure", "platform"],
-  "notes": "Round plank platform on a center post with three splayed strut legs (v1 makePlatformWood). Deck top sits at ~2.2 m and is standable — the box collider matches the deck footprint (legs are pass-through). variants.scale spans 0.9-2.1: pick a tall variant for the ~4.6 m placements.",
+  "category": "levelpart",
+  "tags": ["wood", "level"],
+  "notes": "Round jump platform on a single stand; three diagonal struts run from the ground INTO the post (embedded ends). 3 variants = 3 distinct heights.",
   "materials": {
-    "deck": { "material": "wood_planks_14", "uvRot": 90, "uvProject": "box" },
-    "wood_dark": { "material": "wood_planks_20", "uvProject": "box" },
-    "rim": { "inherit": "wood_dark" },
-    "post": { "material": "wood_planks_18", "uvRot": 90, "uvProject": "box" },
-    "collar": { "inherit": "wood_dark" },
-    "strut_a": { "inherit": "wood_dark", "uvRot": 90 },
-    "strut_b": { "inherit": "wood_dark", "uvRot": 90 },
-    "strut_c": { "inherit": "wood_dark", "uvRot": 90 }
+    "deck": { "material": "wood_planks_20" },
+    "rim": { "material": "bark_11", "uvProject": "box", "uvScale": 0.5 },
+    "post": { "material": "bark_02", "uvProject": "box", "uvScale": 0.5 }
   },
   "rig": {
     "root": {
       "children": {
-        "deck": {
-          "shape": "cylinder",
-          "radiusTop": 1.3,
-          "radiusBottom": 1.15,
-          "height": 0.22,
-          "segments": 24,
-          "pos": [0, 2.09, 0],
-          "material": "deck",
-          "craft": 0.72,
-          "craftSeed": 1179764532
-        },
-        "rim": {
-          "shape": "ring",
-          "radius": 1.34,
-          "height": 0.1,
-          "thickness": 0.045,
-          "segments": 24,
-          "pos": [0, 2.17, 0],
-          "material": "rim",
-          "craft": 0.8,
-          "craftSeed": 1179764532
-        },
-        "post": {
-          "shape": "post",
-          "radiusBottom": 0.23,
-          "radiusTop": 0.17,
-          "height": 2,
-          "segments": 24,
-          "pos": [0, 1, 0],
-          "material": "post",
-          "craft": 1,
-          "craftSeed": 1179764532
-        },
-        "collar": {
-          "shape": "cylinder",
-          "radiusTop": 0.34,
-          "radiusBottom": 0.26,
-          "height": 0.2,
-          "segments": 24,
-          "pos": [0, 1.9, 0],
-          "material": "collar",
-          "chance": 0.7,
-          "craft": 0.8,
-          "craftSeed": 1179764532
-        },
-        "legs": {
+        "asm_low": {
           "children": {
-            "strut_a": {
+            "post_low": {
+              "shape": "post",
+              "radius": 0.17,
+              "height": 1.1,
+              "pos": [0, 0.55, 0],
+              "material": "post",
+              "craftSeed": 660001100
+            },
+            "strut_low_0": {
               "shape": "cylinder",
-              "radius": 0.07,
-              "height": 1.6,
+              "radius": 0.055,
+              "height": 0.8637268086611647,
+              "segments": 8,
+              "pos": [0.31154180947108234, 0.341, 0.17019606620449207],
+              "rot": [20.434090477607768, 0, -32.58173293435981],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660001101
+            },
+            "strut_low_1": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 0.8637268086611646,
+              "segments": 8,
+              "pos": [-0.3031650216928094, 0.341, 0.18470508824068274],
+              "rot": [22.015237674394996, 0, 31.602483993361535],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660001102
+            },
+            "strut_low_2": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 0.8637268086611646,
+              "segments": 8,
+              "pos": [-0.008376787778273026, 0.341, -0.3549011544451748],
+              "rot": [-37.84398116215903, 0, 0.8296338024019898],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660001103
+            },
+            "deck_low": {
+              "shape": "cylinder",
+              "radius": 0.78,
+              "height": 0.12,
               "segments": 16,
-              "pos": [0.58, 0.76, 0],
-              "rot": [0, 0, 24],
-              "rotJitter": [0, 0, 2],
-              "material": "strut_a",
-              "craft": 0.8,
-              "craftSeed": 1179764532
+              "pos": [0, 1.1600000000000001, 0],
+              "material": { "top": "deck", "side": "rim", "bottom": "deck" },
+              "craft": 0.94,
+              "craftSeed": 660001109
             },
-            "leg_b": {
-              "rot": [0, 120, 0],
-              "children": {
-                "strut_b": {
-                  "shape": "cylinder",
-                  "radius": 0.07,
-                  "height": 1.6,
-                  "segments": 16,
-                  "pos": [0.58, 0.76, 0],
-                  "rot": [0, 0, 24],
-                  "rotJitter": [0, 0, 2],
-                  "material": "strut_b",
-                  "craft": 0.8,
-                  "craftSeed": 1179764532
-                }
-              }
+            "rim_low": {
+              "shape": "ring",
+              "radiusTop": 0.82,
+              "radiusBottom": 0.82,
+              "height": 0.07,
+              "thickness": 0.035,
+              "segments": 16,
+              "pos": [0, 1.1600000000000001, 0],
+              "material": "rim",
+              "craft": 0.94,
+              "craftSeed": 660001110
+            }
+          }
+        },
+        "asm_mid": {
+          "children": {
+            "post_mid": {
+              "shape": "post",
+              "radius": 0.17,
+              "height": 1.8,
+              "pos": [0, 0.9, 0],
+              "material": "post",
+              "craftSeed": 660002200
             },
-            "leg_c": {
-              "rot": [0, -120, 0],
-              "children": {
-                "strut_c": {
-                  "shape": "cylinder",
-                  "radius": 0.07,
-                  "height": 1.6,
-                  "segments": 16,
-                  "pos": [0.58, 0.76, 0],
-                  "rot": [0, 0, 24],
-                  "rotJitter": [0, 0, 2],
-                  "material": "strut_c",
-                  "craft": 0.8,
-                  "craftSeed": 1179764532
-                }
-              }
+            "strut_mid_0": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 1.235457809882636,
+              "segments": 8,
+              "pos": [0.31154180947108234, 0.558, 0.17019606620449207],
+              "rot": [12.826680232681506, 0, -22.11549514465566],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660002201
+            },
+            "strut_mid_1": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 1.235457809882636,
+              "segments": 8,
+              "pos": [-0.3031650216928094, 0.558, 0.18470508824068274],
+              "rot": [13.879428741943242, 0, 21.49081718304265],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660002202
+            },
+            "strut_mid_2": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 1.235457809882636,
+              "segments": 8,
+              "pos": [-0.008376787778273026, 0.558, -0.3549011544451748],
+              "rot": [-25.397346644028797, 0, 0.5799988868591854],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660002203
+            },
+            "deck_mid": {
+              "shape": "cylinder",
+              "radius": 0.78,
+              "height": 0.12,
+              "segments": 16,
+              "pos": [0, 1.86, 0],
+              "material": { "top": "deck", "side": "rim", "bottom": "deck" },
+              "craft": 0.94,
+              "craftSeed": 660002209
+            },
+            "rim_mid": {
+              "shape": "ring",
+              "radiusTop": 0.82,
+              "radiusBottom": 0.82,
+              "height": 0.07,
+              "thickness": 0.035,
+              "segments": 16,
+              "pos": [0, 1.86, 0],
+              "material": "rim",
+              "craft": 0.94,
+              "craftSeed": 660002210
+            }
+          }
+        },
+        "asm_tall": {
+          "children": {
+            "post_tall": {
+              "shape": "post",
+              "radius": 0.17,
+              "height": 2.5,
+              "pos": [0, 1.25, 0],
+              "material": "post",
+              "craftSeed": 660003300
+            },
+            "strut_tall_0": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 1.6381086655042152,
+              "segments": 8,
+              "pos": [0.31154180947108234, 0.775, 0.17019606620449207],
+              "rot": [9.309838474693926, 0, -16.495285529565663],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660003301
+            },
+            "strut_tall_1": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 1.6381086655042152,
+              "segments": 8,
+              "pos": [-0.3031650216928094, 0.775, 0.18470508824068274],
+              "rot": [10.087812231864925, 0, 16.039615056236244],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660003302
+            },
+            "strut_tall_2": {
+              "shape": "cylinder",
+              "radius": 0.055,
+              "height": 1.6381086655042152,
+              "segments": 8,
+              "pos": [-0.008376787778273026, 0.775, -0.3549011544451748],
+              "rot": [-18.872494362008062, 0, 0.43743061287082663],
+              "material": "post",
+              "craft": 0.9,
+              "craftSeed": 660003303
+            },
+            "deck_tall": {
+              "shape": "cylinder",
+              "radius": 0.78,
+              "height": 0.12,
+              "segments": 16,
+              "pos": [0, 2.56, 0],
+              "material": { "top": "deck", "side": "rim", "bottom": "deck" },
+              "craft": 0.94,
+              "craftSeed": 660003309
+            },
+            "rim_tall": {
+              "shape": "ring",
+              "radiusTop": 0.82,
+              "radiusBottom": 0.82,
+              "height": 0.07,
+              "thickness": 0.035,
+              "segments": 16,
+              "pos": [0, 2.56, 0],
+              "material": "rim",
+              "craft": 0.94,
+              "craftSeed": 660003310
             }
           }
         }
       }
     }
   },
-  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [2.5, 0.28, 2.5], "offset": [0, 2.06, 0] } },
-  "variants": { "count": 6 }
+  "physics": {
+    "body": "fixed",
+    "collider": { "shape": "cylinder", "radius": 0.8, "height": 2.7, "offset": [0, 1.35, 0] }
+  },
+  "variants": { "count": 3, "oneOf": { "asm": ["asm_low", "asm_mid", "asm_tall"] } }
 }

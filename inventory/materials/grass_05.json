@@ -4,9 +4,9 @@
   "name": "Grass 05",
   "category": "grass",
   "maps": {
-    "color": "PBR/grass_05/grass_05_basecolor_1k.png",
-    "normal": "PBR/grass_05/grass_05_normal_gl_1k.png",
-    "roughness": "PBR/grass_05/grass_05_roughness_1k.png",
+    "color": "PBR/grass_05/grass_05_basecolor_1k.ktx2",
+    "normal": "PBR/grass_05/grass_05_normal_gl_1k.ktx2",
+    "roughness": "PBR/grass_05/grass_05_roughness_1k.ktx2",
     "height": null,
     "ao": null,
     "metallic": null,
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

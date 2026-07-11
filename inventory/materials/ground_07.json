@@ -4,12 +4,12 @@
   "name": "Ground 07",
   "category": "ground",
   "maps": {
-    "color": "PBR/ground_07/ground_07_basecolor_1k.png",
-    "normal": "PBR/ground_07/ground_07_normal_gl_1k.png",
-    "roughness": "PBR/ground_07/ground_07_roughness_1k.png",
-    "height": "PBR/ground_07/ground_07_height_1k.png",
-    "ao": "PBR/ground_07/ground_07_ambientocclusion_1k.png",
-    "metallic": "PBR/ground_07/ground_07_metallic_1k.png",
+    "color": "PBR/ground_07/ground_07_basecolor_1k.ktx2",
+    "normal": "PBR/ground_07/ground_07_normal_gl_1k.ktx2",
+    "roughness": "PBR/ground_07/ground_07_roughness_1k.ktx2",
+    "height": "PBR/ground_07/ground_07_height_1k.ktx2",
+    "ao": "PBR/ground_07/ground_07_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/ground_07/ground_07_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

@@ -7,7 +7,7 @@
     "color": "PBR/wood_06/wood_06_baseColor_1k.jpg",
     "normal": "PBR/wood_06/wood_06_normal_gl_1k.jpg",
     "roughness": "PBR/wood_06/wood_06_roughness_1k.jpg",
-    "height": "PBR/wood_06/wood_06_height_1k.png",
+    "height": "PBR/wood_06/wood_06_height_1k.ktx2",
     "ao": "PBR/wood_06/wood_06_ambientOcclusion_1k.jpg",
     "metallic": "PBR/wood_06/wood_06_metallic_1k.jpg",
     "emissive": null
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

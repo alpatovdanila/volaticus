@@ -4,12 +4,12 @@
   "name": "Metal 02",
   "category": "metal",
   "maps": {
-    "color": "PBR/metal_02/metal_02_color_1k.png",
-    "normal": "PBR/metal_02/metal_02_normal_1k.png",
-    "roughness": "PBR/metal_02/metal_02_roughness_1k.png",
-    "height": "PBR/metal_02/metal_02_height_1k.png",
-    "ao": "PBR/metal_02/metal_02_ambient_occlusion_1k.png",
-    "metallic": "PBR/metal_02/metal_02_metallic_1k.png",
+    "color": "PBR/metal_02/metal_02_color_1k.ktx2",
+    "normal": "PBR/metal_02/metal_02_normal_1k.ktx2",
+    "roughness": "PBR/metal_02/metal_02_roughness_1k.ktx2",
+    "height": "PBR/metal_02/metal_02_height_1k.ktx2",
+    "ao": "PBR/metal_02/metal_02_ambient_occlusion_1k.ktx2",
+    "metallic": "PBR/metal_02/metal_02_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {

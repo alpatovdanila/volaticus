@@ -4,12 +4,12 @@
   "name": "Church Wall 01",
   "category": "church_wall",
   "maps": {
-    "color": "PBR/church_wall_01/church_wall_01_basecolor_1k.png",
-    "normal": "PBR/church_wall_01/church_wall_01_normal_gl_1k.png",
-    "roughness": "PBR/church_wall_01/church_wall_01_roughness_1k.png",
-    "height": "PBR/church_wall_01/church_wall_01_height_1k.png",
-    "ao": "PBR/church_wall_01/church_wall_01_ambientocclusion_1k.png",
-    "metallic": "PBR/church_wall_01/church_wall_01_metallic_1k.png",
+    "color": "PBR/church_wall_01/church_wall_01_basecolor_1k.ktx2",
+    "normal": "PBR/church_wall_01/church_wall_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/church_wall_01/church_wall_01_roughness_1k.ktx2",
+    "height": "PBR/church_wall_01/church_wall_01_height_1k.ktx2",
+    "ao": "PBR/church_wall_01/church_wall_01_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/church_wall_01/church_wall_01_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

@@ -4,195 +4,156 @@
   "name": "Crate",
   "category": "prop",
   "tags": ["wood", "container"],
-  "notes": "Slatted low-poly crate: corner posts + rails frame an inset panel, diagonal braces by chance. oneOf damage variant.",
+  "notes": "Slatted crate: a slim frame — 4 thin corner stands + ONE diagonal brace per wall — around 4 inset plank walls and a floor; the lid is a separate overhanging slab with two edge battens resting on top.",
   "materials": {
-    "panel": { "material": "wood_planks_20" },
-    "panel_2": { "inherit": "panel", "uvRot": 90 },
-    "hole_split_a": { "inherit": "panel" },
-    "hole_split_b": { "inherit": "panel" },
-    "frame": { "material": "bark_11", "uvProject": "box" },
-    "post_a": { "inherit": "frame" },
-    "post_b": { "inherit": "frame", "uvMode": "tile" },
-    "post_c": { "inherit": "frame" },
-    "post_d": { "inherit": "frame" },
-    "rail_top_f": { "inherit": "frame" },
-    "rail_top_b": { "inherit": "frame" },
-    "rail_top_l": { "inherit": "frame" },
-    "rail_top_r": { "inherit": "frame" },
-    "rail_bot_f": { "inherit": "frame" },
-    "rail_bot_b": { "inherit": "frame" },
-    "brace_f": { "inherit": "frame" },
-    "brace_b": { "inherit": "frame" },
-    "chip_board": { "inherit": "frame" },
-    "interior": { "material": "plaster_wall_01", "uvMode": "stretch" },
-    "chip_opening": { "inherit": "interior" },
-    "hole_opening": { "inherit": "interior" }
+    "wall": { "material": "wood_planks_20" },
+    "frame": { "material": "bark_11", "uvProject": "box", "uvScale": 0.5 },
+    "stand": { "inherit": "frame" },
+    "brace": { "inherit": "frame" },
+    "lid": { "material": "wood_planks_20", "uvRot": 90 },
+    "batten": { "inherit": "frame" },
+    "floor": { "inherit": "wall", "uvProject": "planar" }
   },
   "rig": {
     "root": {
       "children": {
-        "panel": {
+        "stand_a": {
           "shape": "plank",
-          "size": [0.56, 0.56, 0.56],
-          "pos": [0, 0.31, 0],
-          "material": "panel_2",
+          "size": [0.05, 0.6, 0.05],
+          "pos": [-0.275, 0.3, 0.275],
+          "material": "stand",
           "craftSeed": 1144721472
         },
-        "post_a": {
+        "stand_b": {
           "shape": "plank",
-          "size": [0.11, 0.66, 0.11],
-          "pos": [-0.28, 0.33, 0.28],
-          "material": "post_a",
+          "size": [0.05, 0.6, 0.05],
+          "pos": [0.275, 0.3, 0.275],
+          "material": "stand",
           "craftSeed": 1144721472
         },
-        "post_b": {
+        "stand_c": {
           "shape": "plank",
-          "size": [0.11, 0.66, 0.11],
-          "pos": [0.28, 0.33, 0.28],
-          "material": "post_b",
+          "size": [0.05, 0.6, 0.05],
+          "pos": [-0.275, 0.3, -0.275],
+          "material": "stand",
           "craftSeed": 1144721472
         },
-        "post_c": {
+        "stand_d": {
           "shape": "plank",
-          "size": [0.11, 0.66, 0.11],
-          "pos": [-0.28, 0.33, -0.28],
-          "material": "post_c",
+          "size": [0.05, 0.6, 0.05],
+          "pos": [0.275, 0.3, -0.275],
+          "material": "stand",
           "craftSeed": 1144721472
         },
-        "post_d": {
-          "shape": "plank",
-          "size": [0.11, 0.66, 0.11],
-          "pos": [0.28, 0.33, -0.28],
-          "material": "post_d",
+        "wall_f": {
+          "shape": "box",
+          "size": [0.5, 0.52, 0.035],
+          "pos": [0, 0.31, 0.26],
+          "material": "wall",
           "craftSeed": 1144721472
         },
-        "rail_top_f": {
-          "shape": "plank",
-          "size": [0.56, 0.1, 0.1],
-          "pos": [0, 0.61, 0.28],
-          "material": "rail_top_f",
+        "wall_b": {
+          "shape": "box",
+          "size": [0.5, 0.52, 0.035],
+          "pos": [0, 0.31, -0.26],
+          "material": "wall",
           "craftSeed": 1144721472
         },
-        "rail_top_b": {
-          "shape": "plank",
-          "size": [0.56, 0.1, 0.1],
-          "pos": [0, 0.61, -0.28],
-          "material": "rail_top_b",
+        "wall_l": {
+          "shape": "box",
+          "size": [0.035, 0.52, 0.5],
+          "pos": [-0.26, 0.31, 0],
+          "material": "wall",
           "craftSeed": 1144721472
         },
-        "rail_top_l": {
-          "shape": "plank",
-          "size": [0.1, 0.1, 0.46],
-          "pos": [-0.28, 0.61, 0],
-          "material": "rail_top_l",
+        "wall_r": {
+          "shape": "box",
+          "size": [0.035, 0.52, 0.5],
+          "pos": [0.26, 0.31, 0],
+          "material": "wall",
           "craftSeed": 1144721472
         },
-        "rail_top_r": {
-          "shape": "plank",
-          "size": [0.1, 0.1, 0.46],
-          "pos": [0.28, 0.61, 0],
-          "material": "rail_top_r",
-          "craftSeed": 1144721472
-        },
-        "rail_bot_f": {
-          "shape": "plank",
-          "size": [0.56, 0.1, 0.1],
-          "pos": [0, 0.05, 0.28],
-          "material": "rail_bot_f",
-          "craft": 0.95,
-          "craftSeed": 1144721472
-        },
-        "rail_bot_b": {
-          "shape": "plank",
-          "size": [0.56, 0.1, 0.1],
-          "pos": [0, 0.05, -0.28],
-          "material": "rail_bot_b",
-          "craft": 0.95,
+        "floor": {
+          "shape": "box",
+          "size": [0.5, 0.04, 0.5],
+          "pos": [0, 0.06, 0],
+          "material": "floor",
           "craftSeed": 1144721472
         },
         "brace_f": {
           "shape": "plank",
-          "size": [0.74, 0.09, 0.05],
-          "pos": [0, 0.31, 0.3],
-          "rot": [0, 0, 40],
-          "material": "brace_f",
-          "chance": 0.6,
+          "size": [0.68, 0.06, 0.025],
+          "pos": [0, 0.3, 0.285],
+          "rot": [0, 0, 38],
+          "material": "brace",
           "craft": 0.95,
           "craftSeed": 1144721472
         },
         "brace_b": {
           "shape": "plank",
-          "size": [0.74, 0.09, 0.05],
-          "pos": [0, 0.31, -0.3],
-          "rot": [0, 0, -40],
-          "material": "brace_b",
-          "chance": 0.6,
+          "size": [0.68, 0.06, 0.025],
+          "pos": [0, 0.3, -0.285],
+          "rot": [0, 0, -38],
+          "material": "brace",
           "craft": 0.95,
           "craftSeed": 1144721472
         },
-        "crate_ok": {},
-        "crate_chip": {
-          "children": {
-            "chip_opening": {
-              "shape": "box",
-              "size": [0.24, 0.035, 0.24],
-              "pos": [0.13, 0.615, 0.13],
-              "rot": [0, 10, 0],
-              "material": "chip_opening",
-              "craftSeed": 1144721472
-            },
-            "chip_board": {
-              "shape": "plank",
-              "size": [0.3, 0.045, 0.11],
-              "pos": [0.02, 0.645, 0.19],
-              "rot": [3, 24, 7],
-              "material": "chip_board",
-              "craft": 0.95,
-              "craftSeed": 1144721472
-            }
-          }
+        "brace_l": {
+          "shape": "plank",
+          "size": [0.025, 0.06, 0.68],
+          "pos": [-0.285, 0.3, 0],
+          "rot": [-38, 0, 0],
+          "material": "brace",
+          "craft": 0.95,
+          "craftSeed": 1144721472
         },
-        "crate_hole": {
+        "brace_r": {
+          "shape": "plank",
+          "size": [0.025, 0.06, 0.68],
+          "pos": [0.285, 0.3, 0],
+          "rot": [38, 0, 0],
+          "material": "brace",
+          "craft": 0.95,
+          "craftSeed": 1144721472
+        },
+        "lid": {
+          "pos": [0, 0.625, 0],
           "children": {
-            "hole_opening": {
-              "shape": "box",
-              "size": [0.22, 0.2, 0.05],
-              "pos": [0.03, 0.34, 0.29],
-              "rot": [0, 0, 8],
-              "material": "hole_opening",
+            "lid_slab": {
+              "shape": "plank",
+              "size": [0.64, 0.045, 0.64],
+              "pos": [0, 0, 0],
+              "material": "lid",
               "craftSeed": 1144721472
             },
-            "hole_split_a": {
+            "batten_l": {
               "shape": "plank",
-              "size": [0.1, 0.28, 0.04],
-              "pos": [-0.1, 0.36, 0.3],
-              "rot": [0, 0, 16],
-              "material": "hole_split_a",
+              "size": [0.05, 0.04, 0.6],
+              "pos": [-0.25, 0.042, 0],
+              "material": "batten",
               "craft": 0.95,
               "craftSeed": 1144721472
             },
-            "hole_split_b": {
+            "batten_r": {
               "shape": "plank",
-              "size": [0.09, 0.24, 0.04],
-              "pos": [0.16, 0.31, 0.3],
-              "rot": [0, 0, -13],
-              "material": "hole_split_b",
+              "size": [0.05, 0.04, 0.6],
+              "pos": [0.25, 0.042, 0],
+              "material": "batten",
               "craft": 0.95,
               "craftSeed": 1144721472
             }
           }
         }
       },
-      "craft": 1
+      "craft": 0.97
     }
   },
   "physics": {
     "body": "dynamic",
-    "collider": { "shape": "box", "size": [0.62, 0.66, 0.62], "offset": [0, 0.33, 0] },
-    "mass": 12
+    "collider": { "shape": "box", "size": [0.6, 0.67, 0.6], "offset": [0, 0.335, 0] },
+    "mass": 14
   },
-  "props": { "health": 1 },
-  "variants": { "count": 6, "oneOf": { "damage": ["crate_ok", "crate_chip", "crate_hole"] } },
+  "props": { "health": 2 },
   "anims": {
     "wobble": {
       "duration": 0.42,
@@ -201,19 +162,19 @@
           "node": "root",
           "prop": "scale",
           "ease": "sine",
-          "keys": [[0, 1], [0.06, 0.85], [0.16, 1.1], [0.26, 0.94], [0.34, 1.03], [0.42, 1]]
+          "keys": [[0, 1], [0.06, 0.87], [0.16, 1.09], [0.26, 0.95], [0.34, 1.02], [0.42, 1]]
         },
         {
           "node": "root",
           "prop": "rot.z",
           "ease": "sine",
-          "keys": [[0, 0], [0.06, -3], [0.16, 3], [0.26, -1.5], [0.34, 0.5], [0.42, 0]]
+          "keys": [[0, 0], [0.06, -3], [0.16, 3], [0.26, -1], [0.42, 0]]
         }
       ]
     }
   },
   "events": {
     "hit": { "anim": "wobble" },
-    "died": { "effect": { "id": "wood_break", "slot": "panel" }, "hideGeometry": true }
+    "died": { "effect": { "id": "wood_break", "slot": "wall" }, "hideGeometry": true }
   }
 }

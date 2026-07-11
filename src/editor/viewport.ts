@@ -6,7 +6,7 @@ import { denoise } from 'three/addons/tsl/display/DenoiseNode.js'
 import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { setLevelEnvMap } from '../inventory/envmap'
-import { setFlatShadingEnabled } from '../inventory/materials'
+import { setFlatShadingEnabled, configureKtx2 } from '../inventory/materials'
 import { EffectSystem } from '../inventory/effects'
 import { loadSkybox } from './skybox'
 import {
@@ -142,6 +142,9 @@ export class Viewport {
     // frame loop no-ops until `ready`; the HDRI load (PMREM needs the renderer) waits.
     void this.renderer.init().then(() => {
       this.ready = true
+      // KTX2 transcode-target detection needs the INITIALIZED device (feature flags);
+      // any ktx2 load requested earlier queued inside materials.ts and starts now.
+      configureKtx2(this.renderer)
       this.resize()
       this.rig.applyParams(this.lightParams) // kicks off the HDRI load + PMREM
     })

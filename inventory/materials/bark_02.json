@@ -4,11 +4,11 @@
   "name": "Bark 02",
   "category": "bark",
   "maps": {
-    "color": "PBR/bark_02/bark_02_color_1k.png",
-    "normal": "PBR/bark_02/bark_02_normal_gl_1k.png",
-    "roughness": "PBR/bark_02/bark_02_roughness_1k.png",
-    "height": "PBR/bark_02/bark_02_height_1k.png",
-    "ao": "PBR/bark_02/bark_02_ambient_occlusion_1k.png",
+    "color": "PBR/bark_02/bark_02_color_1k.ktx2",
+    "normal": "PBR/bark_02/bark_02_normal_gl_1k.ktx2",
+    "roughness": "PBR/bark_02/bark_02_roughness_1k.ktx2",
+    "height": "PBR/bark_02/bark_02_height_1k.ktx2",
+    "ao": "PBR/bark_02/bark_02_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },

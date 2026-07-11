@@ -4,12 +4,12 @@
   "name": "Tudor Wall 03",
   "category": "tudor_wall",
   "maps": {
-    "color": "PBR/tudor_wall_03/tudor_wall_03_basecolor_1k.png",
-    "normal": "PBR/tudor_wall_03/tudor_wall_03_normal_gl_1k.png",
-    "roughness": "PBR/tudor_wall_03/tudor_wall_03_roughness_1k.png",
-    "height": "PBR/tudor_wall_03/tudor_wall_03_height_1k.png",
-    "ao": "PBR/tudor_wall_03/tudor_wall_03_ambientocclusion_1k.png",
-    "metallic": "PBR/tudor_wall_03/tudor_wall_03_metallic_1k.png",
+    "color": "PBR/tudor_wall_03/tudor_wall_03_basecolor_1k.ktx2",
+    "normal": "PBR/tudor_wall_03/tudor_wall_03_normal_gl_1k.ktx2",
+    "roughness": "PBR/tudor_wall_03/tudor_wall_03_roughness_1k.ktx2",
+    "height": "PBR/tudor_wall_03/tudor_wall_03_height_1k.ktx2",
+    "ao": "PBR/tudor_wall_03/tudor_wall_03_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/tudor_wall_03/tudor_wall_03_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

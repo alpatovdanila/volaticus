@@ -4,12 +4,12 @@
   "name": "Wood 05",
   "category": "wood",
   "maps": {
-    "color": "PBR/wood_05/wood_05_baseColor_1k.png",
-    "normal": "PBR/wood_05/wood_05_normal_gl_1k.png",
-    "roughness": "PBR/wood_05/wood_05_roughness_1k.png",
-    "height": "PBR/wood_05/wood_05_height_1k.png",
-    "ao": "PBR/wood_05/wood_05_ambientOcclusion_1k.png",
-    "metallic": "PBR/wood_05/wood_05_metallic_1k.png",
+    "color": "PBR/wood_05/wood_05_baseColor_1k.ktx2",
+    "normal": "PBR/wood_05/wood_05_normal_gl_1k.ktx2",
+    "roughness": "PBR/wood_05/wood_05_roughness_1k.ktx2",
+    "height": "PBR/wood_05/wood_05_height_1k.ktx2",
+    "ao": "PBR/wood_05/wood_05_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/wood_05/wood_05_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

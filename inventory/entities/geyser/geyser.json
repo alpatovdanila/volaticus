@@ -4,16 +4,14 @@
   "name": "Geyser",
   "category": "prop",
   "tags": ["nature", "water", "hazard"],
-  "notes": "Lifecycle: idle (steam wisps + gurgle) → fountain (water column + spray jets) → settling (droplets raining back down). The game drives the cycle; preview via the state dropdown.",
+  "notes": "Lifecycle: idle (steam wisps + gurgle) -> fountain (water column + spray jets) -> settling. The mound is a chunky low-segment cone with a REAL crater — a boolean-subtracted cylinder, edges roughened by the craft jitter that runs after the cut.",
   "materials": {
-    "rock": { "material": "cliff_rocks_01", "uvScale": 0.25 },
-    "mound": { "inherit": "rock" },
+    "rock": { "material": "cliff_rocks_01" },
+    "mound": { "inherit": "rock", "uvProject": "box", "uvScale": 0.5 },
     "stone_b": { "inherit": "rock" },
     "rock_dark": { "material": "ground_with_rocks_03", "uvScale": 0.25 },
-    "vent": { "inherit": "rock_dark" },
     "stone_a": { "inherit": "rock_dark" },
     "stone_c": { "inherit": "rock" },
-    "hole": { "inherit": "rock_dark", "uvScale": 0.25 },
     "water": { "material": "plaster_wall_01", "uvScale": 0.25 }
   },
   "rig": {
@@ -22,32 +20,23 @@
         "mound": {
           "shape": "cone",
           "radius": 0.95,
-          "height": 0.55,
-          "segments": 24,
-          "pos": [0, 0.27, 0],
+          "height": 0.62,
+          "segments": 9,
+          "pos": [0, 0.31, 0],
           "material": "mound",
-          "craft": 0.52,
-          "craftSeed": 552434703
-        },
-        "vent": {
-          "shape": "cylinder",
-          "radiusBottom": 0.3,
-          "radiusTop": 0.24,
-          "height": 0.18,
-          "segments": 24,
-          "pos": [0, 0.5, 0],
-          "material": "vent",
-          "craft": 0.52,
-          "craftSeed": 552434703
-        },
-        "hole": {
-          "shape": "cylinder",
-          "radius": 0.18,
-          "height": 0.04,
-          "segments": 20,
-          "pos": [0, 0.58, 0],
-          "material": "hole",
-          "craft": 0.96,
+          "craft": 0.82,
+          "sub": 1,
+          "booleans": [
+            {
+              "op": "subtract",
+              "shape": "cylinder",
+              "radiusTop": 0.24,
+              "radiusBottom": 0.17,
+              "height": 0.42,
+              "segments": 12,
+              "pos": [0, 0.33, 0]
+            }
+          ],
           "craftSeed": 552434703
         },
         "stone_a": {
@@ -57,8 +46,7 @@
           "pos": [0.75, 0.12, 0.3],
           "scale": [1, 0.7, 0.9],
           "material": "stone_a",
-          "chance": 0.8,
-          "craft": 0.93,
+          "craft": 0.87,
           "sub": 2,
           "craftSeed": 552434703
         },
@@ -69,8 +57,7 @@
           "pos": [-0.7, 0.1, -0.35],
           "scale": [1, 0.65, 1],
           "material": "stone_b",
-          "chance": 0.7,
-          "craft": 0.55,
+          "craft": 1,
           "craftSeed": 552434703
         },
         "stone_c": {
@@ -79,8 +66,7 @@
           "segments": 5,
           "pos": [-0.3, 0.08, 0.75],
           "material": "stone_c",
-          "chance": 0.6,
-          "craft": 0.55,
+          "craft": 1,
           "craftSeed": 552434703
         },
         "column": {
@@ -95,7 +81,8 @@
           "hidden": true,
           "craftSeed": 552434703
         }
-      }
+      },
+      "craft": 0.93
     }
   },
   "physics": {
@@ -112,14 +99,14 @@
       "enter": { "effect": "water_jet" },
       "cues": { "0.02": { "effect": "water_jet" }, "0.14": { "effect": "water_jet" } }
     },
-    "settling": { "anim": "calm", "cues": { "0.05": { "effect": "water_drips" }, "0.3": { "effect": "water_drips" } } }
+    "settling": { "cues": { "0.05": { "effect": "water_drips" }, "0.3": { "effect": "water_drips" } } }
   },
   "anims": {
     "simmer": {
       "loop": true,
       "duration": 3.2,
       "tracks": [
-        { "node": "vent", "prop": "scale", "ease": "sine", "keys": [[0, 1], [1.6, 1.03], [3.2, 1]] }
+        { "node": "mound", "prop": "scale", "ease": "sine", "keys": [[0, 1], [1.6, 1.015], [3.2, 1]] }
       ]
     },
     "erupt": {
@@ -128,13 +115,6 @@
       "tracks": [
         { "node": "column", "prop": "scale", "ease": "sine", "keys": [[0, 0.94], [0.12, 1.06], [0.24, 0.94]] },
         { "node": "column", "prop": "rot.z", "ease": "sine", "keys": [[0, -1.5], [0.12, 1.5], [0.24, -1.5]] }
-      ]
-    },
-    "calm": {
-      "loop": true,
-      "duration": 0.55,
-      "tracks": [
-        { "node": "vent", "prop": "scale", "ease": "sine", "keys": [[0, 1.02], [0.27, 0.99], [0.55, 1.02]] }
       ]
     }
   }

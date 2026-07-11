@@ -4,12 +4,12 @@
   "name": "Ancient Trimsheet 01",
   "category": "ancient_trimsheet",
   "maps": {
-    "color": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_baseColor_1k.png",
-    "normal": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_normal_gl_1k.png",
-    "roughness": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_roughness_1k.png",
-    "height": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_height_1k.png",
-    "ao": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_ambientOcclusion_1k.png",
-    "metallic": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_metallic_1k.png",
+    "color": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_baseColor_1k.ktx2",
+    "normal": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_roughness_1k.ktx2",
+    "height": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_height_1k.ktx2",
+    "ao": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/ancient_trimsheet_01/ancient_trimsheet_01_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

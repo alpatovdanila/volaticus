@@ -4,11 +4,11 @@
   "name": "White Bricks Wall 01",
   "category": "white_bricks_wall",
   "maps": {
-    "color": "PBR/white_bricks_wall_01/white_bricks_wall_01_color_1k.png",
-    "normal": "PBR/white_bricks_wall_01/white_bricks_wall_01_normal_gl_1k.png",
-    "roughness": "PBR/white_bricks_wall_01/white_bricks_wall_01_roughness_1k.png",
-    "height": "PBR/white_bricks_wall_01/white_bricks_wall_01_height_1k.png",
-    "ao": "PBR/white_bricks_wall_01/white_bricks_wall_01_ambient_occlusion_1k.png",
+    "color": "PBR/white_bricks_wall_01/white_bricks_wall_01_color_1k.ktx2",
+    "normal": "PBR/white_bricks_wall_01/white_bricks_wall_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/white_bricks_wall_01/white_bricks_wall_01_roughness_1k.ktx2",
+    "height": "PBR/white_bricks_wall_01/white_bricks_wall_01_height_1k.ktx2",
+    "ao": "PBR/white_bricks_wall_01/white_bricks_wall_01_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

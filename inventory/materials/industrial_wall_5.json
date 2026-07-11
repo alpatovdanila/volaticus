@@ -4,13 +4,13 @@
   "name": "Industrial Wall 5",
   "category": "industrial_wall",
   "maps": {
-    "color": "PBR/industrial_wall_5/industrial_wall_5_baseColor_1k.png",
-    "normal": "PBR/industrial_wall_5/industrial_wall_5_normal_gl_1k.png",
-    "roughness": "PBR/industrial_wall_5/industrial_wall_5_roughness_1k.png",
-    "height": "PBR/industrial_wall_5/industrial_wall_5_height_1k.png",
-    "ao": "PBR/industrial_wall_5/industrial_wall_5_ambientOcclusion_1k.png",
-    "metallic": "PBR/industrial_wall_5/industrial_wall_5_metallic_1k.png",
-    "emissive": "PBR/industrial_wall_5/industrial_wall_5_emissive_1k.png"
+    "color": "PBR/industrial_wall_5/industrial_wall_5_baseColor_1k.ktx2",
+    "normal": "PBR/industrial_wall_5/industrial_wall_5_normal_gl_1k.ktx2",
+    "roughness": "PBR/industrial_wall_5/industrial_wall_5_roughness_1k.ktx2",
+    "height": "PBR/industrial_wall_5/industrial_wall_5_height_1k.ktx2",
+    "ao": "PBR/industrial_wall_5/industrial_wall_5_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/industrial_wall_5/industrial_wall_5_metallic_1k.ktx2",
+    "emissive": "PBR/industrial_wall_5/industrial_wall_5_emissive_1k.ktx2"
   },
   "tuning": {
     "tint": null,
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

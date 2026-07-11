@@ -1,6 +1,8 @@
 // Builds a live THREE object tree from an entity doc. Used identically by the
 // editor preview and (later) the game — what the editor shows is what ships.
 import * as THREE from 'three'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
+import { Brush, Evaluator, SUBTRACTION, ADDITION, INTERSECTION } from 'three-bvh-csg'
 import { randRange } from '../lib/rng'
 import { catalogDefaultUvScale, makeDecalMaterial, makeSlotMaterial, type EntityMaterial } from './materials'
 import { getMeshGeometry } from './meshes'
@@ -12,12 +14,13 @@ import {
   generatePost,
   generateRing,
   generateStar,
+  generateTree,
   generateTube,
   hash3,
   subdivideTriangleSoup,
   type GeneratedGeometry,
 } from './procgeom'
-import { resolveMaterials, walkRig, type EntityDoc, type FaceKey, type NodeDef, type ResolvedMaterialDef } from './schema'
+import { resolveMaterials, walkRig, type BooleanMod, type EntityDoc, type FaceKey, type NodeDef, type ResolvedMaterialDef } from './schema'
 
 // generated shapes: always jittered (craft defaults to 0.5), authored UVs
 const GENERATED_SHAPES = new Set<NodeDef['shape']>(['plank', 'post', 'ring', 'arrow', 'star'])
@@ -441,6 +444,220 @@ function aspectSegs(dim: number, minDim: number): number {
 
 // effCraft/effSub = the node's EFFECTIVE generation options after rig-tree inheritance
 // (own value ?? nearest ancestor's — resolved by the caller's walk), not node.craft/node.sub.
+// ---------------------------------------------------------------------------
+// Half/quarter primitives + arch (chest lids, lamp rings, hooks, domes). Composed
+// from three primitives + manual caps, merged to ONE group with UVs pre-baked to
+// METERS (faces su/sv = 1, like the generated lumber) — mixed part parameterizations
+// can't share a single su/sv factor pair. `thickness` turns the sphere/cylinder
+// halves into hollow shells (inner surface + rim faces); absent = solid (flat caps).
+
+// reverse winding + negate normals — inner surfaces of hollow shells
+function flipInsideOut(geo: THREE.BufferGeometry): THREE.BufferGeometry {
+  const idx = geo.getIndex()!
+  const a = idx.array as Uint32Array
+  for (let i = 0; i < a.length; i += 3) {
+    const t = a[i + 1]
+    a[i + 1] = a[i + 2]
+    a[i + 2] = t
+  }
+  idx.needsUpdate = true
+  const n = geo.getAttribute('normal') as THREE.BufferAttribute
+  for (let i = 0; i < n.count; i++) n.setXYZ(i, -n.getX(i), -n.getY(i), -n.getZ(i))
+  return geo
+}
+
+function scaleUv(geo: THREE.BufferGeometry, su: number, sv: number): THREE.BufferGeometry {
+  const uv = geo.getAttribute('uv') as THREE.BufferAttribute
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv)
+  return geo
+}
+
+function mergeParts(parts: THREE.BufferGeometry[]): THREE.BufferGeometry {
+  const merged = mergeGeometries(parts, false)!
+  for (const p of parts) p.dispose()
+  return merged
+}
+
+// dome (flat side down at y=0, apex up). thickness → hollow bowl shell with a rim ring.
+function buildHalfSphere(r: number, seg: number, segY: number, t?: number): THREE.BufferGeometry {
+  const parts: THREE.BufferGeometry[] = [
+    scaleUv(new THREE.SphereGeometry(r, seg, segY, 0, Math.PI * 2, 0, Math.PI / 2), 2 * Math.PI * r, (Math.PI / 2) * r),
+  ]
+  if (t !== undefined) {
+    parts.push(flipInsideOut(scaleUv(new THREE.SphereGeometry(Math.max(0.001, r - t), seg, segY, 0, Math.PI * 2, 0, Math.PI / 2), 2 * Math.PI * r, (Math.PI / 2) * r)))
+    parts.push(scaleUv(new THREE.RingGeometry(Math.max(0.001, r - t), r, seg).rotateX(Math.PI / 2), 2 * r, 2 * r))
+  } else {
+    parts.push(scaleUv(new THREE.CircleGeometry(r, seg).rotateX(Math.PI / 2), 2 * r, 2 * r))
+  }
+  return mergeParts(parts)
+}
+
+// quarter dome: half of the dome, cut on the z=0 plane (round side bulges +Z).
+function buildQuarterSphere(r: number, seg: number, segY: number, t?: number): THREE.BufferGeometry {
+  const halfSeg = Math.max(3, Math.round(seg / 2))
+  const dome = (radius: number) =>
+    scaleUv(new THREE.SphereGeometry(radius, halfSeg, segY, 0, Math.PI, 0, Math.PI / 2), Math.PI * r, (Math.PI / 2) * r)
+  const parts: THREE.BufferGeometry[] = [dome(r)]
+  const ri = Math.max(0.001, r - (t ?? 0))
+  if (t !== undefined) {
+    parts.push(flipInsideOut(dome(ri)))
+    // bottom rim (half annulus at y=0, facing down) + vertical cut rim (half annulus in z=0, facing -Z)
+    parts.push(scaleUv(new THREE.RingGeometry(ri, r, halfSeg, 1, 0, Math.PI).rotateX(Math.PI / 2), 2 * r, 2 * r))
+    parts.push(flipInsideOut(scaleUv(new THREE.RingGeometry(ri, r, halfSeg, 1, 0, Math.PI), 2 * r, 2 * r)))
+  } else {
+    parts.push(scaleUv(new THREE.CircleGeometry(r, halfSeg, 0, Math.PI).rotateX(Math.PI / 2), 2 * r, 2 * r))
+    parts.push(flipInsideOut(scaleUv(new THREE.CircleGeometry(r, halfSeg, 0, Math.PI), 2 * r, 2 * r)))
+  }
+  return mergeParts(parts)
+}
+
+// half column around Y (arc bulges +X, cut plane x=0). thickness → curved shell with
+// straight rim strips; open drops the flat closures (end caps + chord/annuli).
+function buildHalfCylinder(rt: number, rb: number, h: number, seg: number, t?: number, open?: boolean): THREE.BufferGeometry {
+  const halfSeg = Math.max(3, Math.round(seg / 2))
+  const cMax = Math.PI * Math.max(rt, rb)
+  const tube = (top: number, bot: number) =>
+    scaleUv(new THREE.CylinderGeometry(top, bot, h, halfSeg, 1, true, 0, Math.PI), cMax, h)
+  const parts: THREE.BufferGeometry[] = [tube(rt, rb)]
+  const quad = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3, d: THREE.Vector3, w: number, v: number) => {
+    // two triangles a-b-c, a-c-d with meters uv (w × v)
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.Float32BufferAttribute([...a.toArray(), ...b.toArray(), ...c.toArray(), ...d.toArray()], 3))
+    g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, w, 0, w, v, 0, v], 2))
+    g.setIndex([0, 1, 2, 0, 2, 3])
+    g.computeVertexNormals()
+    return g
+  }
+  const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z)
+  if (t !== undefined) {
+    const rit = Math.max(0.001, rt - t)
+    const rib = Math.max(0.001, rb - t)
+    parts.push(flipInsideOut(tube(rit, rib)))
+    // straight rim strips in the x=0 plane (θ=0 edge at +Z, θ=π edge at -Z), facing -X
+    parts.push(quad(V(0, -h / 2, rib), V(0, -h / 2, rb), V(0, h / 2, rt), V(0, h / 2, rit), t, h))
+    parts.push(quad(V(0, -h / 2, -rb), V(0, -h / 2, -rib), V(0, h / 2, -rit), V(0, h / 2, -rt), t, h))
+    if (!open) {
+      parts.push(scaleUv(new THREE.RingGeometry(rit, rt, halfSeg, 1, -Math.PI / 2, Math.PI).rotateX(-Math.PI / 2).translate(0, h / 2, 0), 2 * rt, 2 * rt))
+      parts.push(scaleUv(new THREE.RingGeometry(rib, rb, halfSeg, 1, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2).translate(0, -h / 2, 0), 2 * rb, 2 * rb))
+    }
+  } else if (!open) {
+    // chord face (trapezoid for a frustum) facing -X + half-disk end caps
+    parts.push(quad(V(0, -h / 2, -rb), V(0, -h / 2, rb), V(0, h / 2, rt), V(0, h / 2, -rt), 2 * Math.max(rt, rb), h))
+    parts.push(scaleUv(new THREE.CircleGeometry(rt, halfSeg, -Math.PI / 2, Math.PI).rotateX(-Math.PI / 2).translate(0, h / 2, 0), 2 * rt, 2 * rt))
+    parts.push(scaleUv(new THREE.CircleGeometry(rb, halfSeg, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2).translate(0, -h / 2, 0), 2 * rb, 2 * rb))
+  }
+  return mergeParts(parts)
+}
+
+// rectangular-profile bar swept along an arc in the XY plane ("rainbow": ends on y=0
+// at x=±radius for the default 180°). size = [profile width (radial), depth (along Z)].
+function buildArch(radius: number, w: number, d: number, arcDeg: number, seg: number): THREE.BufferGeometry {
+  const arc = THREE.MathUtils.degToRad(arcDeg)
+  const n = Math.max(4, Math.round(seg * (arc / Math.PI)))
+  const ro = radius + w / 2
+  const ri = radius - w / 2
+  const pos: number[] = []
+  const uv: number[] = []
+  const index: number[] = []
+  // four longitudinal strips: outer (radial +), inner (radial -), front (z+), back (z-)
+  const strip = (corner: (theta: number) => [THREE.Vector3, THREE.Vector3], v: number) => {
+    const base = pos.length / 3
+    for (let i = 0; i <= n; i++) {
+      const th = (arc * i) / n
+      const [a, b] = corner(th)
+      pos.push(a.x, a.y, a.z, b.x, b.y, b.z)
+      const u = radius * th
+      uv.push(u, 0, u, v)
+    }
+    for (let i = 0; i < n; i++) {
+      const o = base + i * 2
+      index.push(o, o + 2, o + 1, o + 1, o + 2, o + 3)
+    }
+  }
+  const P = (r: number, th: number, z: number) => new THREE.Vector3(r * Math.cos(th), r * Math.sin(th), z)
+  strip((th) => [P(ro, th, -d / 2), P(ro, th, d / 2)], d) // outer, facing outward
+  strip((th) => [P(ri, th, d / 2), P(ri, th, -d / 2)], d) // inner, facing the arc center
+  strip((th) => [P(ro, th, d / 2), P(ri, th, d / 2)], w) // front (+Z)
+  strip((th) => [P(ri, th, -d / 2), P(ro, th, -d / 2)], w) // back (-Z)
+  // end caps at θ=0 and θ=arc
+  const cap = (th: number, flip: boolean) => {
+    const base = pos.length / 3
+    const c = [P(ro, th, -d / 2), P(ro, th, d / 2), P(ri, th, d / 2), P(ri, th, -d / 2)]
+    for (const p of c) pos.push(p.x, p.y, p.z)
+    uv.push(0, 0, d, 0, d, w, 0, w)
+    if (flip) index.push(base, base + 2, base + 1, base, base + 3, base + 2)
+    else index.push(base, base + 1, base + 2, base, base + 2, base + 3)
+  }
+  cap(0, true)
+  cap(arc, false)
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+  geo.setIndex(index)
+  geo.computeVertexNormals()
+  return geo
+}
+
+// torus segment in the XY plane (arc from +X, counter-clockwise — 180° = upright
+// rainbow), tube cross-section capped flat at both ends.
+function buildTorusArc(r: number, tube: number, arcDeg: number, seg: number): THREE.BufferGeometry {
+  const arc = THREE.MathUtils.degToRad(arcDeg)
+  const ringSegs = Math.max(6, Math.round(seg * (arc / (Math.PI * 2))) * 2)
+  const tubeSegs = Math.max(6, Math.min(12, Math.round((2 * Math.PI * tube) / ((2 * Math.PI * r) / seg))))
+  const parts: THREE.BufferGeometry[] = [
+    scaleUv(new THREE.TorusGeometry(r, tube, tubeSegs, ringSegs, arc), r * arc, 2 * Math.PI * tube),
+  ]
+  const cap = (th: number, up: boolean) =>
+    scaleUv(
+      new THREE.CircleGeometry(tube, tubeSegs)
+        .rotateX(up ? -Math.PI / 2 : Math.PI / 2)
+        .translate(r, 0, 0)
+        .rotateZ(th),
+      2 * tube,
+      2 * tube,
+    )
+  parts.push(cap(0, false)) // start cap faces -Y (down, pre-rotation)
+  parts.push(cap(arc, true)) // end cap faces the sweep direction
+  return mergeParts(parts)
+}
+
+// ---------------------------------------------------------------------------
+// Boolean modifiers (BAKE-time CSG, three-bvh-csg): the "modifier service" — feed a
+// node's generated geometry + its `booleans` list, get the final geometry back. Each
+// modifier is a generated shape placed in the node's local space. Runs on the RAW
+// generated surfaces (before subdivide/craft), so the jitter pass afterwards roughens
+// the cut edges — an authored hole gets the same hand-made irregularity as the rest.
+// UVs are baked to meters on BOTH sides first (cut faces inherit the modifier's), and
+// the result is a single group — a boolean node renders ONE material slot.
+const CSG_OPS = { subtract: SUBTRACTION, union: ADDITION, intersect: INTERSECTION } as const
+function applyBooleans(geo: THREE.BufferGeometry, mods: BooleanMod[]): THREE.BufferGeometry {
+  const evaluator = new Evaluator()
+  evaluator.useGroups = false // single-slot result — the cut inherits the node's material
+  let brush = new Brush(geo)
+  brush.updateMatrixWorld()
+  for (const mod of mods) {
+    const built = buildGeometry(mod as NodeDef)
+    bakeUvsToMeters(built.geo, built.faces, mod as NodeDef)
+    const mb = new Brush(built.geo)
+    const [px, py, pz] = mod.pos ?? [0, 0, 0]
+    const [rx, ry, rz] = mod.rot ?? [0, 0, 0]
+    mb.position.set(px, py, pz)
+    mb.rotation.set(THREE.MathUtils.degToRad(rx), THREE.MathUtils.degToRad(ry), THREE.MathUtils.degToRad(rz))
+    if (mod.scale !== undefined) {
+      if (typeof mod.scale === 'number') mb.scale.setScalar(mod.scale)
+      else mb.scale.set(mod.scale[0], mod.scale[1], mod.scale[2])
+    }
+    mb.updateMatrixWorld()
+    const next = evaluator.evaluate(brush, mb, CSG_OPS[mod.op])
+    brush.geometry.dispose()
+    built.geo.dispose()
+    brush = next
+  }
+  const out = brush.geometry
+  out.clearGroups()
+  return out
+}
+
 function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo: THREE.BufferGeometry; faces: FaceRepeat[] } {
   // deforming nodes get aspect-corrected sources so triangles stay ~uniform
   const deforms = effCraft !== undefined || (effSub ?? 0) > 0
@@ -458,12 +675,36 @@ function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo
       return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
     }
     case 'star': {
-      // extruded n-point star in the XY plane (a point straight up)
+      // beveled 3D n-point star in the XY plane (a point straight up) — every rim
+      // vertex fans to front/back center apexes; depth = apex-to-apex thickness
       const r = node.radius!
       const geo = toBufferGeometry(
         generateStar(r, node.innerRatio ?? 0.45, node.points ?? 5, node.depth ?? r * 0.35, 1, 0),
       )
       return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
+    }
+    case 'tree': {
+      // recursive trunk/branches/twigs + leaf blobs; groups: 0 bark → 'side',
+      // 1 leaves → 'top' (material: { side: bark_slot, top: leaf_slot }).
+      // Seeded by craftSeed — every seed is a different tree; UVs already meters.
+      const geo = toBufferGeometry(
+        generateTree({
+          height: node.height ?? 5,
+          radius: node.radius ?? 0.18,
+          lushness: node.lushness ?? 0.6,
+          spread: node.spread ?? 45,
+          thickness: node.thickness ?? 0.6,
+          leafSize: node.leafSize ?? 0.5,
+          seed: node.craftSeed ?? 1,
+        }),
+      )
+      return {
+        geo,
+        faces: [
+          { face: 'side', su: 1, sv: 1 },
+          { face: 'top', su: 1, sv: 1 },
+        ],
+      }
     }
     case 'post': {
       const rt = node.radiusTop ?? node.radius!
@@ -562,6 +803,37 @@ function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo
       const geo = new THREE.CapsuleGeometry(r, h, 8, node.segments ?? 20)
       return { geo, faces: [{ face: 'all', su: 2 * Math.PI * r, sv: h + Math.PI * r }] }
     }
+    // half/quarter primitives + arch: UVs pre-baked to METERS by the builders
+    // (su/sv 1 like the generated lumber) — one 'all' group, single slot.
+    case 'halfSphere': {
+      const r = node.radius!, seg = node.segments ?? 24
+      const geo = buildHalfSphere(r, seg, node.segmentsY ?? Math.max(2, Math.round(seg / 4)), node.thickness)
+      return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
+    }
+    case 'quarterSphere': {
+      const r = node.radius!, seg = node.segments ?? 24
+      const geo = buildQuarterSphere(r, seg, node.segmentsY ?? Math.max(2, Math.round(seg / 4)), node.thickness)
+      return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
+    }
+    case 'halfCylinder': {
+      const rt = node.radiusTop ?? node.radius!
+      const rb = node.radiusBottom ?? node.radius!
+      const geo = buildHalfCylinder(rt, rb, node.height!, node.segments ?? 24, node.thickness, node.open)
+      return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
+    }
+    case 'arch': {
+      const [w, d] = node.size as [number, number]
+      const geo = buildArch(node.radius!, w, d, node.arc ?? 180, node.segments ?? 24)
+      return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
+    }
+    case 'halfTorus': {
+      const geo = buildTorusArc(node.radius!, node.tube!, node.arc ?? 180, node.segments ?? 24)
+      return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
+    }
+    case 'quarterTorus': {
+      const geo = buildTorusArc(node.radius!, node.tube!, node.arc ?? 90, node.segments ?? 24)
+      return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
+    }
     case 'plane':
     case 'cross': {
       const [w, h] = node.size as [number, number]
@@ -609,6 +881,7 @@ function groupFacesOf(node: RenderNode): readonly FaceKey[] {
     case 'cylinder':
     case 'post':
     case 'ring':
+    case 'tree': // 0 bark → side, 1 leaves → top
       return CYL_GROUP_FACES
     case 'cone':
       return CONE_GROUP_FACES
@@ -936,11 +1209,11 @@ function foldBackfaces(geo: THREE.BufferGeometry): THREE.BufferGeometry {
   return out
 }
 
-// BAKE one node's geometry (STUDIO/tool only): generate → subdivide → craft
-// jitter (entity-space, seeded per variant) → UVs-to-meters → doubleWall fold →
-// serialize. Returns null for a mesh whose FBX isn't preloaded. effCraft/effSub are
-// the EFFECTIVE generation options after rig-tree inheritance (caller resolves
-// own ?? nearest ancestor down its walk) — this function never reads node.craft/sub.
+// BAKE one node's geometry (STUDIO/tool only): generate → booleans (CSG) →
+// subdivide → craft jitter (entity-space, seeded per variant) → UVs-to-meters →
+// doubleWall fold → serialize. Returns null for a mesh whose FBX isn't preloaded.
+// effCraft/effSub are the EFFECTIVE generation options after rig-tree inheritance
+// (caller resolves own ?? nearest ancestor) — this function never reads node.craft/sub.
 function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: number, effCraft?: number, effSub?: number): BakedNodeGeom | null {
   if (node.shape === 'mesh') {
     const g = getMeshGeometry(node.mesh!)
@@ -953,6 +1226,14 @@ function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: numb
   }
   const built = buildGeometry(node, effCraft, effSub)
   let geo = built.geo
+  let faces = built.faces
+  if (node.booleans?.length) {
+    // meters BEFORE the cut (both sides), then CSG; the later metering no-ops (su/sv 1).
+    // Jitter still runs after — cut edges get the same hand-made roughness.
+    bakeUvsToMeters(geo, faces, node)
+    geo = applyBooleans(geo, node.booleans)
+    faces = [{ face: 'all', su: 1, sv: 1 }]
+  }
   const generated = GENERATED_SHAPES.has(node.shape)
   if (!generated) {
     const sub = effSub ?? 0
@@ -964,7 +1245,7 @@ function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: numb
   }
   const craft = effCraft ?? (generated ? 0.5 : undefined)
   if (craft !== undefined) applyCraftJitter(geo, craft, matrix, jitterSeed)
-  bakeUvsToMeters(geo, built.faces, node)
+  bakeUvsToMeters(geo, faces, node)
   if (node.doubleWall) {
     const folded = foldBackfaces(geo)
     geo.dispose()
@@ -1003,7 +1284,7 @@ function loadNodeMeshes(
   if (node.shape === 'box') {
     material = BOX_GROUP_FACES.map((f) => slotFor(f))
     slotByIndex = BOX_GROUP_FACES.map((f) => resolveFaceSlot(node.material, f))
-  } else if (node.shape === 'cylinder' || node.shape === 'post' || node.shape === 'ring') {
+  } else if (node.shape === 'cylinder' || node.shape === 'post' || node.shape === 'ring' || node.shape === 'tree') {
     material = CYL_GROUP_FACES.map((f) => slotFor(f))
     slotByIndex = CYL_GROUP_FACES.map((f) => resolveFaceSlot(node.material, f))
   } else if (node.shape === 'cone') {

@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { MeshStandardNodeMaterial } from 'three/webgpu'
 import { texture, vec2, normalMap, uv, dFdx, dFdy, uniform } from 'three/tsl'
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js'
 import { parallaxUvNode, isParallaxEnabled, type Uniform } from './parallax'
 
 // loose channel-swizzle alias — TSL's published node types don't expose .r/.g/.b fluently here.
@@ -27,7 +28,9 @@ export const DEFAULT_HEIGHT = 0.05
 // shift ("glass with a copy behind it"). Cached by URL.
 const heightRangeCache = new Map<string, { min: number; max: number }>()
 function heightUrl(path: string): string {
-  return '/' + encodeURI(resolveTexturePath(path))
+  // the analyzer decodes via <img> + 2D canvas, which can't read .ktx2 — use the PNG
+  // sibling (the originals stay on disk exactly for these CPU-side reads)
+  return '/' + encodeURI(resolveTexturePath(path).replace(/\.ktx2$/i, '.png'))
 }
 
 // Analyze a height map's actual value band and push it into the material's live hMin/hMax uniforms. These
@@ -79,11 +82,62 @@ export type EntityMaterial = MeshStandardNodeMaterial
 const texCache = new Map<string, THREE.Texture>()
 const loader = new THREE.TextureLoader()
 
+// KTX2 (Basis UASTC) — the PBR catalog ships .ktx2 since the KTX2 migration: textures
+// stay block-compressed in VRAM (BC7 on desktop, ASTC/ETC2 on mobile — ~4× less memory
+// and fetch bandwidth than RGBA8) with the full mip chain baked in. The loader needs
+// the renderer once (feature detection picks the transcode target) — the viewport
+// calls configureKtx2 right after WebGPU init, before anything builds materials.
+// Files are encoded PRE-FLIPPED (compressed uploads can't flipY), so they read
+// identically to the old flipY PNG path.
+const ktx2Loader = new KTX2Loader().setTranscoderPath('/basis/')
+let ktx2Ready = false
+// loads requested before the renderer finished initialising (inventory fetch can beat
+// device init) — configureKtx2 drains them
+const ktx2Queue: (() => void)[] = []
+export function configureKtx2(renderer: THREE.WebGLRenderer | object): void {
+  ktx2Loader.detectSupport(renderer as THREE.WebGLRenderer)
+  ktx2Ready = true
+  for (const run of ktx2Queue.splice(0)) run()
+}
+
+// Load a .ktx2 into a stable placeholder texture (sync return, same identity contract
+// as the PNG path — merge/batch buckets key on the texture uuid). The transcoded
+// result is copied in when it lands; sampler state is then re-asserted (copy()
+// overwrites it with the loader's defaults).
+function loadKtx2Into(placeholder: THREE.CompressedTexture, path: string, srgb: boolean): void {
+  let settle!: () => void
+  const pending = new Promise<void>((resolve) => (settle = resolve))
+  pendingTextureLoads.add(pending)
+  const done = (): void => {
+    pendingTextureLoads.delete(pending)
+    settle()
+  }
+  const start = (): void => ktx2Loader.load(
+    '/' + encodeURI(path),
+    (tex) => {
+      placeholder.copy(tex)
+      placeholder.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace
+      placeholder.wrapS = placeholder.wrapT = THREE.RepeatWrapping
+      placeholder.magFilter = THREE.LinearFilter
+      placeholder.minFilter = THREE.LinearMipmapLinearFilter
+      placeholder.anisotropy = anisotropyLevel
+      placeholder.generateMipmaps = false // baked chain; compressed can't generate
+      placeholder.needsUpdate = true
+      done()
+    },
+    undefined,
+    () => {
+      console.error('KTX2 load failed:', path)
+      done()
+    },
+  )
+  if (ktx2Ready) start()
+  else ktx2Queue.push(start)
+}
+
 // Global anisotropic filtering level (render setting). Applies at texture creation +
-// live to everything cached. NOTE the WebGPU rule: anisotropy only takes effect on
-// samplers whose min/mag/mip filters are ALL linear — three's backend guards this —
-// so it sharpens the linearly-filtered data maps (normal/height); the crisp Nearest
-// albedo look is untouched by design.
+// live to everything cached. Every catalog map filters trilinear (WebGPU requires
+// all-linear samplers for aniso), so this bites on ALL of them — color included.
 let anisotropyLevel = 1
 export function setAnisotropy(n: number): void {
   anisotropyLevel = Math.max(1, Math.min(16, Math.round(n)))
@@ -92,8 +146,9 @@ export function setAnisotropy(n: number): void {
     tex.anisotropy = anisotropyLevel
     // sampler rebuild rides the texture-update path; imageless textures pick the
     // new level up at their first real upload (bumping them would re-trigger the
-    // "no image data" warn burst — see loadTexture's version reset)
-    if (tex.image) tex.needsUpdate = true
+    // "no image data" warn burst — see loadTexture's version reset). The width check
+    // also skips still-loading ktx2 placeholders (empty image shell).
+    if (tex.image && ((tex.image as { width?: number }).width ?? 0) > 0) tex.needsUpdate = true
   }
 }
 
@@ -177,6 +232,13 @@ export function resolveTexturePath(id: string): string {
   return id
 }
 
+// URL for an <img>-based preview of a texture path (editor chips / pickers / the MM
+// list). Browsers can't decode .ktx2 in an <img>, so previews read the PNG sibling —
+// the originals stay on disk exactly for these CPU-side consumers.
+export function thumbnailUrl(path: string): string {
+  return '/' + encodeURI(resolveTexturePath(path).replace(/\.ktx2$/i, '.png'))
+}
+
 // Every in-flight texture decode, as a self-removing promise. whenTexturesReady() gates a
 // scene reveal on "no map is still imageless" — an imageless bound map samples BLACK, which
 // is exactly the black-geometry flash on entity load. Errors settle too (a missing file
@@ -191,14 +253,22 @@ export function whenTexturesReady(): Promise<void> {
   return Promise.allSettled([...pendingTextureLoads]).then(() => whenTexturesReady())
 }
 
-function loadTexture(path: string, srgb: boolean, linear = false): THREE.Texture {
-  // `linear` gets its own cache entry so a path used elsewhere as a crisp (Nearest) map can also
-  // be loaded smoothly here. Height and normal maps are CONTINUOUS data (a scalar field / packed
-  // directions), so they must be bilinearly interpolated + mipmapped — Nearest reads back blocky
-  // texel steps that POM and the lighting amplify. (The base colour keeps its Nearest look.)
-  const key = linear ? path + '#lin' : path
+function loadTexture(path: string, srgb: boolean): THREE.Texture {
+  // ONE cache entry per path; every map filters trilinear + anisotropic. (The old
+  // Nearest-for-color policy was a minecraft-pixel-art-era holdover — on the 1k
+  // photographic PBR set it snapped texels up close AND blocked anisotropy on the
+  // color maps, since WebGPU only applies aniso to all-linear samplers. Decal
+  // sprites keep their own Nearest look in makeDecalMaterial — they ARE pixel art.)
+  const key = path
   let tex = texCache.get(key)
   if (tex) return tex
+  if (path.toLowerCase().endsWith('.ktx2')) {
+    const placeholder = new THREE.CompressedTexture([], 1, 1) // 1×1 shell; copy() fills it on load
+    placeholder.version = 0 // nothing to upload until the transcoded copy lands
+    loadKtx2Into(placeholder, path, srgb)
+    texCache.set(key, placeholder)
+    return placeholder
+  }
   let settle!: () => void
   const pending = new Promise<void>((resolve) => (settle = resolve))
   pendingTextureLoads.add(pending)
@@ -211,9 +281,9 @@ function loadTexture(path: string, srgb: boolean, linear = false): THREE.Texture
   tex = loader.load('/' + encodeURI(path), done, undefined, done)
   tex.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
-  tex.magFilter = linear ? THREE.LinearFilter : THREE.NearestFilter // Nearest = crisp pixel art
-  tex.minFilter = linear ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter
-  tex.anisotropy = anisotropyLevel // effective on the linear samplers only (WebGPU rule)
+  tex.magFilter = THREE.LinearFilter
+  tex.minFilter = THREE.LinearMipmapLinearFilter
+  tex.anisotropy = anisotropyLevel
   // Leftover gap #3: EACH of the setters above (colorSpace/wrap/filter) bumps the
   // texture's `version`, so the still-imageless base texture gets marked for upload
   // and the renderer warns "no image data found" EVERY FRAME until the async load
@@ -305,16 +375,14 @@ export function materialLoadState(materialId: string): { total: number; loaded: 
   if (doc.tuning.parallax && isParallaxEnabled()) kinds.push('height')
   let total = 0
   let loaded = 0
-  // `linear` maps are cached under path+'#lin' (loadTexture's separate smooth-filter entry) —
-  // tally the SAME key the material actually binds, or the map never counts as loaded and the
-  // spinner runs forever (that was the parallax/height infinite loader).
-  const tally = (p: string | null | undefined, linear = false): void => {
+  const tally = (p: string | null | undefined): void => {
     if (!p) return
     total++
-    const tex = texCache.get(linear ? p + '#lin' : p)
-    if (tex && tex.image) loaded++
+    const tex = texCache.get(p) // one cache entry per path (uniform trilinear filtering)
+    // width check: a ktx2 placeholder carries an empty {width: undefined} image shell
+    if (tex && tex.image && ((tex.image as { width?: number }).width ?? 0) > 0) loaded++
   }
-  for (const k of kinds) tally(resolveCatalogMap(doc, k), k === 'height' || k === 'normal')
+  for (const k of kinds) tally(resolveCatalogMap(doc, k))
   tally(doc.tuning.alphaMap)
   return { total, loaded }
 }
@@ -392,13 +460,10 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
   mat.roughness = t.roughness
   mat.metalness = t.metalness
 
-  // normal (GL convention, linear color space), strength from tuning. Filter policy:
-  // normals are CONTINUOUS packed directions — always bilinear (`linear=true`), the
-  // same cache entry the parallax path binds. (Nearest here read back faceted texel
-  // steps AND double-cached every normal map used by both a plain and a POM material.)
+  // normal (GL convention, linear color space), strength from tuning
   const normalPath = resolveCatalogMap(doc, 'normal')
   if (normalPath) {
-    mat.normalMap = loadTexture(normalPath, false, true)
+    mat.normalMap = loadTexture(normalPath, false)
     mat.normalScale.set(t.normalScale, t.normalScale)
   }
 
@@ -436,7 +501,7 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     const hMaxU = uniform(1)
     mat.userData.tuningU = { tintU, roughnessU, metalnessU, normalScaleU, aoU, heightU, hMinU, hMaxU }
     analyzeHeightRange(heightPath, hMinU as never, hMaxU as never) // fills hMin/hMax live (async)
-    const pUv = parallaxUvNode(loadTexture(heightPath, false, true), heightU as never, hMinU as never, hMaxU as never)
+    const pUv = parallaxUvNode(loadTexture(heightPath, false), heightU as never, hMinU as never, hMaxU as never)
     // Drive the mip from the BASE uv gradients; the march's jitter + binary refinement already kill the
     // layer-beat moire, so no grazing mip bias is needed (biasing smeared the near-cliff texels).
     const gdx = dFdx(uv())
@@ -452,7 +517,7 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     if (colorPath) mat.colorNode = texture(loadTexture(colorPath, true), pUv).grad(gdx, gdy).mul(tintU)
     if (normalPath)
       mat.normalNode = normalMap(
-        texture(loadTexture(normalPath, false, true), pUv).grad(gdx, gdy),
+        texture(loadTexture(normalPath, false), pUv).grad(gdx, gdy),
         vec2(normalScaleU, normalScaleU),
       )
     // Route the OTHER spatial maps through the SAME parallax UV, or roughness (→ env reflection),
@@ -488,9 +553,9 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
   mat.userData.catalogMat = true // the global-flat live flip targets these
 
   // #27: alpha MASK (single resolution-independent path). three.js reads its green
-  // channel; a linear (NoColorSpace), NearestFilter texture — loadTexture(_, false)
-  // already gives exactly that. The mask combines with the tuning below: cutout →
-  // hard alphaTest edges (leaves/foliage); opacity<1 → soft transparent blend.
+  // channel; a NoColorSpace data texture — loadTexture(_, false) gives exactly that.
+  // The mask combines with the tuning below: cutout → hard alphaTest edges
+  // (leaves/foliage); opacity<1 → soft transparent blend.
   const hasAlphaMask = !!t.alphaMap
   if (t.alphaMap) mat.alphaMap = loadTexture(t.alphaMap, false)
 

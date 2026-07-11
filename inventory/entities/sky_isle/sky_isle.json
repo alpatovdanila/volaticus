@@ -2,164 +2,46 @@
   "format": 1,
   "id": "sky_isle",
   "name": "Sky Isle",
-  "category": "prop",
-  "tags": ["sky", "island", "scenery"],
-  "notes": "Decorative floating island, ~9.8m across and ~6.4m tall: grassy crafted cap on a soil skirt, inverted rock cone underside (oneOf picks a single deep root or a shattered multi-tip shard cluster), 1-2 rock outcrops and grass tufts by chance. Origin is at the underside TIP (y0) - place with an explicit Y so the cap top sits ~4.6m above the placement point. NO collider on purpose: unreachable scenery, physics omitted.",
+  "category": "levelpart",
+  "tags": ["nature", "island"],
+  "notes": "Floating island: ONE tapered low-segment cylinder per variant — grass top face, rocky underside in a single stitched surface (no seam ring). Sharp-cornered silhouette from low segments + heavy jitter. Nothing placed on top; dress it in the level editor.",
   "materials": {
-    "grass": { "material": "grass_02", "uvScale": 0.25 },
-    "cap_top": { "inherit": "grass" },
-    "soil": { "material": "ground_with_roots_01" },
-    "cap_side": { "inherit": "soil" },
-    "cap_bottom": { "inherit": "soil" },
-    "rock": { "inherit": "tuft" },
-    "ud_core": { "inherit": "rock" },
-    "ud_spur": { "inherit": "rock" },
-    "us_core": { "inherit": "rock" },
-    "us_tip": { "inherit": "rock" },
-    "us_tip2": { "inherit": "rock" },
-    "outcrop_1": { "inherit": "rock" },
-    "outcrop_2": { "inherit": "rock" },
-    "tuft": { "material": "cliff_rocks_06", "doubleSided": true, "uvMode": "fit tile", "uvScale": 0.25 },
-    "tuft_1": { "inherit": "tuft" },
-    "tuft_2": { "inherit": "tuft" },
-    "tuft_3": { "inherit": "tuft" }
+    "grass": { "material": "grass_02" },
+    "rock": { "material": "cliff_rocks_01", "uvProject": "box", "uvScale": 0.5 }
   },
   "rig": {
     "root": {
       "children": {
-        "cap": {
+        "isle_a": {
           "shape": "cylinder",
-          "radiusTop": 4.9,
-          "radiusBottom": 4.35,
-          "height": 1.2,
-          "segments": 24,
-          "pos": [0, 4, 0],
-          "material": { "side": "cap_side", "top": "cap_top", "bottom": "cap_bottom" },
+          "radiusTop": 2.3,
+          "radiusBottom": 0.12,
+          "height": 1.9,
+          "segments": 8,
+          "pos": [0, 1.05, 0],
+          "material": { "top": "grass", "side": "rock", "bottom": "rock" },
+          "craft": 0.72,
           "sub": 1,
-          "craftSeed": 346603435
+          "craftSeed": 335577220
         },
-        "under_deep": {
-          "children": {
-            "ud_core": {
-              "shape": "cone",
-              "radius": 4.4,
-              "height": 3.5,
-              "segments": 24,
-              "pos": [0, 1.75, 0],
-              "rot": [180, 0, 0],
-              "material": "ud_core",
-              "sub": 2,
-              "craftSeed": 346603435
-            },
-            "ud_spur": {
-              "shape": "cone",
-              "radius": 1.35,
-              "height": 1.7,
-              "segments": 24,
-              "pos": [2.5, 2.6, 0.8],
-              "rot": [172, 0, 10],
-              "material": "ud_spur",
-              "chance": 0.75,
-              "sub": 1,
-              "craftSeed": 346603435
-            }
-          }
-        },
-        "under_shard": {
-          "children": {
-            "us_core": {
-              "shape": "cone",
-              "radius": 4.45,
-              "height": 2.6,
-              "segments": 24,
-              "pos": [0, 2.2, 0],
-              "rot": [180, 0, 0],
-              "material": "us_core",
-              "craft": 0.5,
-              "sub": 2,
-              "craftSeed": 346603435
-            },
-            "us_tip": {
-              "shape": "cone",
-              "radius": 2,
-              "height": 2.4,
-              "segments": 24,
-              "pos": [-1.2, 1.1, 0.4],
-              "rot": [178, 0, -6],
-              "material": "us_tip",
-              "craft": 0.5,
-              "sub": 1,
-              "craftSeed": 346603435
-            },
-            "us_tip2": {
-              "shape": "cone",
-              "radius": 1.2,
-              "height": 1.5,
-              "segments": 24,
-              "pos": [2.3, 1.6, -0.9],
-              "rot": [176, 0, 8],
-              "material": "us_tip2",
-              "chance": 0.7,
-              "craft": 0.5,
-              "sub": 1,
-              "craftSeed": 346603435
-            }
-          }
-        },
-        "outcrop_1": {
-          "shape": "sphere",
-          "radius": 1.15,
+        "isle_b": {
+          "shape": "cylinder",
+          "radiusTop": 2.05,
+          "radiusBottom": 0.1,
+          "height": 1.65,
           "segments": 7,
-          "scale": [1, 1.25, 0.9],
-          "pos": [2.3, 5, -1.4],
-          "rotJitter": [0, 40, 0],
-          "material": "outcrop_1",
-          "chance": 0.85,
-          "craft": 0.55,
+          "pos": [0, 1.15, 0],
+          "material": { "top": "grass", "side": "rock", "bottom": "rock" },
+          "craft": 0.68,
           "sub": 1,
-          "craftSeed": 346603435
-        },
-        "outcrop_2": {
-          "shape": "box",
-          "size": [1.5, 1.1, 1.2],
-          "pos": [-2.1, 5, 1.5],
-          "rot": [0, 25, 0],
-          "rotJitter": [3, 20, 3],
-          "material": "outcrop_2",
-          "chance": 0.6,
-          "craft": 0.5,
-          "sub": 2,
-          "craftSeed": 346603435
-        },
-        "tuft_1": {
-          "shape": "cross",
-          "size": [1, 0.7],
-          "pos": [0.6, 4.95, 2.6],
-          "rotJitter": [0, 90, 0],
-          "material": "tuft_1",
-          "chance": 0.7,
-          "craftSeed": 346603435
-        },
-        "tuft_2": {
-          "shape": "cross",
-          "size": [0.8, 0.6],
-          "pos": [-2.6, 4.95, -1.8],
-          "rotJitter": [0, 90, 0],
-          "material": "tuft_2",
-          "chance": 0.6,
-          "craftSeed": 346603435
-        },
-        "tuft_3": {
-          "shape": "cross",
-          "size": [0.9, 0.65],
-          "pos": [3.2, 4.95, 0.9],
-          "rotJitter": [0, 90, 0],
-          "material": "tuft_3",
-          "chance": 0.5,
-          "craftSeed": 346603435
+          "craftSeed": 990242615
         }
       }
     }
   },
-  "variants": { "count": 6, "oneOf": { "underside": ["under_deep", "under_shard"] } }
+  "physics": {
+    "body": "fixed",
+    "collider": { "shape": "cylinder", "radius": 2.2, "height": 0.5, "offset": [0, 1.85, 0] }
+  },
+  "variants": { "count": 2, "oneOf": { "isle": ["isle_a", "isle_b"] } }
 }

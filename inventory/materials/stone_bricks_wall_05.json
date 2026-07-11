@@ -4,11 +4,11 @@
   "name": "Stone Bricks Wall 05",
   "category": "stone_bricks_wall",
   "maps": {
-    "color": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_color_1k.png",
-    "normal": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_normal_gl_1k.png",
-    "roughness": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_roughness_1k.png",
-    "height": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_height_1k.png",
-    "ao": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_ambient_occlusion_1k.png",
+    "color": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_color_1k.ktx2",
+    "normal": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_normal_gl_1k.ktx2",
+    "roughness": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_roughness_1k.ktx2",
+    "height": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_height_1k.ktx2",
+    "ao": "PBR/stone_bricks_wall_05/stone_bricks_wall_05_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

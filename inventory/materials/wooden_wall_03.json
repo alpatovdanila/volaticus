@@ -4,12 +4,12 @@
   "name": "Wooden Wall 03",
   "category": "wooden_wall",
   "maps": {
-    "color": "PBR/wooden_wall_03/wooden_wall_03_basecolor_1k.png",
-    "normal": "PBR/wooden_wall_03/wooden_wall_03_normal_gl_1k.png",
-    "roughness": "PBR/wooden_wall_03/wooden_wall_03_roughness_1k.png",
-    "height": "PBR/wooden_wall_03/wooden_wall_03_height_1k.png",
-    "ao": "PBR/wooden_wall_03/wooden_wall_03_ambientocclusion_1k.png",
-    "metallic": "PBR/wooden_wall_03/wooden_wall_03_metallic_1k.png",
+    "color": "PBR/wooden_wall_03/wooden_wall_03_basecolor_1k.ktx2",
+    "normal": "PBR/wooden_wall_03/wooden_wall_03_normal_gl_1k.ktx2",
+    "roughness": "PBR/wooden_wall_03/wooden_wall_03_roughness_1k.ktx2",
+    "height": "PBR/wooden_wall_03/wooden_wall_03_height_1k.ktx2",
+    "ao": "PBR/wooden_wall_03/wooden_wall_03_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/wooden_wall_03/wooden_wall_03_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {

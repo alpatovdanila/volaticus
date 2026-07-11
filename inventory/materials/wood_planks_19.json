@@ -4,12 +4,12 @@
   "name": "Wood Planks 19",
   "category": "wood_planks",
   "maps": {
-    "color": "PBR/wood_planks_19/basecolor_1kwood_planks_19_.png",
-    "normal": "PBR/wood_planks_19/normal_gl_1kwood_planks_19_.png",
-    "roughness": "PBR/wood_planks_19/roughness_1kwood_planks_19_.png",
-    "height": "PBR/wood_planks_19/height_1kwood_planks_19_.png",
-    "ao": "PBR/wood_planks_19/ambientocclusion_1kwood_planks_19_.png",
-    "metallic": "PBR/wood_planks_19/metallic_1kwood_planks_19_.png",
+    "color": "PBR/wood_planks_19/basecolor_1kwood_planks_19_.ktx2",
+    "normal": "PBR/wood_planks_19/normal_gl_1kwood_planks_19_.ktx2",
+    "roughness": "PBR/wood_planks_19/roughness_1kwood_planks_19_.ktx2",
+    "height": "PBR/wood_planks_19/height_1kwood_planks_19_.ktx2",
+    "ao": "PBR/wood_planks_19/ambientocclusion_1kwood_planks_19_.ktx2",
+    "metallic": "PBR/wood_planks_19/metallic_1kwood_planks_19_.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

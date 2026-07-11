@@ -4,12 +4,12 @@
   "name": "Ground 08",
   "category": "ground",
   "maps": {
-    "color": "PBR/ground_08/ground_08_basecolor_1k.png",
-    "normal": "PBR/ground_08/ground_08_normal_gl_1k.png",
-    "roughness": "PBR/ground_08/ground_08_roughness_1k.png",
-    "height": "PBR/ground_08/ground_08_height_1k.png",
-    "ao": "PBR/ground_08/ground_08_ambientocclusion_1k.png",
-    "metallic": "PBR/ground_08/ground_08_metallic_1k.png",
+    "color": "PBR/ground_08/ground_08_basecolor_1k.ktx2",
+    "normal": "PBR/ground_08/ground_08_normal_gl_1k.ktx2",
+    "roughness": "PBR/ground_08/ground_08_roughness_1k.ktx2",
+    "height": "PBR/ground_08/ground_08_height_1k.ktx2",
+    "ao": "PBR/ground_08/ground_08_ambientocclusion_1k.ktx2",
+    "metallic": "PBR/ground_08/ground_08_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

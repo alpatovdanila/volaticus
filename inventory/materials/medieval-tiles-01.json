@@ -4,11 +4,11 @@
   "name": "Medieval Tiles 01",
   "category": "medieval_tiles",
   "maps": {
-    "color": "PBR/medieval-tiles-01/medieval-tiles-01_color_1k.png",
-    "normal": "PBR/medieval-tiles-01/medieval-tiles-01_normal_gl_1k.png",
-    "roughness": "PBR/medieval-tiles-01/medieval-tiles-01_roughness_1k.png",
-    "height": "PBR/medieval-tiles-01/medieval-tiles-01_height_1k.png",
-    "ao": "PBR/medieval-tiles-01/medieval-tiles-01_ambient_occlusion_1k.png",
+    "color": "PBR/medieval-tiles-01/medieval-tiles-01_color_1k.ktx2",
+    "normal": "PBR/medieval-tiles-01/medieval-tiles-01_normal_gl_1k.ktx2",
+    "roughness": "PBR/medieval-tiles-01/medieval-tiles-01_roughness_1k.ktx2",
+    "height": "PBR/medieval-tiles-01/medieval-tiles-01_height_1k.ktx2",
+    "ao": "PBR/medieval-tiles-01/medieval-tiles-01_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

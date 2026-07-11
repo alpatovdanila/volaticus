@@ -272,12 +272,16 @@ export function generateStar(
     perim.push([Math.cos(a) * r, Math.sin(a) * r])
   }
 
+  // BEVELED 3D star (the classic gold-award look): the perimeter sits at z=0 and every
+  // rim vertex fans straight to a FRONT and BACK center apex — each point becomes two
+  // ridged facets per side, no flat faces, no side walls. Crease welding keeps the
+  // facet edges crisp under the global smooth shading.
   const face = (sign: 1 | -1) => {
     const center = positions.length / 3
     positions.push(0, 0, sign * hz)
     uvs.push(radius, radius)
     for (const [x, y] of perim) {
-      positions.push(x, y, sign * hz)
+      positions.push(x, y, 0)
       uvs.push(x + radius, y + radius) // meters
     }
     for (let k = 0; k < n; k++) {
@@ -290,21 +294,173 @@ export function generateStar(
   face(1)
   face(-1)
 
-  // sides: one outward quad per perimeter edge, u = unrolled edge length
-  let u = 0
-  for (let k = 0; k < n; k++) {
-    const [x0, y0] = perim[k]
-    const [x1, y1] = perim[(k + 1) % n]
-    const len = Math.hypot(x1 - x0, y1 - y0)
-    const start = positions.length / 3
-    positions.push(x0, y0, hz, x0, y0, -hz, x1, y1, -hz, x1, y1, hz)
-    uvs.push(u, depth, u, 0, u + len, 0, u + len, depth) // meters
-    indices.push(start, start + 1, start + 2, start, start + 2, start + 3)
-    u += len
-  }
-
   jitterPositions(positions, craftAmount(craft, Math.min(radius * 2, depth)), seed)
   return { positions, uvs, indices }
+}
+
+// ---------------------------------------------------------------------------
+// Recursive low-poly TREE: a wandering tapered trunk, level-1 branches, level-2
+// twigs on those, and faceted leaf blobs at every terminal tip. One geometry,
+// TWO index groups: 0 = bark (trunk + branches), 1 = leaves — the factory maps
+// them to the 'side' / 'top' material faces. UVs are already METERS (bark:
+// u around the tube, v along the growth; leaves: blob-local planar-ish).
+// Deterministic from `seed` — a different seed is a different tree.
+export function generateTree(opts: {
+  height: number
+  radius: number // trunk base radius
+  lushness: number // 0..1 → branch counts + twig recursion density
+  spread: number // branch angle from vertical, degrees (birch ~38, oak ~60)
+  thickness: number // child/parent radius ratio (oak fatter ~0.7)
+  leafSize: number // terminal blob radius (0 = bare tree)
+  seed: number
+}): GeneratedGeometry {
+  const { height, radius, lushness, spread, thickness, leafSize, seed } = opts
+  const positions: number[] = []
+  const uvs: number[] = []
+  const indices: number[] = []
+  let s = (seed | 0) || 1
+  const rnd = (): number => {
+    // xorshift32 → [0, 1)
+    s ^= s << 13
+    s ^= s >>> 17
+    s ^= s << 5
+    return ((s >>> 0) % 1_000_000) / 1_000_000
+  }
+
+  type V3 = [number, number, number]
+  const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+  const scale = (a: V3, k: number): V3 => [a[0] * k, a[1] * k, a[2] * k]
+  const norm = (a: V3): V3 => {
+    const l = Math.hypot(a[0], a[1], a[2]) || 1
+    return [a[0] / l, a[1] / l, a[2] / l]
+  }
+
+  // sweep a tapered tube along a polyline (rings per point, shared frame per ring)
+  const tube = (pts: V3[], r0: number, r1: number, radial: number): void => {
+    let v = 0
+    const ringStart: number[] = []
+    for (let i = 0; i < pts.length; i++) {
+      const t = i / (pts.length - 1)
+      const r = r0 + (r1 - r0) * t
+      const dir = norm(
+        i === 0 ? add(pts[1], scale(pts[0], -1)) : add(pts[i], scale(pts[i - 1], -1)),
+      )
+      // orthonormal frame around dir
+      const up: V3 = Math.abs(dir[1]) > 0.93 ? [1, 0, 0] : [0, 1, 0]
+      const sx = norm([dir[1] * up[2] - dir[2] * up[1], dir[2] * up[0] - dir[0] * up[2], dir[0] * up[1] - dir[1] * up[0]])
+      const sz = norm([dir[1] * sx[2] - dir[2] * sx[1], dir[2] * sx[0] - dir[0] * sx[2], dir[0] * sx[1] - dir[1] * sx[0]])
+      if (i > 0) v += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1], pts[i][2] - pts[i - 1][2])
+      ringStart.push(positions.length / 3)
+      for (let k = 0; k <= radial; k++) {
+        const a = (k / radial) * Math.PI * 2
+        const off = add(scale(sx, Math.cos(a) * r), scale(sz, Math.sin(a) * r))
+        positions.push(pts[i][0] + off[0], pts[i][1] + off[1], pts[i][2] + off[2])
+        uvs.push((k / radial) * 2 * Math.PI * Math.max(r0, 0.02), v)
+      }
+    }
+    for (let i = 0; i < pts.length - 1; i++)
+      for (let k = 0; k < radial; k++) {
+        const a = ringStart[i] + k
+        const b = ringStart[i + 1] + k
+        indices.push(a, b, b + 1, a, b + 1, a + 1)
+      }
+    // tip cap (fan to the end point)
+    const tipRing = ringStart[ringStart.length - 1]
+    const tip = positions.length / 3
+    const last = pts[pts.length - 1]
+    positions.push(last[0], last[1], last[2])
+    uvs.push(0, v)
+    for (let k = 0; k < radial; k++) indices.push(tipRing + k, tip, tipRing + k + 1)
+  }
+
+  interface Tip {
+    at: V3
+    r: number
+  }
+  const tips: Tip[] = []
+
+  // one branch: curved polyline from `from` along `dir`, optionally recursing
+  const branch = (from: V3, dir: V3, len: number, r: number, radial: number, level: number): void => {
+    const segs = level === 0 ? 5 : 3
+    const pts: V3[] = [from]
+    let p = from
+    let d = dir
+    for (let i = 1; i <= segs; i++) {
+      // wander + gentle upward pull on branches (phototropism, reads hand-made)
+      d = norm(add(d, [ (rnd() - 0.5) * 0.3, level > 0 ? 0.12 : (rnd() - 0.5) * 0.12, (rnd() - 0.5) * 0.3 ]))
+      p = add(p, scale(d, len / segs))
+      pts.push(p)
+    }
+    tube(pts, r, Math.max(0.012, r * 0.32), radial)
+    const end = pts[pts.length - 1]
+    if (level === 0) {
+      // level-1 branches from the trunk
+      const count = Math.round(2 + lushness * 4)
+      for (let i = 0; i < count; i++) {
+        const t = 0.42 + (0.5 * (i + rnd() * 0.7)) / count
+        const at = pts[Math.min(segs, Math.floor(t * segs))]
+        const az = i * 2.399 + rnd() * 0.8 // golden-angle spiral
+        const pol = ((spread + (rnd() - 0.5) * 24) * Math.PI) / 180
+        const bd: V3 = norm([Math.sin(pol) * Math.cos(az), Math.cos(pol), Math.sin(pol) * Math.sin(az)])
+        branch(at, bd, len * (0.42 + rnd() * 0.2) * (1.25 - t * 0.5), Math.max(0.02, r * thickness * (1 - t * 0.4)), 5, 1)
+      }
+      tips.push({ at: end, r: Math.max(0.02, r * 0.3) })
+    } else if (level === 1 && lushness > 0.25) {
+      // level-2 twigs
+      const count = Math.max(1, Math.round(lushness * 2.6))
+      for (let i = 0; i < count; i++) {
+        const t = 0.45 + (0.45 * i) / count
+        const at = pts[Math.min(segs, Math.max(1, Math.floor(t * segs)))]
+        const az = rnd() * Math.PI * 2
+        const pol = ((spread * 0.85 + (rnd() - 0.5) * 30) * Math.PI) / 180
+        const bd: V3 = norm([Math.sin(pol) * Math.cos(az), Math.cos(pol), Math.sin(pol) * Math.sin(az)])
+        branch(at, bd, len * (0.45 + rnd() * 0.2), Math.max(0.014, r * thickness), 4, 2)
+      }
+      tips.push({ at: end, r })
+    } else {
+      tips.push({ at: end, r })
+    }
+  }
+
+  branch([0, 0, 0], [0, 1, 0], height, radius, 7, 0)
+  const barkCount = indices.length
+
+  // leaf blobs: one faceted squashed sphere per terminal tip
+  if (leafSize > 0) {
+    for (const tip of tips) {
+      const r = leafSize * (0.75 + rnd() * 0.55)
+      const segs = 6
+      const rows = 4
+      const base = positions.length / 3
+      for (let row = 0; row <= rows; row++) {
+        const th = (row / rows) * Math.PI
+        for (let k = 0; k <= segs; k++) {
+          const a = (k / segs) * Math.PI * 2
+          const jx = (rnd() - 0.5) * r * 0.25
+          const px = tip.at[0] + Math.sin(th) * Math.cos(a) * r + jx
+          const py = tip.at[1] + Math.cos(th) * r * 0.8
+          const pz = tip.at[2] + Math.sin(th) * Math.sin(a) * r
+          positions.push(px, py, pz)
+          uvs.push((k / segs) * 2 * r, (row / rows) * 2 * r)
+        }
+      }
+      for (let row = 0; row < rows; row++)
+        for (let k = 0; k < segs; k++) {
+          const a = base + row * (segs + 1) + k
+          const b = a + segs + 1
+          indices.push(a, b, b + 1, a, b + 1, a + 1)
+        }
+    }
+  }
+  return {
+    positions,
+    uvs,
+    indices,
+    groups: [
+      { start: 0, count: barkCount, materialIndex: 0 },
+      { start: barkCount, count: indices.length - barkCount, materialIndex: 1 },
+    ],
+  }
 }
 
 // Tapered tube with UNIFORM density: side ring spacing == circumferential edge

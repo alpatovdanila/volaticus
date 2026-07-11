@@ -4,12 +4,12 @@
   "name": "Floor Tiles 01",
   "category": "floor_tiles",
   "maps": {
-    "color": "PBR/floor_tiles_01/floor_tiles_01_baseColor_1k.png",
-    "normal": "PBR/floor_tiles_01/floor_tiles_01_normal_gl_1k.png",
-    "roughness": "PBR/floor_tiles_01/floor_tiles_01_roughness_1k.png",
-    "height": "PBR/floor_tiles_01/floor_tiles_01_height_1k.png",
-    "ao": "PBR/floor_tiles_01/floor_tiles_01_ambientOcclusion_1k.png",
-    "metallic": "PBR/floor_tiles_01/floor_tiles_01_metallic_1k.png",
+    "color": "PBR/floor_tiles_01/floor_tiles_01_baseColor_1k.ktx2",
+    "normal": "PBR/floor_tiles_01/floor_tiles_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/floor_tiles_01/floor_tiles_01_roughness_1k.ktx2",
+    "height": "PBR/floor_tiles_01/floor_tiles_01_height_1k.ktx2",
+    "ao": "PBR/floor_tiles_01/floor_tiles_01_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/floor_tiles_01/floor_tiles_01_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

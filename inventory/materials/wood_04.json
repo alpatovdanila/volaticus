@@ -4,11 +4,11 @@
   "name": "Wood 04",
   "category": "wood",
   "maps": {
-    "color": "PBR/wood_04/wood_04_color_1k.png",
-    "normal": "PBR/wood_04/wood_04_normal_1k.png",
-    "roughness": "PBR/wood_04/wood_04_roughness_1k.png",
-    "height": "PBR/wood_04/wood_04_height_1k.png",
-    "ao": "PBR/wood_04/wood_04_ambient_occlusion_1k.png",
+    "color": "PBR/wood_04/wood_04_color_1k.ktx2",
+    "normal": "PBR/wood_04/wood_04_normal_1k.ktx2",
+    "roughness": "PBR/wood_04/wood_04_roughness_1k.ktx2",
+    "height": "PBR/wood_04/wood_04_height_1k.ktx2",
+    "ao": "PBR/wood_04/wood_04_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

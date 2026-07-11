@@ -4,11 +4,11 @@
   "name": "Hay Roof 01",
   "category": "hay_roof",
   "maps": {
-    "color": "PBR/hay_roof_01/hay_roof_01_color_1k.png",
-    "normal": "PBR/hay_roof_01/hay_roof_01_normal_gl_1k.png",
-    "roughness": "PBR/hay_roof_01/hay_roof_01_roughness_1k.png",
-    "height": "PBR/hay_roof_01/hay_roof_01_height_1k.png",
-    "ao": "PBR/hay_roof_01/hay_roof_01_ambient_occlusion_1k.png",
+    "color": "PBR/hay_roof_01/hay_roof_01_color_1k.ktx2",
+    "normal": "PBR/hay_roof_01/hay_roof_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/hay_roof_01/hay_roof_01_roughness_1k.ktx2",
+    "height": "PBR/hay_roof_01/hay_roof_01_height_1k.ktx2",
+    "ao": "PBR/hay_roof_01/hay_roof_01_ambient_occlusion_1k.ktx2",
     "metallic": null,
     "emissive": null
   },

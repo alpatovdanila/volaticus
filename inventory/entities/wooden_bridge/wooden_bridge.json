@@ -2,277 +2,302 @@
   "format": 1,
   "id": "wooden_bridge",
   "name": "Wooden Bridge",
-  "category": "prop",
-  "tags": ["village", "bridge", "wood"],
-  "notes": "Arched plank footbridge (v1 makeBridge port, 7.6m span x 2.2m wide, crown ~1.07m): seven tilted deck planks follow the arch, alternating light/dark wood with grain running across the walk direction; low rails on five posts per side. Physics trade-off: v2 collision is 2.5D, so the collider is ONE box whose top (~0.7m) sits at the deck's mid-height - the player floats slightly at the ends and sinks slightly at the crown instead of walking the true arch.",
+  "category": "levelpart",
+  "tags": ["wood", "level"],
+  "notes": "ONE continuous arch deck (7-segment resolution) with full-length arch railings — thin in height, wider than the stand diameter — on short posts. 3 variants = 3 lengths.",
   "materials": {
-    "deck_a": { "material": "wood_planks_22", "uvRot": 90, "uvProject": "box" },
-    "plank_0": { "inherit": "deck_a" },
-    "plank_2": { "inherit": "deck_a" },
-    "plank_4": { "inherit": "deck_a" },
-    "plank_6": { "inherit": "deck_a" },
-    "deck_b": { "uvProject": "box", "inherit": "deck_a" },
-    "plank_1": { "inherit": "deck_b" },
-    "plank_3": { "inherit": "deck_b" },
-    "plank_5": { "inherit": "deck_b" },
-    "wood_dark": { "material": "wood_planks_20", "uvProject": "box", "uvRot": 90 },
-    "post_l0": { "inherit": "wood_dark" },
-    "post_l1": { "inherit": "wood_dark" },
-    "post_l2": { "inherit": "wood_dark" },
-    "post_l3": { "inherit": "wood_dark" },
-    "post_l4": { "inherit": "wood_dark" },
-    "post_r0": { "inherit": "wood_dark" },
-    "post_r1": { "inherit": "wood_dark" },
-    "post_r2": { "inherit": "wood_dark" },
-    "post_r3": { "inherit": "wood_dark" },
-    "post_r4": { "inherit": "wood_dark" },
-    "rail_l1": { "inherit": "wood_dark", "uvRot": 0, "uvProject": "planar" },
-    "rail_l2": { "inherit": "rail_l1" },
-    "rail_l3": { "inherit": "rail_l1" },
-    "rail_l4": { "inherit": "rail_l1" },
-    "rail_r1": { "inherit": "rail_l1" },
-    "rail_r2": { "inherit": "rail_l1" },
-    "rail_r3": { "inherit": "rail_l1" },
-    "rail_r4": { "inherit": "rail_l1" }
+    "deck": { "material": "wood_planks_20", "uvRot": 90 },
+    "rail": { "material": "bark_11", "uvProject": "box", "uvScale": 0.5 },
+    "stand": { "material": "bark_02", "uvProject": "box", "uvScale": 0.5 }
   },
   "rig": {
     "root": {
       "children": {
-        "deck": {
+        "len_s": {
           "children": {
-            "plank_0": {
-              "shape": "plank",
-              "size": [1.44, 0.13, 2.2],
-              "pos": [-3.8, 0.22, 0],
-              "rot": [0, 0, 18],
-              "material": "plank_0",
-              "craftSeed": 1739917495
+            "deck_s": {
+              "shape": "arch",
+              "radius": 2.413684210526316,
+              "size": [0.15, 1.15],
+              "arc": 65.17618982639564,
+              "segments": 7,
+              "pos": [0, -1.958684210526316, 0],
+              "rot": [0, 0, 57.41190508680218],
+              "material": "deck",
+              "craft": 0.95,
+              "craftSeed": 880001100
             },
-            "plank_1": {
-              "shape": "plank",
-              "size": [1.44, 0.13, 2.2],
-              "pos": [-2.53, 0.61, 0],
-              "rot": [0, 0, 15.5],
-              "material": "plank_1",
-              "craftSeed": 1739917495
+            "rail_s_l": {
+              "shape": "arch",
+              "radius": 2.833684210526316,
+              "size": [0.05, 0.17],
+              "arc": 65.17618982639564,
+              "segments": 7,
+              "pos": [0, -1.958684210526316, 0.49],
+              "rot": [0, 0, 57.41190508680218],
+              "material": "rail",
+              "craft": 0.93,
+              "craftSeed": 880001101
             },
-            "plank_2": {
-              "shape": "plank",
-              "size": [1.44, 0.13, 2.2],
-              "pos": [-1.27, 0.9, 0],
-              "rot": [0, 0, 9],
-              "material": "plank_2",
-              "craftSeed": 1739917495
-            },
-            "plank_3": {
-              "shape": "plank",
-              "size": [1.44, 0.13, 2.2],
-              "pos": [0, 1, 0],
-              "material": "plank_3",
-              "craftSeed": 1739917495
-            },
-            "plank_4": {
-              "shape": "plank",
-              "size": [1.44, 0.13, 2.2],
-              "pos": [1.27, 0.9, 0],
-              "rot": [0, 0, -9],
-              "material": "plank_4",
-              "craftSeed": 1739917495
-            },
-            "plank_5": {
-              "shape": "plank",
-              "size": [1.44, 0.13, 2.2],
-              "pos": [2.53, 0.61, 0],
-              "rot": [0, 0, -15.5],
-              "material": "plank_5",
-              "craftSeed": 1739917495
-            },
-            "plank_6": {
-              "shape": "plank",
-              "size": [1.44, 0.13, 2.2],
-              "pos": [3.8, 0.22, 0],
-              "rot": [0, 0, -18],
-              "material": "plank_6",
-              "craftSeed": 1739917495
-            }
-          },
-          "craft": 1
-        },
-        "rail_left": {
-          "children": {
-            "post_l0": {
+            "stand_s_l_0": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [-3.6, 0.59, 1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_l0",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [-1.0111608934647063, 0.4879875522318992, 0.49],
+              "rot": [0, 0, 24.766952134030344],
+              "material": "stand",
+              "craftSeed": 880001110
             },
-            "post_l1": {
+            "stand_s_l_1": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [-1.8, 1.14, 1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_l1",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [0, 0.71, 0.49],
+              "rot": [0, 0, 0],
+              "material": "stand",
+              "craftSeed": 880001111
             },
-            "post_l2": {
+            "stand_s_l_2": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [0, 1.37, 1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_l2",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [1.0111608934647063, 0.4879875522318992, 0.49],
+              "rot": [0, 0, -24.766952134030344],
+              "material": "stand",
+              "craftSeed": 880001112
             },
-            "post_l3": {
+            "rail_s_r": {
+              "shape": "arch",
+              "radius": 2.833684210526316,
+              "size": [0.05, 0.17],
+              "arc": 65.17618982639564,
+              "segments": 7,
+              "pos": [0, -1.958684210526316, -0.49],
+              "rot": [0, 0, 57.41190508680218],
+              "material": "rail",
+              "craft": 0.93,
+              "craftSeed": 880001101
+            },
+            "stand_s_r_0": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [1.8, 1.14, 1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_l3",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [-1.0111608934647063, 0.4879875522318992, -0.49],
+              "rot": [0, 0, 24.766952134030344],
+              "material": "stand",
+              "craftSeed": 880001110
             },
-            "post_l4": {
+            "stand_s_r_1": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [3.6, 0.59, 1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_l4",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [0, 0.71, -0.49],
+              "rot": [0, 0, 0],
+              "material": "stand",
+              "craftSeed": 880001111
             },
-            "rail_l1": {
-              "shape": "plank",
-              "size": [1.95, 0.07, 0.07],
-              "pos": [-2.7, 1.145, 1.02],
-              "rot": [0, 0, 17],
-              "material": "rail_l1",
-              "craftSeed": 1739917495
-            },
-            "rail_l2": {
-              "shape": "plank",
-              "size": [1.9, 0.07, 0.07],
-              "pos": [-0.9, 1.535, 1.02],
-              "rot": [0, 0, 7.5],
-              "material": "rail_l2",
-              "craftSeed": 1739917495
-            },
-            "rail_l3": {
-              "shape": "plank",
-              "size": [1.9, 0.07, 0.07],
-              "pos": [0.9, 1.535, 1.02],
-              "rot": [0, 0, -7.5],
-              "material": "rail_l3",
-              "craftSeed": 1739917495
-            },
-            "rail_l4": {
-              "shape": "plank",
-              "size": [1.95, 0.07, 0.07],
-              "pos": [2.7, 1.145, 1.02],
-              "rot": [0, 0, -17],
-              "material": "rail_l4",
-              "craftSeed": 1739917495
+            "stand_s_r_2": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [1.0111608934647063, 0.4879875522318992, -0.49],
+              "rot": [0, 0, -24.766952134030344],
+              "material": "stand",
+              "craftSeed": 880001112
             }
           }
         },
-        "rail_right": {
+        "len_m": {
           "children": {
-            "post_r0": {
+            "deck_m": {
+              "shape": "arch",
+              "radius": 3.2504166666666663,
+              "size": [0.15, 1.15],
+              "arc": 63.068730169902736,
+              "segments": 7,
+              "pos": [0, -2.695416666666666, 0],
+              "rot": [0, 0, 58.46563491504863],
+              "material": "deck",
+              "craft": 0.95,
+              "craftSeed": 880002200
+            },
+            "rail_m_l": {
+              "shape": "arch",
+              "radius": 3.670416666666666,
+              "size": [0.05, 0.17],
+              "arc": 63.068730169902736,
+              "segments": 7,
+              "pos": [0, -2.695416666666666, 0.49],
+              "rot": [0, 0, 58.46563491504863],
+              "material": "rail",
+              "craft": 0.93,
+              "craftSeed": 880002201
+            },
+            "stand_m_l_0": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [-3.6, 0.59, -1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_r0",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [-1.3203073407960628, 0.5297680132454219, 0.49],
+              "rot": [0, 0, 23.96611746456304],
+              "material": "stand",
+              "craftSeed": 880002210
             },
-            "post_r1": {
+            "stand_m_l_1": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [-1.8, 1.14, -1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_r1",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [0, 0.81, 0.49],
+              "rot": [0, 0, 0],
+              "material": "stand",
+              "craftSeed": 880002211
             },
-            "post_r2": {
+            "stand_m_l_2": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [0, 1.37, -1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_r2",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [1.3203073407960628, 0.5297680132454219, 0.49],
+              "rot": [0, 0, -23.96611746456304],
+              "material": "stand",
+              "craftSeed": 880002212
             },
-            "post_r3": {
+            "rail_m_r": {
+              "shape": "arch",
+              "radius": 3.670416666666666,
+              "size": [0.05, 0.17],
+              "arc": 63.068730169902736,
+              "segments": 7,
+              "pos": [0, -2.695416666666666, -0.49],
+              "rot": [0, 0, 58.46563491504863],
+              "material": "rail",
+              "craft": 0.93,
+              "craftSeed": 880002201
+            },
+            "stand_m_r_0": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [1.8, 1.14, -1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_r3",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [-1.3203073407960628, 0.5297680132454219, -0.49],
+              "rot": [0, 0, 23.96611746456304],
+              "material": "stand",
+              "craftSeed": 880002210
             },
-            "post_r4": {
+            "stand_m_r_1": {
               "shape": "post",
-              "radius": 0.055,
-              "height": 0.62,
-              "segments": 12,
-              "pos": [3.6, 0.59, -1.02],
-              "rotJitter": [0, 0, 2],
-              "material": "post_r4",
-              "craftSeed": 1739917495
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [0, 0.81, -0.49],
+              "rot": [0, 0, 0],
+              "material": "stand",
+              "craftSeed": 880002211
             },
-            "rail_r1": {
-              "shape": "plank",
-              "size": [1.95, 0.07, 0.07],
-              "pos": [-2.7, 1.145, -1.02],
-              "rot": [0, 0, 17],
-              "material": "rail_r1",
-              "craftSeed": 1739917495
+            "stand_m_r_2": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [1.3203073407960628, 0.5297680132454219, -0.49],
+              "rot": [0, 0, -23.96611746456304],
+              "material": "stand",
+              "craftSeed": 880002212
+            }
+          }
+        },
+        "len_l": {
+          "children": {
+            "deck_l": {
+              "shape": "arch",
+              "radius": 4.091724137931035,
+              "size": [0.15, 1.15],
+              "arc": 61.75858214127705,
+              "segments": 7,
+              "pos": [0, -3.4367241379310345, 0],
+              "rot": [0, 0, 59.12070892936147],
+              "material": "deck",
+              "craft": 0.95,
+              "craftSeed": 880003300
             },
-            "rail_r2": {
-              "shape": "plank",
-              "size": [1.9, 0.07, 0.07],
-              "pos": [-0.9, 1.535, -1.02],
-              "rot": [0, 0, 7.5],
-              "material": "rail_r2",
-              "craftSeed": 1739917495
+            "rail_l_l": {
+              "shape": "arch",
+              "radius": 4.511724137931035,
+              "size": [0.05, 0.17],
+              "arc": 61.75858214127705,
+              "segments": 7,
+              "pos": [0, -3.4367241379310345, 0.49],
+              "rot": [0, 0, 59.12070892936147],
+              "material": "rail",
+              "craft": 0.93,
+              "craftSeed": 880003301
             },
-            "rail_r3": {
-              "shape": "plank",
-              "size": [1.9, 0.07, 0.07],
-              "pos": [0.9, 1.535, -1.02],
-              "rot": [0, 0, -7.5],
-              "material": "rail_r3",
-              "craftSeed": 1739917495
+            "stand_l_l_0": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [-1.6294923358053424, 0.5715359314591906, 0.49],
+              "rot": [0, 0, 23.46826121368528],
+              "material": "stand",
+              "craftSeed": 880003310
             },
-            "rail_r4": {
-              "shape": "plank",
-              "size": [1.95, 0.07, 0.07],
-              "pos": [2.7, 1.145, -1.02],
-              "rot": [0, 0, -17],
-              "material": "rail_r4",
-              "craftSeed": 1739917495
+            "stand_l_l_1": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [0, 0.9100000000000001, 0.49],
+              "rot": [0, 0, 0],
+              "material": "stand",
+              "craftSeed": 880003311
+            },
+            "stand_l_l_2": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [1.6294923358053424, 0.5715359314591906, 0.49],
+              "rot": [0, 0, -23.46826121368528],
+              "material": "stand",
+              "craftSeed": 880003312
+            },
+            "rail_l_r": {
+              "shape": "arch",
+              "radius": 4.511724137931035,
+              "size": [0.05, 0.17],
+              "arc": 61.75858214127705,
+              "segments": 7,
+              "pos": [0, -3.4367241379310345, -0.49],
+              "rot": [0, 0, 59.12070892936147],
+              "material": "rail",
+              "craft": 0.93,
+              "craftSeed": 880003301
+            },
+            "stand_l_r_0": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [-1.6294923358053424, 0.5715359314591906, -0.49],
+              "rot": [0, 0, 23.46826121368528],
+              "material": "stand",
+              "craftSeed": 880003310
+            },
+            "stand_l_r_1": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [0, 0.9100000000000001, -0.49],
+              "rot": [0, 0, 0],
+              "material": "stand",
+              "craftSeed": 880003311
+            },
+            "stand_l_r_2": {
+              "shape": "post",
+              "radius": 0.045,
+              "height": 0.42,
+              "pos": [1.6294923358053424, 0.5715359314591906, -0.49],
+              "rot": [0, 0, -23.46826121368528],
+              "material": "stand",
+              "craftSeed": 880003312
             }
           }
         }
       }
     }
   },
-  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [7.6, 0.7, 2.3], "offset": [0, 0.35, 0] } },
-  "variants": { "count": 6 }
+  "physics": { "body": "fixed", "collider": { "shape": "box", "size": [4.2, 0.6, 1.2], "offset": [0, 0.3, 0] } },
+  "variants": { "count": 3, "oneOf": { "len": ["len_s", "len_m", "len_l"] } }
 }

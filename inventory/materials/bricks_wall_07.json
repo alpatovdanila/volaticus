@@ -4,12 +4,12 @@
   "name": "Bricks Wall 07",
   "category": "bricks_wall",
   "maps": {
-    "color": "PBR/bricks_wall_07/bricks_wall_07_baseColor_1k.png",
-    "normal": "PBR/bricks_wall_07/bricks_wall_07_normal_gl_1k.png",
-    "roughness": "PBR/bricks_wall_07/bricks_wall_07_roughness_1k.png",
-    "height": "PBR/bricks_wall_07/bricks_wall_07_height_1k.png",
-    "ao": "PBR/bricks_wall_07/bricks_wall_07_ambientOcclusion_1k.png",
-    "metallic": "PBR/bricks_wall_07/bricks_wall_07_metallic_1k.png",
+    "color": "PBR/bricks_wall_07/bricks_wall_07_baseColor_1k.ktx2",
+    "normal": "PBR/bricks_wall_07/bricks_wall_07_normal_gl_1k.ktx2",
+    "roughness": "PBR/bricks_wall_07/bricks_wall_07_roughness_1k.ktx2",
+    "height": "PBR/bricks_wall_07/bricks_wall_07_height_1k.ktx2",
+    "ao": "PBR/bricks_wall_07/bricks_wall_07_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/bricks_wall_07/bricks_wall_07_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {

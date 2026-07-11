@@ -4,13 +4,13 @@
   "name": "Mystic Ground Tiles 01",
   "category": "mystic_ground_tiles",
   "maps": {
-    "color": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_baseColor_1k.png",
-    "normal": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_normal_gl_1k.png",
-    "roughness": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_roughness_1k.png",
-    "height": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_height_1k.png",
-    "ao": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_ambientOcclusion_1k.png",
-    "metallic": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_metallic_1k.png",
-    "emissive": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_emissive_1k.png"
+    "color": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_baseColor_1k.ktx2",
+    "normal": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_roughness_1k.ktx2",
+    "height": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_height_1k.ktx2",
+    "ao": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_metallic_1k.ktx2",
+    "emissive": "PBR/mystic_ground_tiles_01/mystic_ground_tiles_01_emissive_1k.ktx2"
   },
   "tuning": {
     "tint": null,
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

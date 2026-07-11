@@ -4,12 +4,12 @@
   "name": "Stone Bricks Wall 07",
   "category": "stone_bricks_wall",
   "maps": {
-    "color": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_baseColor_1k.png",
-    "normal": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_normal_gl_1k.png",
-    "roughness": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_roughness_1k.png",
-    "height": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_height_1k.png",
-    "ao": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_ambientOcclusion_1k.png",
-    "metallic": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_metallic_1k.png",
+    "color": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_baseColor_1k.ktx2",
+    "normal": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_normal_gl_1k.ktx2",
+    "roughness": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_roughness_1k.ktx2",
+    "height": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_height_1k.ktx2",
+    "ao": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_ambientOcclusion_1k.ktx2",
+    "metallic": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {

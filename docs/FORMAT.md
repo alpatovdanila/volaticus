@@ -94,7 +94,7 @@ Rules and semantics:
 
   "rig": {                        // tree of named nodes; names are the animation/prompting vocabulary
     "body": {
-      "shape": "box|cylinder|sphere|capsule|cone|plane|cross|torus|mesh|plank|post|ring|arrow|star",  // omit shape = pure group
+      "shape": "box|cylinder|sphere|capsule|cone|plane|cross|torus|mesh|plank|post|ring|arrow|star|halfSphere|quarterSphere|halfCylinder|arch|halfTorus|quarterTorus",  // omit shape = pure group
       "mesh": "models/stone_big.fbx",  // shape "mesh": external low-poly FBX (path relative to resources/),
                                   // merged to one geometry (many FBX packs are cm-scale — node scale ~0.003-0.01);
                                   // gets a normal material slot (the pack's texture atlas + flat + stretch)
@@ -119,11 +119,42 @@ Rules and semantics:
                                   // sided same-material parts (one fewer draw). ~2× the part's tris (cheap:
                                   // the GPU is idle, draws are the cost). Use INSTEAD of a doubleSided slot,
                                   // not with it. For open shells (barrel body) this trades a draw for triangles.
-      "tube": 0.05,               // torus ring thickness (torus lies flat, axis = Y)
-      "thickness": 0.02,          // shape "ring" ONLY: wall thickness of the generated annular band
-                                  // (outer+inner shell + top/bottom annulus caps — thin metal with real
-                                  // thickness for barrel bands, bucket walls, rims; radius/radiusTop+
-                                  // radiusBottom/height/segments/craft/seed work like post)
+      "tube": 0.05,               // torus/halfTorus/quarterTorus ring thickness (full torus lies flat,
+                                  // axis = Y; the PARTIAL tori stand UPRIGHT in the XY plane — arc from
+                                  // +X counter-clockwise, ends capped flat: 180° = rainbow/hanging ring,
+                                  // 90° = hook. "arc" (degrees) overrides the default sweep)
+      "thickness": 0.02,          // "ring": wall thickness of the generated annular band (outer+inner
+                                  // shell + annulus caps — barrel bands, rims). On halfSphere/quarter-
+                                  // Sphere/halfCylinder: present = HOLLOW SHELL with that wall (inner
+                                  // surface + rim faces — bowls, troughs, rounded chest lids); absent =
+                                  // solid (flat caps close the shape)
+      // HALF/QUARTER primitives + arch (chest lids, domes, hooks, hanging rings):
+      //   halfSphere     dome, flat side down (radius/segments/segmentsY/thickness)
+      //   quarterSphere  half a dome, cut on the z=0 plane (bulges +Z)
+      //   halfCylinder   half column around Y, arc bulges +X, cut plane x=0
+      //                  (radius or radiusTop/Bottom, height, thickness, open drops the
+      //                  flat closures — rotate [0,0,90] for a lying trough/lid)
+      //   arch           rectangular-profile bar swept along an arc in the XY plane
+      //                  ("rainbow", ends on y=0): radius = centerline, size = [profile
+      //                  width (radial), depth (along Z)], arc default 180°
+      //   halfTorus/quarterTorus  torus segments (see "tube" above)
+      // Their UVs are pre-baked to METERS (single 'all' face — one material slot).
+      // shape "tree" — RECURSIVE tree generator (trunk → branches → twigs + faceted
+      // leaf blobs at the tips), seeded by craftSeed (every seed = a different tree):
+      //   height/radius (trunk), "lushness" 0-1 (branch counts + twig recursion),
+      //   "spread" deg (branch angle from vertical — birch ~38, oak ~60),
+      //   "thickness" (child/parent radius ratio — oak fat ~0.72),
+      //   "leafSize" (terminal blob radius, 0 = bare)
+      // TWO material groups: bark → 'side', leaves → 'top', so assign
+      //   "material": { "side": "trunk", "top": "leaves" }
+      // Per-variant tree SHAPES need separate nodes (parts bake once): author N
+      // `tree` nodes with different seeds/params + a oneOf group picking one.
+      "booleans": [               // BAKE-time CSG modifiers, applied to THIS node's generated geometry
+        { "op": "subtract|union|intersect",  // in order, before subdivide/craft — so the jitter pass
+          "shape": "cylinder",               // roughens the cut edges like everything else (geyser crater)
+          "radius": 0.2, "height": 0.4,      // any generated-shape params + pos/rot/scale, placed in the
+          "pos": [0, 0.3, 0] }               // node's local space. Result is ONE group → single material
+      ],                                     // slot (cut faces inherit the node's material)
       // shape "decal" — a SPRITE stamped onto the model: a flat size-[w,h] quad (meters, faces +Z
       // before rot) carrying an image EMBEDDED base64 in this very JSON (self-contained declaration):
       //   { "shape": "decal", "image": "data:image/png;base64,…", "size": [0.1, 0.1],

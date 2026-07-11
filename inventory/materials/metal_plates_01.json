@@ -4,12 +4,12 @@
   "name": "Metal Plates 01",
   "category": "metal_plates",
   "maps": {
-    "color": "PBR/metal_plates_01/metal_plates_01_color_1k.png",
-    "normal": "PBR/metal_plates_01/metal_plates_01_normal_gl_1k.png",
-    "roughness": "PBR/metal_plates_01/metal_plates_01_roughness_1k.png",
-    "height": "PBR/metal_plates_01/metal_plates_01_height_1k.png",
-    "ao": "PBR/metal_plates_01/metal_plates_01_ambient_occlusion_1k.png",
-    "metallic": "PBR/metal_plates_01/metal_plates_01_metallic_1k.png",
+    "color": "PBR/metal_plates_01/metal_plates_01_color_1k.ktx2",
+    "normal": "PBR/metal_plates_01/metal_plates_01_normal_gl_1k.ktx2",
+    "roughness": "PBR/metal_plates_01/metal_plates_01_roughness_1k.ktx2",
+    "height": "PBR/metal_plates_01/metal_plates_01_height_1k.ktx2",
+    "ao": "PBR/metal_plates_01/metal_plates_01_ambient_occlusion_1k.ktx2",
+    "metallic": "PBR/metal_plates_01/metal_plates_01_metallic_1k.ktx2",
     "emissive": null
   },
   "tuning": {
@@ -22,6 +22,5 @@
     "opacity": 1,
     "cutout": false,
     "doubleSided": false
-
   }
 }

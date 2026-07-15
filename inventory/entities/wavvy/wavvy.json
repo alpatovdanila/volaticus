@@ -3,21 +3,41 @@
   "id": "wavvy",
   "name": "Wavvy",
   "category": "character",
-  "tags": ["character", "demo", "skeletal"],
-  "notes": "SKELETAL DEMO (phase-1 rigid skinning, docs/SKELETAL_ANIMATION_RESEARCH.md): built as bones + SkinnedMesh via `skinned: true`. Two-segment arms hinge at real shoulder/elbow bones — the 'waving' state drives them through the skeleton (same anim format as everything else). Visuals match a rigid build exactly; smooth joint weighting is the phase-2 payoff.",
+  "tags": [
+    "character",
+    "demo",
+    "skeletal"
+  ],
+  "notes": "SKELETAL DEMO (phase-1 rigid skinning, docs/SKELETAL_ANIMATION_RESEARCH.md): built as bones + SkinnedMesh via `skinned: true`. Two-segment arms hinge at real shoulder/elbow bones \u2014 the 'waving' state drives them through the skeleton (same anim format as everything else). Visuals match a rigid build exactly; smooth joint weighting is the phase-2 payoff.",
   "skinned": true,
   "materials": {
-    "skin": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#f2c79c" },
-    "shirt": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#4a7fae" },
-    "pants": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#4a4038" },
-    "boot": { "material": "bark_11", "uvScale": 2, "tint": "#5a3d28" }
+    "skin": {
+      "material": "plaster_wall_01",
+      "uvMode": "stretch"
+    },
+    "shirt": {
+      "material": "plaster_wall_01",
+      "uvMode": "stretch"
+    },
+    "pants": {
+      "material": "plaster_wall_01",
+      "uvMode": "stretch"
+    },
+    "boot": {
+      "material": "bark_11",
+      "uvScale": 2
+    }
   },
   "rig": {
     "body": {
       "shape": "capsule",
       "radius": 0.15,
       "height": 0.28,
-      "pos": [0, 0.52, 0],
+      "pos": [
+        0,
+        0.52,
+        0
+      ],
       "material": "shirt",
       "craft": 0.93,
       "children": {
@@ -25,15 +45,26 @@
           "shape": "sphere",
           "radius": 0.13,
           "segments": 20,
-          "pos": [0, 0.4, 0],
+          "pos": [
+            0,
+            0.4,
+            0
+          ],
           "material": "skin",
           "craft": 0.95,
           "children": {
             "face_decal": {
               "shape": "decal",
               "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAeElEQVR4AdyRvQqAMAyE1UlX3fT9H003XXVTMhxcfpBAO7UQkuZ6HyEdusLTGmCdxxdhV4O+ZNbcDvbzZl3VkeYA2zIpE18izQHYkKkV4LieHmHN6EtmTQFYyNb1AfabeJJICyeQh1EwDLUDyJL+AkZkB4CQzcWADwAA///7VEuLAAAABklEQVQDAJLcPiEoFIU2AAAAAElFTkSuQmCC",
-              "size": [0.12, 0.1],
-              "pos": [0, 0.01, 0.128],
+              "size": [
+                0.12,
+                0.1
+              ],
+              "pos": [
+                0,
+                0.01,
+                0.128
+              ],
               "craftSeed": 393770363
             }
           },
@@ -44,9 +75,21 @@
           "radiusBottom": 0.042,
           "radiusTop": 0.048,
           "height": 0.22,
-          "pos": [-0.2, 0.06, 0],
-          "pivot": [0, 0.11, 0],
-          "rot": [0, 0, 10],
+          "pos": [
+            -0.2,
+            0.06,
+            0
+          ],
+          "pivot": [
+            0,
+            0.11,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            10
+          ],
           "material": "shirt",
           "craft": 0.95,
           "children": {
@@ -55,9 +98,21 @@
               "radiusBottom": 0.034,
               "radiusTop": 0.04,
               "height": 0.2,
-              "pos": [0, -0.21, 0],
-              "pivot": [0, 0.1, 0],
-              "rot": [0, 0, 5],
+              "pos": [
+                0,
+                -0.21,
+                0
+              ],
+              "pivot": [
+                0,
+                0.1,
+                0
+              ],
+              "rot": [
+                0,
+                0,
+                5
+              ],
               "material": "skin",
               "craft": 0.95,
               "children": {
@@ -65,7 +120,11 @@
                   "shape": "sphere",
                   "radius": 0.055,
                   "segments": 14,
-                  "pos": [0, -0.13, 0],
+                  "pos": [
+                    0,
+                    -0.13,
+                    0
+                  ],
                   "material": "skin",
                   "craft": 0.95,
                   "craftSeed": 393770363
@@ -81,9 +140,21 @@
           "radiusBottom": 0.042,
           "radiusTop": 0.048,
           "height": 0.22,
-          "pos": [0.2, 0.06, 0],
-          "pivot": [0, 0.11, 0],
-          "rot": [0, 0, -10],
+          "pos": [
+            0.2,
+            0.06,
+            0
+          ],
+          "pivot": [
+            0,
+            0.11,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            -10
+          ],
           "material": "shirt",
           "craft": 0.95,
           "children": {
@@ -92,9 +163,21 @@
               "radiusBottom": 0.034,
               "radiusTop": 0.04,
               "height": 0.2,
-              "pos": [0, -0.21, 0],
-              "pivot": [0, 0.1, 0],
-              "rot": [0, 0, -5],
+              "pos": [
+                0,
+                -0.21,
+                0
+              ],
+              "pivot": [
+                0,
+                0.1,
+                0
+              ],
+              "rot": [
+                0,
+                0,
+                -5
+              ],
               "material": "skin",
               "craft": 0.95,
               "children": {
@@ -102,7 +185,11 @@
                   "shape": "sphere",
                   "radius": 0.055,
                   "segments": 14,
-                  "pos": [0, -0.13, 0],
+                  "pos": [
+                    0,
+                    -0.13,
+                    0
+                  ],
                   "material": "skin",
                   "craft": 0.95,
                   "craftSeed": 393770363
@@ -118,15 +205,31 @@
           "radiusBottom": 0.045,
           "radiusTop": 0.052,
           "height": 0.3,
-          "pos": [-0.08, -0.3, 0],
-          "pivot": [0, 0.15, 0],
+          "pos": [
+            -0.08,
+            -0.3,
+            0
+          ],
+          "pivot": [
+            0,
+            0.15,
+            0
+          ],
           "material": "pants",
           "craft": 0.95,
           "children": {
             "foot_l": {
               "shape": "box",
-              "size": [0.09, 0.05, 0.15],
-              "pos": [0, -0.17, 0.025],
+              "size": [
+                0.09,
+                0.05,
+                0.15
+              ],
+              "pos": [
+                0,
+                -0.17,
+                0.025
+              ],
               "material": "boot",
               "craft": 0.9,
               "craftSeed": 393770363
@@ -139,15 +242,31 @@
           "radiusBottom": 0.045,
           "radiusTop": 0.052,
           "height": 0.3,
-          "pos": [0.08, -0.3, 0],
-          "pivot": [0, 0.15, 0],
+          "pos": [
+            0.08,
+            -0.3,
+            0
+          ],
+          "pivot": [
+            0,
+            0.15,
+            0
+          ],
           "material": "pants",
           "craft": 0.95,
           "children": {
             "foot_r": {
               "shape": "box",
-              "size": [0.09, 0.05, 0.15],
-              "pos": [0, -0.17, 0.025],
+              "size": [
+                0.09,
+                0.05,
+                0.15
+              ],
+              "pos": [
+                0,
+                -0.17,
+                0.025
+              ],
               "material": "boot",
               "craft": 0.9,
               "craftSeed": 393770363
@@ -159,16 +278,96 @@
       "craftSeed": 393770363
     }
   },
-  "states": { "initial": "idle", "idle": { "anim": "bob" }, "waving": { "anim": "wave" } },
+  "states": {
+    "initial": "idle",
+    "idle": {
+      "anim": "bob"
+    },
+    "waving": {
+      "anim": "wave"
+    }
+  },
   "anims": {
     "bob": {
       "loop": true,
       "duration": 2.6,
       "tracks": [
-        { "node": "body", "prop": "pos.y", "ease": "sine", "keys": [[0, 0], [1.3, 0.02], [2.6, 0]] },
-        { "node": "arm_l_upper", "prop": "rot.z", "ease": "sine", "keys": [[0, 10], [1.3, 14], [2.6, 10]] },
-        { "node": "arm_r_upper", "prop": "rot.z", "ease": "sine", "keys": [[0, -10], [1.3, -14], [2.6, -10]] },
-        { "node": "head", "prop": "rot.z", "ease": "sine", "keys": [[0, 2], [1.3, -2], [2.6, 2]] }
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              0
+            ],
+            [
+              1.3,
+              0.02
+            ],
+            [
+              2.6,
+              0
+            ]
+          ]
+        },
+        {
+          "node": "arm_l_upper",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              10
+            ],
+            [
+              1.3,
+              14
+            ],
+            [
+              2.6,
+              10
+            ]
+          ]
+        },
+        {
+          "node": "arm_r_upper",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              -10
+            ],
+            [
+              1.3,
+              -14
+            ],
+            [
+              2.6,
+              -10
+            ]
+          ]
+        },
+        {
+          "node": "head",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              2
+            ],
+            [
+              1.3,
+              -2
+            ],
+            [
+              2.6,
+              2
+            ]
+          ]
+        }
       ]
     },
     "wave": {
@@ -179,17 +378,105 @@
           "node": "arm_r_upper",
           "prop": "rot.z",
           "ease": "sine",
-          "keys": [[0, -150], [0.6, -160], [1.2, -150]]
+          "keys": [
+            [
+              0,
+              -150
+            ],
+            [
+              0.6,
+              -160
+            ],
+            [
+              1.2,
+              -150
+            ]
+          ]
         },
         {
           "node": "arm_r_lower",
           "prop": "rot.z",
           "ease": "sine",
-          "keys": [[0, -35], [0.3, 25], [0.6, -35], [0.9, 25], [1.2, -35]]
+          "keys": [
+            [
+              0,
+              -35
+            ],
+            [
+              0.3,
+              25
+            ],
+            [
+              0.6,
+              -35
+            ],
+            [
+              0.9,
+              25
+            ],
+            [
+              1.2,
+              -35
+            ]
+          ]
         },
-        { "node": "body", "prop": "rot.z", "ease": "sine", "keys": [[0, -3], [0.6, -4], [1.2, -3]] },
-        { "node": "head", "prop": "rot.z", "ease": "sine", "keys": [[0, 6], [0.6, 8], [1.2, 6]] },
-        { "node": "arm_l_upper", "prop": "rot.z", "ease": "sine", "keys": [[0, 14], [0.6, 16], [1.2, 14]] }
+        {
+          "node": "body",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              -3
+            ],
+            [
+              0.6,
+              -4
+            ],
+            [
+              1.2,
+              -3
+            ]
+          ]
+        },
+        {
+          "node": "head",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              6
+            ],
+            [
+              0.6,
+              8
+            ],
+            [
+              1.2,
+              6
+            ]
+          ]
+        },
+        {
+          "node": "arm_l_upper",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              14
+            ],
+            [
+              0.6,
+              16
+            ],
+            [
+              1.2,
+              14
+            ]
+          ]
+        }
       ]
     }
   }

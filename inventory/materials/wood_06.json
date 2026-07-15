@@ -9,16 +9,13 @@
     "roughness": "PBR/wood_06/wood_06_roughness_1k.jpg",
     "height": "PBR/wood_06/wood_06_height_1k.ktx2",
     "ao": "PBR/wood_06/wood_06_ambientOcclusion_1k.jpg",
-    "metallic": "PBR/wood_06/wood_06_metallic_1k.jpg",
-    "emissive": null
+    "metallic": "PBR/wood_06/wood_06_metallic_1k.jpg"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

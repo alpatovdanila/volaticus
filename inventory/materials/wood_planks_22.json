@@ -9,16 +9,13 @@
     "roughness": "PBR/wood_planks_22/wood_planks_22_roughness_1k.ktx2",
     "height": "PBR/wood_planks_22/wood_planks_22_height_1k.ktx2",
     "ao": "PBR/wood_planks_22/wood_planks_22_ambientocclusion_1k.ktx2",
-    "metallic": "PBR/wood_planks_22/wood_planks_22_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/wood_planks_22/wood_planks_22_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1.9,
     "aoIntensity": 1.69,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,

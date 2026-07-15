@@ -9,16 +9,13 @@
     "roughness": "PBR/wood_planks_03/wood_planks_03_roughness_1k.ktx2",
     "height": "PBR/wood_planks_03/wood_planks_03_height_1k.ktx2",
     "ao": "PBR/wood_planks_03/wood_planks_03_ambient_occlusion_1k.ktx2",
-    "metallic": null,
-    "emissive": null
+    "metallic": null
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

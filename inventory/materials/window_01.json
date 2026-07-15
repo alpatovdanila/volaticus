@@ -9,16 +9,13 @@
     "roughness": "PBR/window_01/window_01_roughness_1k.ktx2",
     "height": "PBR/window_01/window_01_height_1k.ktx2",
     "ao": "PBR/window_01/window_01_ambientOcclusion_1k.ktx2",
-    "metallic": "PBR/window_01/window_01_metallic_1k.ktx2",
-    "emissive": "PBR/window_01/window_01_emissive_1k.ktx2"
+    "metallic": "PBR/window_01/window_01_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 0.53,
     "cutout": false,
     "doubleSided": false

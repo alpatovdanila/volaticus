@@ -71,13 +71,12 @@ export function renderItemList(inv: Inventory, filter: string, selected: string 
 
 // per-key override state for an inheriting slot (item 34): true = the key is
 // set on THIS slot (an override → gets a ↺ reset), false = inherited (ghosted)
-export type OverridableKey = 'material' | 'tint' | 'uvMode' | 'uvScale' | 'uvRot' | 'uvProject'
+export type OverridableKey = 'material' | 'uvMode' | 'uvScale' | 'uvRot' | 'uvProject'
 
 export interface SlotInfo {
   slot: string
   texture: string // catalog color-map path for the chip thumbnail (RESOLVED material)
   material: string // catalog material id (shown on the chip) — RESOLVED
-  tint: string | null // '#rrggbb' multiplier or null (white/off) — RESOLVED
   uvMode: string // per-axis pair, schema-validated ("tile", "fit stretch", …)
   uvScale: number
   uvRot: number // degrees (item 35: any angle; the dropdown offers 15° steps)
@@ -98,17 +97,13 @@ export interface FxTextureInfo {
   key: string // encoded pick key ("fx:<json path>")
   label: string // e.g. "fx · destroyed"
   texture?: string // resolved: explicit texture, or the inherited slot's texture
-  tint?: string // resolved tint (explicit, or the inherited slot's) — thumbnail preview
   inheritSlot?: string // set when the effect inherits from a material slot
   uvRot: number // explicit-mode texture direction, degrees (15° dropdown steps)
 }
 
 export interface SlotCallbacks {
   onPick(key: string): void
-  onParam(slot: string, param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject', value: string): void
-  // live tint while dragging the color picker — applies the color to the built
-  // material directly (cheap, no rebuild). onParam still commits on 'change'.
-  onTintLive(slot: string, value: string): void
+  onParam(slot: string, param: 'uvMode' | 'uvRot' | 'uvScale' | 'uvProject', value: string): void
   onFxInherit(key: string, slot: string | null): void
   onFxRot(key: string, deg: string): void
   onEditMaterial(slot: string): void // #14: right-click preview → edit the slot's material
@@ -406,15 +401,11 @@ export function renderSlotChips(
         ctl.classList.add('ghosted')
       }
     }
-    // thumbnail shows the RESULT: texture × tint (multiply blend over the tint color)
+    // thumbnail shows the material's color map.
     // #2: bigger + top-aligned (CSS). #3: the material name shows only on hover
     // (title attr). #14: right-click the preview → context menu → Edit material.
     const thumb = el('div', 'slot-thumb')
-    thumb.style.background = s.tint ?? '#ffffff'
-    thumb.title =
-      s.material +
-      (s.tint ? ` · tinted ${s.tint}` : '') +
-      (inheriting && !s.own.material ? ` (inherited from ${s.inherit})` : '')
+    thumb.title = s.material + (inheriting && !s.own.material ? ` (inherited from ${s.inherit})` : '')
     const img = el('img') as HTMLImageElement
     img.src = thumbnailUrl(s.texture)
     img.loading = 'lazy'
@@ -587,36 +578,9 @@ export function renderSlotChips(
     decorate(rotSel, 'uvRot', controls)
     decorate(projSel, 'uvProject', controls)
     meta.appendChild(controls)
-    const surf = el('div', 'slot-controls')
-    // tint: the color multiplied over the texture — THE source of "same texture,
-    // different color". Rendered as our own square swatch (the native color-input
-    // chrome is too small to read); the hidden input only supplies the picker.
-    const tintWrap = el('label', 'slot-tint')
-    tintWrap.title = 'tint — multiplies the texture (white = no tint). Click to change.'
-    tintWrap.appendChild(el('span', undefined, 'tint'))
-    const swatch = el('span', 'tint-swatch' + (s.tint ? '' : ' none'))
-    swatch.style.background = s.tint ?? '#ffffff'
-    const tintInput = el('input') as HTMLInputElement
-    tintInput.type = 'color'
-    tintInput.value = s.tint ?? '#ffffff'
-    tintInput.oninput = () => {
-      // live preview on the swatch AND the entity material while the picker is
-      // open (real-time drag); commit (writes JSON + rebuild) on close.
-      swatch.style.background = tintInput.value
-      swatch.classList.remove('none')
-      cb.onTintLive(s.slot, tintInput.value)
-    }
-    tintInput.onchange = () => cb.onParam(s.slot, 'tint', tintInput.value)
-    tintInput.onclick = (e) => e.stopPropagation()
-    tintWrap.onclick = (e) => e.stopPropagation()
-    tintWrap.appendChild(swatch)
-    tintWrap.appendChild(tintInput)
-    decorate(tintWrap, 'tint', surf)
-    // surface/cutout/opacity moved to the material (tuning) — phase 4's Material
-    // Manager. The chip keeps only per-slot placement overrides (tint + uv).
-    // Geometry generation (craft/sub/⟲) moved to the GEOMETRY tab — per rig node,
-    // inherited down the rig tree — so the chip is purely material concerns now.
-    meta.appendChild(surf)
+    // surface/cutout/opacity live on the material (tuning) — the Material Manager. The
+    // chip keeps only per-slot UV placement overrides. Geometry generation (craft/sub/⟲)
+    // is on the GEOMETRY tab — per rig node — so the chip is purely material placement.
     chip.appendChild(meta)
     chip.onclick = () => cb.onPick(s.slot)
     wrap.appendChild(chip)
@@ -625,7 +589,6 @@ export function renderSlotChips(
   for (const f of fx) {
     const chip = el('div', 'slot-chip fx-chip' + (picked === f.key ? ' selected' : ''))
     const thumb = el('div', 'slot-thumb')
-    thumb.style.background = f.tint ?? '#ffffff'
     const img = el('img') as HTMLImageElement
     if (f.texture) img.src = thumbnailUrl(f.texture)
     img.loading = 'lazy'
@@ -851,14 +814,12 @@ export function renderMgrList(
 // The tuning fields (matches MaterialTuning, minus the retired-from-UI uv defaults
 // which are now PREVIEW-ONLY controls in the preview bar).
 export interface MgrTuning {
-  tint: string | null
   roughness: number
   metalness: number
   normalScale: number
   height: number // parallax occlusion depth (0 = flat)
   parallax: boolean // per-material POM opt-in (effective only while the global Render toggle is on)
   aoIntensity: number
-  emissive: number
   opacity: number
   cutout: boolean
   doubleSided: boolean
@@ -867,27 +828,22 @@ export interface MgrTuning {
 }
 
 // Which texture maps this material actually ships (any resolution). Drives the
-// tuning panel: normal/ao/emissive rows only render when their map is present;
+// tuning panel: normal/ao rows only render when their map is present;
 // roughness/metalness always render but show a "backed by a map" badge.
 export interface MgrMaps {
   roughness: boolean
   metallic: boolean
   normal: boolean
   ao: boolean
-  emissive: boolean
   height: boolean
 }
 
 export interface MgrTuningCallbacks {
-  onNum(key: 'roughness' | 'metalness' | 'normalScale' | 'height' | 'aoIntensity' | 'emissive' | 'opacity', value: number): void
+  onNum(key: 'roughness' | 'metalness' | 'normalScale' | 'height' | 'aoIntensity' | 'opacity', value: number): void
   // live update while dragging a numeric slider — writes the param's uniform on the preview material
   // directly (no rebuild). onNum still commits the value to the doc on release.
-  onNumLive(key: 'roughness' | 'metalness' | 'normalScale' | 'height' | 'aoIntensity' | 'emissive' | 'opacity', value: number): void
+  onNumLive(key: 'roughness' | 'metalness' | 'normalScale' | 'height' | 'aoIntensity' | 'opacity', value: number): void
   onBool(key: 'cutout' | 'doubleSided' | 'parallax', value: boolean): void
-  onTint(value: string | null): void
-  // live default-tint while dragging — applies to the preview material directly
-  // (no rebuild); onTint still commits the value on 'change'.
-  onTintLive(value: string): void
   // #27: alpha mask — open a resource-texture picker (returns the chosen path or
   // null to clear). textures() lists all pickable resource paths.
   onAlphaMap(value: string | null): void
@@ -920,38 +876,6 @@ export function renderMgrTuning(
     lab.title = hintText // the whole label is hoverable too
     return lab
   }
-
-  // #8: "default tint" — the material's baseline albedo multiply. A per-slot chip
-  // tint overrides it per application (slot.tint ?? material.tuning.tint ?? none).
-  const tintRow = el('div', 'tune-tint')
-  tintRow.appendChild(
-    withHint(
-      'default tint',
-      'DEFAULT TINT — the material baseline color, multiplied over the albedo map. A part chip’s per-slot tint overrides this when the material is applied to an object (slot tint wins, else this default, else none).',
-    ),
-  )
-  const swatch = el('span', 'tint-swatch' + (t.tint ? '' : ' none'))
-  swatch.style.background = t.tint ?? '#ffffff'
-  const tintInput = el('input') as HTMLInputElement
-  tintInput.type = 'color'
-  tintInput.value = t.tint ?? '#ffffff'
-  const tintLabel = el('label', undefined) as HTMLLabelElement
-  tintLabel.style.position = 'relative'
-  tintLabel.style.cursor = 'pointer'
-  tintLabel.appendChild(swatch)
-  tintLabel.appendChild(tintInput)
-  tintInput.oninput = () => {
-    swatch.style.background = tintInput.value
-    swatch.classList.remove('none')
-    cb.onTintLive(tintInput.value) // real-time drag on the preview material
-  }
-  tintInput.onchange = () => cb.onTint(tintInput.value)
-  const clearBtn = el('button', undefined, 'clear') as HTMLButtonElement
-  clearBtn.title = 'remove the default tint (untinted albedo)'
-  clearBtn.onclick = () => cb.onTint(null)
-  tintRow.appendChild(tintLabel)
-  tintRow.appendChild(clearBtn)
-  wrap.appendChild(tintRow)
 
   // A small "▦" badge appended to a label, marking that a texture map backs the
   // scalar (so the slider scales that map rather than acting on a flat value).
@@ -1001,7 +925,7 @@ export function renderMgrTuning(
     'Micro-surface roughness (scalar × the roughness map). 0 = mirror-smooth/glossy, 1 = fully matte. Affects how sharp reflections and highlights are.', maps.roughness)
   slider('metalness', 'metalness', 0, 1, 0.01, t.metalness,
     'Metallic vs. dielectric. 1 = metal (albedo tints the reflection, needs the skybox to show), 0 = non-metal (plastic/wood/stone).', maps.metallic)
-  // normal / AO / emissive are meaningless without their map — show ONLY if present.
+  // normal / AO are meaningless without their map — show ONLY if present.
   if (maps.normal)
     slider('normalScale', 'normalScale', 0, 3, 0.01, t.normalScale,
       'Strength of the normal map — how much the baked surface bumps catch light. 0 = flat, 3 = strongly exaggerated relief.')
@@ -1012,9 +936,6 @@ export function renderMgrTuning(
   if (maps.ao)
     slider('aoIntensity', 'aoIntensity', 0, 2, 0.01, t.aoIntensity,
       'Ambient-occlusion map strength — darkens crevices under indirect (skybox/IBL) light. 0 = off, 1 = baked strength, 2 = deepened.')
-  if (maps.emissive)
-    slider('emissive', 'emissive', 0, 3, 0.05, t.emissive,
-      'Emissive (glow) intensity from the emissive map — the material appears self-lit.')
   slider('opacity', 'opacity', 0, 1, 0.01, t.opacity,
     'Whole-material transparency. <1 turns on alpha blending (depthWrite off) — for glass/water. 1 = opaque.')
 

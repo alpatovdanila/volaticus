@@ -197,13 +197,6 @@ export function catalogColorPath(materialId: string): string {
   return resolveCatalogMap(doc, 'color') ?? ''
 }
 
-// The material's baseline (default) tint from its catalog tuning, or undefined
-// if it has none. Effect/debris inheritance combines this with a per-slot tint
-// override (slot tint wins; else this material default; else none).
-export function catalogDefaultTint(materialId: string): string | undefined {
-  return materialCatalog[materialId]?.tuning.tint ?? undefined
-}
-
 // #32: the material's DEFAULT tiling density (tuning.uvScale, repeats per meter).
 // Multiplied with the per-slot uvScale by the factory's geometry UV metering —
 // NEVER applied via texture.repeat on entities (UVs are baked into geometry, so
@@ -353,7 +346,6 @@ export function makeDecalMaterial(dataUri: string): EntityMaterial {
   mat.polygonOffsetFactor = -1
   mat.polygonOffsetUnits = -1
   mat.userData.slot = 'decal'
-  mat.userData.baseEmissiveIntensity = 0
   decalCache.set(dataUri, mat)
   return mat
 }
@@ -368,10 +360,8 @@ export function materialLoadState(materialId: string): { total: number; loaded: 
   if (!doc) return { total: 0, loaded: 0 }
   // Mirror makeCatalogMaterial's CONDITIONAL loads exactly, or a map that is never
   // bound keeps loaded < total forever (spinner + poll-interval never clear):
-  // emissive loads only when tuning.emissive > 0; height only when the material
-  // opts into parallax AND the global toggle is on (that's when the march binds it).
+  // height only loads when the material opts into parallax AND the global toggle is on.
   const kinds: MapKind[] = ['color', 'normal', 'roughness', 'metallic', 'ao']
-  if (doc.tuning.emissive > 0) kinds.push('emissive')
   if (doc.tuning.parallax && isParallaxEnabled()) kinds.push('height')
   let total = 0
   let loaded = 0
@@ -410,7 +400,6 @@ export function makeSlotMaterial(slot: string, def: ResolvedMaterialDef): Entity
   const key = [
     matCacheGen,
     def.material ?? '_',
-    def.tint ?? '_',
     def.doubleSided === undefined ? '_' : def.doubleSided ? 1 : 0,
     flatShadingOn ? 1 : 0,
     isParallaxEnabled() ? 1 : 0,
@@ -421,10 +410,10 @@ export function makeSlotMaterial(slot: string, def: ResolvedMaterialDef): Entity
 }
 
 // Build a MeshStandardMaterial from a named catalog material at the active res.
-// Per-slot properties honored: tint (× material.color), flat (slot-only — the
-// catalog has no flat). uvMode/uvScale/uvRot never reach the material — the factory
-// bakes all three into geometry UVs (metering + rotateGroupUVs), so every slot
-// binds the SHARED cache textures. opacity/cutout/doubleSided come from tuning.
+// uvMode/uvScale/uvRot never reach the material — the factory bakes all three into
+// geometry UVs (metering + rotateGroupUVs), so every slot binds the SHARED cache
+// textures. opacity/cutout/doubleSided come from tuning. (No tint: a material renders
+// exactly as its texture.)
 // GLOBAL shading mode — smooth (false) by default; the Light panel's "flat
 // shading" checkbox flips it. Build-time default for new materials; the editor
 // also flips LIVE materials in place (userData.catalogMat marks them). Part of
@@ -443,18 +432,14 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     // Render a flat magenta so the gap is obvious rather than silently gray.
     mat.color.set('#ff00ff')
     mat.userData.slot = slot
-    mat.userData.baseEmissiveIntensity = 0
     return mat
   }
   const t = doc.tuning
 
-  // color / albedo (sRGB) — the only channel every material is guaranteed.
+  // color / albedo (sRGB) — the only channel every material is guaranteed. The texture
+  // maps 1:1 with no tint multiply; mat.color stays white (three's default).
   const colorPath = resolveCatalogMap(doc, 'color')
   if (colorPath) mat.map = loadTexture(colorPath, true)
-  // base albedo = material tint × per-slot tint (both multiply the map)
-  mat.color.set('#ffffff')
-  if (t.tint) mat.color.set(t.tint)
-  if (def.tint) mat.color.multiply(new THREE.Color(def.tint))
 
   // scalar PBR params (three.js multiplies scalar × map)
   mat.roughness = t.roughness
@@ -486,12 +471,11 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
   // tuning.parallax flag AND the global Render-panel toggle (shipping a height map alone does
   // nothing). When both are on, replace every base-UV map with a march node; otherwise the material
   // stays the plain PBR built above (classic maps, no march) — 'off' compiles NO parallax shader
-  // (no gray, no cost). Depth, the value band, tint and the PBR scalars are LIVE per-material
+  // (no gray, no cost). Depth, the value band and the PBR scalars are LIVE per-material
   // uniforms and quality is a LIVE global uniform, so editing those updates with no rebuild
   // (see applyLiveTuning); toggling either parallax switch rebuilds.
   const heightPath = resolveCatalogMap(doc, 'height')
   if (heightPath && isParallaxEnabled() && t.parallax) {
-    const tintU = uniform(mat.color.clone())
     const roughnessU = uniform(t.roughness)
     const metalnessU = uniform(t.metalness)
     const normalScaleU = uniform(t.normalScale)
@@ -499,7 +483,7 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     const heightU = uniform(t.height ?? DEFAULT_HEIGHT)
     const hMinU = uniform(0)
     const hMaxU = uniform(1)
-    mat.userData.tuningU = { tintU, roughnessU, metalnessU, normalScaleU, aoU, heightU, hMinU, hMaxU }
+    mat.userData.tuningU = { roughnessU, metalnessU, normalScaleU, aoU, heightU, hMinU, hMaxU }
     analyzeHeightRange(heightPath, hMinU as never, hMaxU as never) // fills hMin/hMax live (async)
     const pUv = parallaxUvNode(loadTexture(heightPath, false), heightU as never, hMinU as never, hMaxU as never)
     // Drive the mip from the BASE uv gradients; the march's jitter + binary refinement already kill the
@@ -514,7 +498,7 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     mat.roughnessMap = null
     mat.metalnessMap = null
     mat.aoMap = null
-    if (colorPath) mat.colorNode = texture(loadTexture(colorPath, true), pUv).grad(gdx, gdy).mul(tintU)
+    if (colorPath) mat.colorNode = texture(loadTexture(colorPath, true), pUv).grad(gdx, gdy)
     if (normalPath)
       mat.normalNode = normalMap(
         texture(loadTexture(normalPath, false), pUv).grad(gdx, gdy),
@@ -536,14 +520,6 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     mat.userData.parallaxKey =
       [colorPath, normalPath, roughPath, metalPath, aoPath, heightPath].map((p) => p ?? '_').join('|') +
       '|' + (t.height ?? DEFAULT_HEIGHT)
-  }
-
-  // emissive: only where a map exists AND tuning turned it on.
-  const emissivePath = resolveCatalogMap(doc, 'emissive')
-  if (emissivePath && t.emissive > 0) {
-    mat.emissive.set('#ffffff')
-    mat.emissiveMap = loadTexture(emissivePath, true)
-    mat.emissiveIntensity = t.emissive
   }
 
   // shading is a GLOBAL artistic choice (Light panel "flat shading" checkbox) —
@@ -591,8 +567,7 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
 
   mat.userData.slot = slot
   mat.userData.materialId = def.material // catalog id — lets a Manager edit find this instance to live-update
-  mat.userData.slotDef = { tint: def.tint, doubleSided: def.doubleSided } // per-slot overrides
-  mat.userData.baseEmissiveIntensity = emissivePath && t.emissive > 0 ? t.emissive : 0
+  mat.userData.slotDef = { doubleSided: def.doubleSided } // per-slot overrides
   return mat
 }
 
@@ -602,30 +577,23 @@ type MaterialTuning = MaterialCatalogDoc['tuning']
 // uniforms (parallax path) or three's built-in uniforms (plain PBR) instantly. The structural flags
 // (double-sided, cutout/alphaTest, transparent) can't be a uniform value — they change the shader/
 // pipeline — so they flip via needsUpdate ONLY when they actually change: an in-place recompile of just
-// this material, no re-merge, no geometry rebuild. Slot overrides (tint/doubleSided) layer on top.
+// this material, no re-merge, no geometry rebuild. Slot override (doubleSided) layers on top.
 // (flatShading is the GLOBAL Light-panel switch — deliberately untouched here.)
 export function applyLiveTuning(mat: EntityMaterial, t: MaterialTuning): void {
-  const sd = (mat.userData.slotDef ?? {}) as { tint?: string; doubleSided?: boolean }
-  const u = mat.userData.tuningU as Record<string, { value: number | THREE.Color }> | undefined
-  const tint = new THREE.Color('#ffffff')
-  if (t.tint) tint.set(t.tint)
-  if (sd.tint) tint.multiply(new THREE.Color(sd.tint))
+  const sd = (mat.userData.slotDef ?? {}) as { doubleSided?: boolean }
+  const u = mat.userData.tuningU as Record<string, { value: number }> | undefined
   if (u) {
-    ;(u.tintU.value as THREE.Color).copy(tint)
     u.roughnessU.value = t.roughness
     u.metalnessU.value = t.metalness
     u.normalScaleU.value = t.normalScale
     u.aoU.value = t.aoIntensity
     u.heightU.value = t.height ?? DEFAULT_HEIGHT
   } else {
-    mat.color.copy(tint)
     mat.roughness = t.roughness
     mat.metalness = t.metalness
     mat.normalScale.set(t.normalScale, t.normalScale)
     mat.aoMapIntensity = t.aoIntensity
   }
-  mat.userData.baseEmissiveIntensity = t.emissive
-  mat.emissiveIntensity = t.emissive
   mat.opacity = t.opacity
   const side = (sd.doubleSided ?? t.doubleSided) ? THREE.DoubleSide : THREE.FrontSide
   if (mat.side !== side) {
@@ -669,22 +637,9 @@ export function setLiveParam(mat: EntityMaterial, key: string, value: number): v
     case 'height':
       if (u) u.heightU.value = value
       break
-    case 'emissive':
-      mat.emissiveIntensity = value
-      break
     case 'opacity':
       mat.opacity = value
       break
   }
-}
-
-// Live tint (catalog default × this material's slot override) for a colour-picker DRAG.
-export function setTintLive(mat: EntityMaterial, catalogHex: string): void {
-  const sd = (mat.userData.slotDef ?? {}) as { tint?: string }
-  const c = new THREE.Color(catalogHex)
-  if (sd.tint) c.multiply(new THREE.Color(sd.tint))
-  const u = mat.userData.tuningU as { tintU: { value: THREE.Color } } | undefined
-  if (u) u.tintU.value.copy(c)
-  else mat.color.copy(c)
 }
 

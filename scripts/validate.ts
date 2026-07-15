@@ -32,8 +32,9 @@ function walk(dir: string, ext: string, base = dir): string[] {
 
 // *.geom.{i}.json (geometry) + *.variants.json (layouts) are baked sidecars, not inventory items.
 const files = walk(INV, '.json').filter((p) => !/\.(geom\.\d+|variants)\.json$/.test(p))
-// .png for the minecraft packs + legacy slots; .jpg for a few freestylized catalog maps.
-const textures = new Set([...walk(RES, '.png'), ...walk(RES, '.jpg')])
+// .png for the minecraft packs + legacy slots; .jpg for a few freestylized catalog
+// maps; .ktx2 for the compressed PBR catalog (mirrors the dev API's /__textures listing).
+const textures = new Set([...walk(RES, '.png'), ...walk(RES, '.jpg'), ...walk(RES, '.ktx2')])
 const animated = new Set(walk(RES, '.png.mcmeta').map((p) => p.replace(/\.mcmeta$/, '')))
 const sounds = new Set([...walk(RES, '.wav'), ...walk(RES, '.ogg'), ...walk(RES, '.mp3')])
 const models = new Set([...walk(RES, '.fbx'), ...walk(RES, '.glb')])

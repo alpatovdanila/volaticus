@@ -4,7 +4,7 @@
 import * as THREE from 'three'
 import { AnimPlayer } from './anim'
 import type { BuiltEntity } from './factory'
-import { catalogColorPath, catalogDefaultTint } from './materials'
+import { catalogColorPath } from './materials'
 import {
   effectIdOf,
   effectParamsOf,
@@ -20,7 +20,6 @@ import {
 export interface PreviewDeps {
   playSfx(id: string): void
   playEffect(id: string, at: THREE.Vector3, params?: { texture?: string; tint?: string }): void
-  flash(hex: string): void
   shatter(): void // effect === SCRIPT_EFFECT_SHATTER — throw the entity's parts apart
   hideGeometry(): void // binding.hideGeometry — hide the main mesh (reaction); instance stays
   onDespawn(): void // state.despawnAfter — the runtime removes the instance
@@ -78,19 +77,16 @@ export class EntityPreview {
       if (effectId === 'SCRIPT_EFFECT_SHATTER') this.deps.shatter()
     } else if (effectId) {
       const params = effectParamsOf(b.effect)
-      // "slot" inherits the current texture+tint of one of this entity's material
-      // slots — debris stays in sync when the object is retextured. Item 34: the
-      // slot is RESOLVED first, so a slot that inherits its material/tint/uvRot
-      // from a parent hands the debris the same values the surface renders with.
+      // "slot" inherits the current texture of one of this entity's material slots —
+      // debris stays in sync when the object is retextured. Item 34: the slot is
+      // RESOLVED first, so a slot that inherits its material/uvRot from a parent hands
+      // the debris the same values the surface renders with.
       if (typeof b.effect === 'object' && b.effect.slot) {
         const m = resolveMaterials(this.doc.materials)[b.effect.slot]
         if (m) {
           // slots reference a catalog material — inherit its color map as the debris texture
           const tex = m.material !== undefined ? catalogColorPath(m.material) : ''
           if (tex) params.texture = tex
-          // effective tint: per-slot override wins, else the material's default
-          // tint (from catalog tuning), else whatever the effect param already had
-          params.tint = m.tint ?? (m.material !== undefined ? catalogDefaultTint(m.material) : undefined) ?? params.tint
           params.uvRot = m.uvRot ?? params.uvRot
         }
       }
@@ -103,7 +99,6 @@ export class EntityPreview {
         this.overlayLeft = clip.duration
       }
     }
-    if (b.flash) this.deps.flash(b.flash)
     if (b.hideGeometry) this.deps.hideGeometry()
   }
 

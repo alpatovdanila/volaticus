@@ -6,7 +6,7 @@ import { mergeBuiltEntity } from '../inventory/merge'
 import { SceneBatcher, type BatchInput } from '../inventory/sceneBatcher'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
-import { applyLiveTuning, catalogColorPath, catalogDefaultTint, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setAnisotropy, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, setTintLive, whenTexturesReady, type EntityMaterial } from '../inventory/materials'
+import { applyLiveTuning, catalogColorPath, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setAnisotropy, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, whenTexturesReady, type EntityMaterial } from '../inventory/materials'
 import { MaterialPreview, previewShapeGeometry, PREVIEW_SHAPES, type PreviewShape, type PreviewUvProject } from './matpreview'
 import { preloadEntityMeshes } from '../inventory/meshes'
 import { setParallaxConfig, getParallaxSamples } from '../inventory/parallax'
@@ -335,24 +335,9 @@ const effectDeps = {
   addShake: (a: number) => vp.addShake(a),
 }
 
-function playEffectById(id: string, at: THREE.Vector3, params?: { texture?: string; tint?: string }): void {
+function playEffectById(id: string, at: THREE.Vector3, params?: { texture?: string }): void {
   const item = inv.effects.get(id)
   if (item?.doc) vp.effects.play(item.doc, at, effectDeps, params)
-}
-
-function flashMeshes(hex: string): void {
-  if (!sel?.built) return
-  for (const m of sel.built.slotMaterials.values()) {
-    m.emissive.set(hex)
-    m.emissiveIntensity = 0.9
-  }
-  setTimeout(() => {
-    if (!sel?.built) return
-    for (const m of sel.built.slotMaterials.values()) {
-      m.emissive.set(m.userData.baseEmissiveIntensity ? '#ffffff' : '#000000')
-      m.emissiveIntensity = m.userData.baseEmissiveIntensity ?? 0
-    }
-  }, 130)
 }
 
 // ---------------------------------------------------------------------------
@@ -500,7 +485,7 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
     return
   }
   applyEnvReflection(sel.built.group) // surface presets keep their opt-in sheen
-  vp.patchEmissive(sel.built.group) // global emissive self-illum lift
+  vp.patchShadow(sel.built.group) // sun shadow-darkening graft (HDRI is the only light)
   // Stage HIDDEN: the group enters the scene invisible while its textures decode and its
   // pipelines compile in the background — the veil covers the wait, and the entity is
   // revealed in ONE frame fully textured + compiled (no black flash, no first-draw hitch).
@@ -534,7 +519,6 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
   sel.preview = new EntityPreview(doc, sel.built, {
     playSfx: effectDeps.playSfx,
     playEffect: playEffectById,
-    flash: flashMeshes,
     shatter: () => {
       if (sel?.built) vp.effects.shatterMeshes(sel.built.meshes)
     },
@@ -674,20 +658,18 @@ const overlayCb = {
 // as extra "fx" chips in the slots panel so their texture is assignable too
 function collectFxTextures(
   doc: EntityDoc,
-): { key: string; label: string; texture?: string; tint?: string; inheritSlot?: string; uvRot: number }[] {
-  const out: { key: string; label: string; texture?: string; tint?: string; inheritSlot?: string; uvRot: number }[] =
-    []
-  // item 34: fx chips show the slot's RESOLVED material/tint (inherit chains applied)
+): { key: string; label: string; texture?: string; inheritSlot?: string; uvRot: number }[] {
+  const out: { key: string; label: string; texture?: string; inheritSlot?: string; uvRot: number }[] = []
+  // item 34: fx chips show the slot's RESOLVED material (inherit chains applied)
   const resolved = resolveMaterials(doc.materials)
   const add = (path: (string | number)[], label: string, binding: unknown) => {
     const eff = (binding as { effect?: unknown })?.effect
     if (eff && typeof eff === 'object') {
-      const e = eff as { texture?: string; tint?: string; slot?: string; uvRot?: number }
+      const e = eff as { texture?: string; slot?: string; uvRot?: number }
       out.push({
         key: 'fx:' + JSON.stringify(path),
         label: 'fx · ' + label,
         texture: e.slot ? slotThumb(resolved[e.slot]?.material ?? '') : e.texture,
-        tint: e.slot ? resolved[e.slot]?.tint : e.tint,
         inheritSlot: e.slot,
         uvRot: e.uvRot ?? 0,
       })
@@ -714,7 +696,7 @@ function bindingAtPath(obj: unknown, path: (string | number)[]): { effect?: unkn
 
 function setSlotParam(
   slot: string,
-  param: 'uvMode' | 'uvRot' | 'uvScale' | 'tint' | 'uvProject',
+  param: 'uvMode' | 'uvRot' | 'uvScale' | 'uvProject',
   value: string,
 ): void {
   if (!sel || sel.kind !== 'entity') return
@@ -735,9 +717,6 @@ function setSlotParam(
       const v = parseFloat(value)
       if (v === 1 && !inheriting) delete m.uvScale
       else m.uvScale = v
-    } else if (param === 'tint') {
-      if (value.toLowerCase() === '#ffffff' && !inheriting) delete m.tint
-      else m.tint = value
     } else if (param === 'uvProject') {
       // '' = none/authored. Standalone: default → drop the key. INHERITING:
       // persist the explicit schema value 'none' (item 34 round 2) — deleting
@@ -804,7 +783,7 @@ function setSlotInherit(slot: string, parent: string | null): void {
       m.inherit = parent
     } else {
       delete m.inherit
-      for (const k of ['material', 'tint', 'uvMode', 'uvScale', 'uvRot', 'uvProject'] as const) {
+      for (const k of ['material', 'uvMode', 'uvScale', 'uvRot', 'uvProject'] as const) {
         const v = (resolved as Record<string, unknown>)[k]
         if (v !== undefined && m[k] === undefined) m[k] = v
       }
@@ -817,55 +796,35 @@ function setSlotInherit(slot: string, parent: string | null): void {
   rebuild()
 }
 
-// Live per-slot tint while dragging the chip color picker: recolor the already-
-// built materials for this slot directly (materialTint × slotTint), no rebuild.
-// The final value is committed (JSON + rebuild) by setSlotParam on 'change'.
-function setSlotTintLive(slot: string, value: string): void {
-  if (!sel?.built || sel.kind !== 'entity') return
-  const doc = inv.entities.get(sel.id)?.doc
-  const matTint = doc ? catalogDefaultTint(resolveMaterials(doc.materials)[slot]?.material ?? '') : undefined
-  const color = new THREE.Color('#ffffff')
-  if (matTint) color.set(matTint)
-  color.multiply(new THREE.Color(value))
-  for (const m of sel.built.meshes) {
-    const slots = (m.userData.slotByIndex as string[]) ?? []
-    if (!slots.includes(slot)) continue
-    const mats = Array.isArray(m.material) ? m.material : [m.material]
-    for (const mm of mats) if (mm.name === slot) (mm as THREE.MeshStandardMaterial).color.copy(color)
-  }
-}
-
 function setFxInherit(key: string, slot: string | null): void {
   if (!sel || sel.kind !== 'entity' || !key.startsWith('fx:')) return
   const item = inv.entities.get(sel.id)
   if (!item?.doc) return
   const path = JSON.parse(key.slice(3)) as (string | number)[]
-  // when unchecking, freeze the currently-resolved texture/tint as explicit values
+  // when unchecking, freeze the currently-resolved texture as an explicit value
   const resolved = (() => {
     const binding = bindingAtPath(item.doc, path)
-    const eff = binding?.effect as { slot?: string; texture?: string; tint?: string } | string | undefined
+    const eff = binding?.effect as { slot?: string; texture?: string } | string | undefined
     if (typeof eff !== 'object' || !eff) return {}
     if (eff.slot) {
       // item 34: freeze the slot's RESOLVED values (inherit chain applied)
       const m = resolveMaterials(item.doc!.materials)[eff.slot]
       // slots reference a catalog material now — freeze its color map as the texture
-      return { texture: m?.material !== undefined ? slotThumb(m.material) : undefined, tint: m?.tint }
+      return { texture: m?.material !== undefined ? slotThumb(m.material) : undefined }
     }
-    return { texture: eff.texture, tint: eff.tint }
+    return { texture: eff.texture }
   })()
   for (const target of [item.raw, item.doc]) {
     const binding = bindingAtPath(target, path)
     if (!binding) continue
     if (typeof binding.effect === 'string') binding.effect = { id: binding.effect }
-    const eff = binding.effect as { id: string; slot?: string; texture?: string; tint?: string }
+    const eff = binding.effect as { id: string; slot?: string; texture?: string }
     if (slot) {
       eff.slot = slot
       delete eff.texture
-      delete eff.tint
     } else {
       delete eff.slot
       if (resolved.texture) eff.texture = resolved.texture
-      if (resolved.tint) eff.tint = resolved.tint
     }
   }
   sel.dirty = true
@@ -1095,7 +1054,6 @@ function refreshSlots(): void {
         slot,
         texture: slotThumb(m.material ?? ''), // catalog color map for the thumbnail
         material: m.material ?? '',
-        tint: m.tint ?? null,
         uvMode: m.uvMode ?? ('tile' as const),
         uvScale: m.uvScale ?? 1,
         uvRot: m.uvRot ?? 0,
@@ -1107,7 +1065,6 @@ function refreshSlots(): void {
         lastInherit: sel ? (frozenParents.get(frozenKey(sel.id, slot)) ?? null) : null,
         own: {
           material: def.material !== undefined,
-          tint: def.tint !== undefined,
           uvMode: def.uvMode !== undefined,
           uvScale: def.uvScale !== undefined,
           uvRot: def.uvRot !== undefined,
@@ -1160,7 +1117,6 @@ function refreshSlots(): void {
         matPicker?.refresh()
       },
       onParam: setSlotParam,
-      onTintLive: setSlotTintLive,
       onFxInherit: setFxInherit,
       onFxRot: setFxRot,
       onEditMaterial: editSlotMaterial,
@@ -1328,7 +1284,7 @@ async function save(): Promise<void> {
 
 // ---------------------------------------------------------------------------
 // #31: light-control popover (💡). Sliders live-apply to the entity viewport
-// environment (HDRI / rotation / intensity / emissive — colors stay neutral
+// environment (HDRI / rotation / intensity — colors stay neutral
 // white, WYSIWYG) and persist via Viewport.setLights (localStorage).
 
 // The lighting is now SHARED: one LightParams (owned by the Viewport) drives both
@@ -1362,11 +1318,11 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
     hdriSel.appendChild(o)
   }
   const fields: {
-    key: 'rotation' | 'intensity' | 'emissive' | 'ao' | 'shadowSoft' | 'shadow'
+    key: 'rotation' | 'intensity' | 'ao' | 'shadowSoft' | 'shadow'
     input: HTMLInputElement
     val: HTMLElement
     fmt(n: number): string
-  }[] = (['rotation', 'intensity', 'emissive', 'ao', 'shadowSoft', 'shadow'] as const).map((key) => ({
+  }[] = (['rotation', 'intensity', 'ao', 'shadowSoft', 'shadow'] as const).map((key) => ({
     key,
     input: $(cfg.fp + key) as HTMLInputElement,
     val: $(cfg.fp + key + '-val'),
@@ -1586,7 +1542,7 @@ const lineupTick = (dt: number) => {
 
 // The lineup's REAL ground: one big plane wearing a catalog material exactly the way an
 // entity slot would (same makeSlotMaterial cache, same tile-mode UV metering, same
-// shadow/emissive grafts via patchEmissive). Replaces the helper grid + shadow-catcher
+// shadow graft via patchShadow). Replaces the helper grid + shadow-catcher
 // overlay while the lineup is up — real geometry writes depth, so GTAO and the sun
 // shadow ground the props properly.
 //
@@ -1628,7 +1584,7 @@ function buildLineupGround(box: THREE.Box3): THREE.Mesh {
   mesh.receiveShadow = true
   mesh.castShadow = false
   applyEnvReflection(mesh)
-  vp.patchEmissive(mesh) // same albedo shadow-darkening + emissive lift every slot gets
+  vp.patchShadow(mesh) // same albedo shadow-darkening every slot gets
   return mesh
 }
 
@@ -1761,7 +1717,7 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
       continue
     }
     applyEnvReflection(built.group) // patch the slot materials (the batch reuses them)
-    vp.patchEmissive(built.group)
+    vp.patchShadow(built.group)
     const size = built.bounds.getSize(new THREE.Vector3())
     const center = built.bounds.getCenter(new THREE.Vector3())
     if (x > 0 && x + size.x > MAX_ROW_WIDTH) {
@@ -1779,7 +1735,6 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
     const preview = new EntityPreview(item.doc!, built, {
       playSfx: () => {},
       playEffect: () => {},
-      flash: () => {},
       shatter: () => {},
       hideGeometry: () => {},
       onDespawn: () => {},
@@ -1938,14 +1893,12 @@ function mgrTuningOf(id: string): MgrTuning | null {
   if (!doc) return null
   const t = doc.tuning
   return {
-    tint: t.tint,
     roughness: t.roughness,
     metalness: t.metalness,
     normalScale: t.normalScale,
     height: t.height ?? DEFAULT_HEIGHT,
     parallax: t.parallax ?? false, // per-material POM opt-in (absent = off)
     aoIntensity: t.aoIntensity,
-    emissive: t.emissive,
     opacity: t.opacity,
     cutout: t.cutout,
     doubleSided: t.doubleSided,
@@ -1957,14 +1910,13 @@ function mgrTuningOf(id: string): MgrTuning | null {
 // Drives the tuning panel's show-if-present rules + the roughness/metalness badges.
 function mgrMapsOf(id: string | null): MgrMaps {
   const doc = id ? inv.materialCatalog()[id] : undefined
-  const has = (k: 'roughness' | 'metallic' | 'normal' | 'ao' | 'emissive' | 'height'): boolean =>
+  const has = (k: 'roughness' | 'metallic' | 'normal' | 'ao' | 'height'): boolean =>
     !!(doc && doc.maps[k])
   return {
     roughness: has('roughness'),
     metallic: has('metallic'),
     normal: has('normal'),
     ao: has('ao'),
-    emissive: has('emissive'),
     height: has('height'),
   }
 }
@@ -2033,11 +1985,6 @@ const mgrTuneCb = {
     // the POM flag is STRUCTURAL (adds/removes the march node graph) — the live tuning
     // path can't apply it, so rebuild the preview material (same pattern as onAlphaMap).
     if (key === 'parallax') rebuildMgrPreview()
-  },
-  onTint: (value: string | null) => setMgrTuning((t) => (t.tint = value)),
-  // live default-tint on drag: recolor the preview material's tint uniform directly (no rebuild).
-  onTintLive: (value: string) => {
-    for (const m of mgrMats) setTintLive(m, value)
   },
   // #27: assign / clear the alpha mask path. Binding/unbinding a texture is STRUCTURAL, so this one
   // rebuilds the preview (it's a rare click, not a slider drag).

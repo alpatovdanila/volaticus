@@ -39,8 +39,9 @@ export const MaterialSchema = z.object({
   // keys are overrides; deleting an override falls back to the live parent
   // value. Parent slots referenced by no geometry are legal group knobs.
   inherit: z.string().min(1).optional(),
-  tint: hexColor.optional(), // per-slot albedo multiply (over the material's own tint)
-  // NOTE: no `flat` — shading is a GLOBAL artistic choice (Light panel "flat
+  // NOTE: no tinting — a material renders exactly as its texture (distinct colors come
+  // from distinct catalog materials). No `flat` either — shading is a GLOBAL artistic
+  // choice (Light panel "flat
   // shading"); v8 bakes carry crease-welded smooth normals on every shape.
   // render both faces for this slot (overrides catalog tuning.doubleSided). Needed
   // by open shells (barrel body) so the far interior wall isn't backface-culled;
@@ -292,15 +293,14 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
 )
 
 // effect reference: plain id, or parameterized — bursts marked "inherit" in the
-// effect take the caller's texture/tint (e.g. wood_break debris matching the barrel)
+// effect take the caller's texture (e.g. wood_break debris matching the barrel)
 const effectRef = z.union([
   z.string(),
   z.object({
     id: z.string(),
     texture: z.string().optional(),
-    tint: hexColor.optional(),
     uvRot: z.number().min(0).max(359).optional(), // degrees (UI offers 15° steps)
-    slot: z.string().optional(), // inherit texture+tint+uvRot from this material slot (stays in sync)
+    slot: z.string().optional(), // inherit texture+uvRot from this material slot (stays in sync)
   }),
 ])
 export type EffectRef = z.infer<typeof effectRef>
@@ -309,8 +309,8 @@ export function effectIdOf(e: EffectRef | undefined): string | undefined {
   return typeof e === 'string' ? e : e?.id
 }
 
-export function effectParamsOf(e: EffectRef | undefined): { texture?: string; tint?: string; uvRot?: number } {
-  return typeof e === 'object' && e ? { texture: e.texture, tint: e.tint, uvRot: e.uvRot } : {}
+export function effectParamsOf(e: EffectRef | undefined): { texture?: string; uvRot?: number } {
+  return typeof e === 'object' && e ? { texture: e.texture, uvRot: e.uvRot } : {}
 }
 
 // Reserved "script effect" ids referenced from a binding's `effect` field instead
@@ -327,7 +327,6 @@ const bindingCore = {
   sfx: z.string().optional(),
   effect: effectRef.optional(), // an inventory effect id, or a reserved SCRIPT_EFFECT_* (e.g. shatter)
   anim: z.string().optional(), // one-shot overlay clip (hit wobble etc.); state anim resumes after
-  flash: hexColor.optional(),
   // hide the entity's MAIN geometry as part of a reaction (so only the effect/debris
   // shows). NOT instance removal — the runtime decides whether/when to despawn.
   hideGeometry: z.boolean().optional(),
@@ -475,11 +474,12 @@ export type EntityDoc = Omit<z.infer<typeof EntitySchema>, 'states'> & {
 // The importer (scripts/import-materials.ts) writes these with RESOLVED map
 // paths; the material manager edits `tuning`; entity slots reference `id`.
 
-export const MAP_KINDS = ['color', 'normal', 'roughness', 'height', 'ao', 'metallic', 'emissive'] as const
+export const MAP_KINDS = ['color', 'normal', 'roughness', 'height', 'ao', 'metallic'] as const
 export type MapKind = (typeof MAP_KINDS)[number]
 
 // A material's texture maps — one path per kind, single resolution. (The old
 // 1k/256/128 tiers were dropped: only 1k ships on disk, so the branch was dead.)
+// No emissive map — materials never self-illuminate.
 const mapSet = z.object({
   color: z.string().nullable(),
   normal: z.string().nullable(),
@@ -487,11 +487,10 @@ const mapSet = z.object({
   height: z.string().nullable(),
   ao: z.string().nullable(),
   metallic: z.string().nullable(),
-  emissive: z.string().nullable(),
 })
 
 export const MaterialTuningSchema = z.object({
-  tint: hexColor.nullable(),
+  // No `tint` (materials render as their texture) and no `emissive` (no self-illum).
   roughness: z.number().min(0).max(2),
   metalness: z.number().min(0).max(1),
   normalScale: z.number().min(0).max(4),
@@ -503,7 +502,6 @@ export const MaterialTuningSchema = z.object({
   // height map alone does NOT enable it. The studio deletes the key when unchecked.
   parallax: z.boolean().optional(),
   aoIntensity: z.number().min(0).max(2),
-  emissive: z.number().min(0).max(4),
   opacity: z.number().min(0).max(1),
   cutout: z.boolean(),
   doubleSided: z.boolean(),

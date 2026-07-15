@@ -9,16 +9,13 @@
     "roughness": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_roughness_1k.ktx2",
     "height": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_height_1k.ktx2",
     "ao": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_ambientocclusion_1k.ktx2",
-    "metallic": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/rusted_metal_paint_02/rusted_metal_paint_02_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

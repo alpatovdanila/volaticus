@@ -9,16 +9,13 @@
     "roughness": "PBR/industrial_wall_01/industrial_wall_01_roughness_1k.ktx2",
     "height": "PBR/industrial_wall_01/industrial_wall_01_height_1k.ktx2",
     "ao": "PBR/industrial_wall_01/industrial_wall_01_ambientOcclusion_1k.ktx2",
-    "metallic": "PBR/industrial_wall_01/industrial_wall_01_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/industrial_wall_01/industrial_wall_01_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

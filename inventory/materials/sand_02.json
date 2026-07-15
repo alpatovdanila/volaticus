@@ -9,16 +9,13 @@
     "roughness": "PBR/sand_02/sand_02_roughness_1k.ktx2",
     "height": "PBR/sand_02/sand_02_height_1k.ktx2",
     "ao": "PBR/sand_02/sand_02_ambient_occlusion_1k.ktx2",
-    "metallic": null,
-    "emissive": null
+    "metallic": null
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

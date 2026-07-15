@@ -168,10 +168,10 @@ export class MaterialPreview {
     if (this.ready) this.rig.applyParams(p) // else the ctor's init().then applies it
   }
 
-  // Give the preview mesh the same global-emissive lift every entity slot gets, so
-  // emissive reads identically. Idempotent.
+  // Give the preview mesh the same sun-shadow darkening every entity slot gets, so it
+  // reads identically to the main viewport. Idempotent.
   patch(obj: THREE.Object3D): void {
-    this.rig.patchEmissive(obj)
+    this.rig.patchShadow(obj)
   }
 
   // Persistent preview: the render loop idles while the modal is closed and resumes

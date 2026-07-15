@@ -24,12 +24,10 @@ const DRY = process.argv.includes('--dry')
 // metalness 0 (dielectric): map-less materials read as normal surfaces; materials
 // that ship a metallic map are still driven by the map (metalness = scalar × map).
 const DEFAULT_TUNING = {
-  tint: null,
   roughness: 1,
   metalness: 0,
   normalScale: 1,
   aoIntensity: 1,
-  emissive: 0,
   opacity: 1,
   cutout: false,
   doubleSided: false,
@@ -43,7 +41,6 @@ const KEYWORDS: readonly [MapKind, readonly string[]][] = [
   ['roughness', ['rough']],
   ['height', ['height', 'displac']],
   ['metallic', ['metallic', 'metal']],
-  ['emissive', ['emissi']],
   ['ao', ['occlus', 'occuls', 'occ', 'ambientoc', '_ao']],
   ['color', ['color', 'albedo', 'diffuse', 'base']],
 ]
@@ -103,7 +100,6 @@ for (const id of folders) {
     height: null,
     ao: null,
     metallic: null,
-    emissive: null,
   }
   let normalPref: 'gl' | 'dx' | null = null
 

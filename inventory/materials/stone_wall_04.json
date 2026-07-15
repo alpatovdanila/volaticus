@@ -9,16 +9,13 @@
     "roughness": "PBR/stone_wall_04/stone_wall_04_roughness_1k.ktx2",
     "height": "PBR/stone_wall_04/stone_wall_04_height_1k.ktx2",
     "ao": "PBR/stone_wall_04/stone_wall_04_ambient_occlusion_1k.ktx2",
-    "metallic": null,
-    "emissive": null
+    "metallic": null
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

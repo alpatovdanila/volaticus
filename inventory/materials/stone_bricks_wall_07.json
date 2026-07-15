@@ -9,16 +9,13 @@
     "roughness": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_roughness_1k.ktx2",
     "height": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_height_1k.ktx2",
     "ao": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_ambientOcclusion_1k.ktx2",
-    "metallic": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/stone_bricks_wall_07/stone_bricks_wall_07_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 0.69,
     "metalness": 0,
     "normalScale": 1.12,
     "aoIntensity": 1.24,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,

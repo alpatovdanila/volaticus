@@ -450,17 +450,6 @@ button:disabled { opacity: 0.4; cursor: default; }
 .slot-slider input { width: 58px; accent-color: var(--accent); height: 12px; margin: 0; padding: 0; }
 .chk-cutout { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--dim); cursor: pointer; }
 .chk-cutout input { accent-color: var(--accent); margin: 0; padding: 0; width: auto; }
-.slot-tint { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--dim); cursor: pointer; }
-/* our own swatch square — the native color-input chrome is unreadably small */
-.tint-swatch { width: 22px; height: 22px; flex: none; border: 1px solid var(--border); border-radius: 4px; }
-.tint-swatch.none { position: relative; }
-.tint-swatch.none::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(45deg, transparent 46%, #c33 46%, #c33 54%, transparent 54%);
-}
-.slot-tint input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 .btn-regen { padding: 1px 7px; font-size: 12px; }
 .btn-regen:disabled { opacity: 0.4; cursor: default; }
 
@@ -799,10 +788,6 @@ button:disabled { opacity: 0.4; cursor: default; }
 .tune-row.chk { gap: 6px; }
 .tune-row.chk input { accent-color: var(--accent); margin: 0; padding: 0; width: auto; }
 .tune-row.chk label { width: auto; color: var(--text); }
-.tune-tint { display: flex; align-items: center; gap: 8px; }
-.tune-tint .tint-swatch { width: 22px; height: 22px; }
-.tune-tint input[type='color'] { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
-.tune-tint button { padding: 2px 8px; font-size: 11px; }
 .tune-sep { border-top: 1px solid var(--border); margin: 12px 0 4px; padding-top: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); }
 .tune-disabled { opacity: 0.4; }
 .hint { color: var(--dim); padding: 8px 12px; font-size: 12px; width: 100%; }

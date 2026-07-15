@@ -26,13 +26,13 @@ Conventions: meters, Y-up, entity origin at ground-center. Resource paths are re
                                   // PBR catalog material by id + GEOMETRIC/placement overrides layered on top
     "shell": { "material": "metal_01",     // catalog material id (inventory/materials/<id>.json). Supplies the
                                            // color/normal/roughness/metallic/ao maps AND the roughness/metalness/
-                                           // emissive/opacity/cutout/doubleSided from its `tuning` — see the
+                                           // opacity/cutout/doubleSided from its `tuning` — see the
                                            // Material catalog section below. (The old per-slot texture/surface/
-                                           // opacity/cutout/emissive/roughness/metalness keys are RETIRED —
+                                           // opacity/cutout/roughness/metalness keys are RETIRED —
                                            // a catalog material carries its own maps + tuning for all of that.)
-               "tint": "#f2a13c",        // per-slot albedo multiply, ON TOP of the material's own tint (white
-                                         // texture + tint = flat color). THE source of "same material, different
-                                         // colors" — editor shows a color swatch on every slot chip (white = off)
+               // NO tinting: a material renders EXACTLY as its texture. Distinct colors come from
+               // distinct catalog materials — there is no per-slot or per-material albedo multiply.
+               // NO emissive either: materials never self-illuminate, and the sun/HDRI is the only light.
                // (NO per-slot "flat" — shading is GLOBAL: the Light panel's "flat shading"
                // checkbox flips every entity between smooth (default) and faceted at once.
                // v8+ bakes carry crease-welded smooth normals on every shape, so both looks
@@ -63,7 +63,7 @@ Conventions: meters, Y-up, entity origin at ground-center. Resource paths are re
 ### Slot inheritance (`"inherit"`)
 
 A slot may declare `"inherit": "<parentSlot>"` instead of (or in addition to) its own keys.
-Every property that is UNSET on the slot — `material`, `tint`, `doubleSided`, `uvMode`,
+Every property that is UNSET on the slot — `material`, `doubleSided`, `uvMode`,
 `uvScale`, `uvRot`, `uvProject` — resolves from the parent, recursively (chains allowed). Own keys are
 **overrides**; **reset = delete the override key**, which falls straight back to the live
 parent value. The single shared resolver (`resolveMaterials` in `src/inventory/schema.ts`)
@@ -74,7 +74,7 @@ is exactly one merge implementation.
 "materials": {
   "frame":  { "material": "weathered_planks", "uvScale": 2 },  // GROUP PARENT — the group knob
   "post_a": { "inherit": "frame" },                            // everything from frame, live
-  "post_b": { "inherit": "frame", "tint": "#b04030" }          // frame's material/uv, own tint
+  "post_b": { "inherit": "frame", "uvScale": 4 }               // frame's material, own tiling density
 }
 ```
 
@@ -255,7 +255,7 @@ Rules and semantics:
     "sleeping": {
       "anim": "sleep",            // clip from anims (loops or holds last frame)
       "show": ["fuse_flame"], "hide": ["body"],   // visibility overrides while in this state
-      "enter": { "sfx": "...", "effect": "...", "flash": "#ffffff" },  // one-shot on entering
+      "enter": { "sfx": "...", "effect": "..." },  // one-shot on entering
       "cues": { "0.30": { "sfx": "..." } },       // fired at N seconds into the anim (each loop)
       "ambient": { "sfx": "boomba_snore", "every": [2.6, 5] },         // random-interval loop
       "despawnAfter": 0.05        // seconds until removal (editor: respawns for preview)
@@ -287,14 +287,13 @@ Rules and semantics:
 ```
 
 Bindings (state `enter`, `cues`, and `events`) accept: `sfx`, `effect` (plain id, or parameterized:
-`{ "id": "wood_break", "slot": "planks" }` inherits that material slot's texture+tint+uvRot at fire
+`{ "id": "wood_break", "slot": "planks" }` inherits that material slot's texture+uvRot at fire
 time — debris stays in sync when the object is retextured; or freeze explicit values with
-`{ "id": ..., "texture": "...", "tint": "#...", "uvRot": 90 }`. Effect bursts marked `"inherit": true`
+`{ "id": ..., "texture": "...", "uvRot": 90 }`. Effect bursts marked `"inherit": true`
 receive the params. The editor shows these as "fx" chips with an [inherit from → slot] control, plus
 texture + direction pickers in explicit mode; OR a reserved `SCRIPT_EFFECT_*` id — currently
 `"SCRIPT_EFFECT_SHATTER"`, a built-in that throws the entity's rig pieces apart (death drama),
 resolved by the runtime instead of an inventory-effect lookup), `anim`,
-`flash` (avoid — cartoon wobble anims read better),
 `hideGeometry` (hide the entity's main mesh as part of a reaction, so only the effect/debris shows —
 NOT instance removal; the runtime decides whether/when to despawn), and `byContext` — context-conditional overrides keyed
 `"dimension=value"`. The game maintains the context (e.g. `surface` from the ground underfoot);
@@ -322,13 +321,13 @@ and the studio's material manager edits `tuning`. Slots layer only geometry/plac
     "roughness": "PBR/wood_planks_20/wood_planks_20_roughness_1k.png",
     "height":    "PBR/wood_planks_20/wood_planks_20_height_1k.png",     // binds only when tuning.parallax opts in (see below)
     "ao":        "PBR/wood_planks_20/wood_planks_20_ambientocclusion_1k.png",
-    "metallic":  "PBR/wood_planks_20/wood_planks_20_metallic_1k.png",
-    "emissive":  null },
+    "metallic":  "PBR/wood_planks_20/wood_planks_20_metallic_1k.png" },
+                                  // (NO "emissive" map — materials never self-illuminate)
   "tuning": {                     // the baked surface look — an entity slot layers only geometry over this
-    "tint": null,                 // #rrggbb base albedo multiply, or null
+                                  // (NO "tint": a material renders exactly as its color map; distinct
+                                  //  colors come from distinct materials. NO "emissive" either.)
     "roughness": 1, "metalness": 0,   // scalar × the roughness/metallic maps (metalness defaults to 0)
     "normalScale": 1, "aoIntensity": 1,
-    "emissive": 0,                // 0..4; the emissive map binds only when this is > 0
     "opacity": 1, "cutout": false,    // opacity < 1 = translucent; cutout = alpha-test (leaves/sprites)
     "doubleSided": false }        // NO "flat" here — flat/smooth shading is GLOBAL (Light panel),
                                   // never on the catalog material or the entity slot
@@ -352,7 +351,7 @@ Referenced from entity bindings via `"effect": "<id>"`.
     // cube burst: chunky colored boxes (aspect makes planks)
     { "count": 26, "size": [0.08, 0.22], "aspect": [2.8, 0.45, 0.35], "speed": [3, 7.5],
       "geometry": "cube|plank",         // plank = procedurally jittered boards (wood_break debris)
-      "inherit": true,                  // burst uses the texture/tint/uvRot passed by the caller's binding
+      "inherit": true,                  // burst uses the texture/uvRot passed by the caller's binding
       "dir": "sphere|up|ring",          // ring = horizontal outward scatter
       "offset": [0, 0.4, 0],            // spawn offset from the entity origin
       "gravity": -7, "drag": 1.2,

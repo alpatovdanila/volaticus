@@ -3,41 +3,95 @@
   "id": "boomba",
   "name": "Boomba",
   "category": "enemy",
-  "tags": ["bomb", "walker"],
+  "tags": [
+    "bomb",
+    "walker"
+  ],
   "notes": "Walking crate FULL of dynamite on stubby booted legs, silly googly face painted on the front (decal). Sleeps until approached; chases, fuse catches, swells and explodes. Forward = +Z (face side).",
   "materials": {
-    "panel": { "material": "wood_planks_20", "uvScale": 2 },
-    "frame": { "material": "bark_11", "uvScale": 2, "uvProject": "box" },
-    "interior": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#4a3b2a" },
-    "dynamite": { "material": "plaster_wall_01", "tint": "#c03227", "uvScale": 2 },
-    "band": { "material": "plaster_wall_01", "uvMode": "stretch", "tint": "#33302b" },
-    "rope": { "material": "bark_02", "uvScale": 4, "uvProject": "box" },
-    "leg": { "material": "metal_01", "tint": "#2f2b26" },
-    "boot": { "material": "bark_11", "tint": "#8a5a33" }
+    "panel": {
+      "material": "wood_planks_20",
+      "uvScale": 2
+    },
+    "frame": {
+      "material": "bark_11",
+      "uvScale": 2,
+      "uvProject": "box"
+    },
+    "interior": {
+      "material": "plaster_wall_01",
+      "uvMode": "stretch"
+    },
+    "dynamite": {
+      "material": "plaster_wall_01",
+      "uvScale": 2
+    },
+    "band": {
+      "material": "plaster_wall_01",
+      "uvMode": "stretch"
+    },
+    "rope": {
+      "material": "bark_02",
+      "uvScale": 4,
+      "uvProject": "box"
+    },
+    "leg": {
+      "material": "metal_01"
+    },
+    "boot": {
+      "material": "bark_11"
+    }
   },
   "rig": {
     "body": {
-      "pos": [0, 0.36, 0],
+      "pos": [
+        0,
+        0.36,
+        0
+      ],
       "children": {
         "interior": {
           "shape": "box",
-          "size": [0.42, 0.3, 0.42],
-          "pos": [0, 0.04, 0],
+          "size": [
+            0.42,
+            0.3,
+            0.42
+          ],
+          "pos": [
+            0,
+            0.04,
+            0
+          ],
           "material": "interior",
           "craftSeed": 1146518157
         },
         "panel_f": {
           "shape": "plank",
-          "size": [0.44, 0.3, 0.035],
-          "pos": [0, 0.02, 0.215],
+          "size": [
+            0.44,
+            0.3,
+            0.035
+          ],
+          "pos": [
+            0,
+            0.02,
+            0.215
+          ],
           "material": "panel",
           "craft": 0.95,
           "children": {
             "face_decal": {
               "shape": "decal",
               "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAYAAAChS3wfAAABkUlEQVR4AeyYPa7CMAyA0ze/gYEd2BjZOA1n4jTsDFwAiYENBkYkGNhBHSxZFlXsxEndYiQraeL457Mbif6FH/85AGsNMJ38v3NFkpN3QIxWbjXo+Zg/2L9ezkEqcFYyDrID5otloCJJGuuyAUirQfWxU805+Em1yQaQ6sD6ucEDgFchFfTgAaQmDudUAUA16AjOLI6qAGiCuRcUtQfPYBePsCcdiwKQBtOHflEA8Cr0kRjXZ1EA3CD61DMLALpHMnJAUh2zAGigpZ5VAeBbGc8lwd+fryZXJP5UAUgcW9F1ANxKSC6jb7pcP7X1vANixHMvJHo+5q/2vndAbeLW/HkHWKtI7Xi8A7SIw/f/1+P27hLQ0Rxz4/cOyCU49POj74BYgRxAjJB0/9sfIViT2qqhb64DdqtVwLKdzUMreK2da8ExB0ArMa4dB8AlNVY974CxVpabl1oH0C8/qc/cwME+V79LTw1AlwPr6w7AeoVKx+cdUJqwdfvmOmC9PzRYNsdT0wpea+daYM0ByE1Mev4DAAD//x+99SMAAAAGSURBVAMATxWlcOyNew4AAAAASUVORK5CYII=",
-              "size": [0.34, 0.26],
-              "pos": [0, -0.01, 0.021],
+              "size": [
+                0.34,
+                0.26
+              ],
+              "pos": [
+                0,
+                -0.01,
+                0.021
+              ],
               "craftSeed": 1146518157
             }
           },
@@ -45,138 +99,282 @@
         },
         "panel_b": {
           "shape": "plank",
-          "size": [0.44, 0.3, 0.035],
-          "pos": [0, 0.02, -0.215],
+          "size": [
+            0.44,
+            0.3,
+            0.035
+          ],
+          "pos": [
+            0,
+            0.02,
+            -0.215
+          ],
           "material": "panel",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "panel_l": {
           "shape": "plank",
-          "size": [0.035, 0.3, 0.44],
-          "pos": [-0.215, 0.02, 0],
+          "size": [
+            0.035,
+            0.3,
+            0.44
+          ],
+          "pos": [
+            -0.215,
+            0.02,
+            0
+          ],
           "material": "panel",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "panel_r": {
           "shape": "plank",
-          "size": [0.035, 0.3, 0.44],
-          "pos": [0.215, 0.02, 0],
+          "size": [
+            0.035,
+            0.3,
+            0.44
+          ],
+          "pos": [
+            0.215,
+            0.02,
+            0
+          ],
           "material": "panel",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "post_a": {
           "shape": "plank",
-          "size": [0.075, 0.42, 0.075],
-          "pos": [-0.225, 0.01, 0.225],
+          "size": [
+            0.075,
+            0.42,
+            0.075
+          ],
+          "pos": [
+            -0.225,
+            0.01,
+            0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "post_b": {
           "shape": "plank",
-          "size": [0.075, 0.42, 0.075],
-          "pos": [0.225, 0.01, 0.225],
+          "size": [
+            0.075,
+            0.42,
+            0.075
+          ],
+          "pos": [
+            0.225,
+            0.01,
+            0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "post_c": {
           "shape": "plank",
-          "size": [0.075, 0.42, 0.075],
-          "pos": [-0.225, 0.01, -0.225],
+          "size": [
+            0.075,
+            0.42,
+            0.075
+          ],
+          "pos": [
+            -0.225,
+            0.01,
+            -0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "post_d": {
           "shape": "plank",
-          "size": [0.075, 0.42, 0.075],
-          "pos": [0.225, 0.01, -0.225],
+          "size": [
+            0.075,
+            0.42,
+            0.075
+          ],
+          "pos": [
+            0.225,
+            0.01,
+            -0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_top_f": {
           "shape": "plank",
-          "size": [0.46, 0.06, 0.06],
-          "pos": [0, 0.19, 0.225],
+          "size": [
+            0.46,
+            0.06,
+            0.06
+          ],
+          "pos": [
+            0,
+            0.19,
+            0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_top_b": {
           "shape": "plank",
-          "size": [0.46, 0.06, 0.06],
-          "pos": [0, 0.19, -0.225],
+          "size": [
+            0.46,
+            0.06,
+            0.06
+          ],
+          "pos": [
+            0,
+            0.19,
+            -0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_top_l": {
           "shape": "plank",
-          "size": [0.06, 0.06, 0.46],
-          "pos": [-0.225, 0.19, 0],
+          "size": [
+            0.06,
+            0.06,
+            0.46
+          ],
+          "pos": [
+            -0.225,
+            0.19,
+            0
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_top_r": {
           "shape": "plank",
-          "size": [0.06, 0.06, 0.46],
-          "pos": [0.225, 0.19, 0],
+          "size": [
+            0.06,
+            0.06,
+            0.46
+          ],
+          "pos": [
+            0.225,
+            0.19,
+            0
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_bot_f": {
           "shape": "plank",
-          "size": [0.46, 0.06, 0.06],
-          "pos": [0, -0.15, 0.225],
+          "size": [
+            0.46,
+            0.06,
+            0.06
+          ],
+          "pos": [
+            0,
+            -0.15,
+            0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_bot_b": {
           "shape": "plank",
-          "size": [0.46, 0.06, 0.06],
-          "pos": [0, -0.15, -0.225],
+          "size": [
+            0.46,
+            0.06,
+            0.06
+          ],
+          "pos": [
+            0,
+            -0.15,
+            -0.225
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_bot_l": {
           "shape": "plank",
-          "size": [0.06, 0.06, 0.46],
-          "pos": [-0.225, -0.15, 0],
+          "size": [
+            0.06,
+            0.06,
+            0.46
+          ],
+          "pos": [
+            -0.225,
+            -0.15,
+            0
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "rail_bot_r": {
           "shape": "plank",
-          "size": [0.06, 0.06, 0.46],
-          "pos": [0.225, -0.15, 0],
+          "size": [
+            0.06,
+            0.06,
+            0.46
+          ],
+          "pos": [
+            0.225,
+            -0.15,
+            0
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "brace_l": {
           "shape": "plank",
-          "size": [0.44, 0.055, 0.028],
-          "pos": [-0.238, 0.02, 0],
-          "rot": [0, 90, 38],
+          "size": [
+            0.44,
+            0.055,
+            0.028
+          ],
+          "pos": [
+            -0.238,
+            0.02,
+            0
+          ],
+          "rot": [
+            0,
+            90,
+            38
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
         },
         "brace_r": {
           "shape": "plank",
-          "size": [0.44, 0.055, 0.028],
-          "pos": [0.238, 0.02, 0],
-          "rot": [0, 90, -38],
+          "size": [
+            0.44,
+            0.055,
+            0.028
+          ],
+          "pos": [
+            0.238,
+            0.02,
+            0
+          ],
+          "rot": [
+            0,
+            90,
+            -38
+          ],
           "material": "frame",
           "craft": 0.95,
           "craftSeed": 1146518157
@@ -185,16 +383,32 @@
           "shape": "cylinder",
           "radius": 0.05,
           "height": 0.24,
-          "pos": [-0.11, 0.24, -0.09],
-          "rot": [-8, 0, 7],
-          "rotJitter": [4, 30, 4],
+          "pos": [
+            -0.11,
+            0.24,
+            -0.09
+          ],
+          "rot": [
+            -8,
+            0,
+            7
+          ],
+          "rotJitter": [
+            4,
+            30,
+            4
+          ],
           "material": "dynamite",
           "children": {
             "band_1": {
               "shape": "cylinder",
               "radius": 0.054,
               "height": 0.035,
-              "pos": [0, 0.06, 0],
+              "pos": [
+                0,
+                0.06,
+                0
+              ],
               "material": "band",
               "craftSeed": 1146518157
             },
@@ -202,8 +416,16 @@
               "shape": "cylinder",
               "radius": 0.012,
               "height": 0.07,
-              "pos": [0.02, 0.15, 0],
-              "rot": [0, 0, -38],
+              "pos": [
+                0.02,
+                0.15,
+                0
+              ],
+              "rot": [
+                0,
+                0,
+                -38
+              ],
               "material": "rope",
               "craft": 0.85,
               "craftSeed": 1146518157
@@ -215,16 +437,32 @@
           "shape": "cylinder",
           "radius": 0.05,
           "height": 0.26,
-          "pos": [0.1, 0.26, -0.11],
-          "rot": [7, 0, -11],
-          "rotJitter": [4, 30, 4],
+          "pos": [
+            0.1,
+            0.26,
+            -0.11
+          ],
+          "rot": [
+            7,
+            0,
+            -11
+          ],
+          "rotJitter": [
+            4,
+            30,
+            4
+          ],
           "material": "dynamite",
           "children": {
             "band_2": {
               "shape": "cylinder",
               "radius": 0.054,
               "height": 0.035,
-              "pos": [0, 0.07, 0],
+              "pos": [
+                0,
+                0.07,
+                0
+              ],
               "material": "band",
               "craftSeed": 1146518157
             },
@@ -232,8 +470,16 @@
               "shape": "cylinder",
               "radius": 0.012,
               "height": 0.075,
-              "pos": [-0.02, 0.16, 0.01],
-              "rot": [14, 0, 33],
+              "pos": [
+                -0.02,
+                0.16,
+                0.01
+              ],
+              "rot": [
+                14,
+                0,
+                33
+              ],
               "material": "rope",
               "craft": 0.85,
               "craftSeed": 1146518157
@@ -245,16 +491,32 @@
           "shape": "cylinder",
           "radius": 0.052,
           "height": 0.3,
-          "pos": [-0.01, 0.3, 0.01],
-          "rot": [-3, 0, 3],
-          "rotJitter": [3, 30, 3],
+          "pos": [
+            -0.01,
+            0.3,
+            0.01
+          ],
+          "rot": [
+            -3,
+            0,
+            3
+          ],
+          "rotJitter": [
+            3,
+            30,
+            3
+          ],
           "material": "dynamite",
           "children": {
             "band_3": {
               "shape": "cylinder",
               "radius": 0.056,
               "height": 0.04,
-              "pos": [0, 0.08, 0],
+              "pos": [
+                0,
+                0.08,
+                0
+              ],
               "material": "band",
               "craftSeed": 1146518157
             },
@@ -262,8 +524,16 @@
               "shape": "cylinder",
               "radius": 0.013,
               "height": 0.11,
-              "pos": [0.025, 0.19, 0],
-              "rot": [0, 0, -34],
+              "pos": [
+                0.025,
+                0.19,
+                0
+              ],
+              "rot": [
+                0,
+                0,
+                -34
+              ],
               "material": "rope",
               "craft": 0.82,
               "craftSeed": 1146518157
@@ -275,16 +545,32 @@
           "shape": "cylinder",
           "radius": 0.048,
           "height": 0.22,
-          "pos": [0.13, 0.23, 0.07],
-          "rot": [11, 0, 9],
-          "rotJitter": [4, 30, 4],
+          "pos": [
+            0.13,
+            0.23,
+            0.07
+          ],
+          "rot": [
+            11,
+            0,
+            9
+          ],
+          "rotJitter": [
+            4,
+            30,
+            4
+          ],
           "material": "dynamite",
           "children": {
             "band_4": {
               "shape": "cylinder",
               "radius": 0.052,
               "height": 0.032,
-              "pos": [0, 0.055, 0],
+              "pos": [
+                0,
+                0.055,
+                0
+              ],
               "material": "band",
               "craftSeed": 1146518157
             },
@@ -292,8 +578,16 @@
               "shape": "cylinder",
               "radius": 0.011,
               "height": 0.065,
-              "pos": [0.015, 0.14, -0.01],
-              "rot": [-20, 0, -30],
+              "pos": [
+                0.015,
+                0.14,
+                -0.01
+              ],
+              "rot": [
+                -20,
+                0,
+                -30
+              ],
               "material": "rope",
               "craft": 0.85,
               "craftSeed": 1146518157
@@ -305,16 +599,32 @@
           "shape": "cylinder",
           "radius": 0.05,
           "height": 0.23,
-          "pos": [-0.14, 0.22, 0.1],
-          "rot": [5, 0, -15],
-          "rotJitter": [4, 30, 4],
+          "pos": [
+            -0.14,
+            0.22,
+            0.1
+          ],
+          "rot": [
+            5,
+            0,
+            -15
+          ],
+          "rotJitter": [
+            4,
+            30,
+            4
+          ],
           "material": "dynamite",
           "children": {
             "band_5": {
               "shape": "cylinder",
               "radius": 0.054,
               "height": 0.035,
-              "pos": [0, 0.055, 0],
+              "pos": [
+                0,
+                0.055,
+                0
+              ],
               "material": "band",
               "craftSeed": 1146518157
             },
@@ -322,8 +632,16 @@
               "shape": "cylinder",
               "radius": 0.012,
               "height": 0.07,
-              "pos": [-0.02, 0.145, 0],
-              "rot": [0, 0, 36],
+              "pos": [
+                -0.02,
+                0.145,
+                0
+              ],
+              "rot": [
+                0,
+                0,
+                36
+              ],
               "material": "rope",
               "craft": 0.85,
               "craftSeed": 1146518157
@@ -335,16 +653,32 @@
           "shape": "cylinder",
           "radius": 0.046,
           "height": 0.2,
-          "pos": [0.02, 0.21, -0.01],
-          "rot": [2, 0, -4],
-          "rotJitter": [4, 30, 4],
+          "pos": [
+            0.02,
+            0.21,
+            -0.01
+          ],
+          "rot": [
+            2,
+            0,
+            -4
+          ],
+          "rotJitter": [
+            4,
+            30,
+            4
+          ],
           "material": "dynamite",
           "children": {
             "band_6": {
               "shape": "cylinder",
               "radius": 0.05,
               "height": 0.03,
-              "pos": [0, 0.05, 0],
+              "pos": [
+                0,
+                0.05,
+                0
+              ],
               "material": "band",
               "craftSeed": 1146518157
             },
@@ -352,8 +686,16 @@
               "shape": "cylinder",
               "radius": 0.011,
               "height": 0.06,
-              "pos": [0.01, 0.125, 0.015],
-              "rot": [24, 0, -26],
+              "pos": [
+                0.01,
+                0.125,
+                0.015
+              ],
+              "rot": [
+                24,
+                0,
+                -26
+              ],
               "material": "rope",
               "craft": 0.85,
               "craftSeed": 1146518157
@@ -363,23 +705,51 @@
         },
         "leg_l": {
           "shape": "box",
-          "size": [0.07, 0.17, 0.07],
-          "pos": [-0.12, -0.26, 0],
-          "pivot": [0, 0.08, 0],
+          "size": [
+            0.07,
+            0.17,
+            0.07
+          ],
+          "pos": [
+            -0.12,
+            -0.26,
+            0
+          ],
+          "pivot": [
+            0,
+            0.08,
+            0
+          ],
           "material": "leg",
           "craft": 0.96,
           "children": {
             "foot_l": {
               "shape": "box",
-              "size": [0.115, 0.075, 0.13],
-              "pos": [0, -0.11, 0.01],
+              "size": [
+                0.115,
+                0.075,
+                0.13
+              ],
+              "pos": [
+                0,
+                -0.11,
+                0.01
+              ],
               "material": "boot",
               "craft": 0.88,
               "children": {
                 "toe_l": {
                   "shape": "box",
-                  "size": [0.1, 0.062, 0.07],
-                  "pos": [0, -0.005, 0.09],
+                  "size": [
+                    0.1,
+                    0.062,
+                    0.07
+                  ],
+                  "pos": [
+                    0,
+                    -0.005,
+                    0.09
+                  ],
                   "material": "boot",
                   "craft": 0.88,
                   "craftSeed": 1146518157
@@ -392,23 +762,51 @@
         },
         "leg_r": {
           "shape": "box",
-          "size": [0.07, 0.17, 0.07],
-          "pos": [0.12, -0.26, 0],
-          "pivot": [0, 0.08, 0],
+          "size": [
+            0.07,
+            0.17,
+            0.07
+          ],
+          "pos": [
+            0.12,
+            -0.26,
+            0
+          ],
+          "pivot": [
+            0,
+            0.08,
+            0
+          ],
           "material": "leg",
           "craft": 0.96,
           "children": {
             "foot_r": {
               "shape": "box",
-              "size": [0.115, 0.075, 0.13],
-              "pos": [0, -0.11, 0.01],
+              "size": [
+                0.115,
+                0.075,
+                0.13
+              ],
+              "pos": [
+                0,
+                -0.11,
+                0.01
+              ],
               "material": "boot",
               "craft": 0.88,
               "children": {
                 "toe_r": {
                   "shape": "box",
-                  "size": [0.1, 0.062, 0.07],
-                  "pos": [0, -0.005, 0.09],
+                  "size": [
+                    0.1,
+                    0.062,
+                    0.07
+                  ],
+                  "pos": [
+                    0,
+                    -0.005,
+                    0.09
+                  ],
                   "material": "boot",
                   "craft": 0.88,
                   "craftSeed": 1146518157
@@ -424,7 +822,16 @@
   },
   "physics": {
     "body": "kinematicCharacter",
-    "collider": { "shape": "capsule", "radius": 0.3, "height": 0.2, "offset": [0, 0.4, 0] }
+    "collider": {
+      "shape": "capsule",
+      "radius": 0.3,
+      "height": 0.2,
+      "offset": [
+        0,
+        0.4,
+        0
+      ]
+    }
   },
   "props": {
     "health": 1,
@@ -437,55 +844,225 @@
     "explodeRadius": 2.4,
     "damage": 2
   },
-  "variants": { "count": 3 },
+  "variants": {
+    "count": 3
+  },
   "states": {
     "initial": "sleeping",
-    "sleeping": { "anim": "sleep" },
-    "walking": { "anim": "waddle" },
+    "sleeping": {
+      "anim": "sleep"
+    },
+    "walking": {
+      "anim": "waddle"
+    },
     "alert": {
       "anim": "startle",
-      "enter": { "effect": "fuse_sparks", "flash": "#ffffff" },
-      "cues": { "0.3": { "effect": "fuse_sparks" } }
-    },
-    "running": { "anim": "sprint", "cues": { "0.12": { "effect": "fuse_sparks" } } },
-    "fusing": {
-      "anim": "swell",
-      "enter": { "effect": "fuse_sparks" },
+      "enter": {
+        "effect": "fuse_sparks"
+      },
       "cues": {
-        "1": { "effect": "fuse_sparks" },
-        "0.25": { "effect": "fuse_sparks" },
-        "0.5": { "effect": "fuse_sparks" },
-        "0.75": { "effect": "fuse_sparks" },
-        "1.2": { "effect": "fuse_sparks" },
-        "1.35": { "effect": "fuse_sparks" }
+        "0.3": {
+          "effect": "fuse_sparks"
+        }
       }
     },
-    "explode": { "hide": ["body"], "enter": { "effect": "explosion" }, "despawnAfter": 0.05 }
+    "running": {
+      "anim": "sprint",
+      "cues": {
+        "0.12": {
+          "effect": "fuse_sparks"
+        }
+      }
+    },
+    "fusing": {
+      "anim": "swell",
+      "enter": {
+        "effect": "fuse_sparks"
+      },
+      "cues": {
+        "1": {
+          "effect": "fuse_sparks"
+        },
+        "0.25": {
+          "effect": "fuse_sparks"
+        },
+        "0.5": {
+          "effect": "fuse_sparks"
+        },
+        "0.75": {
+          "effect": "fuse_sparks"
+        },
+        "1.2": {
+          "effect": "fuse_sparks"
+        },
+        "1.35": {
+          "effect": "fuse_sparks"
+        }
+      }
+    },
+    "explode": {
+      "hide": [
+        "body"
+      ],
+      "enter": {
+        "effect": "explosion"
+      },
+      "despawnAfter": 0.05
+    }
   },
   "anims": {
     "sleep": {
       "loop": true,
       "duration": 3.4,
       "tracks": [
-        { "node": "body", "prop": "pos.y", "keys": [[0, -0.08]] },
-        { "node": "body", "prop": "rot.x", "keys": [[0, -12]] },
-        { "node": "leg_l", "prop": "rot.x", "keys": [[0, -76]] },
-        { "node": "leg_r", "prop": "rot.x", "keys": [[0, -76]] },
-        { "node": "body", "prop": "scale", "ease": "sine", "keys": [[0, 1], [1.7, 1.05], [3.4, 1]] }
+        {
+          "node": "body",
+          "prop": "pos.y",
+          "keys": [
+            [
+              0,
+              -0.08
+            ]
+          ]
+        },
+        {
+          "node": "body",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              -12
+            ]
+          ]
+        },
+        {
+          "node": "leg_l",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              -76
+            ]
+          ]
+        },
+        {
+          "node": "leg_r",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              -76
+            ]
+          ]
+        },
+        {
+          "node": "body",
+          "prop": "scale",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              1
+            ],
+            [
+              1.7,
+              1.05
+            ],
+            [
+              3.4,
+              1
+            ]
+          ]
+        }
       ]
     },
     "waddle": {
       "loop": true,
       "duration": 0.85,
       "tracks": [
-        { "node": "leg_l", "prop": "rot.x", "ease": "sine", "keys": [[0, 28], [0.425, -28], [0.85, 28]] },
-        { "node": "leg_r", "prop": "rot.x", "ease": "sine", "keys": [[0, -28], [0.425, 28], [0.85, -28]] },
-        { "node": "body", "prop": "rot.z", "ease": "sine", "keys": [[0, 5], [0.425, -5], [0.85, 5]] },
+        {
+          "node": "leg_l",
+          "prop": "rot.x",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              28
+            ],
+            [
+              0.425,
+              -28
+            ],
+            [
+              0.85,
+              28
+            ]
+          ]
+        },
+        {
+          "node": "leg_r",
+          "prop": "rot.x",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              -28
+            ],
+            [
+              0.425,
+              28
+            ],
+            [
+              0.85,
+              -28
+            ]
+          ]
+        },
+        {
+          "node": "body",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              5
+            ],
+            [
+              0.425,
+              -5
+            ],
+            [
+              0.85,
+              5
+            ]
+          ]
+        },
         {
           "node": "body",
           "prop": "pos.y",
           "ease": "sine",
-          "keys": [[0, 0.032], [0.2, 0], [0.425, 0.032], [0.63, 0], [0.85, 0.032]]
+          "keys": [
+            [
+              0,
+              0.032
+            ],
+            [
+              0.2,
+              0
+            ],
+            [
+              0.425,
+              0.032
+            ],
+            [
+              0.63,
+              0
+            ],
+            [
+              0.85,
+              0.032
+            ]
+          ]
         }
       ]
     },
@@ -496,26 +1073,183 @@
           "node": "body",
           "prop": "pos.y",
           "ease": "quadOut",
-          "keys": [[0, 0], [0.12, 0.2], [0.3, 0], [0.38, 0.05], [0.45, 0]]
+          "keys": [
+            [
+              0,
+              0
+            ],
+            [
+              0.12,
+              0.2
+            ],
+            [
+              0.3,
+              0
+            ],
+            [
+              0.38,
+              0.05
+            ],
+            [
+              0.45,
+              0
+            ]
+          ]
         },
-        { "node": "body", "prop": "scale", "ease": "quadOut", "keys": [[0, 1], [0.1, 1.16], [0.3, 1]] },
-        { "node": "leg_l", "prop": "rot.x", "keys": [[0, 0], [0.12, -30], [0.3, 0]] },
-        { "node": "leg_r", "prop": "rot.x", "keys": [[0, 0], [0.12, -30], [0.3, 0]] }
+        {
+          "node": "body",
+          "prop": "scale",
+          "ease": "quadOut",
+          "keys": [
+            [
+              0,
+              1
+            ],
+            [
+              0.1,
+              1.16
+            ],
+            [
+              0.3,
+              1
+            ]
+          ]
+        },
+        {
+          "node": "leg_l",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              0
+            ],
+            [
+              0.12,
+              -30
+            ],
+            [
+              0.3,
+              0
+            ]
+          ]
+        },
+        {
+          "node": "leg_r",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              0
+            ],
+            [
+              0.12,
+              -30
+            ],
+            [
+              0.3,
+              0
+            ]
+          ]
+        }
       ]
     },
     "sprint": {
       "loop": true,
       "duration": 0.36,
       "tracks": [
-        { "node": "leg_l", "prop": "rot.x", "ease": "sine", "keys": [[0, 55], [0.18, -55], [0.36, 55]] },
-        { "node": "leg_r", "prop": "rot.x", "ease": "sine", "keys": [[0, -55], [0.18, 55], [0.36, -55]] },
-        { "node": "body", "prop": "rot.x", "keys": [[0, 14]] },
-        { "node": "body", "prop": "rot.z", "ease": "sine", "keys": [[0, -3], [0.18, 3], [0.36, -3]] },
+        {
+          "node": "leg_l",
+          "prop": "rot.x",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              55
+            ],
+            [
+              0.18,
+              -55
+            ],
+            [
+              0.36,
+              55
+            ]
+          ]
+        },
+        {
+          "node": "leg_r",
+          "prop": "rot.x",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              -55
+            ],
+            [
+              0.18,
+              55
+            ],
+            [
+              0.36,
+              -55
+            ]
+          ]
+        },
+        {
+          "node": "body",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              14
+            ]
+          ]
+        },
+        {
+          "node": "body",
+          "prop": "rot.z",
+          "ease": "sine",
+          "keys": [
+            [
+              0,
+              -3
+            ],
+            [
+              0.18,
+              3
+            ],
+            [
+              0.36,
+              -3
+            ]
+          ]
+        },
         {
           "node": "body",
           "prop": "pos.y",
           "ease": "sine",
-          "keys": [[0, 0.012], [0.09, 0.034], [0.18, 0.012], [0.27, 0.034], [0.36, 0.012]]
+          "keys": [
+            [
+              0,
+              0.012
+            ],
+            [
+              0.09,
+              0.034
+            ],
+            [
+              0.18,
+              0.012
+            ],
+            [
+              0.27,
+              0.034
+            ],
+            [
+              0.36,
+              0.012
+            ]
+          ]
         }
       ]
     },
@@ -525,17 +1259,137 @@
         {
           "node": "body",
           "prop": "scale",
-          "keys": [[0, 1], [0.35, 1.14], [0.6, 1.08], [0.95, 1.3], [1.15, 1.22], [1.4, 1.5]]
+          "keys": [
+            [
+              0,
+              1
+            ],
+            [
+              0.35,
+              1.14
+            ],
+            [
+              0.6,
+              1.08
+            ],
+            [
+              0.95,
+              1.3
+            ],
+            [
+              1.15,
+              1.22
+            ],
+            [
+              1.4,
+              1.5
+            ]
+          ]
         },
-        { "node": "leg_l", "prop": "rot.x", "keys": [[0, 10]] },
-        { "node": "leg_r", "prop": "rot.x", "keys": [[0, 10]] },
+        {
+          "node": "leg_l",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              10
+            ]
+          ]
+        },
+        {
+          "node": "leg_r",
+          "prop": "rot.x",
+          "keys": [
+            [
+              0,
+              10
+            ]
+          ]
+        },
         {
           "node": "body",
           "prop": "rot.z",
-          "keys": [[0, -5], [0.09, 5], [0.18, -5], [0.27, 5], [0.36, -5], [0.45, 5], [0.54, -5], [0.63, 5], [0.72, -5], [0.81, 5], [0.9, -5], [0.99, 5], [1.08, -6], [1.17, 6], [1.26, -7], [1.33, 7], [1.4, 0]]
+          "keys": [
+            [
+              0,
+              -5
+            ],
+            [
+              0.09,
+              5
+            ],
+            [
+              0.18,
+              -5
+            ],
+            [
+              0.27,
+              5
+            ],
+            [
+              0.36,
+              -5
+            ],
+            [
+              0.45,
+              5
+            ],
+            [
+              0.54,
+              -5
+            ],
+            [
+              0.63,
+              5
+            ],
+            [
+              0.72,
+              -5
+            ],
+            [
+              0.81,
+              5
+            ],
+            [
+              0.9,
+              -5
+            ],
+            [
+              0.99,
+              5
+            ],
+            [
+              1.08,
+              -6
+            ],
+            [
+              1.17,
+              6
+            ],
+            [
+              1.26,
+              -7
+            ],
+            [
+              1.33,
+              7
+            ],
+            [
+              1.4,
+              0
+            ]
+          ]
         }
       ]
     }
   },
-  "events": { "hit": { "effect": "poof" }, "died": { "effect": "SCRIPT_EFFECT_SHATTER", "hideGeometry": true } }
+  "events": {
+    "hit": {
+      "effect": "poof"
+    },
+    "died": {
+      "effect": "SCRIPT_EFFECT_SHATTER",
+      "hideGeometry": true
+    }
+  }
 }

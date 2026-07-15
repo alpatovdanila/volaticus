@@ -9,16 +9,13 @@
     "roughness": "PBR/plaster_wall_04/plaster_wall_02_roughness_1k.ktx2",
     "height": null,
     "ao": null,
-    "metallic": null,
-    "emissive": null
+    "metallic": null
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

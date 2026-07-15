@@ -9,16 +9,13 @@
     "roughness": "PBR/floor_tiles_08/floor_tiles_08_roughness_1k.ktx2",
     "height": "PBR/floor_tiles_08/floor_tiles_08_height_1k.ktx2",
     "ao": "PBR/floor_tiles_08/floor_tiles_08_ambientOcclusion_1k.ktx2",
-    "metallic": "PBR/floor_tiles_08/floor_tiles_08_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/floor_tiles_08/floor_tiles_08_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

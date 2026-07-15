@@ -9,16 +9,13 @@
     "roughness": "PBR/tudor_wall_01/tudor_wall_01_roughness_1k.ktx2",
     "height": "PBR/tudor_wall_01/tudor_wall_01_height_1k.ktx2",
     "ao": "PBR/tudor_wall_01/tudor_wall_01_ambientocclusion_1k.ktx2",
-    "metallic": "PBR/tudor_wall_01/tudor_wall_01_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/tudor_wall_01/tudor_wall_01_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1.76,
     "aoIntensity": 0.55,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,

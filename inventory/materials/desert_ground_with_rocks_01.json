@@ -9,16 +9,13 @@
     "roughness": "PBR/desert_ground_with_rocks_01/desert_ground_with_rocks_01_roughness_1k.ktx2",
     "height": "PBR/desert_ground_with_rocks_01/desert_ground_with_rocks_01_height_1k.ktx2",
     "ao": "PBR/desert_ground_with_rocks_01/desert_ground_with_rocks_01_ambientOcclusion_1k.ktx2",
-    "metallic": "PBR/desert_ground_with_rocks_01/desert_ground_with_rocks_01_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/desert_ground_with_rocks_01/desert_ground_with_rocks_01_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false

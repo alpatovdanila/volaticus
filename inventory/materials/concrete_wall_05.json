@@ -9,16 +9,13 @@
     "roughness": "PBR/concrete_wall_05/concrete_wall_05_roughness_1k.ktx2",
     "height": "PBR/concrete_wall_05/concrete_wall_05_height_1k.ktx2",
     "ao": "PBR/concrete_wall_05/concrete_wall_05_ambient_occlusion_1k.ktx2",
-    "metallic": null,
-    "emissive": null
+    "metallic": null
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 1,
     "aoIntensity": 0.98,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,

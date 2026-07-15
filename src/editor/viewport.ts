@@ -479,9 +479,10 @@ export class Viewport {
     })
   }
 
-  // global emissive self-illum lift — apply to each built entity's materials.
-  patchEmissive(root: THREE.Object3D): void {
-    this.rig.patchEmissive(root)
+  // graft the sun's shadow-darkening onto each built entity's materials (HDRI is the
+  // only light; the sun is a pure shadow-caster).
+  patchShadow(root: THREE.Object3D): void {
+    this.rig.patchShadow(root)
   }
 
   fit(bounds: THREE.Box3): void {

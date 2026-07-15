@@ -9,16 +9,13 @@
     "roughness": "PBR/metal_01/metal_01_roughness_1k.ktx2",
     "height": "PBR/metal_01/metal_01_height_1k.ktx2",
     "ao": "PBR/metal_01/metal_01_ambient_occlusion_1k.ktx2",
-    "metallic": "PBR/metal_01/metal_01_metallic_1k.ktx2",
-    "emissive": null
+    "metallic": "PBR/metal_01/metal_01_metallic_1k.ktx2"
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 1,
     "normalScale": 1.65,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,

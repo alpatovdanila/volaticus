@@ -124,13 +124,7 @@ export interface EffectDeps {
 
 export interface EffectParams {
   texture?: string // applied to bursts marked "inherit" (debris matches the source object)
-  tint?: string
   uvRot?: number // texture direction for the inherited texture, degrees (any angle; UI offers 15° steps)
-}
-
-function tintShades(hex: string): THREE.Color[] {
-  const base = new THREE.Color(hex)
-  return [base, base.clone().multiplyScalar(0.82), base.clone().multiplyScalar(0.65)]
 }
 
 interface Shard {
@@ -194,7 +188,6 @@ export class EffectSystem {
       let mesh: THREE.InstancedMesh | null = null
       let sprites: THREE.Sprite[] | null = null
       let frames: THREE.Texture[] | null = null
-      const inheritTint = def.inherit && params?.tint ? tintShades(params.tint) : null
       if (def.flipbook || def.sprite) {
         frames = def.flipbook ? flipbookFrames(def.flipbook).map((p) => getTexture(p)) : [getTexture(def.sprite!)]
         sprites = []
@@ -234,9 +227,7 @@ export class EffectSystem {
           life: 0,
           ttl,
         })
-        const color = inheritTint
-          ? inheritTint[Math.floor(Math.random() * inheritTint.length)].clone()
-          : new THREE.Color(def.colors[Math.floor(Math.random() * def.colors.length)])
+        const color = new THREE.Color(def.colors[Math.floor(Math.random() * def.colors.length)])
         if (mesh) mesh.setColorAt(i, color)
         if (sprites && frames) {
           const sprite = new THREE.Sprite(acquireSpriteMaterial(frames[0], color))

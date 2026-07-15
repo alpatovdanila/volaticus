@@ -9,16 +9,13 @@
     "roughness": "PBR/bricks_wall_04/bricks_wall_04_roughness_1k.ktx2",
     "height": "PBR/bricks_wall_04/bricks_wall_04_height_1k.ktx2",
     "ao": "PBR/bricks_wall_04/bricks_wall_04_ambient_occlusion_1k.ktx2",
-    "metallic": null,
-    "emissive": null
+    "metallic": null
   },
   "tuning": {
-    "tint": null,
     "roughness": 0.79,
     "metalness": 0,
     "normalScale": 0.21,
     "aoIntensity": 1.33,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,

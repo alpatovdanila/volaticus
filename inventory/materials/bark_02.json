@@ -9,16 +9,13 @@
     "roughness": "PBR/bark_02/bark_02_roughness_1k.ktx2",
     "height": "PBR/bark_02/bark_02_height_1k.ktx2",
     "ao": "PBR/bark_02/bark_02_ambient_occlusion_1k.ktx2",
-    "metallic": null,
-    "emissive": null
+    "metallic": null
   },
   "tuning": {
-    "tint": null,
     "roughness": 1,
     "metalness": 0,
     "normalScale": 0.8,
     "aoIntensity": 1,
-    "emissive": 0,
     "opacity": 1,
     "cutout": false,
     "doubleSided": false,

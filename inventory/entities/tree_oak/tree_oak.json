@@ -3,12 +3,22 @@
   "id": "tree_oak",
   "name": "Oak Tree",
   "category": "prop",
-  "tags": ["vegetation", "tree"],
+  "tags": [
+    "vegetation",
+    "tree"
+  ],
   "notes": "Generator oak (shape \"tree\"): thick trunk, wide heavy branching, big blob crown. 6 variants = 6 seeds/param mixes.",
   "materials": {
-    "trunk": { "material": "bark_11", "uvScale": 1 },
-    "leaves": { "material": "grass_02", "tint": "#5e8f3e" },
-    "leaves_light": { "material": "grass_02", "tint": "#6f9c49" }
+    "trunk": {
+      "material": "bark_11",
+      "uvScale": 1
+    },
+    "leaves": {
+      "material": "grass_02"
+    },
+    "leaves_light": {
+      "material": "grass_02"
+    }
   },
   "rig": {
     "root": {
@@ -21,8 +31,15 @@
           "spread": 58,
           "thickness": 0.72,
           "leafSize": 0.72,
-          "pos": [0, 0, 0],
-          "material": { "side": "trunk", "top": "leaves" },
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "material": {
+            "side": "trunk",
+            "top": "leaves"
+          },
           "craftSeed": 135792468
         },
         "tree_2": {
@@ -33,8 +50,15 @@
           "spread": 63,
           "thickness": 0.74,
           "leafSize": 0.78,
-          "pos": [0, 0, 0],
-          "material": { "side": "trunk", "top": "leaves_light" },
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "material": {
+            "side": "trunk",
+            "top": "leaves_light"
+          },
           "craftSeed": 864209753
         },
         "tree_3": {
@@ -45,8 +69,15 @@
           "spread": 60,
           "thickness": 0.7,
           "leafSize": 0.8,
-          "pos": [0, 0, 0],
-          "material": { "side": "trunk", "top": "leaves" },
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "material": {
+            "side": "trunk",
+            "top": "leaves"
+          },
           "craftSeed": 314159265
         },
         "tree_4": {
@@ -57,8 +88,15 @@
           "spread": 66,
           "thickness": 0.75,
           "leafSize": 0.74,
-          "pos": [0, 0, 0],
-          "material": { "side": "trunk", "top": "leaves_light" },
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "material": {
+            "side": "trunk",
+            "top": "leaves_light"
+          },
           "craftSeed": 271828182
         },
         "tree_5": {
@@ -69,8 +107,15 @@
           "spread": 62,
           "thickness": 0.72,
           "leafSize": 0.82,
-          "pos": [0, 0, 0],
-          "material": { "side": "trunk", "top": "leaves" },
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "material": {
+            "side": "trunk",
+            "top": "leaves"
+          },
           "craftSeed": 987654321
         },
         "tree_6": {
@@ -81,8 +126,15 @@
           "spread": 57,
           "thickness": 0.73,
           "leafSize": 0.76,
-          "pos": [0, 0, 0],
-          "material": { "side": "trunk", "top": "leaves" },
+          "pos": [
+            0,
+            0,
+            0
+          ],
+          "material": {
+            "side": "trunk",
+            "top": "leaves"
+          },
           "craftSeed": 192837465
         }
       }
@@ -90,7 +142,28 @@
   },
   "physics": {
     "body": "fixed",
-    "collider": { "shape": "cylinder", "radius": 0.42, "height": 6.2, "offset": [0, 3.1, 0] }
+    "collider": {
+      "shape": "cylinder",
+      "radius": 0.42,
+      "height": 6.2,
+      "offset": [
+        0,
+        3.1,
+        0
+      ]
+    }
   },
-  "variants": { "count": 6, "oneOf": { "tree": ["tree_1", "tree_2", "tree_3", "tree_4", "tree_5", "tree_6"] } }
+  "variants": {
+    "count": 6,
+    "oneOf": {
+      "tree": [
+        "tree_1",
+        "tree_2",
+        "tree_3",
+        "tree_4",
+        "tree_5",
+        "tree_6"
+      ]
+    }
+  }
 }

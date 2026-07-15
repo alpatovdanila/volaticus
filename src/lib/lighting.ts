@@ -7,8 +7,8 @@
 // env. The sun casts a CACHED VSM shadow map: `shadow.autoUpdate` is off and the
 // map re-renders only when something actually moves it — sun params, env
 // rotation, HDRI swap, or new scene content via fitShadow() — never per frame.
-// A global `emissive` term adds each surface's own flat color back as
-// self-illumination. `applyParams` drives everything live.
+// The HDRI is the ONLY light; the sun adds no illumination, only its cached shadow
+// (grafted onto materials by patchShadow). `applyParams` drives everything live.
 import * as THREE from 'three'
 import {
   WebGPURenderer,
@@ -16,12 +16,12 @@ import {
   MeshStandardNodeMaterial,
   type Node,
 } from 'three/webgpu'
-import { uniform, materialEmissive, materialColor, shadow, mix, float } from 'three/tsl'
+import { uniform, materialColor, shadow, mix, float } from 'three/tsl'
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 import { setLevelEnvMap } from '../inventory/envmap'
 
-// TSL ergonomics: the materialColor / materialEmissive accessors surface as the
+// TSL ergonomics: the materialColor accessor surfaces as the
 // UNTYPED base Node, which lacks the chainable .mul/.add proxy methods (those are
 // augmented onto the TYPED Node<'float'>/Node<'vec3'>). Re-tag to the known channel
 // so chaining typechecks (runtime is identical — pure float/vec3 values).
@@ -87,8 +87,6 @@ export interface LightParams {
   tonemap: ToneMap // display transform (none = WYSIWYG clip, aces/agx = filmic HDR)
   rotation: number // env yaw, degrees (spins sky + IBL)
   intensity: number // IBL strength → scene.environmentIntensity
-  emissive: number // global self-illumination 0..1: adds emissive*albedo to every
-  // surface, lifting dark areas toward the WYSIWYG flat color (0 = pure HDRI lighting)
   hideBg: boolean // hide the HDRI sky (flat backdrop) but KEEP its lighting
   // ambient-occlusion intensity — the GTAO darkness curve (0 = off, 1 = neutral,
   // >1 = deeper contact shading). Lives WITH the lighting because AO depth is an
@@ -116,7 +114,6 @@ export const LIGHT_DEFAULTS: LightParams = {
   tonemap: 'agx',
   rotation: 0,
   intensity: 1,
-  emissive: 0,
   hideBg: false,
   ao: 1,
   flat: false,
@@ -142,7 +139,6 @@ export function clampLightParams(p: Partial<LightParams>): LightParams {
     tonemap: p.tonemap && p.tonemap in TONEMAPS ? p.tonemap : d.tonemap,
     rotation: num(p.rotation as number, 0, 360, d.rotation),
     intensity: num(p.intensity as number, 0, 3, d.intensity),
-    emissive: num(p.emissive as number, 0, 1, d.emissive),
     hideBg: p.hideBg ?? d.hideBg,
     ao: num(p.ao as number, 0, 3, d.ao),
     flat: p.flat ?? d.flat,
@@ -165,9 +161,6 @@ export class LightingRig {
   // ready environment (e.g. gate effect warmup on env presence).
   onHdriLoaded: ((tex: THREE.DataTexture) => void) | null = null
 
-  // Shared TSL uniform (live — applyParams sets .value, no recompile) driving the
-  // global self-illum term that patchEmissive folds into every material.
-  private emissiveU = uniform(LIGHT_DEFAULTS.emissive)
   private lastTonemap: ToneMap | '' = ''
   private curEnv: THREE.Texture | null = null
   private curBg: THREE.Texture | null = null
@@ -412,7 +405,6 @@ export class LightingRig {
     this.scene.environmentRotation.copy(rot)
     this.scene.backgroundRotation.copy(rot)
     this.updateBackground() // show the HDRI sky, or a flat backdrop when hidden
-    this.emissiveU.value = p.emissive // live — shared uniform, every patched material picks it up
 
     // SUN (shadow-caster only): softness + darkness live; direction re-derived
     // (HDRI dir × rotation). applyParams only fires on actual light edits, and
@@ -430,14 +422,13 @@ export class LightingRig {
     this.scene.background = this.params.hideBg ? this.hiddenBg : (this.curBg ?? this.scene.background)
   }
 
-  // Give every entity material the global self-illum term: emissiveNode adds
-  // emissive×albedo (composes onto any map-driven emissive). Shared emissiveU,
-  // live via applyParams. Idempotent per material. The SAME traverse also grafts
-  // the shadow-DARKNESS term: albedo × mix(1, sunShadowMask, shadowDarkU) — the
-  // sun's cached shadow darkens the whole surface response (IBL included), which
-  // is what makes shadows read under a bright HDRI. Both uniforms are live.
-  patchEmissive(root: THREE.Object3D): void {
-    const lift = v3n(materialColor).mul(fl(this.emissiveU)) // albedo × global emissive
+  // Graft the shadow-DARKNESS term onto every entity material: albedo ×
+  // mix(1, sunShadowMask, shadowDarkU) — the sun's cached shadow darkens the whole
+  // surface response (IBL included), which is what makes shadows read under a bright
+  // HDRI. The sun contributes NO light; all illumination is the HDRI. Idempotent per
+  // material; shadowDarkU is live. (There is no emissive/self-illumination term —
+  // materials never self-illuminate.)
+  patchShadow(root: THREE.Object3D): void {
     this.ensureSun() // the mask node must exist before materials reference it
     const dark = mix(float(1), fl(this.sunShadowMask!), fl(this.shadowDarkU)) // 1 lit → shadowed
     root.traverse((o) => {
@@ -447,11 +438,6 @@ export class LightingRig {
       for (const m of mats) {
         const nm = m as MeshStandardNodeMaterial
         if (!nm.isMeshStandardNodeMaterial) continue
-        if (!nm.userData.emissivePatched) {
-          nm.userData.emissivePatched = true
-          nm.emissiveNode = v3n(nm.emissiveNode ?? materialEmissive).add(lift)
-          nm.needsUpdate = true
-        }
         if (!nm.userData.shadowPatched && nm.userData.catalogMat) {
           nm.userData.shadowPatched = true
           // materialColor already folds in .map; parallax mats carry their own colorNode

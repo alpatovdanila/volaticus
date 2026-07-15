@@ -1,9 +1,8 @@
-// Page-scoped dev reloads (see the scopedReload plugin in vite.config.ts).
-// The dev server suppresses vite's global full-reload broadcast for src/*.ts
-// changes and instead announces the changed file; each page registers the
-// prefixes that can affect it and reloads only for those. This is what lets
-// the user keep working on assets in the inventory studio while Claude (or a
-// build agent) edits level/game code — the pages no longer reload each other.
+// Guarded dev reloads (see the scopedReload plugin in vite.config.ts). The dev
+// server suppresses vite's global full-reload broadcast for src/*.ts changes and
+// instead announces the changed file; the studio registers the prefixes that affect
+// it and, via the guard, HOLDS the reload while there are unsaved slot edits (a
+// reload would nuke them) — otherwise it reloads.
 export function scopeHmrReloads(prefixes: string[], guard?: () => true | string): void {
   if (!import.meta.hot) return
   import.meta.hot.on('volaticus:src-change', (data: { file: string }) => {

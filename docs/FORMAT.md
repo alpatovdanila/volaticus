@@ -397,14 +397,3 @@ Synth form (WebAudio, good for bespoke bleeps/hisses no pack file covers):
       "gain": { "from": 1, "to": 0 }, "duration": 0.75 }
   ] }
 ```
-
-## Level instances (future level editor)
-
-```jsonc
-{ "ref": "crate", "pos": [12, 0, -3], "yaw": 90, "variant": 2,
-  "overrides": { "physics.body": "fixed", "props.health": 5, "states.initial": "aggro" } }
-```
-
-`variant` indexes into the entity's baked `<id>.geom.{i}.json` set — placement PICKS
-a pre-composed static result, it never generates. `overrides` are dot-path patches
-onto the entity doc.

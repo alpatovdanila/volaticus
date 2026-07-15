@@ -244,23 +244,17 @@ function devApi(): Plugin {
   }
 }
 
-// Page-scoped hot reload. Vite broadcasts JS-caused full reloads to EVERY
-// connected client, so editing level-editor code used to reload the inventory
-// studio (and could nuke unsaved slot work there) and vice versa. Instead of
-// the default broadcast we announce the changed file and let each page decide:
-// entries call scopeHmrReloads() from src/lib/hmr-scope.ts with the src/
-// prefixes that can affect them. A page that has NOT registered the handler
-// simply stops auto-reloading on TS edits (manual F5) — fail-quiet, never
-// cross-reloads. CSS keeps vite's native hot swap (no reload at all).
+// Guarded hot reload for the studio. Instead of vite's default JS full-reload
+// broadcast, announce the changed file and let the page decide: main.ts calls
+// scopeHmrReloads() from src/lib/hmr-scope.ts, which HOLDS the reload while there
+// are unsaved slot edits (reload would nuke them) and otherwise reloads. CSS keeps
+// vite's native hot swap (no reload at all).
 function scopedReload(): Plugin {
   return {
     name: 'volaticus-scoped-reload',
     handleHotUpdate(ctx) {
       const rel = path.relative(ROOT, ctx.file).replace(/\\/g, '/')
-      // levels/<id>/scripts/*.js enter the module graph via the game's dynamic
-      // import — without this they too would full-reload every open page.
-      const scoped = rel.startsWith('src/') || rel.startsWith('levels/')
-      if (!scoped || rel.endsWith('.css')) return // default vite handling
+      if (!rel.startsWith('src/') || rel.endsWith('.css')) return // default vite handling
       ctx.server.ws.send({ type: 'custom', event: 'volaticus:src-change', data: { file: rel } })
       return [] // suppress the global full-reload broadcast
     },

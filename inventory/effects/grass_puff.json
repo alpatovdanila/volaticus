@@ -1,9 +1,0 @@
-{
-  "format": 1,
-  "id": "grass_puff",
-  "name": "Grass puff",
-  "notes": "Green specks kicked up by footsteps on grass.",
-  "particles": [
-    { "count": 6, "size": [0.05, 0.09], "offset": [0, -0.35, 0], "speed": [0.8, 1.7], "dir": "up", "gravity": -6, "life": [0.35, 0.6], "colors": ["#6fae4a", "#4c7f33", "#8ec46a"], "spin": 9 }
-  ]
-}

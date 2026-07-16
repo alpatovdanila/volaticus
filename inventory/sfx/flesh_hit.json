@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "flesh_hit",
+  "name": "Bolt hits flesh",
+  "volume": 0.7,
+  "pitchJitter": 0.12,
+  "files": [
+    "sounds/independent_nu_ljudbank-hits_and_punches/hits/hit05.mp3.flac",
+    "sounds/independent_nu_ljudbank-hits_and_punches/hits/hit12.mp3.flac",
+    "sounds/independent_nu_ljudbank-hits_and_punches/hits/hit18.mp3.flac",
+    "sounds/independent_nu_ljudbank-hits_and_punches/hits/hit22.mp3.flac",
+    "sounds/independent_nu_ljudbank-hits_and_punches/hits/hit30.mp3.flac",
+    "sounds/independent_nu_ljudbank-hits_and_punches/hits/hit33.mp3.flac"
+  ]
+}

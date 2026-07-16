@@ -16,7 +16,7 @@ import {
   MeshStandardNodeMaterial,
   type Node,
 } from 'three/webgpu'
-import { uniform, materialColor, shadow, mix, float, vec3 } from 'three/tsl'
+import { uniform, materialColor, shadow, mix, float, vec3, pow } from 'three/tsl'
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 import { setLevelEnvMap } from '../inventory/envmap'
@@ -28,12 +28,14 @@ import { setLevelEnvMap } from '../inventory/envmap'
 const fl = (n: unknown): Node<'float'> => n as Node<'float'>
 const v3n = (n: unknown): Node<'vec3'> => n as Node<'vec3'>
 
-// The ambient lift is `ambient × mix(albedo, white, LIFT_FLOOR)` — NOT a plain
-// `ambient × albedo`. A pure multiply dead-ends on near-black texels (AI-generated
-// model textures love pitch-black backs/undersides: 0 × anything = 0, so cranking
-// ambient did nothing there). The floor keeps per-texel colour detail but guarantees
-// even black cloth lifts to LIFT_FLOOR × ambient at full crank.
-const LIFT_FLOOR = 0.3
+// The ambient lift is `ambient × mix(albedo^0.5, white, LIFT_FLOOR)`. Two failure
+// modes bracketed here: a plain `ambient × albedo` multiply dead-ends on near-black
+// texels (0 × anything = 0 — cranking ambient did nothing on AI textures' pitch-black
+// backs), while a big white floor reads as a desaturating WHITE OVERLAY instead of
+// "more light on the texture". The gamma term (albedo^0.5) brightens darks/mids while
+// PRESERVING HUE — the surface looks lit, not tinted — and a small residual floor
+// still guarantees pure black lifts a little at full crank.
+const LIFT_FLOOR = 0.12
 
 
 export type ToneMap = 'none' | 'aces' | 'agx'
@@ -77,6 +79,7 @@ const STYLIZED_DIR = encodeURI('/HDRI/stylized HDRI')
 
 export const HDRIS: HdriEntry[] = [
   { id: 'qwantani_noon_puresky_1k', name: 'Qwantani noon (sky, 1k)', hdr: '/HDRI/qwantani_noon_puresky_1k.exr' },
+  { id: 'concrete_tunnel_1k', name: 'Concrete tunnel (1k)', hdr: '/HDRI/concrete_tunnel_1k.exr' },
   { id: 'qwantani_afternoon_puresky_4k', name: 'Qwantani afternoon (sky)', hdr: '/HDRI/qwantani_afternoon_puresky_4k.exr' },
   { id: 'autumn_hilly_field_4k', name: 'Autumn hilly field', hdr: '/HDRI/autumn_hilly_field_4k.exr' },
   { id: 'ticknock_02_4k', name: 'Ticknock', hdr: '/HDRI/ticknock_02_4k.exr' },
@@ -240,19 +243,22 @@ export class LightingRig {
   // inside the frustum reads as shadowed, the "giant blob"). So the cache is
   // implemented by PULSING autoUpdate for exactly one rendered frame: the host
   // calls settleShadow() after each frame render to switch it back off.
-  private shadowSettle = false
   requestShadowUpdate(): void {
     if (!this.sun) return
     this.sun.shadow.autoUpdate = true
     this.sun.shadow.needsUpdate = true // harmless; future-correct if three honors it
-    this.shadowSettle = true
   }
 
   // Call AFTER a frame rendered: returns the shadow map to cached (frozen) state.
+  // BOTH flags must drop: three clears needsUpdate only when the depth texture's
+  // version already matches (ShadowNode.updateBefore) — when it lags, a surviving
+  // needsUpdate re-triggers the shadow render inside the NEXT render call, which
+  // under a post chain is the MRT pass ("targets[1]" ShadowMaterial pipeline error,
+  // poisoned frames). Settle means frozen, unconditionally.
   settleShadow(): void {
-    if (!this.shadowSettle || !this.sun) return
+    if (!this.sun) return
     this.sun.shadow.autoUpdate = false
-    this.shadowSettle = false
+    this.sun.shadow.needsUpdate = false
   }
 
   // Frame the ortho shadow camera around the CURRENT scene content (an entity's
@@ -446,6 +452,13 @@ export class LightingRig {
     this.requestShadowUpdate()
   }
 
+  // the flat backdrop shown when the sky is hidden. Editor keeps its neutral studio grey;
+  // the game overrides this to black (a lit arena reads better against void than grey).
+  setHiddenBackground(color: THREE.ColorRepresentation): void {
+    this.hiddenBg.set(color)
+    if (this.params.hideBg) this.updateBackground()
+  }
+
   // show the HDRI equirect as the sky, or a flat neutral backdrop when hideBg is
   // on — the IBL (scene.environment) is untouched, so lighting stays identical.
   private updateBackground(): void {
@@ -473,10 +486,10 @@ export class LightingRig {
             // materialColor already folds in .map; parallax mats carry their own colorNode
             const albedo = v3n(nm.colorNode ?? materialColor)
             nm.colorNode = albedo.mul(dark)
-            // global ambient lift: + ambient × mix(albedo, white, floor) — the floor keeps
-            // near-black texels liftable (see LIFT_FLOOR); × dark so the fill still darkens
-            // inside sun shadows. Live via ambientLiftU — no recompiles.
-            nm.emissiveNode = v3n(mix(albedo, vec3(1, 1, 1), float(LIFT_FLOOR))).mul(dark).mul(fl(this.ambientLiftU))
+            // global ambient lift: + ambient × mix(albedo^0.5, white, floor) — hue-preserving
+            // brighten (see LIFT_FLOOR); × dark so the fill still darkens inside sun
+            // shadows. Live via ambientLiftU — no recompiles.
+            nm.emissiveNode = v3n(mix(pow(albedo, vec3(0.5, 0.5, 0.5)), vec3(1, 1, 1), float(LIFT_FLOOR))).mul(dark).mul(fl(this.ambientLiftU))
             nm.needsUpdate = true
           } else if (!nm.userData.shadowPatched && nm.userData.iblFromScene && !nm.userData.exposedEmissive && !nm.emissiveMap) {
             // imported-GLB node material (converted at load): the SAME lift, minus the
@@ -484,7 +497,7 @@ export class LightingRig {
             // the light itself). Skips @exposeEmissive clones (their emissive IS the glow)
             // and authored emissive maps (the graft would override that channel).
             nm.userData.shadowPatched = true
-            nm.emissiveNode = v3n(mix(v3n(materialColor), vec3(1, 1, 1), float(LIFT_FLOOR))).mul(fl(this.ambientLiftU))
+            nm.emissiveNode = v3n(mix(pow(v3n(materialColor), vec3(0.5, 0.5, 0.5)), vec3(1, 1, 1), float(LIFT_FLOOR))).mul(fl(this.ambientLiftU))
             nm.needsUpdate = true
           }
           continue

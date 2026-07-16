@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "zombie_rise",
+  "name": "Zombie rises",
+  "volume": 0.55,
+  "pitchJitter": 0.12,
+  "files": [
+    "sounds/Fantasy Sound Library/Goblin_00.wav",
+    "sounds/Fantasy Sound Library/Goblin_01.wav"
+  ]
+}

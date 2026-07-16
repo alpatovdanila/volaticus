@@ -36,7 +36,7 @@ const files = walk(INV, '.json').filter((p) => !/\.(geom\.\d+|variants)\.json$/.
 // maps; .ktx2 for the compressed PBR catalog (mirrors the dev API's /__textures listing).
 const textures = new Set([...walk(RES, '.png'), ...walk(RES, '.jpg'), ...walk(RES, '.ktx2')])
 const animated = new Set(walk(RES, '.png.mcmeta').map((p) => p.replace(/\.mcmeta$/, '')))
-const sounds = new Set([...walk(RES, '.wav'), ...walk(RES, '.ogg'), ...walk(RES, '.mp3')])
+const sounds = new Set([...walk(RES, '.wav'), ...walk(RES, '.ogg'), ...walk(RES, '.mp3'), ...walk(RES, '.flac')])
 const models = new Set([...walk(RES, '.fbx'), ...walk(RES, '.glb')])
 const surfaces = new Set<string>()
 try {

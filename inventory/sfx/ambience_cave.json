@@ -1,0 +1,8 @@
+{
+  "format": 1,
+  "id": "ambience_cave",
+  "name": "Cave ambience (loop)",
+  "notes": "Looped by the game as level ambience.",
+  "volume": 0.3,
+  "files": ["sounds/Fantasy Sound Library/Ambience_Cave_00.wav"]
+}

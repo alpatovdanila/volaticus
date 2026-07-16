@@ -175,6 +175,10 @@ export interface EffectDeps {
 export interface EffectParams {
   texture?: string // applied to bursts marked "inherit" (debris matches the source object)
   uvRot?: number // texture direction for the inherited texture, degrees (any angle; UI offers 15° steps)
+  // world-space bias added to every particle's random unit direction before speed is
+  // applied — LENGTH is the strength (1 ≈ hemisphere, 2 ≈ tight cone). Shapes 'sphere'/
+  // 'up' only; 'ring' keeps its authored silhouette.
+  aim?: THREE.Vector3
 }
 
 interface Shard {
@@ -378,6 +382,12 @@ export class EffectSystem {
     pool.imesh.instanceMatrix.needsUpdate = true
   }
 
+  // Budget the battlefield: despawn the OLDEST severed chunks beyond `max` (the live
+  // list is in spawn order). Hosts call this per frame with their remains budget.
+  capDismembered(max: number): void {
+    while (this.dismembered.length > max) this.removeChunk(this.dismembered.shift()!)
+  }
+
   // Despawn severed limbs — all of them, or just one part's chunks (restore/undo a
   // dismemberment: the modifier re-shows the limb, this removes its ground twin). Idempotent.
   clearDismembered(part?: string): void {
@@ -437,6 +447,7 @@ export class EffectSystem {
           if (dir.lengthSq() < 1e-4) dir = new THREE.Vector3(0, 1, 0)
           dir.normalize()
           if (def.dir === 'up') dir.y = Math.abs(dir.y) * 1.5, dir.normalize()
+          if (params?.aim) dir.add(params.aim).normalize()
         }
         const speed = def.speed[0] + Math.random() * (def.speed[1] - def.speed[0])
         const ttl = def.life[0] + Math.random() * (def.life[1] - def.life[0])

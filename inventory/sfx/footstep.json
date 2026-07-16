@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "footstep",
+  "name": "Player footstep (concrete)",
+  "volume": 0.35,
+  "pitchJitter": 0.1,
+  "files": [
+    "sounds/Footsteps/foley_footstep_concrete_1.wav",
+    "sounds/Footsteps/foley_footstep_concrete_2.wav",
+    "sounds/Footsteps/foley_footstep_concrete_3.wav",
+    "sounds/Footsteps/foley_footstep_concrete_4.wav"
+  ]
+}

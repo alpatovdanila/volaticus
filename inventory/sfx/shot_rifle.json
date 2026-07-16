@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "id": "shot_rifle",
+  "name": "Rifle shot",
+  "notes": "The alterro player-bolt shot (public/audio/shot.wav there): pitched up 1.12 with ~9% variance. Vol raised to 0.6 — it's the player's primary feedback and now shares the master bus with world hits (was being halved relative to them).",
+  "volume": 0.6,
+  "pitch": 1.12,
+  "pitchJitter": 0.09,
+  "files": ["sounds/alterro/shot.wav"]
+}

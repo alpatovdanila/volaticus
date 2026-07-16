@@ -7,8 +7,10 @@ import { MeshBasicNodeMaterial } from 'three/webgpu'
 import { color } from 'three/tsl'
 import { system } from './system'
 import type { LightPool } from './lights'
+import { segmentEntryT, type Box } from './obstacles'
 
-const BOLT_LIGHT = { color: 0xff9a33, intensity: 7, range: 5 } // warm tracer pool on the PBR floor
+export const BOLT_COLOR = 0xff9a33 // the tracer's warm orange — also lent to the arena orbs
+const BOLT_LIGHT = { color: BOLT_COLOR, intensity: 7, range: 5 } // warm tracer pool on the PBR floor
 
 const MAX = 64
 const SPEED = 16 // m/s
@@ -46,6 +48,7 @@ export class Projectiles {
     scene: THREE.Scene,
     private wallHalf = Infinity, // |x|/|z| beyond this = wall impact (reported for sparks)
     private lights: LightPool | null = null, // optional dlights: one pooled light per bolt
+    private obstacles: Box[] = [], // interior walls that stop a bolt (cover)
   ) {
     const geo = new THREE.BoxGeometry(0.014, 0.014, 0.4) // 50% thinner cross-section
     const mat = new MeshBasicNodeMaterial()
@@ -95,32 +98,42 @@ export class Projectiles {
       b.ttl -= dt
       seg.copy(b.vel).multiplyScalar(dt)
       const segLen2 = seg.lengthSq()
+      // nearest zombie hit along this frame's travel (by the closest-point parameter u)
       let hit: Hit | null = null
+      let hitU = Infinity
       for (const t of targets) {
         toT.copy(t.point).sub(b.pos)
         const u = segLen2 > 0 ? THREE.MathUtils.clamp(toT.dot(seg) / segLen2, 0, 1) : 0
         const dx = toT.x - seg.x * u
         const dy = toT.y - seg.y * u
         const dz = toT.z - seg.z * u
-        if (dx * dx + dy * dy + dz * dz < HIT_RADIUS * HIT_RADIUS) {
+        if (dx * dx + dy * dy + dz * dz < HIT_RADIUS * HIT_RADIUS && u < hitU) {
+          hitU = u
           hit = { target: t.object, at: b.pos.clone().addScaledVector(seg, u), dir: b.vel.clone().normalize() }
-          break
         }
       }
-      b.pos.add(seg)
+      // an interior wall crossing the path first stops the bolt (cover): a zombie behind
+      // the wall is safe, and the shot sparks on the wall instead
+      const obsT = this.obstacles.length ? segmentEntryT(b.pos.x, b.pos.z, b.pos.x + seg.x, b.pos.z + seg.z, this.obstacles) : Infinity
       let dead = true
-      if (hit) hits.push(hit)
-      else if (Math.abs(b.pos.x) > this.wallHalf || Math.abs(b.pos.z) > this.wallHalf) {
-        walls.push(
-          b.pos
-            .clone()
-            .setX(THREE.MathUtils.clamp(b.pos.x, -this.wallHalf, this.wallHalf))
-            .setZ(THREE.MathUtils.clamp(b.pos.z, -this.wallHalf, this.wallHalf)),
-        )
-      } else if (b.ttl > 0) {
-        keep.push(b)
-        dead = false
-        b.light?.position.copy(b.pos) // the dlight rides the tracer
+      if (obsT <= 1 && obsT < hitU) {
+        walls.push(b.pos.clone().addScaledVector(seg, obsT)) // spark where it met the wall
+      } else if (hit) {
+        hits.push(hit)
+      } else {
+        b.pos.add(seg)
+        if (Math.abs(b.pos.x) > this.wallHalf || Math.abs(b.pos.z) > this.wallHalf) {
+          walls.push(
+            b.pos
+              .clone()
+              .setX(THREE.MathUtils.clamp(b.pos.x, -this.wallHalf, this.wallHalf))
+              .setZ(THREE.MathUtils.clamp(b.pos.z, -this.wallHalf, this.wallHalf)),
+          )
+        } else if (b.ttl > 0) {
+          keep.push(b)
+          dead = false
+          b.light?.position.copy(b.pos) // the dlight rides the tracer
+        }
       }
       if (dead && b.light) {
         this.lights?.release(b.light)

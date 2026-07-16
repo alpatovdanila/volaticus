@@ -7,7 +7,7 @@
   "model": {
     "src": "models/alyosha/index.glb",
     "anims": ["Walking.fbx", "Zombie Death.fbx"],
-    "emissive": { "crystals": { "color": "#21fdf9", "intensity": 0.7 } },
+    "emissive": { "crystals": { "color": "#52bdff", "intensity": 1.6 } },
     "dismember": { "lhand": { "weight": 1 }, "rhand": { "weight": 1 } }
   },
   "materials": {},

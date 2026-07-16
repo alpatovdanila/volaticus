@@ -69,7 +69,7 @@ const checkbox = (get: () => boolean, set: (v: boolean) => void): HTMLInputEleme
   return c
 }
 
-export function mountSettingsPanel(h: Hooks): void {
+export function mountSettingsPanel(h: Hooks, parent: HTMLElement = document.body): void {
   const panel = document.createElement('div')
   panel.style.cssText =
     'position:fixed;right:10px;top:64px;width:270px;color:#9fb2c5;font:11px/1.7 monospace;user-select:none;display:flex;flex-direction:column;gap:6px;'
@@ -126,5 +126,5 @@ export function mountSettingsPanel(h: Hooks): void {
     row('tilt str', slider(0, 1, 0.05, () => G.tiltStrength, (v) => { G.tiltStrength = v; saveLive() })),
   )
 
-  document.body.appendChild(panel)
+  parent.appendChild(panel)
 }

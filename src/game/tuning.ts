@@ -18,7 +18,7 @@ export interface DevButton {
   isOn?: () => boolean // toggles render their live state
 }
 
-export function mountTuningPanel(fields: TuningField[], buttons: DevButton[] = []): void {
+export function mountTuningPanel(fields: TuningField[], buttons: DevButton[] = [], parent: HTMLElement = document.body): void {
   const panel = document.createElement('div')
   panel.style.cssText =
     'position:fixed;left:10px;bottom:10px;padding:8px 10px;background:rgba(10,14,18,0.75);' +
@@ -69,5 +69,5 @@ export function mountTuningPanel(fields: TuningField[], buttons: DevButton[] = [
     row.append(label, input, val)
     panel.appendChild(row)
   }
-  document.body.appendChild(panel)
+  parent.appendChild(panel)
 }

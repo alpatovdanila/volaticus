@@ -10,7 +10,7 @@ import { color, uniform } from 'three/tsl'
 
 export interface OrbConfig {
   count: number
-  color: string // warm hex; drives both the point light and the sphere glow
+  color: THREE.ColorRepresentation // hex string or number; drives both the point light and the sphere glow
   intensity: number // point-light intensity (live-tunable)
   radius: number // ring radius from arena centre
   height: number // y of the orb + its light

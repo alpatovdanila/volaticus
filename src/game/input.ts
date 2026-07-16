@@ -26,15 +26,40 @@ function listen(): void {
 // Debug/test hook: a synthetic stick (set from the console / verification scripts)
 // overrides real devices while non-null. window.__stick(x, y) or __stick(null) to clear.
 let synthetic: { x: number; y: number } | null = null
+let syntheticUlt = false // one-shot ultimate trigger for verification scripts
 declare global {
   interface Window {
     __stick(x: number | null, y?: number): void
+    __ult(): void
   }
 }
 if (typeof window !== 'undefined') {
   window.__stick = (x, y = 0) => {
     synthetic = x === null ? null : { x, y }
   }
+  window.__ult = () => {
+    syntheticUlt = true
+  }
+}
+
+// Edge-detected ACTION button (gamepad A / keyboard E or Space): true exactly once per
+// press, so a held button fires the ultimate once, not every frame. Input stays a pure
+// device layer — the controller decides what a press means.
+let actionHeld = false
+export function pollActionPress(): boolean {
+  listen()
+  let pressed = false
+  for (const gp of navigator.getGamepads?.() ?? []) {
+    if (gp?.buttons[0]?.pressed) pressed = true // A / cross
+  }
+  if (keys.has('KeyE') || keys.has('Space')) pressed = true
+  const edge = pressed && !actionHeld
+  actionHeld = pressed
+  if (syntheticUlt) {
+    syntheticUlt = false
+    return true
+  }
+  return edge
 }
 
 export function pollMove(): MoveInput {

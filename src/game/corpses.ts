@@ -1,0 +1,119 @@
+// Corpse batch — the cheap, persistent resting place for the dead. A live zombie is an
+// animated SkinnedMesh (4 draw calls, CPU skinning); keeping dozens of those lying around
+// is exactly the draw-call blowup we want to avoid. So the instant a death animation
+// finishes, the corpse is BAKED — its final frozen pose is snapshotted into static
+// geometry (once, in the entity's local frame, since every zombie ends the death clip in
+// the same pose) — and every corpse thereafter is just an INSTANCE of that geometry. All
+// corpses of a part share one InstancedMesh: N dead zombies = 4 draw calls, not 4·N. The
+// skinned entity is freed back to the spawn pool the same moment, so it costs nothing more.
+//
+// Dismemberment is handled per part: a corpse's severed hand simply isn't given an instance
+// in that hand's mesh (severed parts are hidden on the source, so they're skipped at bake).
+import * as THREE from 'three'
+import type { BuiltEntity } from '../inventory/factory'
+
+const CAPACITY = 320 // hard ceiling on batched corpses; oldest drop out beyond it
+
+interface Corpse {
+  matrix: THREE.Matrix4 // the entity's world transform, frozen at death
+  parts: Set<string> // which part meshes this corpse still has (missing = dismembered)
+  gen: number // wave it died in (for the HUD / future policy)
+}
+
+export class CorpseBatch {
+  private parts = new Map<string, THREE.InstancedMesh>() // part name → shared instanced mesh
+  private material: THREE.Material | null = null // shared static skin (captured from the body)
+  private corpses: Corpse[] = []
+  private dirty = false
+
+  constructor(private scene: THREE.Scene) {}
+
+  // snapshot a SkinnedMesh's CURRENT pose into static group-local geometry. applyBoneTransform
+  // gives the skinned vertex in the mesh's local frame; ·matrixWorld → world; ·groupInv →
+  // the entity's local frame, so one bake serves every corpse (each instanced by its own
+  // world transform). Normals are recomputed from the baked positions (corpse-grade).
+  private bake(sm: THREE.SkinnedMesh, groupInv: THREE.Matrix4): THREE.BufferGeometry {
+    sm.updateWorldMatrix(true, false)
+    const toLocal = new THREE.Matrix4().multiplyMatrices(groupInv, sm.matrixWorld)
+    const src = sm.geometry
+    const posAttr = src.attributes.position
+    const n = posAttr.count
+    const out = new Float32Array(n * 3)
+    const v = new THREE.Vector3()
+    for (let i = 0; i < n; i++) {
+      v.fromBufferAttribute(posAttr, i)
+      sm.applyBoneTransform(i, v) // → mesh-local skinned position
+      v.applyMatrix4(toLocal) // → entity-group-local
+      out[i * 3] = v.x
+      out[i * 3 + 1] = v.y
+      out[i * 3 + 2] = v.z
+    }
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(out, 3))
+    if (src.attributes.uv) g.setAttribute('uv', (src.attributes.uv as THREE.BufferAttribute).clone())
+    if (src.index) g.setIndex(src.index.clone())
+    g.computeVertexNormals()
+    return g
+  }
+
+  private ensurePart(name: string, sm: THREE.SkinnedMesh, groupInv: THREE.Matrix4): THREE.InstancedMesh {
+    let imesh = this.parts.get(name)
+    if (imesh) return imesh
+    const geo = this.bake(sm, groupInv)
+    imesh = new THREE.InstancedMesh(geo, this.material!, CAPACITY)
+    imesh.count = 0
+    imesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+    imesh.frustumCulled = false // corpses scatter — a shared bound would cull wrongly
+    imesh.receiveShadow = true
+    imesh.castShadow = false // grounded + low; skip the shadow-pass cost of hundreds of them
+    this.scene.add(imesh)
+    this.parts.set(name, imesh)
+    return imesh
+  }
+
+  // enrol a freshly-finished corpse: bake any part geometry we don't have yet, then record
+  // this corpse's transform. `built` is about to be recycled, so we copy what we need now.
+  add(built: BuiltEntity, gen: number): void {
+    built.group.updateWorldMatrix(true, false)
+    const groupInv = built.group.matrixWorld.clone().invert()
+    // the shared corpse skin = the BODY material (no crystal glow — that clone stays with
+    // the live entity; a corpse's crystals have long since faded)
+    if (!this.material) {
+      const body = built.meshes.find((m) => m.userData.nodeName === 'body') ?? built.meshes[0]
+      this.material = (Array.isArray(body.material) ? body.material[0] : body.material) as THREE.Material
+    }
+    const present = new Set<string>()
+    for (const sm of built.meshes as THREE.SkinnedMesh[]) {
+      if (!sm.visible) continue // severed/hidden parts aren't part of the corpse
+      const name = (sm.userData.nodeName as string) || sm.name
+      this.ensurePart(name, sm, groupInv)
+      present.add(name)
+    }
+    this.corpses.push({ matrix: built.group.matrixWorld.clone(), parts: present, gen })
+    if (this.corpses.length > CAPACITY) this.corpses.shift() // evict the oldest corpse
+    this.dirty = true
+  }
+
+  // rewrite the instance buffers from the surviving corpse records (corpses never move, so
+  // this only runs when the set changed). Each part mesh gets an instance for every corpse
+  // that still has that part.
+  update(): void {
+    if (!this.dirty) return
+    this.dirty = false
+    for (const [name, imesh] of this.parts) {
+      let count = 0
+      for (const c of this.corpses) {
+        if (c.parts.has(name)) {
+          imesh.setMatrixAt(count, c.matrix)
+          count++
+        }
+      }
+      imesh.count = count
+      imesh.instanceMatrix.needsUpdate = true
+    }
+  }
+
+  count(): number {
+    return this.corpses.length
+  }
+}

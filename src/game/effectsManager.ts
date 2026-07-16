@@ -48,11 +48,32 @@ const WALL_SPARK: EffectDoc = {
   ],
 }
 
+// muzzle flash — a spray of TINY (~1px) short-lived sparks off the barrel on every shot
+const MUZZLE_SPARK: EffectDoc = {
+  format: 1,
+  id: 'muzzle-spark',
+  name: 'muzzle spark',
+  particles: [
+    {
+      count: 5,
+      size: [0.005, 0.012], // ~1px at play distance
+      speed: [4, 9],
+      dir: 'sphere', // biased forward down the barrel via EffectParams.aim
+      gravity: -8,
+      drag: 3,
+      life: [0.03, 0.1], // a flash, gone almost instantly
+      colors: ['#fff4cc', '#ffd070', '#ff9a33'],
+      spin: 0,
+    },
+  ],
+}
+
 // per-category budget: at most `max` spawns per rolling `window` seconds — a crowd of
 // zombies all being hit the same frame degrades to "enough blood", not a particle storm
 const BUDGETS: Record<string, { max: number; window: number }> = {
   blood: { max: 8, window: 0.4 },
   spark: { max: 6, window: 0.4 },
+  muzzle: { max: 14, window: 0.4 }, // one per shot — generous so rapid/ultimate fire keeps flashing
 }
 
 const NOOP_DEPS: EffectDeps = { playSfx: () => {}, addShake: () => {} }
@@ -73,6 +94,11 @@ export class EffectsManager {
 
   wallSpark(at: THREE.Vector3): void {
     if (this.allow('spark')) this.fx.play(WALL_SPARK, at, this.deps)
+  }
+
+  // dir = shot direction; the tiny sparks spray forward off the barrel
+  muzzleSpark(at: THREE.Vector3, dir?: THREE.Vector3): void {
+    if (this.allow('muzzle')) this.fx.play(MUZZLE_SPARK, at, this.deps, dir ? { aim: dir.clone().setLength(1.8) } : undefined)
   }
 
   update(dt: number): void {

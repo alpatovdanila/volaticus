@@ -18,9 +18,9 @@ export interface WaveDef {
   interWaveDelay: number // seconds between a cleared arena and the next wave
 }
 
-// the dev test wave: 7–9 plain zombies rising in a ring around the player
+// the dev test wave: 14–18 plain zombies rising in a ring around the player
 export const TEST_WAVE: WaveDef = {
-  count: [7, 9],
+  count: [14, 18],
   spawns: [{ type: 'alyosha', weight: 1 }],
   zones: [{ kind: 'ring', rMin: 5.5, rMax: 10 }],
   stagger: [0, 1.5],
@@ -84,8 +84,8 @@ export class WaveController {
   private async beginWave(): Promise<void> {
     this.wave += 1
     this.onWaveStart?.(this.wave)
-    // corpses/chunks are NOT this controller's concern — the remains manager holds
-    // custody and budgets them; spawnAt reclaims the oldest corpse if the pool is dry
+    // corpses are NOT this controller's concern — the horde bakes them into the CorpseBatch
+    // and recycles the skinned entities itself; the controller only decides when to spawn
     const [lo, hi] = this.def.count
     const count = lo + Math.floor(Math.random() * (hi - lo + 1))
     for (let i = 0; i < count; i++) {

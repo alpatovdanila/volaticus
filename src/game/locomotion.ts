@@ -15,6 +15,8 @@ const BLEND_RATE = 9 // 1/s — exponential approach for phase weights
 const TURN_RATE = 14 // 1/s — heading slerp
 const RUN_ENTER = 0.55 // hysteresis: walk→run above this deflection…
 const RUN_EXIT = 0.45 // …run→walk below this
+const AIM_LOCK = 0.11 // rad (~6°) — aligned enough onto the target to fire
+const AIM_UNLOCK = 0.3 // rad (~17°) — a miss this big is a real target switch → hold fire
 
 export function speedFor(mag: number): number {
   // live registry reads: speed tuning/upgrades reshape the curve instantly
@@ -123,6 +125,7 @@ export class Locomotion {
   // carries momentum, and settles with a whisper of overshoot, like a practiced shooter
   // throwing the gun onto the next target. Stiffness is a live registry read.
   private aimVel = 0 // yaw angular velocity (rad/s) — the spring's state
+  private aimLocked = true // latched aim-settled flag (hysteresis band AIM_LOCK..AIM_UNLOCK)
   faceToward(target: THREE.Vector3, dt: number): void {
     const dx = target.x - this.group.position.x
     const dz = target.z - this.group.position.z
@@ -131,11 +134,23 @@ export class Locomotion {
     let err = yaw - this.heading
     while (err > Math.PI) err -= Math.PI * 2
     while (err < -Math.PI) err += Math.PI * 2
+    // aim lock with hysteresis: a big miss (a NEW target) unlocks → 'switching', and it
+    // re-locks only once tightly aligned — the band keeps the spring's small end-of-sweep
+    // overshoot from flickering the lock (and firing) back off.
+    const a = Math.abs(err)
+    if (a > AIM_UNLOCK) this.aimLocked = false
+    else if (a < AIM_LOCK) this.aimLocked = true
     const stiff = system.params.aimTurnStiffness
-    const damping = 2 * 0.72 * Math.sqrt(stiff) // ζ = 0.72: underdamped → pronounced accel + a weighty overshoot
+    const damping = 2 * 0.68 * Math.sqrt(stiff) // ζ = 0.68: underdamped → pronounced accel + a weighty overshoot
     this.aimVel += (stiff * err - damping * this.aimVel) * dt
     this.heading += this.aimVel * dt
     this.group.rotation.y = this.heading
+  }
+
+  // true once the gun has settled onto the target; false while still sweeping to it. The
+  // controller holds fire until this is true (the 'switching targets' state).
+  aimSettled(): boolean {
+    return this.aimLocked
   }
 
   // dir = desired WORLD-space move direction (unit XZ), mag = stick deflection 0..1.

@@ -13,13 +13,18 @@ import * as THREE from 'three'
 import type { BuiltEntity } from '../inventory/factory'
 import type { MoveInput } from './input'
 import { Locomotion, type AimMove } from './locomotion'
+import { pushCircleOut, type Box } from './obstacles'
 import { system } from './system'
 
 export type Stance = 'moving' | 'settling' | 'standing'
 
+const _out = { x: 0, z: 0 } // scratch for obstacle push-out
+
 export class PlayerController {
   readonly loco: Locomotion
   stance: Stance = 'standing'
+  // aimed at a target but the gun is still sweeping onto it → hold fire ('switching targets')
+  switching = false
   // damage immunity flag — nothing deals damage to the player yet, but dev modes
   // (pacifist) and future powerups set it; the damage pipeline must consult it
   invincible = false
@@ -32,6 +37,7 @@ export class PlayerController {
     readonly built: BuiltEntity,
     private boundsHalf: number,
     private radius: number,
+    private obstacles: Box[] = [], // interior walls the player can't walk through
   ) {
     this.loco = new Locomotion(built.group, built.mixer!, built.clips ?? [], {
       idle: 'Idle Rifle',
@@ -106,10 +112,17 @@ export class PlayerController {
       const p = this.built.group.position
       p.x = THREE.MathUtils.clamp(p.x + dir.x * speed * dt, -this.boundsHalf + this.radius, this.boundsHalf - this.radius)
       p.z = THREE.MathUtils.clamp(p.z + dir.z * speed * dt, -this.boundsHalf + this.radius, this.boundsHalf - this.radius)
+      if (this.obstacles.length) {
+        pushCircleOut(p.x, p.z, this.radius, this.obstacles, _out) // slide along interior walls
+        p.x = _out.x
+        p.z = _out.z
+      }
     }
 
-    // firing: a standing-only capability (aimed while moving = tracked, not shot)
-    this.loco.setFiring(this.stance === 'standing' && aimed)
+    // firing needs a SETTLED aim: while the gun sweeps onto a fresh target the player is
+    // 'switching targets' and holds fire. Firing stays a standing-only capability.
+    this.switching = this.stance === 'standing' && aimed && !this.loco.aimSettled()
+    this.loco.setFiring(this.stance === 'standing' && aimed && this.loco.aimSettled())
     return speed
   }
 }

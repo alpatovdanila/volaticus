@@ -8,6 +8,7 @@
 // SkeletonUtils clone (a THREE.Skeleton can't be shared across live instances) while the
 // stateless AnimationClips are shared.
 import * as THREE from 'three'
+import { MeshPhysicalNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
 import { clone as cloneHierarchy } from 'three/addons/utils/SkeletonUtils.js'
@@ -194,6 +195,33 @@ function normalizeGlbMaterials(scene: THREE.Object3D): void {
   })
 }
 
+// Convert the GLB's CLASSIC materials to real NODE materials. The rest of the engine is
+// node-native (catalog materials, grafts, the whole WebGPU stack); classic materials only
+// exist here because GLTFLoader emits them — and they keep paying for it: the transient
+// classic→node wrapper in three r185 provably LOSES live scene.environmentRotation (a
+// node-material mirror follows the env yaw, a classic one doesn't — patch-verified), plus
+// the earlier envMap-crash and baked-emissive-lift workarounds were classic-only. One
+// conversion at load and imported models are first-class citizens: same property names,
+// so a shallow copy carries maps/factors verbatim (mirrors three's NodeLibrary.fromMaterial).
+function toNodeMaterials(scene: THREE.Object3D): void {
+  const converted = new Map<THREE.Material, THREE.Material>()
+  const convert = (m: THREE.Material): THREE.Material => {
+    const cached = converted.get(m)
+    if (cached) return cached
+    if ((m as { isNodeMaterial?: boolean }).isNodeMaterial) return m
+    if (!(m as THREE.MeshStandardMaterial).isMeshStandardMaterial) return m // unlit/basic — leave alone
+    const nm = (m as THREE.MeshPhysicalMaterial).isMeshPhysicalMaterial ? new MeshPhysicalNodeMaterial() : new MeshStandardNodeMaterial()
+    for (const key in m) (nm as unknown as Record<string, unknown>)[key] = (m as unknown as Record<string, unknown>)[key]
+    converted.set(m, nm)
+    return nm
+  }
+  scene.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!(mesh as unknown as { isMesh?: boolean }).isMesh) return
+    mesh.material = Array.isArray(mesh.material) ? mesh.material.map(convert) : convert(mesh.material)
+  })
+}
+
 // Fetch + parse a GLB once (+ merge any sibling FBX clips), cache the raw scene + clips.
 export function preloadGltf(path: string, animFiles: string[] = []): Promise<void> {
   const key = keyFor(path, animFiles)
@@ -205,6 +233,7 @@ export function preloadGltf(path: string, animFiles: string[] = []): Promise<voi
       .loadAsync('/' + encodeURI(path))
       .then(async (gltf) => {
         normalizeGlbMaterials(gltf.scene)
+        toNodeMaterials(gltf.scene)
         const merged = animFiles.length ? await mergeFbxClips(gltf.scene, path, animFiles) : []
         rawCache.set(key, { scene: gltf.scene, clips: [...gltf.animations, ...merged] })
       })

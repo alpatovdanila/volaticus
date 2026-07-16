@@ -5,22 +5,11 @@
   "category": "enemy",
   "notes": "Imported GLB via scripts/import-glb.ts. Parts: tripo_part_0, tripo_part_1, tripo_part_2, tripo_part_3, tripo_part_4. Clips: index, Hit.",
   "model": {
-    "src": "models/shielder/index.glb"
+    "src": "models/shielder/index.glb",
+    "dismember": { "tripo_part_0": { "weight": 1 }, "tripo_part_4": { "weight": 1 } }
   },
   "materials": {},
   "rig": {},
-  "states": {
-    "initial": "index",
-    "index": {
-      "anim": "index"
-    },
-    "Hit": {
-      "anim": "Hit"
-    }
-  },
-  "events": {
-    "Hit": {
-      "anim": "Hit"
-    }
-  }
+  "states": { "initial": "index", "index": { "anim": "index" }, "Hit": { "anim": "Hit" } },
+  "events": { "Hit": { "anim": "Hit" } }
 }

@@ -6,6 +6,7 @@ import { Brush, Evaluator, SUBTRACTION, ADDITION, INTERSECTION } from 'three-bvh
 import { randRange } from '../lib/rng'
 import { catalogDefaultUvScale, makeDecalMaterial, makeSlotMaterial, type EntityMaterial } from './materials'
 import { getMeshGeometry } from './meshes'
+import type { GltfModel } from './gltf'
 import {
   craftAmount,
   generateArrowPlank,
@@ -270,6 +271,22 @@ export interface BuiltEntity {
   // legacy per-instance tint multiplier — always 1 now (tint jitter moved to the
   // level editor). Kept so batching code that divides it back out still compiles.
   tintK: number
+  // IMPORTED GLB entities only (buildGlbEntity): the model's own AnimationMixer + clips
+  // drive its native skeleton. EntityPreview plays these via the mixer instead of
+  // AnimPlayer. Undefined for procedural entities (the AnimPlayer path is unchanged).
+  mixer?: THREE.AnimationMixer
+  clips?: THREE.AnimationClip[]
+  // GLB meshes tagged "<part>@exposeEmissive": their CLONED materials (so only that part
+  // glows), keyed by exposed part name. The editor's emissive control edits these live.
+  emissiveParts?: Map<string, THREE.MeshStandardMaterial>
+}
+
+// A GLB mesh named "<part>@exposeEmissive[.NNN]" opts into a per-part emissive glow. Returns
+// the exposed part name ("crystal") or null. The tag lives in the mesh name so the model
+// author declares intent in Blender; the editor surfaces a colour+intensity control for it.
+export function exposedEmissiveName(meshName: string): string | null {
+  const m = /^(.+?)@exposeEmissive/.exec(meshName)
+  return m ? m[1] : null
 }
 
 // ---------------------------------------------------------------------------
@@ -1683,6 +1700,58 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
 
   const bounds = new THREE.Box3().setFromObject(group)
   return { group, nodes, meshes, slotMaterials, bounds, seed: 0, tintK: 1 }
+}
+
+// IMPORTED-GLB path — parallel to buildEntity. No procgeom, no baked variant, no CSG,
+// no merge: the GLB's native meshes / skeleton / PBR materials / clips are used verbatim
+// (the model ships its own textures — nothing is retextured). Produces the same
+// BuiltEntity contract the editor + preview consume, plus mixer/clips for animation.
+export function buildGlbEntity(doc: EntityDoc, model: GltfModel): BuiltEntity {
+  const group = new THREE.Group()
+  group.name = doc.id
+  group.add(model.scene)
+
+  const nodes = new Map<string, BuiltNode>()
+  const meshes: THREE.Mesh[] = []
+  const emissiveParts = new Map<string, THREE.MeshStandardMaterial>()
+  for (const mesh of model.meshes) {
+    // the part's PUBLIC name is the tag-stripped mesh name — "crystals@exposeEmissive"
+    // is addressed as "crystals" everywhere doc-side (emissive, dismember, show/hide);
+    // the raw tagged name lives only inside the GLB.
+    const exposed = exposedEmissiveName(mesh.name || 'mesh')
+    const name = exposed ?? (mesh.name || 'mesh')
+    mesh.userData.nodeName = name
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    mesh.frustumCulled = false // bind-pose bounds lie once bones move the verts
+
+    // "@exposeEmissive"-tagged part → give it its OWN material (the GLB shares one atlas
+    // material across parts) so only this part glows, and apply the authored colour/intensity.
+    if (exposed) {
+      const src = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshStandardMaterial
+      const mat = src.clone() // shares the atlas texture; independent emissive
+      const cfg = doc.model?.emissive?.[exposed]
+      mat.emissive = new THREE.Color(cfg?.color ?? '#ffffff')
+      mat.emissiveIntensity = cfg?.intensity ?? 1.5
+      mat.userData.exposedEmissive = true // its emissive channel IS the glow — the global ambient-lift graft must skip it
+      mesh.material = mat
+      emissiveParts.set(exposed, mat)
+    }
+
+    meshes.push(mesh)
+    // nodes are VISIBILITY-ONLY (show/hide + picking). Animation drives the BONES via
+    // the mixer — a different set of objects — never these.
+    nodes.set(name, {
+      outer: mesh as unknown as THREE.Group,
+      inner: new THREE.Group(), // unused (no merge) — satisfies the BuiltNode contract
+      base: { pos: mesh.position.clone(), rot: mesh.rotation.clone(), scale: mesh.scale.clone() },
+      defaultVisible: true,
+    })
+  }
+
+  const bounds = new THREE.Box3().setFromObject(group)
+  const mixer = new THREE.AnimationMixer(group)
+  return { group, nodes, meshes, slotMaterials: new Map(), bounds, seed: 0, tintK: 1, mixer, clips: model.clips, emissiveParts }
 }
 
 export function disposeEntity(built: BuiltEntity): void {

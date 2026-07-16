@@ -267,6 +267,156 @@ export interface GeomCallbacks {
   onNodeRegen(name: string): void // fresh craft seed for this node (+ its seam group)
 }
 
+// Imported-model "materials" tab: a colour + intensity control per @exposeEmissive part
+// (e.g. the zombie's crystal), plus metalness/roughness sliders per glTF MATERIAL. PBR
+// changes preview live ('input') and are SAVED INTO THE .glb on release ('change') — the
+// model file stays the single source of truth for its materials.
+export interface ModelEmissivePart {
+  name: string
+  color: string // #rrggbb
+  intensity: number
+}
+export interface ModelPbrMaterial {
+  name: string
+  metalness: number
+  roughness: number
+}
+// every mesh part of the imported model — checkbox marks it dismemberable (+ weight)
+export interface ModelDismemberPart {
+  name: string
+  on: boolean
+  weight: number
+}
+export interface ModelMaterialCallbacks {
+  onColor(part: string, hex: string): void
+  onIntensity(part: string, value: number): void
+  // live preview every input; commit=true on release → persisted into the GLB
+  onPbr(material: string, key: 'metalness' | 'roughness', value: number, commit: boolean): void
+  onDismember(part: string, on: boolean): void // dismemberable checkbox → doc model.dismember
+  onWeight(part: string, weight: number): void // throw scales with 1/weight
+}
+export function renderModelMaterials(
+  parts: ModelEmissivePart[],
+  mats: ModelPbrMaterial[],
+  dparts: ModelDismemberPart[],
+  cb: ModelMaterialCallbacks,
+): void {
+  const wrap = $('#slot-chips')
+  wrap.innerHTML = ''
+  if (!parts.length && !mats.length && !dparts.length) {
+    wrap.appendChild(el('div', 'hint', 'imported model — no editable materials'))
+    return
+  }
+  if (mats.length) {
+    wrap.appendChild(el('div', 'list-section', 'pbr materials (saved into the .glb)'))
+    for (const m of mats) {
+      const box = el('div')
+      box.style.cssText = 'padding:6px 8px;display:flex;flex-direction:column;gap:4px;'
+      const title = el('div', undefined, m.name)
+      title.style.cssText = 'font-size:12px;opacity:0.9;'
+      box.appendChild(title)
+      const slider = (label: string, key: 'metalness' | 'roughness', value: number): HTMLElement => {
+        const row = el('div')
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;'
+        const lab = el('span', undefined, label)
+        lab.style.cssText = 'width:44px;font-size:11px;opacity:0.7;'
+        const range = el('input') as HTMLInputElement
+        range.type = 'range'
+        range.min = '0'
+        range.max = '1'
+        range.step = '0.01'
+        range.value = String(value)
+        range.style.cssText = 'flex:1;'
+        const num = el('span', undefined, value.toFixed(2))
+        num.style.cssText = 'width:34px;font-size:11px;text-align:right;opacity:0.8;'
+        range.oninput = () => {
+          num.textContent = (+range.value).toFixed(2)
+          cb.onPbr(m.name, key, +range.value, false)
+        }
+        range.onchange = () => cb.onPbr(m.name, key, +range.value, true)
+        row.append(lab, range, num)
+        return row
+      }
+      box.appendChild(slider('metal', 'metalness', m.metalness))
+      box.appendChild(slider('rough', 'roughness', m.roughness))
+      wrap.appendChild(box)
+    }
+  }
+  if (parts.length) {
+    wrap.appendChild(el('div', 'list-section', 'emissive'))
+    for (const p of parts) {
+      const row = el('div')
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;'
+      const name = el('span', undefined, p.name)
+      name.style.cssText = 'flex:1;font-size:12px;'
+      const color = el('input') as HTMLInputElement
+      color.type = 'color'
+      color.value = p.color
+      color.title = 'glow colour'
+      color.style.cssText = 'width:34px;height:24px;padding:0;border:none;background:none;cursor:pointer;'
+      color.oninput = () => cb.onColor(p.name, color.value)
+      const range = el('input') as HTMLInputElement
+      range.type = 'range'
+      range.min = '0'
+      range.max = '10'
+      range.step = '0.1'
+      range.value = String(p.intensity)
+      range.title = 'glow intensity'
+      range.style.cssText = 'width:110px;'
+      const num = el('span', undefined, p.intensity.toFixed(1))
+      num.style.cssText = 'width:28px;font-size:12px;text-align:right;opacity:0.8;'
+      range.oninput = () => {
+        num.textContent = (+range.value).toFixed(1)
+        cb.onIntensity(p.name, +range.value)
+      }
+      row.append(name, color, range, num)
+      wrap.appendChild(row)
+    }
+  }
+  if (dparts.length) {
+    wrap.appendChild(el('div', 'list-section', 'parts — dismemberable'))
+    const hint = el(
+      'div',
+      'hint',
+      'checked parts get generic "dismember_<part>" events + reversible "dismembered_<part>" modifiers; weight scales the throw (heavy drops short, light flies)',
+    )
+    hint.style.cssText = 'padding:2px 8px 6px;font-size:11px;'
+    wrap.appendChild(hint)
+    for (const p of dparts) {
+      const row = el('div')
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 8px;'
+      const check = el('input') as HTMLInputElement
+      check.type = 'checkbox'
+      check.checked = p.on
+      check.title = 'dismemberable: derive dismember/dismembered controls for this part'
+      const name = el('span', undefined, p.name)
+      name.style.cssText = 'flex:1;font-size:12px;'
+      const wLab = el('span', undefined, 'weight')
+      wLab.style.cssText = 'font-size:11px;opacity:0.7;'
+      const num = el('input') as HTMLInputElement
+      num.type = 'number'
+      num.min = '0.05'
+      num.max = '100'
+      num.step = '0.1'
+      num.value = String(p.weight)
+      num.disabled = !p.on
+      num.title = 'relative mass — the severed chunk is thrown with velocity ∝ 1/weight'
+      num.style.cssText = 'width:58px;'
+      check.onchange = () => {
+        num.disabled = !check.checked
+        cb.onDismember(p.name, check.checked)
+      }
+      num.onchange = () => {
+        const v = Math.min(100, Math.max(0.05, +num.value || 1))
+        num.value = String(v)
+        cb.onWeight(p.name, v)
+      }
+      row.append(check, name, wLab, num)
+      wrap.appendChild(row)
+    }
+  }
+}
+
 export function renderGeomTree(rows: GeomNodeInfo[], cb: GeomCallbacks): void {
   const wrap = $('#slot-chips')
   wrap.innerHTML = ''
@@ -1014,7 +1164,7 @@ export interface OverlayCallbacks {
   onCollider(show: boolean): void
   onResetCam(): void
   onContext(dim: string, value: string | null): void
-  onModifier(name: string | null): void // entity-level visibility overlay (face expression)
+  onModifier(name: string, active: boolean): void // entity-level visibility overlays — STACKABLE toggles
 }
 
 export function renderOverlay(
@@ -1023,8 +1173,8 @@ export function renderOverlay(
     states: string[]
     current: string | null
     events: string[]
-    modifiers?: string[] // declared entity modifiers (doc.modifiers keys)
-    modifier?: string | null // the active one
+    modifiers?: string[] // declared + derived entity modifiers (doc.modifiers keys, dismembered_<part>)
+    activeModifiers?: string[] // the currently active set (stackable)
     contextDims?: Map<string, Set<string>>
     context?: Record<string, string>
     variant?: { index: number; count: number } // baked variant set (<id>.geom.{i}.json + layouts)
@@ -1054,12 +1204,13 @@ export function renderOverlay(
       b.onclick = () => cb.onEvent(ev)
       top.appendChild(b)
     }
-    // modifier chips: visibility overlays that combine with ANY state — click
-    // toggles (one active at a time, clicking the active one clears it)
+    // modifier chips: visibility overlays that combine with ANY state — independent
+    // toggles, any number active at once (severed left + severed right + an expression)
     for (const m of item.modifiers ?? []) {
-      const b = el('button', 'btn-modifier' + (item.modifier === m ? ' active' : ''), m)
-      b.title = `modifier "${m}": show/hide overlay on top of the current state (combineable with any animation)`
-      b.onclick = () => cb.onModifier(item.modifier === m ? null : m)
+      const active = item.activeModifiers?.includes(m) ?? false
+      const b = el('button', 'btn-modifier' + (active ? ' active' : ''), m)
+      b.title = `modifier "${m}": show/hide overlay on top of the current state (stackable, combineable with any animation)`
+      b.onclick = () => cb.onModifier(m, !active)
       top.appendChild(b)
     }
     for (const [dim, values] of item.contextDims ?? []) {

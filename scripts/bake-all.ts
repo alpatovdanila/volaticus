@@ -39,6 +39,13 @@ for (const id of fs.readdirSync(ENTITIES).filter((d) => fs.statSync(path.join(EN
   if (!fs.existsSync(file)) continue
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'))
 
+  // imported GLB entities have no procedural rig — nothing to bake (geometry, skeleton,
+  // clips all live in the GLB). Never emit variants/geom sidecars for them.
+  if (raw.model) {
+    console.log(`  ${id}: imported model — skipped (no bake)`)
+    continue
+  }
+
   // 1. clean the entity JSON
   delete raw.behavior
   if (isObj(raw.variants)) {

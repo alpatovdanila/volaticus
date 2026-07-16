@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "id": "alyosha",
+  "name": "Alyosha",
+  "category": "enemy",
+  "notes": "Imported GLB via scripts/import-glb.ts. Parts: body, crystals@exposeEmissive, lhand, rhand. Clips: index, Walking, Zombie Death.",
+  "model": {
+    "src": "models/alyosha/index.glb",
+    "anims": [
+      "Walking.fbx",
+      "Zombie Death.fbx"
+    ],
+    "emissive": {
+      "crystals": {
+        "color": "#66ccff",
+        "intensity": 2.5
+      }
+    },
+    "dismember": {
+      "lhand": {
+        "weight": 1
+      },
+      "rhand": {
+        "weight": 1
+      }
+    }
+  },
+  "materials": {},
+  "rig": {},
+  "states": {
+    "initial": "index",
+    "index": {
+      "anim": "index"
+    },
+    "Walking": {
+      "anim": "Walking"
+    },
+    "Zombie Death": {
+      "anim": "Zombie Death"
+    }
+  }
+}

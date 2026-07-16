@@ -301,6 +301,11 @@ const effectRef = z.union([
     texture: z.string().optional(),
     uvRot: z.number().min(0).max(359).optional(), // degrees (UI offers 15° steps)
     slot: z.string().optional(), // inherit texture+uvRot from this material slot (stays in sync)
+    part: z.string().optional(), // SCRIPT_EFFECT_DISMEMBER: name of the mesh part to sever + throw
+    // seconds to hold the effect AND the binding's modifier flip (the "consequence") after the
+    // binding fires — the binding's anim/sfx start immediately, so a flinch can lead before the
+    // visible detach (e.g. dismember at 0.25s into the hit reaction).
+    delay: z.number().min(0).optional(),
   }),
 ])
 export type EffectRef = z.infer<typeof effectRef>
@@ -316,8 +321,9 @@ export function effectParamsOf(e: EffectRef | undefined): { texture?: string; uv
 // Reserved "script effect" ids referenced from a binding's `effect` field instead
 // of an inventory effect — built-in runtime behaviors the studio/game resolve
 // directly (preview.ts) rather than looking up inventory/effects/. Exempt from the
-// effect-existence cross-check. SCRIPT_EFFECT_SHATTER = throw the entity's parts apart.
-export const SCRIPT_EFFECTS = ['SCRIPT_EFFECT_SHATTER'] as const
+// effect-existence cross-check. SCRIPT_EFFECT_SHATTER = throw the entity's parts apart;
+// SCRIPT_EFFECT_DISMEMBER = sever + throw ONE named mesh part (effect.part), e.g. a hand.
+export const SCRIPT_EFFECTS = ['SCRIPT_EFFECT_SHATTER', 'SCRIPT_EFFECT_DISMEMBER'] as const
 export type ScriptEffect = (typeof SCRIPT_EFFECTS)[number]
 export function isScriptEffect(id: string | undefined): id is ScriptEffect {
   return !!id && (SCRIPT_EFFECTS as readonly string[]).includes(id)
@@ -330,6 +336,9 @@ const bindingCore = {
   // hide the entity's MAIN geometry as part of a reaction (so only the effect/debris
   // shows). NOT instance removal — the runtime decides whether/when to despawn.
   hideGeometry: z.boolean().optional(),
+  // activate an entity-level MODIFIER as part of the reaction (e.g. dismember → the
+  // "dismembered" modifier hides the severed part across ALL later states). '' clears.
+  modifier: z.string().optional(),
 }
 
 export const BindingSchema = z.object({
@@ -409,6 +418,31 @@ export const ClipSchema = z.object({
 })
 export type ClipDef = z.infer<typeof ClipSchema>
 
+// Imported model descriptor — the GLB is the single source of truth for its geometry,
+// materials, skeleton and clip names (we never mirror mesh/clip lists into the doc).
+export const ModelSchema = z.object({
+  src: z.string().min(1), // resources-relative, e.g. 'models/player-test/index.glb'
+  // extra animation clips to MERGE from sibling Mixamo FBX files (filenames relative to the
+  // GLB's folder). Retargeted onto the GLB skeleton at load and named after the file (minus
+  // .fbx). Use when the GLB ships only its base clip (clips already baked into the GLB need
+  // no entry). e.g. ["Running.fbx", "Reaction Hit.fbx"].
+  anims: z.array(z.string()).optional(),
+  // Per-part uniform emissive (glow). Keyed by the EXPOSED part name — a GLB mesh named
+  // "<part>@exposeEmissive" opts in; the editor shows a colour+intensity control for it.
+  // The part's material is cloned so only that part glows. Absent = the tagged part uses
+  // a default glow until authored here.
+  emissive: z
+    .record(z.object({ color: hexColor, intensity: z.number().min(0).max(20) }))
+    .optional(),
+  // DISMEMBERABLE parts, keyed by GLB mesh name — the ONLY persisted dismemberment data
+  // (checkbox + weight in the editor). Everything else is DERIVED at load: each entry gets a
+  // virtual modifier "dismembered_<part>" (hides the mesh — reversible, stackable) and a
+  // virtual event "dismember_<part>" (bakes the part's current pose into a chunk and throws
+  // it back, velocity ∝ 1/weight, then activates the modifier). Severed = HIDDEN, never removed.
+  dismember: z.record(z.object({ weight: z.number().min(0.05).max(100) })).optional(),
+})
+export type ModelDef = z.infer<typeof ModelSchema>
+
 export const EntitySchema = z.object({
   format: z.literal(1),
   id: z.string().regex(/^[a-z0-9_]+$/),
@@ -421,6 +455,11 @@ export const EntitySchema = z.object({
   // bone names 1:1, so the anim tracks drive bones unchanged. Opt-in per entity —
   // skinned entities skip the per-entity merge (BatchedMesh cannot skin).
   skinned: z.boolean().optional(),
+  // Imported glTF/GLB model. When present, this entity is NOT procedural: geometry,
+  // skeleton, materials AND animation clips all come from the GLB (which ships its own
+  // PBR maps — kept as-is, no in-editor material editing). `rig` + `materials` are then
+  // empty ({}); `states` map state names to GLB clip names (see scripts/import-glb.ts).
+  model: ModelSchema.optional(),
   materials: z.record(MaterialSchema),
   rig: z.record(NodeSchema),
   physics: z
@@ -731,6 +770,11 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
   const issues: string[] = []
   const doc = parsed.data as unknown as EntityDoc
 
+  // Imported GLB entity: geometry/skeleton/materials/clips all live in the GLB. Its
+  // state.anim values are GLB CLIP names (validated in the browser against the loaded
+  // model, not here), and it has no procedural rig/anims. `rig`/`materials` are empty {}.
+  const isImported = !!doc.model
+
   // item 34: inherit targets exist, no cycles, chains terminate in a material.
   // (Parent slots referenced by no geometry are LEGAL — they're group knobs.)
   checkSlotInheritance(doc.materials, issues)
@@ -762,9 +806,13 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
       }
       stateNames.push(key)
       const s = st.data
-      if (s.anim && !doc.anims?.[s.anim]) issues.push(`states.${key}: unknown anim "${s.anim}"`)
-      for (const n of [...(s.show ?? []), ...(s.hide ?? [])])
-        if (!nodeNames.has(n)) issues.push(`states.${key}: unknown node "${n}" in show/hide`)
+      // imported models: state.anim is a GLB clip name and show/hide are GLB mesh names —
+      // both validated in the browser against the loaded GLB, not against rig/anims here.
+      if (!isImported) {
+        if (s.anim && !doc.anims?.[s.anim]) issues.push(`states.${key}: unknown anim "${s.anim}"`)
+        for (const n of [...(s.show ?? []), ...(s.hide ?? [])])
+          if (!nodeNames.has(n)) issues.push(`states.${key}: unknown node "${n}" in show/hide`)
+      }
       for (const t of Object.keys(s.cues ?? {}))
         if (!(parseFloat(t) >= 0)) issues.push(`states.${key}: bad cue time "${t}"`)
     }
@@ -780,15 +828,26 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
     }
   }
 
-  // binding.anim must reference a real clip; byContext keys must be "dim=value"
+  // binding.anim must reference a real clip (imported models: GLB clip names — checked in the
+  // browser, not here); binding.modifier a declared modifier OR a derived dismemberment one
+  // ("dismembered_<part>" exists implicitly for every model.dismember part); byContext keys "dim=value"
+  const modifierKnown = (name: string): boolean => {
+    if (doc.modifiers?.[name]) return true
+    const part = /^dismembered_(.+)$/.exec(name)?.[1]
+    return !!(part && doc.model?.dismember?.[part])
+  }
   const checkBindingAnim = (where: string, b: unknown) => {
     const binding = b as Binding | undefined
     if (!binding) return
-    if (binding.anim && !doc.anims?.[binding.anim]) issues.push(`${where}: unknown anim "${binding.anim}"`)
+    if (!isImported && binding.anim && !doc.anims?.[binding.anim]) issues.push(`${where}: unknown anim "${binding.anim}"`)
+    if (binding.modifier && !modifierKnown(binding.modifier))
+      issues.push(`${where}: unknown modifier "${binding.modifier}"`)
     for (const [key, override] of Object.entries(binding.byContext ?? {})) {
       if (!CONTEXT_KEY_RE.test(key)) issues.push(`${where}: bad context key "${key}" (expected dim=value)`)
-      if (override.anim && !doc.anims?.[override.anim])
+      if (!isImported && override.anim && !doc.anims?.[override.anim])
         issues.push(`${where}[${key}]: unknown anim "${override.anim}"`)
+      if (override.modifier && !modifierKnown(override.modifier))
+        issues.push(`${where}[${key}]: unknown modifier "${override.modifier}"`)
     }
   }
   for (const [ev, b] of Object.entries(doc.events ?? {})) checkBindingAnim(`events.${ev}`, b)
@@ -804,10 +863,12 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
     for (const n of names) if (!nodeNames.has(n)) issues.push(`variants.oneOf.${group}: unknown node "${n}"`)
   }
 
-  for (const [mod, def] of Object.entries(doc.modifiers ?? {})) {
-    for (const n of [...(def.show ?? []), ...(def.hide ?? [])])
-      if (!nodeNames.has(n)) issues.push(`modifiers.${mod}: unknown node "${n}" in show/hide`)
-  }
+  // imported models: modifier show/hide reference GLB MESH names (live in the GLB, not the rig)
+  if (!isImported)
+    for (const [mod, def] of Object.entries(doc.modifiers ?? {})) {
+      for (const n of [...(def.show ?? []), ...(def.hide ?? [])])
+        if (!nodeNames.has(n)) issues.push(`modifiers.${mod}: unknown node "${n}" in show/hide`)
+    }
 
   return { doc, issues }
 }
@@ -876,6 +937,8 @@ export function crossCheckEntity(doc: EntityDoc, ctx: CrossContext): string[] {
     if (mat.material !== undefined && !ctx.hasMaterial(mat.material))
       issues.push(`materials.${slot}: unknown catalog material "${mat.material}"`)
   }
+  // imported GLB source must exist on disk (mesh/clip coverage is checked in the browser)
+  if (doc.model?.src && !ctx.hasModel(doc.model.src)) issues.push(`model.src: model file not found "${doc.model.src}"`)
   walkRig(doc.rig, (name, node) => {
     if (node.shape === 'mesh' && node.mesh && !ctx.hasModel(node.mesh))
       issues.push(`rig.${name}: mesh file not found "${node.mesh}"`)

@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "id": "ancient_shooter",
+  "name": "Ancient Shooter",
+  "category": "enemy",
+  "notes": "Imported GLB via scripts/import-glb.ts. Parts: ball@exposeEmissive, body, gem2@exposeEmissive, gem@exposeEmissive. Clips: index, Hit.",
+  "model": {
+    "src": "models/ancient-shooter/index.glb",
+    "emissive": {
+      "ball": {
+        "color": "#66ccff",
+        "intensity": 2.5
+      },
+      "gem2": {
+        "color": "#66ccff",
+        "intensity": 2.5
+      },
+      "gem": {
+        "color": "#66ccff",
+        "intensity": 2.5
+      }
+    }
+  },
+  "materials": {},
+  "rig": {},
+  "states": {
+    "initial": "index",
+    "index": {
+      "anim": "index"
+    },
+    "Hit": {
+      "anim": "Hit"
+    }
+  },
+  "events": {
+    "Hit": {
+      "anim": "Hit"
+    }
+  }
+}

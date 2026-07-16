@@ -30,7 +30,11 @@ export function attachEnv(m: THREE.Material): void {
   // material already reflects the scene's IBL environment (scene.environment) — the Manager preview
   // reflects gorgeously with NO per-material envMap — so opt-in reflection rides scene.environment and
   // we never set the crashing envMap on a node material. (Legacy MeshStandardMaterial still uses envMap.)
-  const want = std.isMeshStandardNodeMaterial ? null : std.envMapIntensity > 0 ? envTexture : null
+  // node materials (and anything flagged iblFromScene — e.g. imported GLB materials) light
+  // from the LIVE scene.environment, never a per-material envMap: the latter is a snapshot
+  // of the current PMREM env that the next HDRI swap disposes, blacking the material out.
+  const sceneIbl = std.isMeshStandardNodeMaterial || std.userData?.iblFromScene === true
+  const want = sceneIbl ? null : std.envMapIntensity > 0 ? envTexture : null
   if (std.envMap !== want) {
     std.envMap = want
     std.needsUpdate = true // USE_ENVMAP define changes — recompile

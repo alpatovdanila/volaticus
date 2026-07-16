@@ -16,7 +16,7 @@ import {
   MeshStandardNodeMaterial,
   type Node,
 } from 'three/webgpu'
-import { uniform, materialColor, shadow, mix, float } from 'three/tsl'
+import { uniform, materialColor, shadow, mix, float, vec3 } from 'three/tsl'
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
 import { setLevelEnvMap } from '../inventory/envmap'
@@ -27,6 +27,51 @@ import { setLevelEnvMap } from '../inventory/envmap'
 // so chaining typechecks (runtime is identical — pure float/vec3 values).
 const fl = (n: unknown): Node<'float'> => n as Node<'float'>
 const v3n = (n: unknown): Node<'vec3'> => n as Node<'vec3'>
+
+// The ambient lift is `ambient × mix(albedo, white, LIFT_FLOOR)` — NOT a plain
+// `ambient × albedo`. A pure multiply dead-ends on near-black texels (AI-generated
+// model textures love pitch-black backs/undersides: 0 × anything = 0, so cranking
+// ambient did nothing there). The floor keeps per-texel colour detail but guarantees
+// even black cloth lifts to LIFT_FLOOR × ambient at full crank.
+const LIFT_FLOOR = 0.3
+
+// Classic materials can't express the floor through their channels (emissiveMap only
+// MULTIPLIES the emissive colour — there is no additive slot), so the floor is baked
+// into a one-off emissive texture per albedo map: pixels = mix(albedo, white, LIFT_FLOOR)
+// (drawing white at alpha=K over a copy IS that mix). Cached per source texture —
+// shared albedos get one floored twin. Non-drawable images (compressed textures)
+// fall back to the raw map: plain multiplicative lift, as before.
+const flooredAlbedoCache = new Map<THREE.Texture, THREE.Texture>()
+function flooredAlbedo(src: THREE.Texture): THREE.Texture {
+  const hit = flooredAlbedoCache.get(src)
+  if (hit) return hit
+  const img = src.image as CanvasImageSource & { width?: number; height?: number }
+  const w = (img?.width as number) || 0
+  const h = (img?.height as number) || 0
+  if (!img || !w || !h || (src as THREE.CompressedTexture).isCompressedTexture) return src
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return src
+  ctx.drawImage(img, 0, 0)
+  ctx.fillStyle = `rgba(255,255,255,${LIFT_FLOOR})`
+  ctx.fillRect(0, 0, w, h)
+  const out = new THREE.CanvasTexture(canvas)
+  out.colorSpace = src.colorSpace
+  out.flipY = src.flipY // glTF textures are flipY=false; CanvasTexture defaults true — must match
+  out.wrapS = src.wrapS
+  out.wrapT = src.wrapT
+  out.minFilter = src.minFilter
+  out.magFilter = src.magFilter
+  out.channel = src.channel
+  out.repeat.copy(src.repeat)
+  out.offset.copy(src.offset)
+  out.rotation = src.rotation
+  out.center.copy(src.center)
+  flooredAlbedoCache.set(src, out)
+  return out
+}
 
 export type ToneMap = 'none' | 'aces' | 'agx'
 
@@ -107,6 +152,11 @@ export interface LightParams {
   // the HDRI's brightest texels + rotation); all illumination is the HDRI's.
   // 0 = shadows off, 1 = pitch-black shadows.
   shadow: number
+  // GLOBAL flat lift (a scene-wide AmbientLight): adds `ambient × albedo` to every lit
+  // material — fills the pitch-black crevices the HDRI can't reach WITHOUT blowing out the
+  // already-lit areas (which cranking `intensity` does). One scene knob, no per-model or
+  // per-material emissive data. 0 = off (pure-HDRI look).
+  ambient: number
 }
 
 export const LIGHT_DEFAULTS: LightParams = {
@@ -119,6 +169,7 @@ export const LIGHT_DEFAULTS: LightParams = {
   flat: false,
   shadowSoft: 3,
   shadow: 0.35,
+  ambient: 0,
 }
 
 const TONEMAPS: Record<ToneMap, THREE.ToneMapping> = {
@@ -144,6 +195,7 @@ export function clampLightParams(p: Partial<LightParams>): LightParams {
     flat: p.flat ?? d.flat,
     shadowSoft: num(p.shadowSoft as number, 0, 20, d.shadowSoft),
     shadow: num(p.shadow as number, 0, 1, d.shadow),
+    ambient: num(p.ambient as number, 0, 1, d.ambient),
   }
 }
 
@@ -173,6 +225,14 @@ export class LightingRig {
   // with the env. fitShadow() frames the ortho shadow camera around the scene
   // content; the depth map re-renders ONLY on explicit requestShadowUpdate().
   private sun: THREE.DirectionalLight | null = null
+  // global flat lift (params.ambient): `ambient × albedo` added to every material, driven by
+  // a LIVE uniform. NOT a THREE.AmbientLight — analytic-light uniforms are baked into the
+  // compiled pipelines in this stack (intensity/color changes after compile are inert), while
+  // material uniforms update per frame. Node materials get a TSL emissive graft off ambientLiftU
+  // (patchShadow); classic materials (imported GLBs) get emissiveMap = their own albedo map with
+  // emissiveIntensity as the live knob — same math, same slider.
+  private ambientLiftU = uniform(0)
+  private liftedClassic = new Set<THREE.MeshStandardMaterial>()
   private sunDirs = new Map<string, THREE.Vector3>()
   private shadowBounds: THREE.Box3 | null = null
   // shadow DARKNESS term: the sun's shadow mask (a TSL node over the same cached
@@ -406,6 +466,11 @@ export class LightingRig {
     this.scene.backgroundRotation.copy(rot)
     this.updateBackground() // show the HDRI sky, or a flat backdrop when hidden
 
+    // global flat lift — live uniform for the node-material graft; classic (imported GLB)
+    // materials mirror it via their per-frame emissiveIntensity uniform. No recompiles.
+    this.ambientLiftU.value = p.ambient
+    for (const m of this.liftedClassic) m.emissiveIntensity = p.ambient
+
     // SUN (shadow-caster only): softness + darkness live; direction re-derived
     // (HDRI dir × rotation). applyParams only fires on actual light edits, and
     // each is potentially "the sun moved" — one cached-shadow re-render per apply.
@@ -437,12 +502,32 @@ export class LightingRig {
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
       for (const m of mats) {
         const nm = m as MeshStandardNodeMaterial
-        if (!nm.isMeshStandardNodeMaterial) continue
-        if (!nm.userData.shadowPatched && nm.userData.catalogMat) {
-          nm.userData.shadowPatched = true
-          // materialColor already folds in .map; parallax mats carry their own colorNode
-          nm.colorNode = v3n(nm.colorNode ?? materialColor).mul(dark)
-          nm.needsUpdate = true
+        if (nm.isMeshStandardNodeMaterial) {
+          if (!nm.userData.shadowPatched && nm.userData.catalogMat) {
+            nm.userData.shadowPatched = true
+            // materialColor already folds in .map; parallax mats carry their own colorNode
+            const albedo = v3n(nm.colorNode ?? materialColor)
+            nm.colorNode = albedo.mul(dark)
+            // global ambient lift: + ambient × mix(albedo, white, floor) — the floor keeps
+            // near-black texels liftable (see LIFT_FLOOR); × dark so the fill still darkens
+            // inside sun shadows. Live via ambientLiftU — no recompiles.
+            nm.emissiveNode = v3n(mix(albedo, vec3(1, 1, 1), float(LIFT_FLOOR))).mul(dark).mul(fl(this.ambientLiftU))
+            nm.needsUpdate = true
+          }
+          continue
+        }
+        // CLASSIC MeshStandardMaterial (imported GLBs): the same lift via the material's own
+        // emissive channel — emissiveMap = a FLOORED copy of its albedo map (per-texel colors
+        // kept, blacks liftable), emissiveIntensity = the live knob (material uniforms update
+        // per frame, unlike lights). Skip @exposeEmissive glow clones (their emissive IS the glow).
+        const std = m as THREE.MeshStandardMaterial
+        if (std?.isMeshStandardMaterial && !std.userData.shadowPatched && !std.userData.exposedEmissive && std.map && !std.emissiveMap) {
+          std.userData.shadowPatched = true
+          std.emissiveMap = flooredAlbedo(std.map)
+          std.emissive.set('#ffffff')
+          std.emissiveIntensity = this.params.ambient
+          std.needsUpdate = true
+          this.liftedClassic.add(std)
         }
       }
     })

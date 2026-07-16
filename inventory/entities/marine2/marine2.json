@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "id": "marine2",
+  "name": "Marine2",
+  "category": "character",
+  "notes": "Imported GLB via scripts/import-glb.ts. Parts: body, glass@exposeEmissive, hand_l, hand_r. Clips: index, Firing Rifle, Idle Rifle, Idle Stretch.",
+  "model": {
+    "src": "models/marine2/index.glb",
+    "anims": [
+      "Firing Rifle.fbx",
+      "Idle Rifle.fbx",
+      "Idle Stretch.fbx"
+    ],
+    "emissive": {
+      "glass": {
+        "color": "#66ccff",
+        "intensity": 2.5
+      }
+    }
+  },
+  "materials": {},
+  "rig": {},
+  "states": {
+    "initial": "index",
+    "index": {
+      "anim": "index"
+    },
+    "Firing Rifle": {
+      "anim": "Firing Rifle"
+    },
+    "Idle Rifle": {
+      "anim": "Idle Rifle"
+    },
+    "Idle Stretch": {
+      "anim": "Idle Stretch"
+    }
+  }
+}

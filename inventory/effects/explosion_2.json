@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "id": "explosion_2",
+  "name": "Explosion 2",
+  "notes": "Imported via scripts/import-atlas.ts from resources/particle/explosions/explosion 2.png (8×8 grid).",
+  "particles": [
+    {
+      "count": 1,
+      "size": [
+        1.4,
+        1.4
+      ],
+      "speed": [
+        0,
+        0
+      ],
+      "life": [
+        0.9,
+        0.9
+      ],
+      "colors": [
+        "#ffffff"
+      ],
+      "fade": false,
+      "flipbook": {
+        "pattern": "particle/explosions/explosion_2/#.png",
+        "frames": 64
+      }
+    }
+  ]
+}

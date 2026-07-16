@@ -117,6 +117,74 @@ function devApi(): Plugin {
             texCache = null // let /__textures re-index so the new file is listable
             return send(200, { ok: true, path: 'user-textures/' + file })
           }
+          if (url.pathname.startsWith('/models/') && req.method === 'GET') {
+            // Serve model files straight from disk. resources/models/** is EXCLUDED from the
+            // vite watcher (so /__model/tune GLB writes don't full-reload the studio), but the
+            // publicDir registry is watcher-fed — models added after boot would 404 through it.
+            // This middleware bypasses the registry entirely: always fresh, no restart needed.
+            const rel = decodeURIComponent(url.pathname.slice(1))
+            const abs = safePath(RES_DIR, rel)
+            if (!abs || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) return next()
+            const types: Record<string, string> = {
+              '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.fbx': 'application/octet-stream',
+              '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+            }
+            res.statusCode = 200
+            res.setHeader('Content-Type', types[path.extname(abs).toLowerCase()] ?? 'application/octet-stream')
+            res.end(fs.readFileSync(abs))
+            return
+          }
+          if (url.pathname === '/__model/tune' && req.method === 'POST') {
+            // Imported-GLB material tuning: patch metallicFactor/roughnessFactor of a named
+            // glTF material INSIDE the .glb (the model file is the single source of truth for
+            // its materials — no doc-side override). Rewrites only the JSON chunk; the binary
+            // chunk (geometry/textures/animations) is copied through byte-for-byte.
+            const body = await readBody(req)
+            const rel = String(body.src ?? '')
+            const abs = safePath(RES_DIR, rel)
+            if (!abs || !rel.endsWith('.glb') || !fs.existsSync(abs)) return send(400, { error: 'bad src' })
+            const glb = fs.readFileSync(abs)
+            if (glb.readUInt32LE(0) !== 0x46546c67) return send(400, { error: 'not a GLB' })
+            const chunks: { type: number; data: Buffer }[] = []
+            for (let off = 12; off < glb.length; ) {
+              const clen = glb.readUInt32LE(off)
+              const ctype = glb.readUInt32LE(off + 4)
+              chunks.push({ type: ctype, data: glb.subarray(off + 8, off + 8 + clen) })
+              off += 8 + clen
+            }
+            const jc = chunks.find((c) => c.type === 0x4e4f534a)
+            if (!jc) return send(400, { error: 'no JSON chunk' })
+            const g = JSON.parse(jc.data.toString('utf8'))
+            const targets = (g.materials ?? []).filter(
+              (m: { name?: string }) => body.material == null || m.name === body.material,
+            )
+            if (!targets.length) return send(404, { error: 'material not found' })
+            const clamp01 = (v: number) => Math.max(0, Math.min(1, v))
+            for (const m of targets) {
+              const p = (m.pbrMetallicRoughness ??= {})
+              if (typeof body.metalness === 'number') p.metallicFactor = clamp01(body.metalness)
+              if (typeof body.roughness === 'number') p.roughnessFactor = clamp01(body.roughness)
+            }
+            jc.data = Buffer.from(JSON.stringify(g), 'utf8')
+            // reassemble with 4-byte chunk alignment (JSON pads with spaces, others with zeros)
+            let total = 12
+            for (const c of chunks) total += 8 + c.data.length + ((4 - (c.data.length % 4)) % 4)
+            const out = Buffer.alloc(total)
+            out.writeUInt32LE(0x46546c67, 0)
+            out.writeUInt32LE(2, 4)
+            out.writeUInt32LE(total, 8)
+            let o = 12
+            for (const c of chunks) {
+              const pad = (4 - (c.data.length % 4)) % 4
+              out.writeUInt32LE(c.data.length + pad, o)
+              out.writeUInt32LE(c.type, o + 4)
+              c.data.copy(out, o + 8)
+              if (pad && c.type === 0x4e4f534a) out.fill(0x20, o + 8 + c.data.length, o + 8 + c.data.length + pad)
+              o += 8 + c.data.length + pad
+            }
+            fs.writeFileSync(abs, out)
+            return send(200, { ok: true })
+          }
           if (url.pathname === '/__textures') {
             if (!texCache || Date.now() - texCache.at > 5000)
               texCache = {
@@ -268,7 +336,9 @@ export default defineConfig({
   // Exact-match regex so `three/webgpu`, `three/tsl`, `three/addons/*` resolve normally.
   resolve: { alias: [{ find: /^three$/, replacement: 'three/webgpu' }] },
   plugins: [devApi(), scopedReload()],
-  server: { port: 5173, strictPort: true },
+  // don't full-reload the studio when a model file is rewritten (the /__model/tune endpoint
+  // saves material tuning into the .glb while the user is dragging sliders)
+  server: { port: 5173, strictPort: true, watch: { ignored: ['**/resources/models/**'] } },
   build: {
     rollupOptions: {
       input: {

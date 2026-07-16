@@ -117,6 +117,56 @@ function acquireShatterMaterial(src: THREE.Material): THREE.Material {
   return mat
 }
 
+// Dominant bone of a skinned part = the bone carrying the most total skin weight. Parts
+// worth severing (hands, heads) are ~fully rigid to one bone, so a bake in that bone's
+// bind frame reproduces the live pose exactly when re-attached to the bone's world matrix.
+function dominantBoneIndex(sm: THREE.SkinnedMesh): number {
+  const idx = sm.geometry.attributes.skinIndex as THREE.BufferAttribute | undefined
+  const wgt = sm.geometry.attributes.skinWeight as THREE.BufferAttribute | undefined
+  if (!idx || !wgt) return -1
+  const acc = new Float32Array(sm.skeleton.bones.length)
+  for (let i = 0; i < idx.count; i++)
+    for (let k = 0; k < 4; k++) {
+      const w = wgt.getComponent(i, k)
+      if (w > 0) acc[idx.getComponent(i, k)] += w
+    }
+  let best = -1
+  let bw = 0
+  for (let b = 0; b < acc.length; b++)
+    if (acc[b] > bw) {
+      bw = acc[b]
+      best = b
+    }
+  return best
+}
+
+// Canonical chunk bake for a pool: the part's geometry expressed in its dominant bone's
+// BIND frame (skinned) or its own local frame (plain), RE-CENTRED on its bounding-box
+// centre. Centering is the key: a limb sits far from the armature origin, so if the chunk's
+// transform were the armature origin, spinning it would swing the limb in a huge arc (it
+// "orbits" and dips under the floor). Centred, the instance transform IS the limb's
+// location, so it tumbles in place. Every instance of the pool shares this one geometry;
+// the spawn matrix places it at the live limb:
+//   skinned: meshWorld · bindInv · boneWorld · T(centre)     plain: meshWorld · T(centre)
+function bakeCanonicalChunk(mesh: THREE.Mesh): { geo: THREE.BufferGeometry; centre: THREE.Vector3; size: THREE.Vector3; boneIndex: number } {
+  const sm = (mesh as THREE.SkinnedMesh).isSkinnedMesh ? (mesh as THREE.SkinnedMesh) : null
+  const geo = mesh.geometry.clone()
+  let boneIndex = -1
+  if (sm) {
+    boneIndex = dominantBoneIndex(sm)
+    // bone-local at bind: boneInverse · bindMatrix (applyMatrix4 also fixes normals/tangents)
+    if (boneIndex >= 0) geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(sm.skeleton.boneInverses[boneIndex], sm.bindMatrix))
+  }
+  geo.deleteAttribute('skinIndex') // instances are rigid — drop skin attributes
+  geo.deleteAttribute('skinWeight')
+  geo.computeBoundingBox()
+  const box = geo.boundingBox!
+  const centre = box.getCenter(new THREE.Vector3())
+  const size = box.getSize(new THREE.Vector3())
+  geo.translate(-centre.x, -centre.y, -centre.z)
+  return { geo, centre, size, boneIndex }
+}
+
 export interface EffectDeps {
   playSfx(id: string): void
   addShake(amount: number): void
@@ -136,10 +186,47 @@ interface Shard {
   ttl: number
 }
 
+// One InstancedMesh per (source geometry, part): every severed copy of that part — across
+// ALL live entities of the model, whenever they were severed — is one instance slot, so a
+// horde's worth of severed hands stays ONE draw call. Canonical geometry is baked once in
+// the dominant bone's bind frame, re-centred on its own bbox (a chunk tumbles about its
+// own middle); the spawn matrix places it at the live limb.
+interface ChunkPool {
+  imesh: THREE.InstancedMesh
+  geo: THREE.BufferGeometry // canonical bake — owned by the pool (disposed on full clear)
+  centre: THREE.Vector3 // canonical bbox centre in bone/local space (spawn offset)
+  size: THREE.Vector3 // canonical bbox size — restY at spawn, scaled per instance
+  boneIndex: number // dominant bone (−1 = plain mesh)
+  cap: number
+  slots: DismemberedPart[] // dense: slots[i] owns instance i
+}
+
+// A severed limb (dismemberment): one instance slot of its pool + a physics body. Unlike a
+// shatter Shard it does NOT despawn: it falls, bounces, settles, and PERSISTS until the host
+// clears it. Matrix writes stop once resting — a settled battlefield costs nothing per frame.
+interface DismemberedPart {
+  pool: ChunkPool
+  slot: number // instance index in the pool — kept in sync on swap-removal
+  part?: string // source mesh part name — lets the host despawn ONE part's chunks (restore)
+  pos: THREE.Vector3
+  quat: THREE.Quaternion
+  scl: THREE.Vector3
+  vel: THREE.Vector3
+  axis: THREE.Vector3
+  spin: number
+  restY: number // center height at which the piece sits on the ground
+  resting: boolean
+}
+
+const _chunkM = new THREE.Matrix4()
+const _spinQ = new THREE.Quaternion()
+
 export class EffectSystem {
   private bursts: LiveBurst[] = []
   private flashes: LiveFlash[] = []
   private shards: Shard[] = []
+  private dismembered: DismemberedPart[] = []
+  private chunkPools = new Map<string, ChunkPool>()
 
   constructor(private scene: THREE.Scene) {}
 
@@ -176,6 +263,142 @@ export class EffectSystem {
         life: 0,
         ttl: 0.9 + Math.random() * 0.5,
       })
+    }
+  }
+
+  // Dismemberment: sever ONE mesh part and let it tumble away. Chunks are INSTANCED — every
+  // severed copy of the same (geometry, part), across all entities and moments in time, is a
+  // slot of one shared InstancedMesh: 100 severed hands = 1 draw call. The pool's canonical
+  // geometry is baked once in the part's dominant-bone bind frame; each spawn is placed at
+  // THIS entity's live limb via meshWorld · bindInv · boneWorld · T(centre) — exact for
+  // single-bone parts (hands, heads); multi-bone parts rigidify to the dominant bone
+  // (debris-grade). Plain (boneless) parts use their local frame + world matrix.
+  // The caller hides the original part.
+  dismemberPart(sm: THREE.Mesh, dir: THREE.Vector3, opts?: { weight?: number; part?: string }): void {
+    // chunks accumulate (an entity can lose several parts); the host clears them —
+    // the editor does on every rebuild/entity switch, the game via clearDismembered()
+    const part = opts?.part ?? (sm.userData.nodeName as string | undefined) ?? sm.name
+    const key = `${sm.geometry.uuid}|${part}`
+    let pool = this.chunkPools.get(key)
+    if (!pool) {
+      const { geo, centre, size, boneIndex } = bakeCanonicalChunk(sm)
+      const srcMat = Array.isArray(sm.material) ? sm.material[0] : sm.material
+      const imesh = new THREE.InstancedMesh(geo, acquireShatterMaterial(srcMat as THREE.Material), 16)
+      imesh.count = 0
+      imesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+      imesh.castShadow = true
+      imesh.receiveShadow = true
+      imesh.frustumCulled = false // instances scatter — a shared bound would cull wrongly
+      imesh.userData.dismembered = true // tag so the host can find the debris layer
+      this.scene.add(imesh)
+      pool = { imesh, geo, centre, size, boneIndex, cap: 16, slots: [] }
+      this.chunkPools.set(key, pool)
+    }
+    if (pool.slots.length === pool.cap) this.growPool(pool)
+    // spawn transform: exactly where THIS entity's limb is at this instant
+    sm.updateWorldMatrix(true, false)
+    const m = new THREE.Matrix4()
+    const skinned = (sm as THREE.SkinnedMesh).isSkinnedMesh ? (sm as THREE.SkinnedMesh) : null
+    if (skinned && pool.boneIndex >= 0) {
+      const bone = skinned.skeleton.bones[pool.boneIndex]
+      bone.updateWorldMatrix(true, false)
+      m.copy(skinned.matrixWorld).multiply(skinned.bindMatrixInverse).multiply(bone.matrixWorld)
+    } else {
+      m.copy(sm.matrixWorld)
+    }
+    m.multiply(new THREE.Matrix4().makeTranslation(pool.centre.x, pool.centre.y, pool.centre.z))
+    const pos = new THREE.Vector3()
+    const quat = new THREE.Quaternion()
+    const scl = new THREE.Vector3()
+    m.decompose(pos, quat, scl)
+    const v = dir.clone().setY(0)
+    if (v.lengthSq() < 1e-4) v.set(0, 0, -1)
+    v.normalize()
+    // weight feel: constant hit impulse → velocity ∝ 1/weight. A light hand flies and
+    // tumbles fast; a heavy arm drops short and rolls. Vertical pop is capped so feather
+    // parts don't moonshot; all weights share the SAME animation model (tumble → settle).
+    const w = Math.max(0.05, opts?.weight ?? 1)
+    const kick = THREE.MathUtils.clamp(1 / w, 0.25, 3)
+    const rec: DismemberedPart = {
+      pool,
+      slot: pool.slots.length,
+      part,
+      pos,
+      quat,
+      scl,
+      // hit-from-front knock-back: mostly horizontal (flies behind), a small pop up → lands + rests
+      vel: v
+        .multiplyScalar((2.2 + Math.random()) * kick)
+        .add(new THREE.Vector3((Math.random() - 0.5) * 0.6 * kick, (1.4 + Math.random() * 0.5) * Math.min(kick, 1.6), 0)),
+      axis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+      spin: (7 + Math.random() * 5) * THREE.MathUtils.clamp(1 / w, 0.5, 2.2),
+      restY: Math.max(0.02, (Math.min(pool.size.x * Math.abs(scl.x), pool.size.y * Math.abs(scl.y), pool.size.z * Math.abs(scl.z)) / 2)),
+      resting: false,
+    }
+    pool.slots.push(rec)
+    pool.imesh.count = pool.slots.length
+    pool.imesh.setMatrixAt(rec.slot, m)
+    pool.imesh.instanceMatrix.needsUpdate = true
+    this.dismembered.push(rec)
+  }
+
+  // Double a full pool: fresh InstancedMesh at 2× capacity, matrices copied over — resting
+  // chunks carry across untouched. The canonical geometry and pooled material are shared.
+  private growPool(pool: ChunkPool): void {
+    const old = pool.imesh
+    const next = new THREE.InstancedMesh(pool.geo, old.material, pool.cap * 2)
+    next.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+    next.count = pool.slots.length
+    const m = new THREE.Matrix4()
+    for (let i = 0; i < pool.slots.length; i++) {
+      old.getMatrixAt(i, m)
+      next.setMatrixAt(i, m)
+    }
+    next.castShadow = true
+    next.receiveShadow = true
+    next.frustumCulled = false
+    next.userData.dismembered = true
+    this.scene.add(next)
+    this.scene.remove(old)
+    old.dispose() // instance buffers only — geometry/material shared, kept
+    pool.imesh = next
+    pool.cap *= 2
+  }
+
+  // Remove one chunk from its pool: swap-last keeps the instance range dense.
+  private removeChunk(rec: DismemberedPart): void {
+    const pool = rec.pool
+    const last = pool.slots.pop()
+    if (last && last !== rec) {
+      pool.slots[rec.slot] = last
+      last.slot = rec.slot
+      pool.imesh.setMatrixAt(rec.slot, _chunkM.compose(last.pos, last.quat, last.scl))
+    }
+    pool.imesh.count = pool.slots.length
+    pool.imesh.instanceMatrix.needsUpdate = true
+  }
+
+  // Despawn severed limbs — all of them, or just one part's chunks (restore/undo a
+  // dismemberment: the modifier re-shows the limb, this removes its ground twin). Idempotent.
+  clearDismembered(part?: string): void {
+    const keep: DismemberedPart[] = []
+    for (const p of this.dismembered) {
+      if (part !== undefined && p.part !== part) {
+        keep.push(p)
+        continue
+      }
+      this.removeChunk(p)
+    }
+    this.dismembered = keep
+    // full clear (editor rebuild / entity switch): drop the pools too — the next sever
+    // re-bakes its canonical chunk (cheap, once) against whatever model is loaded then
+    if (part === undefined) {
+      for (const pool of this.chunkPools.values()) {
+        this.scene.remove(pool.imesh)
+        pool.imesh.dispose() // instance buffers; material is the pooled shatter clone (kept)
+        pool.geo.dispose() // canonical bake — owned by the pool
+      }
+      this.chunkPools.clear()
     }
   }
 
@@ -340,6 +563,36 @@ export class EffectSystem {
       }
     }
     this.shards = this.shards.filter((s) => s.life < s.ttl)
+
+    // Severed limbs: fall + tumble with WEIGHT — over-g gravity (real 9.8 reads floaty at this
+    // visual scale), then energy-losing bounces with ground friction and tumble decay before
+    // coming to rest. PERSISTS after settling (no despawn — clearDismembered() is the host's).
+    const dirtyPools = new Set<ChunkPool>()
+    for (const p of this.dismembered) {
+      if (p.resting) continue
+      p.vel.y -= 14 * dt
+      p.pos.addScaledVector(p.vel, dt)
+      p.quat.multiply(_spinQ.setFromAxisAngle(p.axis, p.spin * dt)) // local-axis tumble
+      if (p.pos.y <= p.restY && p.vel.y <= 0) {
+        p.pos.y = p.restY
+        if (-p.vel.y > 1.1) {
+          // hard contact → bounce: restitution robs most of the fall, friction bleeds the
+          // slide, and the tumble slows with every touch — the mass is in the decay.
+          p.vel.y = -p.vel.y * 0.35
+          p.vel.x *= 0.55
+          p.vel.z *= 0.55
+          p.spin *= 0.5
+        } else {
+          // too slow to bounce — settle where it lies
+          p.vel.set(0, 0, 0)
+          p.spin = 0
+          p.resting = true // keeps its instance slot until clearDismembered()
+        }
+      }
+      p.pool.imesh.setMatrixAt(p.slot, _chunkM.compose(p.pos, p.quat, p.scl))
+      dirtyPools.add(p.pool)
+    }
+    for (const pool of dirtyPools) pool.imesh.instanceMatrix.needsUpdate = true
   }
 }
 

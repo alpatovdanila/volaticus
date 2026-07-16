@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import { warmEffects } from '../inventory/effects'
 import { applyEnvReflection } from '../inventory/envmap'
-import { bakeEntityGeometry, bakeVariantLayouts, buildColliderViz, buildEntity, disposeEntity, ensureCraftSeeds, projectGeometryUv, rerollCraftSeeds, rerollPartSeed, type BakedGeometry, type BuiltEntity, type VariantLayout } from '../inventory/factory'
+import { bakeEntityGeometry, bakeVariantLayouts, buildColliderViz, buildEntity, buildGlbEntity, disposeEntity, ensureCraftSeeds, projectGeometryUv, rerollCraftSeeds, rerollPartSeed, type BakedGeometry, type BuiltEntity, type VariantLayout } from '../inventory/factory'
+import { loadGltfModel } from '../inventory/gltf'
 import { mergeBuiltEntity } from '../inventory/merge'
 import { SceneBatcher, type BatchInput } from '../inventory/sceneBatcher'
 import { scopeHmrReloads } from '../lib/hmr-scope'
@@ -22,6 +23,7 @@ import {
   renderItemList,
   renderMgrList,
   renderMgrTuning,
+  renderModelMaterials,
   renderOverlay,
   renderSlotChips,
   setPickInfo,
@@ -461,28 +463,50 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
   if (!sel) return
   const mySel = sel
   const myToken = ++buildToken
-  await preloadEntityMeshes(doc)
-  if (sel !== mySel || myToken !== buildToken) return // superseded while meshes were loading
-  let baked: BakedGeometry
-  try {
-    baked = await ensureBaked(sel.id, doc)
-  } catch (e) {
-    setValidation(['bake/load error: ' + String(e)])
-    return
-  }
-  if (sel !== mySel || myToken !== buildToken) return // superseded while baking/loading
-  sel.baked = baked
-  const count = baked.length || 1
-  sel.variantIndex = ((sel.variantIndex % count) + count) % count
-  try {
-    sel.built = buildEntity(doc, baked[sel.variantIndex])
-    // WYSIWYG: render the SAME merged object the game/level ships. Keeps the
-    // source primitives (hidden on a non-render layer) for slot picking + outlines
-    // + shatter; re-runs on every rebuild so edits stay reflected.
-    mergeBuiltEntity(sel.built, doc, { keepSource: true })
-  } catch (e) {
-    setValidation(['factory error: ' + String(e)])
-    return
+  vp.effects.clearDismembered() // drop any severed limbs from a prior build/entity (they live in the scene, not the group)
+  if (doc.model) {
+    // IMPORTED GLB path: load the model (geometry + PBR materials + skeleton + clips) and
+    // build directly — no procgeom, no bake, no merge, no material editing. The shared
+    // tail below (env, shadow graft, reveal gate, fit, overlay) is reused unchanged.
+    let model
+    try {
+      model = await loadGltfModel(doc.model.src, doc.model.anims ?? [])
+    } catch (e) {
+      setValidation(['GLB load error: ' + String(e)])
+      return
+    }
+    if (sel !== mySel || myToken !== buildToken) return // superseded while loading
+    sel.baked = undefined
+    try {
+      sel.built = buildGlbEntity(doc, model)
+    } catch (e) {
+      setValidation(['GLB build error: ' + String(e)])
+      return
+    }
+  } else {
+    await preloadEntityMeshes(doc)
+    if (sel !== mySel || myToken !== buildToken) return // superseded while meshes were loading
+    let baked: BakedGeometry
+    try {
+      baked = await ensureBaked(sel.id, doc)
+    } catch (e) {
+      setValidation(['bake/load error: ' + String(e)])
+      return
+    }
+    if (sel !== mySel || myToken !== buildToken) return // superseded while baking/loading
+    sel.baked = baked
+    const count = baked.length || 1
+    sel.variantIndex = ((sel.variantIndex % count) + count) % count
+    try {
+      sel.built = buildEntity(doc, baked[sel.variantIndex])
+      // WYSIWYG: render the SAME merged object the game/level ships. Keeps the
+      // source primitives (hidden on a non-render layer) for slot picking + outlines
+      // + shatter; re-runs on every rebuild so edits stay reflected.
+      mergeBuiltEntity(sel.built, doc, { keepSource: true })
+    } catch (e) {
+      setValidation(['factory error: ' + String(e)])
+      return
+    }
   }
   applyEnvReflection(sel.built.group) // surface presets keep their opt-in sheen
   vp.patchShadow(sel.built.group) // sun shadow-darkening graft (HDRI is the only light)
@@ -521,6 +545,28 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
     playEffect: playEffectById,
     shatter: () => {
       if (sel?.built) vp.effects.shatterMeshes(sel.built.meshes)
+    },
+    dismember: (part, weight) => {
+      if (!sel?.built) return
+      // skinned OR plain part — dismemberPart bakes either (bones or world transform)
+      const mesh = sel.built.meshes.find((m) => m.userData.nodeName === part)
+      if (!mesh) return
+      // throw toward the entity's BACK in MODEL space: glTF characters face +Z, so backward is
+      // local -Z rotated by the entity's current world orientation (hit-from-the-front knock-back
+      // that stays correct however the model or camera is turned).
+      const q = sel.built.group.getWorldQuaternion(new THREE.Quaternion())
+      const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(q)
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q)
+      dir.addScaledVector(right, (Math.random() - 0.5) * 0.5) // slight lateral scatter, still behind
+      vp.effects.dismemberPart(mesh, dir, { weight, part })
+      // sever now for the same-frame detach; the (stackable, reversible) "dismembered_<part>"
+      // modifier that fires with this consequence keeps it hidden across state changes
+      mesh.visible = false
+    },
+    onPartRestored: (part) => {
+      // dismembered_<part> switched OFF — applyVisibility just re-showed the limb, so its
+      // severed ground chunk despawns (limb and chunk never coexist; fully reversible)
+      vp.effects.clearDismembered(part)
     },
     // hideGeometry (a reaction) + onDespawn (a state's despawnAfter) preview the same
     // in the studio — hide the entity, respawn after a beat; in the game they diverge.
@@ -569,16 +615,18 @@ function refreshOverlay(): void {
       kind: sel.kind,
       states: sel.preview?.stateNames ?? [],
       current: sel.preview?.current ?? null,
-      events: Object.keys(doc?.events ?? {}),
-      modifiers: Object.keys(doc?.modifiers ?? {}),
-      modifier: sel.preview?.modifier ?? null,
+      // declared + DERIVED (dismember_<part>/dismembered_<part> from model.dismember)
+      events: sel.preview?.eventNames ?? Object.keys(doc?.events ?? {}),
+      modifiers: sel.preview?.modifierNames ?? Object.keys(doc?.modifiers ?? {}),
+      activeModifiers: sel.preview ? [...sel.preview.activeModifiers] : [],
       contextDims: doc ? contextDimsOf(doc) : undefined,
       context: sel.preview?.context,
-      variant: doc ? { index: sel.variantIndex, count: variantCount(doc) } : undefined,
-      canReroll: hasCraftGeometry(doc),
+      // imported GLB entities have no procedural variants / craft geometry / bake sidecars
+      variant: doc && !doc.model ? { index: sel.variantIndex, count: variantCount(doc) } : undefined,
+      canReroll: !doc?.model && hasCraftGeometry(doc),
       // stale = sidecars were baked from a DIFFERENT rig (hand-edited JSON / generator
       // version bump). Never auto-rebakes — the overlay offers the explicit button.
-      geomStale: doc ? selGeomStale(doc) : false,
+      geomStale: doc && !doc.model ? selGeomStale(doc) : false,
     },
     overlayCb,
   )
@@ -647,9 +695,9 @@ const overlayCb = {
     if (value) sel.preview.context[dim] = value
     else delete sel.preview.context[dim]
   },
-  onModifier: (name: string | null) => {
-    // visibility overlay on top of the current state — combineable with any anim
-    sel?.preview?.setModifier(name)
+  onModifier: (name: string, active: boolean) => {
+    // visibility overlay on top of the current state — STACKABLE, combineable with any anim
+    sel?.preview?.toggleModifier(name, active)
     refreshOverlay()
   },
 }
@@ -1002,8 +1050,131 @@ function inheritCandidates(mats: Record<string, MaterialDef>, slot: string): str
   })
 }
 
+// Imported-model emissive control (materials tab). Reads LIVE from the built materials
+// (source of truth after build) and writes both the live material (real-time glow) and the
+// doc (model.emissive, persisted on save).
+function modelEmissiveParts(): { name: string; color: string; intensity: number }[] {
+  const mats = sel?.built?.emissiveParts
+  if (!mats) return []
+  return [...mats.entries()].map(([name, m]) => ({
+    name,
+    color: '#' + m.emissive.getHexString(),
+    intensity: Math.round(m.emissiveIntensity * 100) / 100,
+  }))
+}
+function setModelEmissive(part: string, patch: { color?: string; intensity?: number }): void {
+  if (!sel || sel.kind !== 'entity') return
+  const item = inv.entities.get(sel.id)
+  if (!item?.doc) return
+  const m = sel.built?.emissiveParts?.get(part)
+  if (m) {
+    if (patch.color !== undefined) m.emissive.set(patch.color) // live uniform → real-time
+    if (patch.intensity !== undefined) m.emissiveIntensity = patch.intensity
+  }
+  for (const target of [item.raw as EntityDoc, item.doc]) {
+    if (!target.model) continue
+    const em = (target.model.emissive ??= {})
+    const cur = (em[part] ??= { color: '#ffffff', intensity: 1.5 })
+    if (patch.color !== undefined) cur.color = patch.color
+    if (patch.intensity !== undefined) cur.intensity = Math.round(patch.intensity * 100) / 100
+  }
+  sel.dirty = true
+  setTitle(sel.id, true)
+}
+// Unique glTF materials on the built model (by material name — GLTFLoader carries it over;
+// emissive part clones keep the name, so tuning reaches them too).
+function modelPbrMaterials(): { name: string; metalness: number; roughness: number }[] {
+  const out = new Map<string, { name: string; metalness: number; roughness: number }>()
+  for (const mesh of sel?.built?.meshes ?? []) {
+    for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+      const std = m as THREE.MeshStandardMaterial
+      if (!std?.isMeshStandardMaterial) continue
+      const name = std.name || 'material'
+      if (!out.has(name)) out.set(name, { name, metalness: std.metalness, roughness: std.roughness })
+    }
+  }
+  return [...out.values()]
+}
+// Dismemberable parts (materials tab): EVERY mesh part of the imported model, with a
+// checkbox + weight. Checked parts are stored as doc model.dismember — the ONLY persisted
+// data; the preview DERIVES "dismember_<part>" events and reversible "dismembered_<part>"
+// modifiers from it live (no rebuild — the preview reads the same doc object).
+function modelDismemberParts(): { name: string; on: boolean; weight: number }[] {
+  const doc = sel?.kind === 'entity' ? inv.entities.get(sel.id)?.doc : undefined
+  if (!doc?.model || !sel?.built) return []
+  const names = new Set<string>()
+  for (const mesh of sel.built.meshes) {
+    const n = mesh.userData.nodeName as string | undefined
+    if (n) names.add(n) // every part qualifies — skinned or plain, the chunk bake handles both
+  }
+  return [...names].map((name) => {
+    const d = doc.model?.dismember?.[name]
+    return { name, on: !!d, weight: d?.weight ?? 1 }
+  })
+}
+function setModelDismember(part: string, patch: { on?: boolean; weight?: number }): void {
+  if (!sel || sel.kind !== 'entity') return
+  const item = inv.entities.get(sel.id)
+  if (!item?.doc) return
+  for (const target of [item.raw as EntityDoc, item.doc]) {
+    if (!target.model) continue
+    const dm = (target.model.dismember ??= {})
+    if (patch.on === false) {
+      delete dm[part]
+      if (!Object.keys(dm).length) delete target.model.dismember
+    } else {
+      const cur = (dm[part] ??= { weight: 1 })
+      if (patch.weight !== undefined) cur.weight = patch.weight
+    }
+  }
+  // unchecking while its derived modifier is active: restore the part (limb shows, chunk despawns)
+  if (patch.on === false) sel.preview?.toggleModifier(`dismembered_${part}`, false)
+  sel.dirty = true
+  setTitle(sel.id, true)
+  refreshOverlay() // derived event/modifier chips appear/disappear immediately
+}
+const modelEmissiveCb = {
+  onColor: (part: string, hex: string) => setModelEmissive(part, { color: hex }),
+  onIntensity: (part: string, value: number) => setModelEmissive(part, { intensity: value }),
+  onDismember: (part: string, on: boolean) => setModelDismember(part, { on }),
+  onWeight: (part: string, weight: number) => setModelDismember(part, { weight }),
+  onPbr: (material: string, key: 'metalness' | 'roughness', value: number, commit: boolean) => {
+    if (!sel?.built) return
+    // live: every material instance with this glTF material name (includes emissive clones)
+    const seen = new Set<THREE.Material>()
+    for (const mesh of sel.built.meshes) {
+      for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+        const std = m as THREE.MeshStandardMaterial
+        if (!std?.isMeshStandardMaterial || seen.has(std) || (std.name || 'material') !== material) continue
+        seen.add(std)
+        std[key] = value
+      }
+    }
+    if (commit) {
+      // persist into the .glb — the model file is the single source of truth for its materials
+      const doc = sel.kind === 'entity' ? inv.entities.get(sel.id)?.doc : undefined
+      if (!doc?.model) return
+      void fetch('/__model/tune', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ src: doc.model.src, material, [key]: value }),
+      })
+        .then((r) => r.json())
+        .then((r) => toast(r.ok ? `${key} ${value.toFixed(2)} saved to GLB` : 'GLB save failed: ' + (r.error ?? '?')))
+        .catch((e) => toast('GLB save failed: ' + e))
+    }
+  },
+}
+
 function refreshSlots(): void {
   const doc = sel?.kind === 'entity' ? inv.entities.get(sel.id)?.doc : undefined
+  if (doc?.model) {
+    // imported model: no procedural geometry / material slots — the materials tab shows the
+    // per-part emissive (@exposeEmissive) controls, per-material PBR (metal/rough → .glb),
+    // and the dismemberable-parts list (checkbox + weight → doc model.dismember).
+    renderModelMaterials(modelEmissiveParts(), modelPbrMaterials(), modelDismemberParts(), modelEmissiveCb)
+    return
+  }
   // GEOMETRY tab: the rig-node tree with per-node craft/sub (inherited down the
   // rig hierarchy). The materials path below stays untouched for its tab.
   if (partsTab === 'geometry') {
@@ -1318,11 +1489,11 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
     hdriSel.appendChild(o)
   }
   const fields: {
-    key: 'rotation' | 'intensity' | 'ao' | 'shadowSoft' | 'shadow'
+    key: 'rotation' | 'intensity' | 'ambient' | 'ao' | 'shadowSoft' | 'shadow'
     input: HTMLInputElement
     val: HTMLElement
     fmt(n: number): string
-  }[] = (['rotation', 'intensity', 'ao', 'shadowSoft', 'shadow'] as const).map((key) => ({
+  }[] = (['rotation', 'intensity', 'ambient', 'ao', 'shadowSoft', 'shadow'] as const).map((key) => ({
     key,
     input: $(cfg.fp + key) as HTMLInputElement,
     val: $(cfg.fp + key + '-val'),
@@ -1736,6 +1907,7 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
       playSfx: () => {},
       playEffect: () => {},
       shatter: () => {},
+      dismember: () => {},
       hideGeometry: () => {},
       onDespawn: () => {},
     })
@@ -2377,7 +2549,7 @@ declare global {
       select(kind: ItemKind, id: string): void
       state(name: string): void
       event(name: string): void
-      modifier(name: string | null): void
+      modifier(name: string | null): void // toggles; null clears ALL active modifiers
       trigger(): void
       reroll(): void
       context(dim: string, value: string | null): void
@@ -2415,7 +2587,13 @@ window.__ed = {
     refreshOverlay()
   },
   event: (name) => sel?.preview?.fireEvent(name),
-  modifier: (name) => overlayCb.onModifier(name),
+  modifier: (name) => {
+    if (name) overlayCb.onModifier(name, !sel?.preview?.activeModifiers.has(name))
+    else {
+      sel?.preview?.clearModifiers()
+      refreshOverlay()
+    }
+  },
   trigger: () => overlayCb.onTriggerEffect(),
   reroll: () => overlayCb.onNextVariant(), // cycles the STORED variant set
   context: (dim, value) => {

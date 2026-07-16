@@ -3,13 +3,15 @@
   "id": "marine2",
   "name": "Marine2",
   "category": "character",
-  "notes": "Imported GLB via scripts/import-glb.ts. Parts: body, glass@exposeEmissive, hand_l, hand_r. Clips: index, Firing Rifle, Idle Rifle, Idle Stretch.",
+  "notes": "Imported GLB via scripts/import-glb.ts. Parts: body, glass@exposeEmissive, hand_l, hand_r. Clips: index, Firing Rifle, Idle Rifle, Idle Stretch, Rifle Run, Rifle Walk.",
   "model": {
     "src": "models/marine2/index.glb",
     "anims": [
       "Firing Rifle.fbx",
       "Idle Rifle.fbx",
-      "Idle Stretch.fbx"
+      "Idle Stretch.fbx",
+      "Rifle Run.fbx",
+      "Rifle Walk.fbx"
     ],
     "emissive": {
       "glass": {
@@ -33,6 +35,12 @@
     },
     "Idle Stretch": {
       "anim": "Idle Stretch"
+    },
+    "Rifle Run": {
+      "anim": "Rifle Run"
+    },
+    "Rifle Walk": {
+      "anim": "Rifle Walk"
     }
   }
 }

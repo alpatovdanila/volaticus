@@ -1,9 +1,19 @@
-// Zombie horde — enemy instances + the instance POOL the wave controller draws from.
-// A dead zombie isn't destroyed: reclaim() parks it, and the next spawnAt() re-dresses
-// it (reset hp/state/position, restore severed parts via the reversible dismemberment
-// modifiers, restore the crystal glow) — building a fresh skeleton clone only happens
-// when the pool runs dry. That keeps wave N+1 free of build hitches and is the seam
-// where true instanced hordes (baked-bone-texture, ~100 enemies) plug in later.
+// Enemy horde — enemy instances + the instance POOL the wave controller draws from.
+// A dead enemy isn't destroyed: once its death animation finishes the corpse is baked into
+// the CorpseBatch and the skinned entity is parked, so the next spawnAt() re-dresses it
+// (reset hp/state/position, restore severed parts via the reversible dismemberment
+// modifiers, restore the crystal glow). Building a fresh skeleton clone only happens when
+// the pool runs dry — that keeps wave N+1 free of build hitches and is the seam where true
+// instanced hordes (baked-bone-texture, ~100 enemies) plug in later.
+//
+// MULTI-TYPE: everything species-specific is data (see enemies.ts EnemyDef) — hit points,
+// aim height, body radius, gameplay kind, and clip NAMES. Per-type derived clip data
+// (durations, the walk clip + its root-motion profile) is cached in a TypeRuntime record,
+// NOT in Horde fields: two species must not overwrite each other's timing.
+//
+// IDENTITY: enemies are addressed by a stable numeric id, freshly minted on every re-dress.
+// A recycled body therefore cannot be confused with its previous life by anything holding a
+// handle across frames (see targeting.ts), and hit() is an O(1) map lookup.
 //
 // Presentation runs through the SAME EntityPreview + derived-dismemberment machinery
 // as the editor: a landed hit rolls system.params.dismemberChance and fires the derived
@@ -13,8 +23,9 @@ import * as THREE from 'three'
 import { EntityPreview } from '../inventory/preview'
 import { buildGlbEntity, type BuiltEntity } from '../inventory/factory'
 import { loadGltfModel, type RootMotionProfile } from '../inventory/gltf'
-import type { EntityDoc } from '../inventory/schema'
 import type { EffectSystem } from '../inventory/effects'
+import type { GameEvents } from './events'
+import type { EnemyDef } from './enemies'
 import type { CorpseBatch } from './corpses'
 import { LightPool } from './lights'
 import { pushCircleOut, navigateAround, type Box } from './obstacles'
@@ -22,45 +33,59 @@ import { separationOffsets } from './steering'
 import { system } from './system'
 
 const MAX_CHUNKS = 120 // severed-limb chunk instances kept before the oldest are evicted
-const ZOMBIE_R = 0.35 // body radius used for interior-wall push-out
 const _scratch = { x: 0, z: 0 } // obstacle push-out target
 
 const STOP_DIST = 1.25 // keep out of the player's capsule
 const TURN_RATE = 7 // 1/s yaw damp
-const HP = 5
-const AIM_HEIGHT = 0.7 // alyosha is squat — bolts aim/hit at his chest
 const GLOW_FADE = 1.4 // seconds for the crystal glow to die with its owner
-const SEP_RADIUS = 0.9 // enemies closer than this (center-to-center) push apart…
+const SEP_RADIUS = 0.9 // crowd SPACING between bodies (not body size — that's EnemyDef.radius)…
 const SEP_STRENGTH = 1.6 // …at up to this m/s — firmer than walk speed, so bodies never interpenetrate
 const EMERGE_DEPTH = 0.6 // spawn: how far under the floor the body starts (lying pose is ~0.4 thick)
 const EMERGE_TIME = 0.7 // s to breach the surface, then the getting-up clip plays
 const LIGHT_HEIGHT = 0.85 // crystal light rides here above the body origin
 const LIGHT_RANGE = 4 // m — a local pool of glow, not a room light
 
-export interface HitResult {
-  hp: number
-  died: boolean
-  severed: string | null
+// what the aim/collision layers see: a stable handle + the live aim point. The point is
+// owned by the enemy and rewritten each targets() call — read it within the frame, never retain it.
+export interface EnemyTarget {
+  id: number
+  point: THREE.Vector3
 }
 
-interface Zombie {
+// per-TYPE data derived from the first built instance of that species. Cached once per
+// type so a second species can never overwrite the first's clip timing.
+interface TypeRuntime {
   type: string
+  def: EnemyDef
+  deathDur: number
+  walkDur: number // walk clip duration — feeds the loops-per-meter rate coupling
+  walkClip: THREE.AnimationClip | null
+  // the clip's AUTHORED forward-motion profile (extracted from the FBX hips at merge):
+  // when present, ground motion follows the gait's non-uniform rate — zero foot slip,
+  // authentic lurch. Absent (in-place clip) → constant speed + loops-per-meter fallback.
+  walkProfile: RootMotionProfile | null
+}
+
+interface Enemy {
+  id: number // stable handle, re-minted on every re-dress
+  rt: TypeRuntime
   built: BuiltEntity
   preview: EntityPreview
   hp: number
   alive: boolean
-  pooled: boolean // parked corpse, waiting to be re-dressed by the next wave
+  pooled: boolean // parked body, waiting to be re-dressed by the next wave
   spawnDelay: number // stagger: hidden until this runs out, THEN the emerge starts
   emergeLeft: number // rising through the floor (posed at the rise clip's first frame)
   riseLeft: number
   deathLeft: number
   heading: number
-  lastHitAt: number // performance.now()/1000 of the last bolt — drives the stopping-power slow
+  lastHitAt: number // sim seconds of the last bolt — drives the stopping-power slow
   glowBase: Map<string, number> // authored emissive intensity per part (restored on respawn)
   light: THREE.PointLight | null // pooled crystal glow — rides the body, dies with the glow fade
-  walkAction: THREE.AnimationAction | null // the Walking action (for root-motion phase reads)
+  walkAction: THREE.AnimationAction | null // the walk action (for root-motion phase reads)
   riseAction: THREE.AnimationAction | null // the getting-up action (pinned to frame 0 while emerging)
   lastDist: number // cumulative profile distance at the last frame — step = delta
+  target: EnemyTarget // persistent — targets() fills it in place, so the hot path never allocates
 }
 
 // linear-interpolated cumulative distance at clip time t
@@ -77,50 +102,59 @@ function distAt(p: RootMotionProfile, t: number): number {
 }
 
 export class Horde {
-  readonly list: Zombie[] = []
-  private deathDur = 2
-  private walkDur = 1 // Walking clip duration — feeds the loops-per-meter rate coupling
-  private walkClip: THREE.AnimationClip | null = null
-  // the clip's AUTHORED forward-motion profile (extracted from the FBX hips at merge):
-  // when present, ground motion follows the gait's non-uniform rate — zero foot slip,
-  // authentic lurch. Absent (in-place clip) → constant speed + loops-per-meter fallback.
-  private walkProfile: RootMotionProfile | null = null
+  readonly list: Enemy[] = []
+  private types = new Map<string, TypeRuntime>()
+  private byId = new Map<number, Enemy>() // O(1) hit() resolution; only live bodies are present
+  private nextId = 1
+  private targetBuf: EnemyTarget[] = [] // reused every targets() call — never retained by callers
+
+  private wave = 0 // stamped onto each baked corpse + reported on death facts
 
   constructor(
     private scene: THREE.Scene,
-    private docs: Record<string, EntityDoc>, // enemy type → entity doc
+    private enemies: Record<string, EnemyDef>, // enemy type → archetype (doc + gameplay data)
     private effects: EffectSystem,
-    private sfx: ((id: string, at?: THREE.Vector3) => void) | null = null, // semantic sound hook (inventory ids, optional world position)
-    private lights: LightPool | null = null, // per-zombie crystal glow (one pooled PointLight each)
+    // the horde REPORTS what happened (spawned/hit/died) and asks for nothing: blood,
+    // sound, the ultimate's counter and the hit log are all subscribers (events.ts).
+    private events: GameEvents,
+    private lights: LightPool | null = null, // per-enemy crystal glow (one pooled PointLight each)
     // when a death animation finishes the corpse is BAKED into this batch (a cheap static
     // instance) and its skinned entity is freed to the pool — so hundreds of corpses cost a
     // handful of draw calls, not 4 each. Null = corpses just vanish (headless/test).
     private corpses: CorpseBatch | null = null,
-    private generation: () => number = () => 0, // current wave — stamped onto each baked corpse
     private obstacles: Box[] = [], // interior walls the horde must flow around, not through
-  ) {}
+  ) {
+    // which wave a body belongs to is a fact the wave controller already reports — the
+    // horde listens instead of being handed a closure back into the composition root
+    events.on('waveStarted', ({ n }) => (this.wave = n))
+  }
 
-  private dropLight(z: Zombie): void {
+  // does this type exist? (WaveController validates its composition against this at boot)
+  hasType(type: string): boolean {
+    return type in this.enemies
+  }
+
+  private dropLight(z: Enemy): void {
     if (!z.light) return
     this.lights?.release(z.light)
     z.light = null
   }
 
-  // lend one pooled light per zombie, tinted by its crystal emissive; null (pool dry) is fine
-  private acquireLight(z: Zombie): void {
+  // lend one pooled light per enemy, tinted by its crystal emissive; null (pool dry) is fine
+  private acquireLight(z: Enemy): void {
     if (z.light || !this.lights) return
     z.light = this.lights.lend(this.crystalColor(z), system.params.zombieLightIntensity, LIGHT_RANGE)
     this.updateLight(z)
   }
 
   // the crystal's own emissive colour (first exposed emissive part) → the light's colour
-  private crystalColor(z: Zombie): number {
+  private crystalColor(z: Enemy): number {
     for (const [, m] of z.built.emissiveParts ?? []) return m.emissive.getHex()
     return 0xffffff
   }
 
   // ride the body; intensity = registry × current glow ratio (dims with the death fade)
-  private updateLight(z: Zombie): void {
+  private updateLight(z: Enemy): void {
     if (!z.light) return
     const p = z.built.group.position
     z.light.position.set(p.x, p.y + LIGHT_HEIGHT, p.z)
@@ -129,7 +163,7 @@ export class Horde {
 
   // crystal-light brightness relative to the authored glow: 1 while alive, follows the
   // emissive fade after death (light and crystal die together)
-  private glowRatio(z: Zombie): number {
+  private glowRatio(z: Enemy): number {
     if (z.alive) return 1
     for (const [part, m] of z.built.emissiveParts ?? []) {
       const base = z.glowBase.get(part) ?? 1
@@ -138,32 +172,47 @@ export class Horde {
     return 0
   }
 
+  // on the field = alive, not parked, past its spawn stagger, and out of the ground.
+  // ONE definition — targets() and separate() both use it, so a new lifecycle stage
+  // (stun, burrow) can't be remembered in one place and forgotten in the other.
+  private onField(z: Enemy): boolean {
+    return z.alive && !z.pooled && z.spawnDelay <= 0 && z.emergeLeft <= 0
+  }
+
   // spawn (or recycle) one enemy of `type` at (x, z); it stays hidden for `delay`
   // seconds so simultaneous spawns don't play their rise animation in lockstep
   async spawnAt(type: string, x: number, z: number, delay: number): Promise<void> {
-    const doc = this.docs[type]
-    if (!doc) throw new Error(`horde: unknown enemy type "${type}"`)
-    // instance source: a free (pooled) entity → build. Corpses no longer live here — once
-    // a death animation finishes the entity is baked into the CorpseBatch and pooled, so the
-    // pool refills fast and only the ~2s of dying zombies are ever expensive skinned meshes.
-    let z0 = this.list.find((c) => c.pooled && c.type === type)
+    const def = this.enemies[type]
+    if (!def) throw new Error(`horde: unknown enemy type "${type}"`)
+    // instance source: a free (parked) body of this type → build. Corpses don't live here —
+    // once a death animation finishes the entity is baked into the CorpseBatch and parked, so
+    // the pool refills fast and only the ~2s of dying enemies are ever expensive skinned meshes.
+    let z0 = this.list.find((c) => c.pooled && c.rt.type === type)
     if (!z0) {
-      const model = await loadGltfModel(doc.model!.src, doc.model!.anims ?? []) // raw parse cached; fresh skeleton clone
-      const built = buildGlbEntity(doc, model)
+      const model = await loadGltfModel(def.doc.model!.src, def.doc.model!.anims ?? []) // raw parse cached; fresh skeleton clone
+      const built = buildGlbEntity(def.doc, model)
       this.scene.add(built.group)
-      const death = built.clips?.find((c) => c.name === 'Zombie Death')
-      if (death) this.deathDur = death.duration
-      const walk = built.clips?.find((c) => c.name === 'Walking')
-      if (walk) {
-        this.walkDur = walk.duration
-        this.walkClip = walk // shared clip object across clones
-        this.walkProfile = (walk.userData.rootMotion as RootMotionProfile | undefined) ?? null
+      let rt = this.types.get(type)
+      if (!rt) {
+        // first body of this species: cache its clip timing under ITS OWN key
+        const death = built.clips?.find((c) => c.name === def.clips.death)
+        const walk = built.clips?.find((c) => c.name === def.clips.walk)
+        rt = {
+          type,
+          def,
+          deathDur: death?.duration ?? 2,
+          walkDur: walk?.duration ?? 1,
+          walkClip: walk ?? null, // shared clip object across clones of this species
+          walkProfile: (walk?.userData.rootMotion as RootMotionProfile | undefined) ?? null,
+        }
+        this.types.set(type, rt)
       }
       z0 = {
-        type,
+        id: 0,
+        rt,
         built,
-        preview: new EntityPreview(doc, built, this.depsFor(built)),
-        hp: HP,
+        preview: new EntityPreview(def.doc, built, this.depsFor(built)),
+        hp: def.hp,
         alive: true,
         pooled: false,
         spawnDelay: 0,
@@ -177,19 +226,25 @@ export class Horde {
         walkAction: null,
         riseAction: null,
         lastDist: 0,
+        target: { id: 0, point: new THREE.Vector3() },
       }
       this.list.push(z0)
     }
-    // (re)dress: position/heading, full hp, severed parts restored, glow restored
-    this.dropLight(z0) // a corpse reclaimed mid-fade may still hold its light
+    // (re)dress: NEW identity first — anything still holding the old handle now misses
+    this.byId.delete(z0.id)
+    z0.id = this.nextId++
+    z0.target.id = z0.id
+    this.byId.set(z0.id, z0)
+    // …then position/heading, full hp, severed parts restored, glow restored
+    this.dropLight(z0) // a body reclaimed mid-fade may still hold its light
     z0.pooled = false
     z0.alive = true
-    z0.hp = HP
+    z0.hp = z0.rt.def.hp
     z0.spawnDelay = delay
     z0.emergeLeft = 0
     z0.riseLeft = 0
     z0.deathLeft = Infinity
-    z0.lastHitAt = -Infinity // a reused corpse starts un-slowed
+    z0.lastHitAt = -Infinity // a reused body starts un-slowed
     z0.built.group.position.set(x, 0, z)
     z0.heading = Math.atan2(-x, -z) // face the arena center
     z0.built.group.rotation.y = z0.heading
@@ -198,7 +253,6 @@ export class Horde {
     z0.preview.clearModifiers() // reversible dismemberment: severed parts re-show
     for (const [part, m] of z0.built.emissiveParts ?? []) m.emissiveIntensity = z0.glowBase.get(part) ?? m.emissiveIntensity
   }
-
 
   // the editor's dismember dep, verbatim semantics: bake+throw the part chunk to the
   // model's BACK (weight-scaled), hide the living mesh — the derived modifier keeps it
@@ -223,7 +277,7 @@ export class Horde {
     }
   }
 
-  update(dt: number, playerPos: THREE.Vector3): void {
+  update(dt: number, now: number, playerPos: THREE.Vector3): void {
     this.effects.capDismembered(MAX_CHUNKS) // budget the flying-limb chunk instances
     this.corpses?.update() // refresh the batched-corpse instance buffers if they changed
     for (const z of this.list) {
@@ -242,7 +296,8 @@ export class Horde {
             // …then the death pose is BAKED into the batched-corpse mesh (cheap static
             // instance) and the expensive skinned entity is freed straight back to the pool.
             this.dropLight(z)
-            this.corpses?.add(z.built, this.generation())
+            this.corpses?.add(z.built, z.rt.type, this.wave)
+            this.byId.delete(z.id) // the handle dies with the body
             z.pooled = true
             z.built.group.visible = false
           }
@@ -256,12 +311,12 @@ export class Horde {
         if (z.spawnDelay <= 0) {
           z.built.group.visible = true
           z.built.group.position.y = -EMERGE_DEPTH
-          z.preview.setState('index', 0) // getting-up clip, snapped to frame 0
-          const rise = z.built.clips?.find((c) => c.name === 'index')
+          z.preview.setState(z.rt.def.clips.rise, 0) // getting-up clip, snapped to frame 0
+          const rise = z.built.clips?.find((c) => c.name === z.rt.def.clips.rise)
           z.riseAction = rise && z.built.mixer ? z.built.mixer.clipAction(rise) : null
           z.emergeLeft = EMERGE_TIME
           this.acquireLight(z) // crystal glow lights the floor it claws out of
-          this.sfx?.('zombie_rise', z.built.group.position)
+          this.events.emit('enemySpawned', { kind: z.rt.def.kind, at: z.built.group.position })
         }
         continue
       }
@@ -276,8 +331,7 @@ export class Horde {
         this.updateLight(z)
         if (z.emergeLeft <= 0) {
           z.built.group.position.y = 0
-          const rise = z.built.clips?.find((c) => c.name === 'index')
-          z.riseLeft = rise ? rise.duration * 0.95 : 0 // NOW the getting-up plays for real
+          z.riseLeft = z.riseAction ? z.riseAction.getClip().duration * 0.95 : 0 // NOW the getting-up plays for real
         }
         continue
       }
@@ -285,9 +339,9 @@ export class Horde {
       if (z.riseLeft > 0) {
         z.riseLeft -= dt
         if (z.riseLeft <= 0) {
-          z.preview.setState('Walking')
-          // grab the Walking action for root-motion phase reads
-          z.walkAction = this.walkClip && z.built.mixer ? z.built.mixer.existingAction(this.walkClip) : null
+          z.preview.setState(z.rt.def.clips.walk)
+          // grab the walk action for root-motion phase reads
+          z.walkAction = z.rt.walkClip && z.built.mixer ? z.built.mixer.existingAction(z.rt.walkClip) : null
           z.lastDist = 0
         }
         this.updateLight(z)
@@ -295,30 +349,30 @@ export class Horde {
       }
       // chase: face + close on the player, stop at melee distance.
       let speed = system.params.zombieSpeed
-      // stopping power: a zombie hit within the last window crawls (registry factor). The
+      // stopping power: an enemy hit within the last window crawls (registry factor). The
       // animation timeScale below is derived from `speed`, so it staggers with feet gripping.
-      if (performance.now() / 1000 - z.lastHitAt < system.params.stoppingPowerTime) speed *= system.params.stoppingPower
+      if (now - z.lastHitAt < system.params.stoppingPowerTime) speed *= system.params.stoppingPower
       let step: number
-      if (this.walkProfile && z.walkAction) {
+      if (z.rt.walkProfile && z.walkAction) {
         // ROOT-MOTION mode: timeScale makes one loop cover profile.total at the registry
         // AVERAGE speed; the per-frame step follows the authored non-uniform gait — the
         // body surges in the stride and settles in the stance, feet never slip.
-        if (z.built.mixer) z.built.mixer.timeScale = (speed * this.walkDur) / this.walkProfile.total
-        const t = z.walkAction.time % this.walkDur
-        const dNow = distAt(this.walkProfile, t)
+        if (z.built.mixer) z.built.mixer.timeScale = (speed * z.rt.walkDur) / z.rt.walkProfile.total
+        const t = z.walkAction.time % z.rt.walkDur
+        const dNow = distAt(z.rt.walkProfile, t)
         step = dNow - z.lastDist
-        if (step < 0) step += this.walkProfile.total // loop wrap
+        if (step < 0) step += z.rt.walkProfile.total // loop wrap
         z.lastDist = dNow
       } else {
         // fallback (in-place clip): constant speed + loops-per-meter rate coupling
-        if (z.built.mixer) z.built.mixer.timeScale = speed * system.params.zombieWalkLpm * this.walkDur
+        if (z.built.mixer) z.built.mixer.timeScale = speed * system.params.zombieWalkLpm * z.rt.walkDur
         step = speed * dt
       }
       const zx = z.built.group.position.x
       const zz = z.built.group.position.z
       // navigate around interior walls: steer toward a corner when the direct path to the
       // player is blocked, so the horde flows AROUND cover instead of pressing into it
-      const goal: { x: number; z: number } = this.obstacles.length ? navigateAround(zx, zz, playerPos.x, playerPos.z, ZOMBIE_R, this.obstacles) : playerPos
+      const goal: { x: number; z: number } = this.obstacles.length ? navigateAround(zx, zz, playerPos.x, playerPos.z, z.rt.def.radius, this.obstacles) : playerPos
       const gx = goal.x - zx
       const gz = goal.z - zz
       const gdist = Math.hypot(gx, gz)
@@ -344,7 +398,7 @@ export class Horde {
   // any that entered an interior wall back out (they slide along it toward the player).
   // One position snapshot of the on-ground horde; the steering is reusable by any manager.
   private separate(dt: number): void {
-    const agents = this.list.filter((z) => z.alive && !z.pooled && z.spawnDelay <= 0 && z.emergeLeft <= 0)
+    const agents = this.list.filter((z) => this.onField(z))
     if (!agents.length) return
     const offs = agents.length >= 2 ? separationOffsets(agents.map((z) => z.built.group.position), SEP_RADIUS) : null
     if (!offs && !this.obstacles.length) return
@@ -355,7 +409,7 @@ export class Horde {
         p.z += offs[i].z * SEP_STRENGTH * dt
       }
       if (this.obstacles.length) {
-        pushCircleOut(p.x, p.z, ZOMBIE_R, this.obstacles, _scratch) // out of interior walls
+        pushCircleOut(p.x, p.z, agents[i].rt.def.radius, this.obstacles, _scratch) // out of interior walls
         p.x = _scratch.x
         p.z = _scratch.z
       }
@@ -363,12 +417,17 @@ export class Horde {
     }
   }
 
-  // aim/hit candidates: alive AND actually on the field — not staggered-hidden, and not
-  // still underground mid-emerge (can't shoot what hasn't breached the floor yet)
-  targets(): { object: THREE.Object3D; point: THREE.Vector3 }[] {
-    return this.list
-      .filter((z) => z.alive && !z.pooled && z.spawnDelay <= 0 && z.emergeLeft <= 0)
-      .map((z) => ({ object: z.built.group, point: z.built.group.position.clone().setY(AIM_HEIGHT) }))
+  // aim/hit candidates: every on-field enemy, as {id, live aim point}. The returned array
+  // and its points are REUSED next call — consume them within the frame, never retain.
+  targets(): readonly EnemyTarget[] {
+    this.targetBuf.length = 0
+    for (const z of this.list) {
+      if (!this.onField(z)) continue
+      const p = z.built.group.position
+      z.target.point.set(p.x, z.rt.def.aimHeight, p.z)
+      this.targetBuf.push(z.target)
+    }
+    return this.targetBuf
   }
 
   aliveCount(): number {
@@ -376,30 +435,37 @@ export class Horde {
   }
 
   // apply one bolt hit: damage from the registry, dismemberment roll while parts remain,
-  // death when hp runs out. Returns what happened (for effects/HUD/log).
-  hit(group: THREE.Object3D): HitResult | null {
-    const z = this.list.find((x) => x.built.group === group)
-    if (!z || !z.alive || z.pooled) return null
-    z.lastHitAt = performance.now() / 1000 // stopping power: slow it for the next window
+  // death when hp runs out. Reports enemyHit (always) and enemyDied (when it was the last
+  // one) — what those facts trigger is entirely up to their subscribers.
+  // `at`/`dir` describe the impact: where the bolt landed and which way it was travelling.
+  hit(id: number, at: THREE.Vector3, dir: THREE.Vector3, now: number): void {
+    const z = this.byId.get(id)
+    if (!z || !z.alive || z.pooled) return // stale id (already dead / recycled) — nothing to hit
+    z.lastHitAt = now // stopping power: slow it for the next window
     z.hp -= system.params.damage
     let severed: string | null = null
     if (Math.random() < system.params.dismemberChance) {
-      const parts = Object.keys(this.docs[z.type].model?.dismember ?? {}).filter((p) => !z.preview.activeModifiers.has(`dismembered_${p}`))
+      const parts = Object.keys(z.rt.def.doc.model?.dismember ?? {}).filter((p) => !z.preview.activeModifiers.has(`dismembered_${p}`))
       if (parts.length) {
         severed = parts[(Math.random() * parts.length) | 0]
         z.preview.fireEvent(`dismember_${severed}`) // the shared derived-event path
       }
     }
-    const died = z.hp <= 0
-    if (died) this.die(z)
-    return { hp: z.hp, died, severed }
+    const kind = z.rt.def.kind
+    this.events.emit('enemyHit', { kind, at, dir, hp: z.hp, severed })
+    if (z.hp <= 0) {
+      this.die(z)
+      // the death fact reports where the BODY is (the pool of blood belongs under the
+      // corpse), not where the bolt struck it
+      this.events.emit('enemyDied', { kind, at: z.built.group.position, wave: this.wave })
+    }
   }
 
-  private die(z: Zombie): void {
+  private die(z: Enemy): void {
     z.alive = false
     if (z.built.mixer) z.built.mixer.timeScale = 1 // death plays at authored speed
-    z.preview.setState('Zombie Death')
-    z.deathLeft = this.deathDur * 0.96
+    z.preview.setState(z.rt.def.clips.death)
+    z.deathLeft = z.rt.deathDur * 0.96
     // the corpse is handed to the CorpseBatch when the death animation finishes (update())
   }
 

@@ -52,6 +52,11 @@ export class Locomotion {
   // one shot per animation loop — the game layer spawns the bolt here, so projectiles
   // stay in lockstep with the firing animation at ANY fire rate (timeScale-synced below)
   onShot: (() => void) | null = null
+  // one call per FOOTFALL, paced off the gait clip that's actually playing (see
+  // advanceSteps): the feet own the cadence, so nothing downstream has to re-derive it
+  // from speed and guess which band/clip we're in.
+  onStep: (() => void) | null = null
+  private stepPhase = 0.6 // primed: the first step lands quickly after moving again
 
   constructor(
     private group: THREE.Object3D,
@@ -209,8 +214,41 @@ export class Locomotion {
     // face the move direction while the stick is live (unless the controller aims us)
     if (mag > 0 && (opts.faceMovement ?? true)) this.turnTo(Math.atan2(dir.x, dir.z), dt)
 
+    this.advanceSteps(dt)
     this.mixer.update(dt)
     return speed
+  }
+
+  // footstep cadence, read off the gait the FEET are actually playing: the heaviest-
+  // weighted movement clip, at the timeScale it's really running (clamp included). Two
+  // steps per gait loop.
+  //
+  // This must not be re-derived from speed anywhere else. It was, and the two disagreed:
+  // a speed-based guess picks its own walk/run band (missing this one's hysteresis, so
+  // steps and feet diverge in the 0.45–0.55 stick band) and can't know that a strafe or
+  // backpedal is playing a different clip at a different rate. Feet are ground truth.
+  private advanceSteps(dt: number): void {
+    let best: THREE.AnimationAction | null = null
+    let bestW = 0.5 // under half weight, no clip is really "the" gait
+    for (const a of [this.walk, this.run, this.back, this.strafeL, this.strafeR]) {
+      if (!a) continue
+      const w = a.getEffectiveWeight()
+      if (w > bestW) {
+        bestW = w
+        best = a
+      }
+    }
+    if (!best || this.phase === 'idle') {
+      this.stepPhase = 0.6 // re-prime while standing
+      return
+    }
+    const dur = best.getClip().duration
+    if (dur <= 0) return
+    this.stepPhase += 2 * (Math.abs(best.timeScale) / dur) * dt // timeScale/dur = loops per second
+    while (this.stepPhase >= 1) {
+      this.stepPhase -= 1
+      this.onStep?.()
+    }
   }
 
   private turnTo(yaw: number, dt: number): void {

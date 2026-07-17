@@ -6,7 +6,7 @@ import { HDRIS, type LightParams, type ToneMap } from '../lib/lighting'
 import type { OrbConfig } from './orbs'
 import { saveGraphics, type GraphicsPrefs } from './userPrefs'
 
-interface Hooks {
+export interface Hooks {
   lights: LightParams // the level's resolved lighting — mutated in place
   graphics: GraphicsPrefs
   orbs?: OrbConfig // level orb config (mutated in place); optional

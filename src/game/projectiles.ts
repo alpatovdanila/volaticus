@@ -18,7 +18,7 @@ const TTL = 1.2 // s — well past arena scale; hits usually land in ~0.3s
 const HIT_RADIUS = 0.38 // m — zombie body hit radius (15% tighter than 0.45 so spread can miss)
 
 export interface Hit {
-  target: THREE.Object3D
+  target: number // the enemy id that was struck (stable handle — see zombies.ts)
   at: THREE.Vector3
   dir: THREE.Vector3 // unit travel direction at impact (exit-wound spray goes this way)
 }
@@ -85,10 +85,10 @@ export class Projectiles {
   }
 
   // advance + collide; returns the hits landed this frame. `targets` supplies each
-  // candidate's aim point (chest height) — the game layer decides what a target is.
+  // candidate's id + aim point (chest height) — the game layer decides what a target is.
   // Collision is SEGMENT-vs-sphere over the frame's travel (a fast bolt covers more
   // than the hit radius per frame at low fps — a point test tunnels straight through).
-  update(dt: number, targets: { object: THREE.Object3D; point: THREE.Vector3 }[]): UpdateResult {
+  update(dt: number, targets: readonly { id: number; point: THREE.Vector3 }[]): UpdateResult {
     const hits: Hit[] = []
     const walls: THREE.Vector3[] = []
     const keep: Bolt[] = []
@@ -109,7 +109,7 @@ export class Projectiles {
         const dz = toT.z - seg.z * u
         if (dx * dx + dy * dy + dz * dz < HIT_RADIUS * HIT_RADIUS && u < hitU) {
           hitU = u
-          hit = { target: t.object, at: b.pos.clone().addScaledVector(seg, u), dir: b.vel.clone().normalize() }
+          hit = { target: t.id, at: b.pos.clone().addScaledVector(seg, u), dir: b.vel.clone().normalize() }
         }
       }
       // an interior wall crossing the path first stops the bolt (cover): a zombie behind

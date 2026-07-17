@@ -30,8 +30,13 @@ export class PlayerController {
   invincible = false
   private settleLeft = 0
   private handBone: THREE.Object3D | null = null
-  // forwarded from locomotion: one bolt per firing-animation loop
-  onShot: (() => void) | null = null
+  // forwarded from locomotion: one bolt per firing-animation loop, carrying the aim the
+  // shot was taken with. The aim travels WITH the shot deliberately — onShot fires from
+  // inside mixer.update(), so a handler reading the aim from anywhere else would depend on
+  // that read happening to be sequenced after selection.
+  onShot: ((aim: THREE.Vector3) => void) | null = null
+  onStep: (() => void) | null = null // forwarded from locomotion: one per footfall
+  private aim: THREE.Vector3 | null = null // this tick's target point (set at the top of update)
 
   constructor(
     readonly built: BuiltEntity,
@@ -48,7 +53,11 @@ export class PlayerController {
       strafeRight: 'Strafe Run Right',
       fire: 'Firing Rifle',
     })
-    this.loco.onShot = () => this.onShot?.()
+    // a shot only exists while aimed, so this.aim is always set when the loop fires
+    this.loco.onShot = () => {
+      if (this.aim) this.onShot?.(this.aim)
+    }
+    this.loco.onStep = () => this.onStep?.()
     // bolts spawn from the LEFT HAND (the rifle hand) — find its bone once
     built.group.traverse((o) => {
       if ((o as THREE.Bone).isBone && /left.?hand$/i.test(o.name) && !this.handBone) this.handBone = o
@@ -74,6 +83,7 @@ export class PlayerController {
   // with a target in range the player FACES it in every stance (backpedaling away
   // plays the backward run); firing remains a capability of 'standing' only.
   update(dt: number, move: MoveInput, aim: THREE.Vector3 | null): number {
+    this.aim = aim // the shot callback fires mid-update (inside mixer.update) and reads this
     // stance transitions
     if (move.mag > 0) {
       this.stance = 'moving'

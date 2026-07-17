@@ -9,6 +9,11 @@
 //
 // Dismemberment is handled per part: a corpse's severed hand simply isn't given an instance
 // in that hand's mesh (severed parts are hidden on the source, so they're skipped at bake).
+//
+// MULTI-TYPE: everything here is keyed by "<type>/<part>". Two species have different
+// skeletons, different death poses and different skins, so they must never share a baked
+// geometry or an InstancedMesh — an unkeyed batch would wear the first species that died
+// as its permanent costume. A type only allocates when its first corpse lands.
 import * as THREE from 'three'
 import type { BuiltEntity } from '../inventory/factory'
 
@@ -16,13 +21,13 @@ const CAPACITY = 320 // hard ceiling on batched corpses; oldest drop out beyond 
 
 interface Corpse {
   matrix: THREE.Matrix4 // the entity's world transform, frozen at death
-  parts: Set<string> // which part meshes this corpse still has (missing = dismembered)
+  parts: Set<string> // "<type>/<part>" keys this corpse still has (missing = dismembered)
   gen: number // wave it died in (for the HUD / future policy)
 }
 
 export class CorpseBatch {
-  private parts = new Map<string, THREE.InstancedMesh>() // part name → shared instanced mesh
-  private material: THREE.Material | null = null // shared static skin (captured from the body)
+  private parts = new Map<string, THREE.InstancedMesh>() // "<type>/<part>" → shared instanced mesh
+  private materials = new Map<string, THREE.Material>() // type → its static skin (captured from the body)
   private corpses: Corpse[] = []
   private dirty = false
 
@@ -56,38 +61,49 @@ export class CorpseBatch {
     return g
   }
 
-  private ensurePart(name: string, sm: THREE.SkinnedMesh, groupInv: THREE.Matrix4): THREE.InstancedMesh {
-    let imesh = this.parts.get(name)
+  private ensurePart(key: string, mat: THREE.Material, sm: THREE.SkinnedMesh, groupInv: THREE.Matrix4): THREE.InstancedMesh {
+    let imesh = this.parts.get(key)
     if (imesh) return imesh
     const geo = this.bake(sm, groupInv)
-    imesh = new THREE.InstancedMesh(geo, this.material!, CAPACITY)
+    imesh = new THREE.InstancedMesh(geo, mat, CAPACITY)
     imesh.count = 0
     imesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
     imesh.frustumCulled = false // corpses scatter — a shared bound would cull wrongly
     imesh.receiveShadow = true
     imesh.castShadow = false // grounded + low; skip the shadow-pass cost of hundreds of them
     this.scene.add(imesh)
-    this.parts.set(name, imesh)
+    this.parts.set(key, imesh)
     return imesh
+  }
+
+  // the static skin for a species = a CLONE of its BODY material, taken at its first death.
+  // A clone, not the live reference: the source belongs to a pooled entity that gets
+  // re-dressed forever, so any runtime mutation on it (a hit flash, a status tint) would
+  // otherwise restyle every corpse already on the ground, retroactively. This copy is
+  // batch-owned and lives as long as the batch — no crystal glow either (that emissive
+  // clone stays with the live entity; a corpse's crystals faded long ago).
+  private materialFor(type: string, built: BuiltEntity): THREE.Material {
+    let mat = this.materials.get(type)
+    if (mat) return mat
+    const body = built.meshes.find((m) => m.userData.nodeName === 'body') ?? built.meshes[0]
+    const src = (Array.isArray(body.material) ? body.material[0] : body.material) as THREE.Material
+    mat = src.clone()
+    this.materials.set(type, mat)
+    return mat
   }
 
   // enrol a freshly-finished corpse: bake any part geometry we don't have yet, then record
   // this corpse's transform. `built` is about to be recycled, so we copy what we need now.
-  add(built: BuiltEntity, gen: number): void {
+  add(built: BuiltEntity, type: string, gen: number): void {
     built.group.updateWorldMatrix(true, false)
     const groupInv = built.group.matrixWorld.clone().invert()
-    // the shared corpse skin = the BODY material (no crystal glow — that clone stays with
-    // the live entity; a corpse's crystals have long since faded)
-    if (!this.material) {
-      const body = built.meshes.find((m) => m.userData.nodeName === 'body') ?? built.meshes[0]
-      this.material = (Array.isArray(body.material) ? body.material[0] : body.material) as THREE.Material
-    }
+    const mat = this.materialFor(type, built)
     const present = new Set<string>()
     for (const sm of built.meshes as THREE.SkinnedMesh[]) {
       if (!sm.visible) continue // severed/hidden parts aren't part of the corpse
-      const name = (sm.userData.nodeName as string) || sm.name
-      this.ensurePart(name, sm, groupInv)
-      present.add(name)
+      const key = `${type}/${(sm.userData.nodeName as string) || sm.name}`
+      this.ensurePart(key, mat, sm, groupInv)
+      present.add(key)
     }
     this.corpses.push({ matrix: built.group.matrixWorld.clone(), parts: present, gen })
     if (this.corpses.length > CAPACITY) this.corpses.shift() // evict the oldest corpse
@@ -96,14 +112,14 @@ export class CorpseBatch {
 
   // rewrite the instance buffers from the surviving corpse records (corpses never move, so
   // this only runs when the set changed). Each part mesh gets an instance for every corpse
-  // that still has that part.
+  // that still has that part — a corpse of another species simply never holds that key.
   update(): void {
     if (!this.dirty) return
     this.dirty = false
-    for (const [name, imesh] of this.parts) {
+    for (const [key, imesh] of this.parts) {
       let count = 0
       for (const c of this.corpses) {
-        if (c.parts.has(name)) {
+        if (c.parts.has(key)) {
           imesh.setMatrixAt(count, c.matrix)
           count++
         }

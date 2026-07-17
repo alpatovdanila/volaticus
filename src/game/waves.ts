@@ -4,6 +4,7 @@
 // next wave. It drives the Horde as an instance POOL (dead enemies are reclaimed and
 // re-dressed instead of rebuilt — the path to ~100 live instances later).
 import type * as THREE from 'three'
+import type { GameEvents } from './events'
 import type { Horde } from './zombies'
 
 export type SpawnZone =
@@ -48,9 +49,6 @@ function pickType(spawns: WaveDef['spawns']): string {
 
 export class WaveController {
   wave = 0
-  // gameplay-fact hooks (audio, UI, future XP) — the controller stays policy-only
-  onWaveStart: ((wave: number) => void) | null = null
-  onCleared: ((wave: number) => void) | null = null
   private countdown = 0
   // 'spawning' exists because spawnAt is async (a dry pool builds a model): the
   // wave-cleared check MUST stay disabled until every spawn has landed, or the empty
@@ -60,7 +58,15 @@ export class WaveController {
   constructor(
     private horde: Horde,
     private def: WaveDef,
+    private events: GameEvents, // waveStarted/waveCleared are reported here, not via callbacks
   ) {
+    // FILL-TIME validation: a composition naming an enemy the horde can't build is a
+    // level-authoring bug, and it must surface at boot — not as a wave that silently
+    // spawns nothing (or an async spawn failure that soft-locks the run, below).
+    const unknown = def.spawns.filter((s) => !horde.hasType(s.type)).map((s) => s.type)
+    if (unknown.length) throw new Error(`waves: unknown enemy type(s) ${unknown.join(', ')} — check the level's WaveDef against enemies.ts`)
+    if (!def.spawns.length) throw new Error('waves: WaveDef has no spawns')
+    if (def.spawns.some((s) => s.weight <= 0)) throw new Error('waves: spawn weights must be > 0')
     this.countdown = 1 // first wave lands a beat after boot
   }
 
@@ -70,20 +76,27 @@ export class WaveController {
       if (this.horde.aliveCount() === 0) {
         this.state = 'countdown'
         this.countdown = this.def.interWaveDelay
-        this.onCleared?.(this.wave)
+        this.events.emit('waveCleared', { n: this.wave })
       }
       return
     }
     this.countdown -= dt
     if (this.countdown <= 0) {
       this.state = 'spawning'
-      void this.beginWave()
+      // fire-and-forget by necessity (update() is sync) — but NEVER unguarded: an
+      // unhandled rejection would strand state at 'spawning', whose early-return above is
+      // permanent. A failed spawn (e.g. the species' GLB fetch fails) degrades to a short
+      // wave and the run continues; the fault is reported loudly, once.
+      this.beginWave().catch((err) => {
+        console.error('waves: beginWave failed — continuing with whatever spawned', err)
+        this.state = 'fighting'
+      })
     }
   }
 
   private async beginWave(): Promise<void> {
     this.wave += 1
-    this.onWaveStart?.(this.wave)
+    this.events.emit('waveStarted', { n: this.wave })
     // corpses are NOT this controller's concern — the horde bakes them into the CorpseBatch
     // and recycles the skinned entities itself; the controller only decides when to spawn
     const [lo, hi] = this.def.count

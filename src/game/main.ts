@@ -9,32 +9,34 @@ import { scopeHmrReloads } from '../lib/hmr-scope'
 import { LightingRig, LIGHT_DEFAULTS, clampLightParams } from '../lib/lighting'
 import { loadGltfModel } from '../inventory/gltf'
 import { buildGlbEntity, type BuiltEntity } from '../inventory/factory'
-import { validateEntity, type EntityDoc, type MaterialCatalogDoc } from '../inventory/schema'
+import { type EntityDoc, type MaterialCatalogDoc } from '../inventory/schema'
+import { validatedDoc } from './entityDoc'
+import { ENEMIES } from './enemies'
 import { EffectSystem } from '../inventory/effects'
 import { configureKtx2, setMaterialCatalog, makeSlotMaterial, whenTexturesReady, setAnisotropy } from '../inventory/materials'
 import { pollMove, pollActionPress } from './input'
 import { UltimateController, ZombieEaterUltimate } from './ultimate'
-import { Targeting } from './targeting'
 import { PlayerController } from './player'
-import { Projectiles, BOLT_COLOR } from './projectiles'
+import { BOLT_COLOR } from './projectiles'
 import { LightPool } from './lights'
 import { Orbs } from './orbs'
 import { Horde } from './zombies'
 import { WaveController } from './waves'
+import { GameEvents } from './events'
+import { CombatSystem } from './combat'
 import { EffectsManager } from './effectsManager'
 import { BloodSplatters } from './blood'
 import { CorpseBatch } from './corpses'
 import { Casings } from './casings'
-import { boxFrom, segmentEntryT, type Box } from './obstacles'
+import { boxFrom, type Box } from './obstacles'
 import { system } from './system'
-import { mountTuningPanel } from './tuning'
-import { mountSettingsPanel } from './settings'
+import { mountDevChrome } from './devChrome'
+import { mountUltHud, mountDebugHud, PerfHud, type RendererView } from './hud'
 import { TEST_LEVEL } from './level'
 import { loadGraphics, aaRenderScale, aaMsaa } from './userPrefs'
 import { PostChain } from './post'
-import { initAudio, sfx, sfxAt, setListener, startAmbience } from './audio'
+import { initAudio, setListener, startAmbience } from './audio'
 import marineRaw from '../../inventory/entities/marine2/marine2.json'
-import alyoshaRaw from '../../inventory/entities/alyosha/alyosha.json'
 
 // the dev server suppresses full reloads for src/** unless the page opts in
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
@@ -42,7 +44,6 @@ scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
 const level = TEST_LEVEL
 const ARENA_HALF = level.arenaHalf
 const PLAYER_RADIUS = 0.45
-const FIRE_RANGE = 14
 const UV_PER_METER = 0.25 // 4m per texture tile
 
 // GRAPHICS = user registry (persisted per machine); LIGHTING = level data
@@ -181,12 +182,6 @@ function buildArena(): Box[] {
 
 // --- entities --------------------------------------------------------------
 
-function docOf(raw: unknown, name: string): EntityDoc {
-  const { doc, issues } = validateEntity(raw)
-  if (!doc) throw new Error(`${name}: invalid entity doc: ${issues.join('; ')}`)
-  return doc
-}
-
 async function buildEntity(doc: EntityDoc, at: THREE.Vector3, yaw: number): Promise<BuiltEntity> {
   const model = await loadGltfModel(doc.model!.src, doc.model!.anims ?? [])
   const built = buildGlbEntity(doc, model)
@@ -219,8 +214,7 @@ async function start(): Promise<void> {
   await loadMaterialCatalog()
   const obstacles = buildArena() // interior-wall footprints for player/horde/bolt collision
 
-  const marineDoc = docOf(marineRaw, 'marine2')
-  const alyoshaDoc = docOf(alyoshaRaw, 'alyosha')
+  const marineDoc = validatedDoc(marineRaw, 'marine2')
 
   // player controller: owns the stance machine (moving → settling → standing), analog
   // locomotion, movement integration and the hand-bone muzzle. Input stays external.
@@ -240,10 +234,11 @@ async function start(): Promise<void> {
   // dead zombies bake into this batch (few draw calls for the whole battlefield); the wave
   // counter is stamped on each corpse (survival policy + HUD)
   const corpseBatch = new CorpseBatch(scene)
-  let currentWave = 0
-  const horde = new Horde(scene, { alyosha: alyoshaDoc }, effects, (id, at) => (at ? sfxAt(id, at.x, at.y, at.z) : sfx(id)), zombieLights, corpseBatch, () => currentWave, obstacles)
-  const waves = new WaveController(horde, level.wave)
-  waves.onWaveStart = (w) => (currentWave = w)
+  // the gameplay-fact bus: producers report, everyone else subscribes (events.ts)
+  const events = new GameEvents()
+  // ENEMIES is the archetype table (enemies.ts): hp/aim height/radius/clip names per species
+  const horde = new Horde(scene, ENEMIES, effects, events, zombieLights, corpseBatch, obstacles)
+  const waves = new WaveController(horde, level.wave, events) // ctor validates the composition
 
   rig.fitShadow(new THREE.Box3(new THREE.Vector3(-ARENA_HALF - 2, 0, -ARENA_HALF - 2), new THREE.Vector3(ARENA_HALF + 2, 3, ARENA_HALF + 2)))
   rig.patchShadow(scene)
@@ -261,165 +256,76 @@ async function start(): Promise<void> {
   await whenTexturesReady() // no black-texture first frame
   if (post.active()) flushShadowDirect() // bake the initial shadow before the first pass render
 
-  // all DEV overlays live in one container (the debug HUD, perf readout, settings + tuning
-  // panels) so entering fullscreen can hide the lot with a single toggle — a clean play/
-  // capture view. The ultimate HUD stays out of it: that's gameplay UI, not dev chrome.
-  const overlays = document.createElement('div')
-  overlays.id = 'overlays'
-  document.body.appendChild(overlays)
-  overlays.appendChild(hud) // reparent the debug HUD from <body> into the container
-  document.addEventListener('fullscreenchange', () => {
-    overlays.style.display = document.fullscreenElement ? 'none' : ''
-  })
-  // 'F' toggles fullscreen (keydown is a user gesture, so requestFullscreen is allowed)
-  window.addEventListener('keydown', (e) => {
-    if (e.code !== 'KeyF') return
-    if (document.fullscreenElement) void document.exitFullscreen()
-    else void document.documentElement.requestFullscreen().catch(() => {})
-  })
+  // ultimate: kills charge the bar; the action button spends it on ZOMBIE EATER (shotgun)
+  const ultimate = new UltimateController(new ZombieEaterUltimate())
+  // combat owns aim policy, the fire path and the hit fan-out (combat.ts); it subscribes
+  // the presentation reactions to the fact bus and wires itself to the player's shot/step
+  const combat = new CombatSystem({ scene, events, horde, player, fx: fxm, blood, casings, ultimate, obstacles, arenaHalf: ARENA_HALF, boltLights: lightPool })
 
-  // settings panels: lighting edits the LEVEL's data live, graphics edits the user registry
-  mountSettingsPanel(
-    {
-    lights: levelLights,
-    graphics: gfx,
-    orbs: orbConfig ?? undefined,
-    onLights: () => {
-      rig.applyParams(levelLights) // arms a shadow update…
-      if (post.active()) flushShadowDirect() // …which must render OUTSIDE the pass
-      post.setGtaoStrength(levelLights.ao)
+  // dev chrome: the overlay container + fullscreen toggle + the panels. Everything a
+  // developer needs and a player must never see goes in here (fullscreen hides it all).
+  const overlays = mountDevChrome({
+    hud,
+    // settings: lighting edits the LEVEL's data live, graphics edits the user registry
+    settings: {
+      lights: levelLights,
+      graphics: gfx,
+      orbs: orbConfig ?? undefined,
+      onLights: () => {
+        rig.applyParams(levelLights) // arms a shadow update…
+        if (post.active()) flushShadowDirect() // …which must render OUTSIDE the pass
+        post.setGtaoStrength(levelLights.ao)
+      },
+      onGraphics: applyGraphics,
+      onOrbs: () => orbs?.setIntensity(orbConfig!.intensity),
     },
-    onGraphics: applyGraphics,
-    onOrbs: () => orbs?.setIntensity(orbConfig!.intensity),
-    },
-    overlays,
-  )
-
-  // dev mode: pacifist = no aiming/shooting at all + player invincible (tweak
-  // animations in peace); the flag lives here (composition root), immunity on the player
-  let pacifist = false
-
-  // animation↔ground coupling sliders (tune, then graduate values into DEFAULT_PARAMS)
-  mountTuningPanel(
-    [
+    // animation↔ground coupling sliders (tune, then graduate values into DEFAULT_PARAMS)
+    sliders: [
       { key: 'playerWalkLpm', label: 'player walk l/m', min: 0.05, max: 2, step: 0.01 },
       { key: 'playerRunLpm', label: 'player run l/m', min: 0.05, max: 2, step: 0.01 },
       { key: 'zombieWalkLpm', label: 'zombie walk l/m', min: 0.05, max: 2, step: 0.01 },
       { key: 'zombieLightIntensity', label: 'zombie light', min: 0, max: 8, step: 0.1 },
       { key: 'targetStickiness', label: 'target stick', min: 0, max: 1, step: 0.05 },
     ],
-    [
+    buttons: [
       {
+        // pacifist: no aiming/shooting at all + player invincible (tweak animations in
+        // peace). Combat holds the guns, the player holds the immunity.
         label: 'pacifist',
-        isOn: () => pacifist,
+        isOn: () => combat.pacifist,
         onClick: () => {
-          pacifist = !pacifist
-          player.invincible = pacifist
+          combat.pacifist = !combat.pacifist
+          player.invincible = combat.pacifist
         },
       },
       { label: 'clear wave', onClick: () => horde.killAll() },
     ],
-    overlays,
-  )
+  })
 
-  const projectiles = new Projectiles(scene, ARENA_HALF + 0.75, lightPool, obstacles) // wall sparks + dlight per bolt
-  // ultimate: kills charge the bar; the action button spends it on ZOMBIE EATER (shotgun)
-  const ultimate = new UltimateController(new ZombieEaterUltimate())
-  // sticky auto-targeting: locks a target and holds it (see targeting.ts) to stop the
-  // re-acquire thrash when a horde closes in — the game still decides what's a valid target
-  const targeting = new Targeting()
-  const hitLog: string[] = []
-  ;(window as unknown as { __game: unknown }).__game = { player, horde, waves, effects, blood, casings, ultimate, targeting, scene, camera, renderer, rig, post, hitLog }
+  ;(window as unknown as { __game: unknown }).__game = { player, horde, waves, effects, blood, casings, ultimate, combat, events, scene, camera, renderer, rig, post, hitLog: combat.hitLog }
 
-  // ultimate HUD — a single line centered at the bottom of the screen
-  const ultHud = document.createElement('div')
-  ultHud.id = 'ult'
-  ultHud.style.cssText =
-    'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);font:600 15px/1.4 monospace;letter-spacing:1px;pointer-events:none;text-shadow:0 1px 3px #000;'
-  document.body.appendChild(ultHud)
-  const updateUltHud = (): void => {
-    if (ultimate.isActive) {
-      ultHud.textContent = `${ultimate.abilityName}  ${ultimate.activeStatus()}` // e.g. "ZOMBIE EATER  3/10"
-      ultHud.style.color = '#ff7a3c' // active — hot
-    } else if (ultimate.ready) {
-      ultHud.textContent = `(${ultimate.chargeValue}/${ultimate.maxCharge})  ULTIMATE READY`
-      ultHud.style.color = '#37e0ff' // ready — bright crystal
-    } else {
-      ultHud.textContent = `(${ultimate.chargeValue}/${ultimate.maxCharge})`
-      ultHud.style.color = '#5f7488' // charging — dim
-    }
-  }
-
-  // perf monitor (top-right): REAL frametimes, not the vsync'd display rate —
-  //   sim = game update CPU cost (input/AI/anim/effects/camera)
-  //   cpu = render submit cost (three → WebGPU encoding)
-  //   gpu = measured GPU frame time (timestamp queries, resolved ~5×/s)
-  //   eng = uncapped engine throughput = 1000 / max(sim+cpu, gpu) — the number that
-  //         matters for "runs on anything"; display fps just shows vsync
-  const perf = document.createElement('div')
-  perf.id = 'perf'
-  perf.style.cssText = 'position:fixed;right:10px;top:10px;color:#9fb2c5;font:11px/1.5 monospace;pointer-events:none;white-space:pre;text-shadow:0 1px 2px #000;text-align:right;'
-  overlays.appendChild(perf) // part of the dev-overlay container (hidden in fullscreen)
-  let perfLast = 0
-  let gpuReadT = 0
-  let simMs = 1
-  let cpuMs = 1
-  let gpuMs = -1
-  let frameMsEma = 16.7
-  let lastFrameEnd = -1
-  const readGpuTime = (): void => {
-    const r = renderer as unknown as { resolveTimestampsAsync?: () => Promise<void> }
-    if (typeof r.resolveTimestampsAsync !== 'function') return
-    r.resolveTimestampsAsync()
-      .then(() => {
-        const ms = (renderer.info.render as unknown as { timestamp?: number }).timestamp
-        if (typeof ms === 'number' && ms > 0) gpuMs = gpuMs < 0 ? ms : gpuMs * 0.9 + ms * 0.1
-      })
-      .catch(() => {
-        /* timestamp-query feature unavailable — eng falls back to CPU-side cost */
-      })
-  }
-  const updatePerf = (t0: number, tRender: number, t1: number): void => {
-    simMs = simMs * 0.9 + (tRender - t0) * 0.1
-    cpuMs = cpuMs * 0.9 + (t1 - tRender) * 0.1
-    if (lastFrameEnd >= 0) frameMsEma = frameMsEma * 0.9 + (t1 - lastFrameEnd) * 0.1
-    lastFrameEnd = t1
-    if (t1 - gpuReadT > 200) {
-      gpuReadT = t1
-      readGpuTime()
-    }
-    if (t1 - perfLast < 250) return
-    perfLast = t1
-    const r = (renderer.info as unknown as { render: { drawCalls: number; triangles: number } }).render
-    const tris = r.triangles >= 1000 ? (r.triangles / 1000).toFixed(1) + 'k' : String(r.triangles)
-    const cost = Math.max(simMs + cpuMs, gpuMs > 0 ? gpuMs : 0)
-    const eng = cost > 0 ? Math.round(1000 / cost) : 0
-    perf.textContent =
-      `${Math.round(1000 / frameMsEma)} fps · ${eng} eng\n` +
-      `sim ${simMs.toFixed(2)} · cpu ${cpuMs.toFixed(2)} · gpu ${gpuMs > 0 ? gpuMs.toFixed(2) : '—'} ms\n` +
-      `${r.drawCalls} draws · ${tris} tris`
-  }
-
-  // one bolt per firing-animation loop, from the LEFT HAND bone (the rifle hand)
+  // frame-scoped state the HUD getters read back. DECLARED BEFORE the getters that close
+  // over them — a `let` used inside a closure defined above its declaration is a temporal
+  // dead zone waiting for someone to call it one line too early.
   let aimPoint: THREE.Vector3 | null = null
-  player.onShot = () => {
-    if (!aimPoint) return
-    const muzzle = player.muzzle()
-    const dir = aimPoint.clone().sub(muzzle)
-    // one bolt normally; the shotgun ultimate raises pelletsPerShot — each pellet takes its
-    // own spread inside spawn(), so a high count + wide spread reads as a shotgun cone
-    const pellets = system.params.pelletsPerShot
-    for (let p = pellets; p > 0; p--) projectiles.spawn(muzzle, dir)
-    fxm.muzzleSpark(muzzle, dir) // tiny 1px sparks off the barrel
-    casings.eject(muzzle, dir) // one shell per shot, not per pellet
-    if (pellets > 1) {
-      // shotgun ultimate: blast, then a pump-rack a beat later
-      sfx('shot_shotgun')
-      window.setTimeout(() => sfx('shotgun_recock'), 280)
-    } else {
-      sfx('shot_rifle')
-    }
-  }
+  let lastMove = { x: 0, y: 0, mag: 0 }
+  let lastSpeed = 0
+
+  // readouts: the ult bar is gameplay UI (stays visible in fullscreen); the debug line and
+  // perf monitor are dev chrome (parented into the overlay container)
+  const updateUltHud = mountUltHud(() => ultimate)
+  const updateDebugHud = mountDebugHud(hud, () => ({
+    stickMag: lastMove.mag,
+    speed: lastSpeed,
+    stance: player.stance,
+    switching: player.switching,
+    aimed: aimPoint !== null,
+    waveStatus: waves.status(),
+    alive: horde.aliveCount(),
+    corpses: horde.corpseCount(),
+    params: system.params,
+  }))
+  const perf = new PerfHud(renderer as unknown as RendererView, overlays)
 
   // fixed camera orientation: aim it ONCE, then only translate — it never rotates
   const CAM_OFFSET = new THREE.Vector3(0, 7.2, 5.2)
@@ -428,7 +334,6 @@ async function start(): Promise<void> {
   const camGoal = new THREE.Vector3()
 
   const clock = new THREE.Clock()
-  let stepClock = 0.6 // footstep phase accumulator (2 steps per gait loop)
   // with the post chain the scene renders 2+ times per frame (shadow flush + pass) —
   // reset the counters ourselves so the HUD shows true PER-FRAME totals
   renderer.info.autoReset = false
@@ -436,64 +341,26 @@ async function start(): Promise<void> {
     renderer.info.reset()
     const t0 = performance.now()
     const dt = Math.min(0.05, clock.getDelta())
+    const now = t0 / 1000 // seconds — the horde's stopping-power window reads this
 
-    // the game proposes a target (nearest living zombie in range); whether the player
-    // may fire at it is the CONTROLLER's call (standing stance only). Pacifist mode
-    // proposes nothing — no aiming, no shooting.
-    aimPoint = null
-    if (!pacifist) {
-      const px = player.position
-      // policy: a valid target is in range AND in line of sight (no wall between — the bolt
-      // would be stopped by it anyway). The sticky targeter picks WHICH valid one to hold.
-      const cands = horde.targets().filter(
-        (t) =>
-          t.point.distanceToSquared(px) < FIRE_RANGE * FIRE_RANGE &&
-          !(obstacles.length && segmentEntryT(px.x, px.z, t.point.x, t.point.z, obstacles) <= 1),
-      )
-      aimPoint = targeting.select(cands, px.x, px.z)
-    }
+    // ONE horde snapshot per frame, shared by aiming and by bolt collision. horde.targets()
+    // hands back a reused buffer, so calling it twice would rewrite the points the first
+    // call's consumers are still holding.
+    const targets = horde.targets()
+
+    // ORDER MATTERS: combat proposes the aim → the player acts on it (and fires from
+    // inside its animation loop) → combat resolves the bolts that are now in the air.
+    aimPoint = combat.chooseTarget(targets)
     // ultimate: the action button spends a full bar; the active buff ticks down each frame
     if (pollActionPress()) ultimate.activate()
     ultimate.update(dt)
 
-    const move = pollMove()
-    const speed = player.update(dt, move, aimPoint)
-
-    // footsteps ride the gait rate: 2 steps per clip loop, loops/s = speed × lpm
-    if (speed > 0) {
-      const lpm = speed <= system.params.walkSpeedMax ? system.params.playerWalkLpm : system.params.playerRunLpm
-      stepClock += 2 * speed * lpm * dt
-      if (stepClock >= 1) {
-        stepClock -= 1
-        sfx('footstep')
-      }
-    } else stepClock = 0.6 // primed: first step lands quickly after moving again
-
-    // projectiles vs zombies + walls: damage/dismember/death registry-driven; the
-    // effects manager decides whether the blood/sparks actually spawn (budgets)
-    const shots = projectiles.update(dt, horde.targets())
-    for (const hit of shots.hits) {
-      const r = horde.hit(hit.target)
-      if (!r) continue
-      fxm.bloodHit(hit.at, hit.dir) // spray out the exit wound (bolt's travel direction)
-      blood.splat(hit.at.x, hit.at.z, 0.3 + Math.random() * 0.25, hit.dir) // small floor splatter
-      sfxAt('flesh_hit', hit.at.x, hit.at.y, hit.at.z)
-      if (r.severed) sfxAt('dismember', hit.at.x, hit.at.y, hit.at.z)
-      if (r.died) {
-        sfxAt('zombie_death', hit.at.x, hit.at.y, hit.at.z)
-        blood.splat(hit.at.x, hit.at.z, 1.65 + Math.random() * 0.75, undefined, true) // a lingering pool where it fell (50% bigger)
-        ultimate.onKill('zombie') // horde kills are zombies (future non-zombie enemies report their own kind)
-      }
-      hitLog.push(`${(performance.now() / 1000).toFixed(2)}s hp=${r.hp}${r.severed ? ' sever:' + r.severed : ''}${r.died ? ' DIED' : ''}`)
-      if (hitLog.length > 120) hitLog.shift()
-    }
-    for (const at of shots.walls) {
-      fxm.wallSpark(at)
-      sfxAt('wall_ricochet', at.x, at.y, at.z)
-    }
+    lastMove = pollMove()
+    lastSpeed = player.update(dt, lastMove, aimPoint)
+    combat.update(dt, now, targets)
 
     waves.update(dt, player.position)
-    horde.update(dt, player.position)
+    horde.update(dt, now, player.position)
     fxm.update(dt)
     blood.update(dt)
     casings.update(dt)
@@ -503,11 +370,7 @@ async function start(): Promise<void> {
     camGoal.copy(player.position).add(CAM_OFFSET)
     camera.position.lerp(camGoal, 1 - Math.exp(-5 * dt))
 
-    const aimTag = player.switching ? ':switching' : player.stance === 'standing' && aimPoint ? ':FIRING' : ''
-    hud.textContent =
-      `stick ${move.mag.toFixed(2)}  speed ${speed.toFixed(2)} m/s  [${player.stance}${aimTag}]\n` +
-      `${waves.status()}  zombies ${horde.aliveCount()}  corpses ${horde.corpseCount()}\n` +
-      `sys: run ${system.params.runSpeedMax}  walk ${system.params.walkSpeedMax}  zspd ${system.params.zombieSpeed}  rof ${system.params.fireRate}/s  dmg ${system.params.damage}  sever ${system.params.dismemberChance}`
+    updateDebugHud()
     updateUltHud()
 
     const tRender = performance.now() // sim work above, render submit below
@@ -524,7 +387,7 @@ async function start(): Promise<void> {
     } else {
       renderer.render(scene, camera) // dynamic shadows ride along (autoUpdate stays on)
     }
-    updatePerf(t0, tRender, performance.now())
+    perf.update(t0, tRender, performance.now())
   }
 
   // pure rAF drives visible frames (no double-ticking — an extra interval tick between

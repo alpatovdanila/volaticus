@@ -94,7 +94,7 @@ export class CombatSystem {
 
   // advance bolts and resolve what they met. `targets` is the frame's single horde
   // snapshot (main takes it once — the buffer is shared).
-  update(dt: number, now: number, targets: readonly EnemyTarget[]): void {
+  update(dt: number, targets: readonly EnemyTarget[]): void {
     for (let i = this.pending.length - 1; i >= 0; i--) {
       const p = this.pending[i]
       p.left -= dt
@@ -105,7 +105,7 @@ export class CombatSystem {
     }
     const shots = this.projectiles.update(dt, targets)
     // the horde owns damage and reports the outcome (enemyHit / enemyDied)
-    for (const hit of shots.hits) this.d.horde.hit(hit.target, hit.at, hit.dir, now)
+    for (const hit of shots.hits) this.d.horde.hit(hit.target, hit.at, hit.dir)
     for (const at of shots.walls) this.d.events.emit('wallHit', { at })
   }
 

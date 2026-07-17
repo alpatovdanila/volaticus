@@ -10,6 +10,7 @@
 // crossfades with hysteresis at the walk/run boundary so a wavering stick can't flap.
 import * as THREE from 'three'
 import { system } from './system'
+import { sim } from './clock'
 
 const BLEND_RATE = 9 // 1/s — exponential approach for phase weights
 const TURN_RATE = 14 // 1/s — heading slerp
@@ -48,7 +49,7 @@ export class Locomotion {
   private phase: Phase = 'idle'
   private heading = 0 // current facing yaw (radians; model forward = +Z)
   private fireLooping = false
-  private lastShot = -Infinity // performance.now()/1000 of the last bolt — rate-limits re-engage
+  private lastShot = -Infinity // sim seconds of the last bolt — rate-limits re-engage
   // one shot per animation loop — the game layer spawns the bolt here, so projectiles
   // stay in lockstep with the firing animation at ANY fire rate (timeScale-synced below)
   onShot: (() => void) | null = null
@@ -119,7 +120,8 @@ export class Locomotion {
   // across the deadzone (or tap-stop-tap play) re-engages constantly — without this gate
   // every re-engage would fire instantly, turning drift into a machine gun.
   private emitShot(): void {
-    const now = performance.now() / 1000
+    // SIM time: a pause (or a hitch) must not let the gate elapse behind the player's back
+    const now = sim.now
     if (now - this.lastShot < 0.95 / system.params.fireRate) return
     this.lastShot = now
     this.onShot?.()

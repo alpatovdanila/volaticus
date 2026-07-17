@@ -7,6 +7,7 @@
 import type * as THREE from 'three'
 import { EffectSystem, type EffectDeps } from '../inventory/effects'
 import type { EffectDoc } from '../inventory/schema'
+import { sim } from './clock'
 
 // -- effect definitions (EffectDoc shape — same format the editor's effects use) --
 
@@ -108,7 +109,9 @@ export class EffectsManager {
   private allow(category: string): boolean {
     const b = BUDGETS[category]
     if (!b) return true
-    const now = performance.now() / 1000
+    // SIM time: budgets are per unit of GAME time. On wall-clock a pause would silently
+    // refill every window, and a frame hitch would hand back a free burst.
+    const now = sim.now
     let s = this.spent.get(category)
     if (!s || now - s.start > b.window) {
       s = { start: now, n: 0 }

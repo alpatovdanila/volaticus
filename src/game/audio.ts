@@ -14,12 +14,37 @@ for (const [path, mod] of Object.entries(modules)) {
   else console.warn('sfx doc invalid:', path, issues)
 }
 
+// The complete vocabulary of sounds the game can ask for. It's a closed list so it can be
+// CHECKED: an unknown id is otherwise silent forever (gated() just returns null), which
+// means renaming an inventory doc removes a sound from the game and nothing says a word.
+// assertSfxIds() at boot turns that into a loud failure at the only moment it's cheap.
+// Level/weapon ids are validated the same way, from their own data (see main.ts).
+export const GAME_SFX = ['footstep', 'flesh_hit', 'dismember', 'zombie_death', 'zombie_rise', 'wall_ricochet'] as const
+
+// throws unless every id resolves to an inventory/sfx doc
+export function assertSfxIds(ids: readonly string[]): void {
+  const missing = [...new Set(ids)].filter((id) => !docs.has(id))
+  if (missing.length) throw new Error(`audio: no sfx doc for id(s) "${missing.join('", "')}" — check inventory/sfx/*.json`)
+}
+
 const MIN_GAP = 0.05 // s per id — collapses same-frame doubles, keeps rapid fire audible
 const lastPlay = new Map<string, number>()
+const warned = new Set<string>()
 
+// WALL-CLOCK, deliberately (not the sim clock): this guards the listener's EAR against
+// same-instant doubles — a real-world concern that must keep working while the sim is
+// paused, and that means nothing in game-seconds. See clock.ts.
 function gated(id: string): SfxDoc | null {
   const doc = docs.get(id)
-  if (!doc) return null
+  if (!doc) {
+    // boot's assertSfxIds should have caught this; if we're here, something asked for an
+    // id that isn't in the vocabulary. Say so once rather than going quietly silent.
+    if (!warned.has(id)) {
+      warned.add(id)
+      console.error(`audio: unknown sfx id "${id}" — no inventory/sfx doc; this sound will never play`)
+    }
+    return null
+  }
   const now = performance.now() / 1000
   if (now - (lastPlay.get(id) ?? -1) < MIN_GAP) return null
   lastPlay.set(id, now)
@@ -58,10 +83,14 @@ export function setListener(x: number, y: number, z: number): void {
 }
 
 export function sfxAt(id: string, x: number, y: number, z: number): void {
-  const doc = gated(id)
   const ac = ensureAudio()
-  if (!doc || !ac) return
+  if (!ac) return
+  // BUDGET BEFORE GATE: gated() stamps the id's MIN_GAP window as a side effect, so
+  // checking the budget afterwards meant a voice we dropped still blocked its own id for
+  // the next 50ms — the sound went quiet exactly when the fight was busiest.
   if (activeVoices >= MAX_VOICES) return // over budget — drop this voice
+  const doc = gated(id)
+  if (!doc) return
   const panner = ac.createPanner()
   panner.panningModel = 'equalpower' // cheap + fine for a fixed top-down camera
   panner.distanceModel = 'linear'
@@ -118,7 +147,7 @@ function startAmbienceNow(id: string): void {
     const g = ac.createGain()
     g.gain.value = doc.volume ?? 0.3
     src.connect(g)
-    g.connect(ac.destination)
+    g.connect(masterBus() ?? ac.destination) // the master bus is the ONE volume authority
     src.start()
   })
 }

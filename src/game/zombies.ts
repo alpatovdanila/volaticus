@@ -31,6 +31,7 @@ import { LightPool } from './lights'
 import { pushCircleOut, navigateAround, type Box } from './obstacles'
 import { separationOffsets } from './steering'
 import { system } from './system'
+import { sim } from './clock'
 
 const MAX_CHUNKS = 120 // severed-limb chunk instances kept before the oldest are evicted
 const _scratch = { x: 0, z: 0 } // obstacle push-out target
@@ -277,7 +278,7 @@ export class Horde {
     }
   }
 
-  update(dt: number, now: number, playerPos: THREE.Vector3): void {
+  update(dt: number, playerPos: THREE.Vector3): void {
     this.effects.capDismembered(MAX_CHUNKS) // budget the flying-limb chunk instances
     this.corpses?.update() // refresh the batched-corpse instance buffers if they changed
     for (const z of this.list) {
@@ -351,7 +352,7 @@ export class Horde {
       let speed = system.params.zombieSpeed
       // stopping power: an enemy hit within the last window crawls (registry factor). The
       // animation timeScale below is derived from `speed`, so it staggers with feet gripping.
-      if (now - z.lastHitAt < system.params.stoppingPowerTime) speed *= system.params.stoppingPower
+      if (sim.now - z.lastHitAt < system.params.stoppingPowerTime) speed *= system.params.stoppingPower
       let step: number
       if (z.rt.walkProfile && z.walkAction) {
         // ROOT-MOTION mode: timeScale makes one loop cover profile.total at the registry
@@ -438,10 +439,10 @@ export class Horde {
   // death when hp runs out. Reports enemyHit (always) and enemyDied (when it was the last
   // one) — what those facts trigger is entirely up to their subscribers.
   // `at`/`dir` describe the impact: where the bolt landed and which way it was travelling.
-  hit(id: number, at: THREE.Vector3, dir: THREE.Vector3, now: number): void {
+  hit(id: number, at: THREE.Vector3, dir: THREE.Vector3): void {
     const z = this.byId.get(id)
     if (!z || !z.alive || z.pooled) return // stale id (already dead / recycled) — nothing to hit
-    z.lastHitAt = now // stopping power: slow it for the next window
+    z.lastHitAt = sim.now // stopping power: slow it for the next window
     z.hp -= system.params.damage
     let severed: string | null = null
     if (Math.random() < system.params.dismemberChance) {

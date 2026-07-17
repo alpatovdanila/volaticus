@@ -30,12 +30,14 @@ import { CorpseBatch } from './corpses'
 import { Casings } from './casings'
 import { boxFrom, type Box } from './obstacles'
 import { system } from './system'
+import { sim } from './clock'
 import { mountDevChrome } from './devChrome'
 import { mountUltHud, mountDebugHud, PerfHud, type RendererView } from './hud'
 import { TEST_LEVEL } from './level'
 import { loadGraphics, aaRenderScale, aaMsaa } from './userPrefs'
 import { PostChain } from './post'
-import { initAudio, setListener, startAmbience } from './audio'
+import { initAudio, setListener, startAmbience, assertSfxIds, GAME_SFX } from './audio'
+import { weaponSfxIds } from './weapons'
 import marineRaw from '../../inventory/entities/marine2/marine2.json'
 
 // the dev server suppresses full reloads for src/** unless the page opts in
@@ -227,7 +229,10 @@ async function start(): Promise<void> {
   const blood = new BloodSplatters(scene) // reflective floor decals (hits + death pools)
   const casings = new Casings(scene) // ejected shell casings (hot → cool, batched on the floor)
 
-  // sounds are inventory-driven: these ids resolve to inventory/sfx docs → files
+  // sounds are inventory-driven: these ids resolve to inventory/sfx docs → files. Validate
+  // the whole vocabulary NOW (the game's, every weapon's, the level's) — a renamed doc is
+  // a boot error here instead of a sound that silently stops existing.
+  assertSfxIds([...GAME_SFX, ...weaponSfxIds(), ...(level.ambience ? [level.ambience] : [])])
   initAudio()
   if (level.ambience) startAmbience(level.ambience)
 
@@ -341,7 +346,7 @@ async function start(): Promise<void> {
     renderer.info.reset()
     const t0 = performance.now()
     const dt = Math.min(0.05, clock.getDelta())
-    const now = t0 / 1000 // seconds — the horde's stopping-power window reads this
+    sim.tick(dt) // THE sim clock — ticked exactly once, here. Everything gameplay reads sim.now.
 
     // ONE horde snapshot per frame, shared by aiming and by bolt collision. horde.targets()
     // hands back a reused buffer, so calling it twice would rewrite the points the first
@@ -357,10 +362,10 @@ async function start(): Promise<void> {
 
     lastMove = pollMove()
     lastSpeed = player.update(dt, lastMove, aimPoint)
-    combat.update(dt, now, targets)
+    combat.update(dt, targets)
 
     waves.update(dt, player.position)
-    horde.update(dt, now, player.position)
+    horde.update(dt, player.position)
     fxm.update(dt)
     blood.update(dt)
     casings.update(dt)

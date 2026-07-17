@@ -43,3 +43,11 @@ export const ZOMBIE_EATER_SHOTGUN: WeaponDef = {
     set: { bulletSpread: 0.15, pelletsPerShot: 12 }, // cone (the rifle's is 0.05); tightened 25% from 0.2
   },
 }
+
+// every weapon in the game. Boot validates their sound ids against the inventory docs
+// (see assertSfxIds) — a typo in a record here would otherwise be a gun that fires silently.
+export const WEAPONS: readonly WeaponDef[] = [RIFLE, ZOMBIE_EATER_SHOTGUN]
+
+export function weaponSfxIds(): string[] {
+  return WEAPONS.flatMap((w) => (w.sfxAfter ? [w.sfxShot, w.sfxAfter] : [w.sfxShot]))
+}

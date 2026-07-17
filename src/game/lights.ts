@@ -8,6 +8,7 @@
 // None of these lights cast shadows: every pooled light costs per-fragment math on all
 // lit pixels even while parked, so the pool stays SMALL.
 import * as THREE from 'three'
+import { hasRendered } from './tripwires'
 
 const PARK_Y = -50
 
@@ -18,6 +19,9 @@ export class LightPool {
   // create BEFORE the first render so the initial pipeline compile already includes
   // the full light set — no recompile hitch ever after
   constructor(scene: THREE.Scene, size = 6) {
+    // …and that "before" is the whole contract, so it's checked rather than requested:
+    // a pool built late defeats its own reason for existing (see tripwires.ts).
+    if (hasRendered()) throw new Error('LightPool: created AFTER the first render — the light count must be fixed at boot, or every pipeline rebuilds (see tripwires.ts)')
     for (let i = 0; i < size; i++) {
       const l = new THREE.PointLight(0xffffff, 0, 6, 1.8)
       l.position.set(0, PARK_Y, 0)

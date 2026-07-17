@@ -7,6 +7,7 @@
 import * as THREE from 'three'
 import { MeshBasicNodeMaterial } from 'three/webgpu'
 import { color, uniform } from 'three/tsl'
+import { hasRendered } from './tripwires'
 
 export interface OrbConfig {
   count: number
@@ -22,6 +23,8 @@ export class Orbs {
   private mesh: THREE.InstancedMesh
 
   constructor(scene: THREE.Scene, private cfg: OrbConfig) {
+    // "created once at boot" above is the contract — checked, not requested (tripwires.ts)
+    if (hasRendered()) throw new Error('Orbs: created AFTER the first render — the scene light count must be fixed at boot (see tripwires.ts)')
     const col = new THREE.Color(cfg.color)
     const mat = new MeshBasicNodeMaterial() // unlit: the orb always glows, regardless of scene light
     mat.colorNode = color(col).mul(this.glowU)

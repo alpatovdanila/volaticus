@@ -177,10 +177,19 @@ export function surfacePresetNames(): string[] {
 // editor/registry boot like setSurfacePresets/setTexturePack.
 
 let materialCatalog: Record<string, MaterialCatalogDoc> = {}
+let catalogSet = false
 
 export function setMaterialCatalog(catalog: Record<string, MaterialCatalogDoc>): void {
   materialCatalog = catalog
+  catalogSet = true
   bumpMaterialCacheGen() // structural change: cached materials were built from the old docs
+}
+
+// Building a catalog material before the catalog exists yields a silently untextured mesh
+// that looks like a renderer bug hours later — so it's an error at the only point where
+// the cause is still obvious. (Boot order: fetch the catalog → setMaterialCatalog → build.)
+export function assertMaterialCatalog(where: string): void {
+  if (!catalogSet) throw new Error(`${where}: the material catalog has not been loaded yet — call setMaterialCatalog() first, or every material here builds untextured`)
 }
 
 // Resolve one map kind's path. Maps are single-resolution now (one path per kind).
@@ -397,6 +406,7 @@ export function bumpMaterialCacheGen(): void {
   matCache.clear()
 }
 export function makeSlotMaterial(slot: string, def: ResolvedMaterialDef): EntityMaterial {
+  if (def.material) assertMaterialCatalog(`makeSlotMaterial("${slot}" → "${def.material}")`)
   const key = [
     matCacheGen,
     def.material ?? '_',

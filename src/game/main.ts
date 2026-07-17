@@ -31,6 +31,7 @@ import { Casings } from './casings'
 import { boxFrom, type Box } from './obstacles'
 import { system } from './system'
 import { sim } from './clock'
+import { markFirstRender, watchLightCount } from './tripwires'
 import { mountDevChrome } from './devChrome'
 import { mountUltHud, mountDebugHud, PerfHud, type RendererView } from './hud'
 import { TEST_LEVEL } from './level'
@@ -208,6 +209,7 @@ async function start(): Promise<void> {
   // includes the full light set, so the count never changes → no recompiles, ever
   const lightPool = new LightPool(scene) // bolt tracers (6)
   const zombieLights = new LightPool(scene, 12) // one crystal glow per zombie (pool caps the count)
+  const flashLights = new LightPool(scene, 4) // effect-doc `flash` lights (see the provider below)
   // static fill orbs — created BEFORE the first render so the light count is fixed. Their
   // colour is the BULLET tracer colour (single source of truth: change the tracer, the orbs
   // follow); orbConfig is the single mutable copy the slider edits and the orbs read.
@@ -223,8 +225,15 @@ async function start(): Promise<void> {
   const playerBuilt = await buildEntity(marineDoc, new THREE.Vector3(0, 0, 0), 0)
   const player = new PlayerController(playerBuilt, ARENA_HALF, PLAYER_RADIUS, obstacles)
 
-  // shared effect system + the game-facing manager (semantic calls, budgets, throttling)
-  const effects = new EffectSystem(scene)
+  // shared effect system + the game-facing manager (semantic calls, budgets, throttling).
+  // The flash provider is NOT optional here: left to its default, an effect doc with a
+  // `flash` would add a raw PointLight mid-fight — the exact light-count change that
+  // rebuilds every pipeline and, under the MRT post chain, blacks out the canvas for good.
+  // Routing flashes through a boot-time pool keeps the count fixed and the docs valid.
+  const effects = new EffectSystem(scene, {
+    acquire: (color, intensity, range) => flashLights.lend(new THREE.Color(color).getHex(), intensity, range),
+    release: (l) => flashLights.release(l),
+  })
   const fxm = new EffectsManager(effects)
   const blood = new BloodSplatters(scene) // reflective floor decals (hits + death pools)
   const casings = new Casings(scene) // ejected shell casings (hot → cool, batched on the floor)
@@ -339,6 +348,11 @@ async function start(): Promise<void> {
   const camGoal = new THREE.Vector3()
 
   const clock = new THREE.Clock()
+  // the boot contracts are now enforced, not just documented (tripwires.ts): from here on
+  // a light created late throws at its constructor, and any other change to the scene's
+  // light set is reported by this check
+  const checkLights = watchLightCount(scene)
+  let lightCheckAt = 0
   // with the post chain the scene renders 2+ times per frame (shadow flush + pass) —
   // reset the counters ourselves so the HUD shows true PER-FRAME totals
   renderer.info.autoReset = false
@@ -392,7 +406,13 @@ async function start(): Promise<void> {
     } else {
       renderer.render(scene, camera) // dynamic shadows ride along (autoUpdate stays on)
     }
-    perf.update(t0, tRender, performance.now())
+    markFirstRender() // from now on, creating a light is a bug (tripwires.ts)
+    const t1 = performance.now()
+    perf.update(t0, tRender, t1)
+    if (t1 - lightCheckAt > 1000) {
+      lightCheckAt = t1
+      checkLights()
+    }
   }
 
   // pure rAF drives visible frames (no double-ticking — an extra interval tick between

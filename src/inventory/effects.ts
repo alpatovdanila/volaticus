@@ -225,6 +225,31 @@ interface DismemberedPart {
 const _chunkM = new THREE.Matrix4()
 const _spinQ = new THREE.Quaternion()
 
+// Where an effect's `flash` gets its PointLight from. This is a SEAM, not a nicety: adding
+// a light to the scene rebuilds every pipeline on this stack (r185 bakes the light COUNT
+// into them), which is precisely the hitch — and, under the game's MRT post chain, the
+// black-canvas poisoning — that the game's fixed light pools exist to prevent. The editor
+// can afford raw lights (it warms the variants up front); the game cannot, and hands over
+// a pool instead. `release` returns the light when the flash dies.
+export interface FlashLights {
+  acquire(color: THREE.ColorRepresentation, intensity: number, range: number): THREE.PointLight | null
+  release(light: THREE.PointLight): void
+}
+
+// the editor's policy, and the default: a fresh light per flash, added to and removed from
+// the scene. Kept as the default so this shared module's existing consumer (the editor) is
+// bit-identical — the GAME passes its pool explicitly (see main.ts).
+function rawFlashLights(scene: THREE.Scene): FlashLights {
+  return {
+    acquire: (color, intensity, range) => {
+      const l = new THREE.PointLight(color, intensity, range, 1.2)
+      scene.add(l)
+      return l
+    },
+    release: (l) => scene.remove(l),
+  }
+}
+
 export class EffectSystem {
   private bursts: LiveBurst[] = []
   private flashes: LiveFlash[] = []
@@ -232,7 +257,17 @@ export class EffectSystem {
   private dismembered: DismemberedPart[] = []
   private chunkPools = new Map<string, ChunkPool>()
 
-  constructor(private scene: THREE.Scene) {}
+  private flashLights: FlashLights
+
+  // `flashLights` defaults to the editor's raw-light policy (unchanged behaviour). Pass a
+  // pool-backed provider to keep the scene's light COUNT fixed; pass one whose acquire()
+  // always returns null to skip flashes entirely — the doc stays valid either way.
+  constructor(
+    private scene: THREE.Scene,
+    flashLights?: FlashLights,
+  ) {
+    this.flashLights = flashLights ?? rawFlashLights(scene)
+  }
 
   // Death drama: clone the entity's visible pieces and let them tumble apart.
   shatterMeshes(meshes: THREE.Mesh[]): void {
@@ -474,10 +509,14 @@ export class EffectSystem {
     }
 
     if (doc.flash) {
-      const light = new THREE.PointLight(doc.flash.color, doc.flash.intensity * 30, doc.flash.radius ?? 8, 1.2)
-      light.position.copy(at)
-      this.scene.add(light)
-      this.flashes.push({ light, ttl: doc.flash.duration, life: 0, intensity: doc.flash.intensity * 30 })
+      const intensity = doc.flash.intensity * 30
+      const light = this.flashLights.acquire(doc.flash.color, intensity, doc.flash.radius ?? 8)
+      if (light) {
+        // null = the provider is rationing (pool dry, or flashes disabled). The effect
+        // still plays — it just doesn't light the room. Same contract as LightPool.lend.
+        light.position.copy(at)
+        this.flashes.push({ light, ttl: doc.flash.duration, life: 0, intensity })
+      }
     }
   }
 
@@ -553,7 +592,7 @@ export class EffectSystem {
       f.life += dt
       const u = Math.min(1, f.life / f.ttl)
       f.light.intensity = f.intensity * (1 - u) * (1 - u)
-      if (u >= 1) this.scene.remove(f.light)
+      if (u >= 1) this.flashLights.release(f.light) // back to the provider (scene remove, or pool)
     }
     this.flashes = this.flashes.filter((f) => f.life < f.ttl)
 

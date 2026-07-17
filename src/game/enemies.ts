@@ -3,8 +3,15 @@
 // concerns (hit points, aim height, body radius, which fact-kind this species reports)
 // live here instead of leaking into inventory/schema.ts.
 //
-// Adding an enemy = one record here + its entity doc. Nothing inside the Horde changes:
-// clip NAMES are data too, so a species with differently-named animations just works.
+// WHAT IS DATA, AND WHAT IS NOT — the honest boundary, because it moves as this fills in:
+//   IS data (add a record here + an entity doc, and the Horde does not change): clip NAMES,
+//   hp, aimHeight, radius, kind, skinPart. A re-skin or a tougher/bigger variant is free.
+//   IS NOT data yet: speed, walk-lpm and light intensity are still ONE GLOBAL EACH in the
+//   registry (system.ts: zombieSpeed / zombieWalkLpm / zombieLightIntensity), so every
+//   species moves and glows identically; and BEHAVIOUR has no seam at all — Horde.update()
+//   has no per-species dispatch and chase-the-player is the loop's tail. A species that
+//   moves differently means editing that loop. Move those three onto EnemyDef beside hp
+//   before the second species lands, and this comment gets shorter.
 import type { EntityDoc } from '../inventory/schema'
 import { validatedDoc } from './entityDoc'
 import alyoshaRaw from '../../inventory/entities/alyosha/alyosha.json'

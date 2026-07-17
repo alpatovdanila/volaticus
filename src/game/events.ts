@@ -41,7 +41,9 @@ type Handler<K extends FactName> = (fact: GameFacts[K]) => void
 export class GameEvents {
   private subs = new Map<FactName, Handler<FactName>[]>()
 
-  // subscribe; returns an unsubscribe fn (an arena session drops its listeners on teardown)
+  // subscribe; returns an unsubscribe fn. NOBODY CALLS IT YET — there is no arena session,
+  // and all six subscribe sites discard the disposer, which is correct while every
+  // subscriber outlives the process. It exists for the session that will need it.
   on<K extends FactName>(name: K, fn: Handler<K>): () => void {
     const list = this.subs.get(name) ?? []
     list.push(fn as Handler<FactName>)

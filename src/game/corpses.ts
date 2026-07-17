@@ -22,7 +22,9 @@ const CAPACITY = 320 // hard ceiling on batched corpses; oldest drop out beyond 
 interface Corpse {
   matrix: THREE.Matrix4 // the entity's world transform, frozen at death
   parts: Set<string> // "<type>/<part>" keys this corpse still has (missing = dismembered)
-  gen: number // wave it died in (for the HUD / future policy)
+  gen: number // wave it died in. NOTHING READS THIS — the HUD takes the wave from
+  // waves.status(), not from here. Kept only as the survival-policy hook; delete it (and
+  // Horde.wave, which exists solely to feed it) if that policy never lands.
 }
 
 export class CorpseBatch {

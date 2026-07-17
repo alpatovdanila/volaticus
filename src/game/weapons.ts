@@ -4,7 +4,15 @@
 // `pellets > 1` heuristic picking the fire sound, a raw setTimeout for the pump-rack, and
 // spread/pellet-count constants sitting next to the ultimate that happened to equip it —
 // with the rifle existing only implicitly, as whatever the registry defaults happened to
-// say. Adding a weapon meant editing the fire path. Now it's a record.
+// say. Adding a weapon meant editing the fire path.
+//
+// WHAT THE RECORD COVERS: ballistics (as a registry Modifier) and the sounds. WHAT IT DOES
+// NOT: the firing ANIMATION is the literal 'Firing Rifle' in PlayerController's ctor, so
+// ZOMBIE_EATER's shotgun fires the rifle's animation today; and the cadence SHAPE is
+// uniform-periodic by construction, because the shot clock is the mixer's loop event
+// (locomotion.ts) with timeScale = clipDur × fireRate. A gun that differs in NUMBERS is a
+// record. A gun that differs in a VERB — burst, charge-up, continuous — is not expressible
+// here and would need the fire clock to leave the animation mixer first.
 //
 // Ballistics are expressed as a registry Modifier (system.ts), not as numbers the fire
 // path reads directly: the same layering that lets an ultimate coexist with a mid-fight

@@ -1,9 +1,14 @@
 // Centralized game-facing effects manager. Call sites ask for MEANING ("blood hit
-// here", "wall spark there") and stay dumb; this layer owns the actual effect
-// definitions and the global policies — throttling, budgets, and later distance
-// culling / quality scaling — so optimization lives in ONE place instead of being
-// re-litigated at every call site. Underneath it drives the shared EffectSystem
-// (pooled materials, instanced burst meshes, severed-part chunk pools).
+// here", "wall spark there") and stay dumb; this layer owns the effect definitions
+// below and the policies over THEM — throttling, the BUDGETS table, and later distance
+// culling / quality scaling. Underneath it drives the shared EffectSystem (pooled
+// materials, instanced burst meshes, severed-part chunk pools).
+//
+// BOUNDARY, because this is not the only budget owner: main.ts hands the Horde the RAW
+// EffectSystem, not this manager, so the horde's dismemberment budget (MAX_CHUNKS,
+// zombies.ts) is enforced on its own and never passes through here. Two budget owners,
+// two injection paths. Route capDismembered through this manager if you want the claim
+// to be true — until then, "budgets live here" means the ones in BUDGETS below.
 import type * as THREE from 'three'
 import { EffectSystem, type EffectDeps } from '../inventory/effects'
 import type { EffectDoc } from '../inventory/schema'

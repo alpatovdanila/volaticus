@@ -309,7 +309,9 @@ export class Horde {
           // fade each emissive part from ITS OWN authored base, so every part takes
           // GLOW_FADE seconds to die regardless of how bright it started (and so a species
           // whose glowing part isn't named 'crystals' fades at all — this line used to
-          // look the base up by that literal, the one species name left in this file)
+          // look the base up by that literal). Species names are gone from this file, but
+          // species-specific VALUES are not: zombieSpeed/zombieWalkLpm/zombieLightIntensity
+          // are still one global each (system.ts), shared by every species alive.
           for (const [part, m] of z.built.emissiveParts ?? []) {
             if (m.emissiveIntensity > 0) m.emissiveIntensity = Math.max(0, m.emissiveIntensity - (dt / GLOW_FADE) * (z.glowBase.get(part) ?? 1))
           }

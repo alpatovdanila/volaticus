@@ -1,7 +1,8 @@
 // Dev tuning panel — live sliders over registry params (bottom-left). Every slider
-// writes system.params directly, and consumers read the registry per frame, so drags
-// apply instantly. Add fields here whenever something needs hand-tuning; the final
-// values then graduate into DEFAULT_PARAMS.
+// writes system.BASE (see the note at the oninput handler below — writing the derived
+// `params` would be erased by the next recompute), and consumers read the registry per
+// frame, so drags apply instantly. Add fields here whenever something needs hand-tuning;
+// the final values then graduate into DEFAULT_PARAMS.
 import { system, type GameParams } from './system'
 
 export interface TuningField {

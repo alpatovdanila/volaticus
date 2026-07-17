@@ -19,6 +19,11 @@ export interface EnemyDef {
   aimHeight: number // bolts aim/hit this high above the body origin
   radius: number // body radius for separation + interior-wall push-out
   clips: { walk: string; death: string; rise: string }
+  // the mesh whose material dresses this species' CORPSES (corpses.ts bakes one static
+  // skin per type from it). Data, not a guess: picking it by a hardcoded name with a
+  // positional fallback would silently clone whatever mesh happened to be first — and if
+  // that were the @exposeEmissive part, every corpse of the species would glow.
+  skinPart: string
 }
 
 // docs validate at module load — an invalid doc throws at boot, not mid-wave
@@ -30,5 +35,6 @@ export const ENEMIES: Record<string, EnemyDef> = {
     aimHeight: 0.7, // alyosha is squat — chest height
     radius: 0.35,
     clips: { walk: 'Walking', death: 'Zombie Death', rise: 'index' },
+    skinPart: 'body', // NOT 'crystals' — the corpse wears the flesh, whose glow is long gone
   },
 }

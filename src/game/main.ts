@@ -266,6 +266,7 @@ async function start(): Promise<void> {
   const flushShadowDirect = (): void => {
     rig.requestShadowUpdate()
     renderer.render(scene, camera)
+    markFirstRender() // THIS is where r185 bakes the light count in — the tripwire arms here
     rig.settleShadow()
   }
   rig.requestShadowUpdate()
@@ -409,7 +410,10 @@ async function start(): Promise<void> {
     } else {
       renderer.render(scene, camera) // dynamic shadows ride along (autoUpdate stays on)
     }
-    markFirstRender() // from now on, creating a light is a bug (tripwires.ts)
+    // from now on, creating a light is a bug (tripwires.ts). Note flushShadowDirect() above
+    // arms this too — under the post chain it renders FIRST, at boot, and that render is
+    // what bakes the pipelines; arming only here left the whole boot tail unguarded.
+    markFirstRender()
     const t1 = performance.now()
     perf.update(t0, tRender, t1)
     if (t1 - lightCheckAt > 1000) {

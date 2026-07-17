@@ -76,17 +76,24 @@ export class CorpseBatch {
     return imesh
   }
 
-  // the static skin for a species = a CLONE of its BODY material, taken at its first death.
-  // A clone, not the live reference: the source belongs to a pooled entity that gets
+  // The static skin for a species = a CLONE of its named skin part's material, taken at
+  // that species' first death.
+  //
+  // A CLONE, not the live reference: the source belongs to a pooled entity that gets
   // re-dressed forever, so any runtime mutation on it (a hit flash, a status tint) would
   // otherwise restyle every corpse already on the ground, retroactively. This copy is
-  // batch-owned and lives as long as the batch — no crystal glow either (that emissive
-  // clone stays with the live entity; a corpse's crystals faded long ago).
-  private materialFor(type: string, built: BuiltEntity): THREE.Material {
+  // batch-owned and lives as long as the batch.
+  //
+  // The part is NAMED by the caller (EnemyDef.skinPart), not guessed. It used to be a
+  // hardcoded 'body' with a `?? meshes[0]` fallback, and that fallback was the danger: GLB
+  // mesh order is arbitrary, and an @exposeEmissive part carries its own glowing clone —
+  // so the fallback could dress every corpse of a species in its crystal glow.
+  private materialFor(type: string, skinPart: string, built: BuiltEntity): THREE.Material {
     let mat = this.materials.get(type)
     if (mat) return mat
-    const body = built.meshes.find((m) => m.userData.nodeName === 'body') ?? built.meshes[0]
-    const src = (Array.isArray(body.material) ? body.material[0] : body.material) as THREE.Material
+    const skin = built.meshes.find((m) => m.userData.nodeName === skinPart)
+    if (!skin) throw new Error(`corpses: enemy "${type}" declares skinPart "${skinPart}", which its model does not have (has: ${built.meshes.map((m) => m.userData.nodeName).join(', ')}) — check enemies.ts`)
+    const src = (Array.isArray(skin.material) ? skin.material[0] : skin.material) as THREE.Material
     mat = src.clone()
     this.materials.set(type, mat)
     return mat
@@ -94,10 +101,10 @@ export class CorpseBatch {
 
   // enrol a freshly-finished corpse: bake any part geometry we don't have yet, then record
   // this corpse's transform. `built` is about to be recycled, so we copy what we need now.
-  add(built: BuiltEntity, type: string, gen: number): void {
+  add(built: BuiltEntity, type: string, skinPart: string, gen: number): void {
     built.group.updateWorldMatrix(true, false)
     const groupInv = built.group.matrixWorld.clone().invert()
-    const mat = this.materialFor(type, built)
+    const mat = this.materialFor(type, skinPart, built)
     const present = new Set<string>()
     for (const sm of built.meshes as THREE.SkinnedMesh[]) {
       if (!sm.visible) continue // severed/hidden parts aren't part of the corpse

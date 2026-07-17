@@ -85,70 +85,101 @@ export function pushCircleOut(cx: number, cz: number, r: number, boxes: Box[], o
 // corner of the blocking wall — head there and the agent flows around it. Greedy and local
 // (no nav mesh): fine for a handful of convex walls, and it re-solves every frame, so as soon
 // as the agent rounds the corner and regains LOS it heads straight at the player again.
-export function navigateAround(ax: number, az: number, px: number, pz: number, r: number, boxes: Box[]): { x: number; z: number } {
-  if (segmentEntryT(ax, az, px, pz, boxes) > 1) return { x: px, z: pz } // clear shot to the player
+// ALLOCATION-FREE: writes the goal into `out` and reuses module scratch for the corners.
+// This runs per on-field enemy, per frame, whenever the arena has cover — a fresh result
+// object plus a corner array plus a throwaway [box] per box per agent was, by some margin,
+// the runtime's largest steady-state garbage source. `pushCircleOut` beside it is the
+// pattern. `out` is returned for convenience; it is the same object every call.
+const _corners = [
+  { x: 0, z: 0 },
+  { x: 0, z: 0 },
+  { x: 0, z: 0 },
+  { x: 0, z: 0 },
+]
+export function navigateAround(ax: number, az: number, px: number, pz: number, r: number, boxes: Box[], out: { x: number; z: number }): { x: number; z: number } {
+  out.x = px
+  out.z = pz
+  if (segmentEntryT(ax, az, px, pz, boxes) > 1) return out // clear shot to the player
   // the nearest wall on the straight path
   let box: Box | null = null
   let bestT = Infinity
   for (const b of boxes) {
-    const t = segmentEntryT(ax, az, px, pz, [b])
+    const t = segmentEntryTBox(ax, az, px, pz, b)
     if (t <= 1 && t < bestT) {
       bestT = t
       box = b
     }
   }
-  if (!box) return { x: px, z: pz }
+  if (!box) return out
   const m = r + 0.35 // clearance so the agent rounds the corner without clipping it
-  const corners = [
-    { x: box.minX - m, z: box.minZ - m },
-    { x: box.maxX + m, z: box.minZ - m },
-    { x: box.minX - m, z: box.maxZ + m },
-    { x: box.maxX + m, z: box.maxZ + m },
-  ]
+  _corners[0].x = box.minX - m
+  _corners[0].z = box.minZ - m
+  _corners[1].x = box.maxX + m
+  _corners[1].z = box.minZ - m
+  _corners[2].x = box.minX - m
+  _corners[2].z = box.maxZ + m
+  _corners[3].x = box.maxX + m
+  _corners[3].z = box.maxZ + m
   // pick the reachable corner with the shortest detour (agent → corner → player)
-  let best: { x: number; z: number } | null = null
   let bestCost = Infinity
-  for (const c of corners) {
+  for (const c of _corners) {
     if (segmentEntryT(ax, az, c.x, c.z, boxes) <= 1) continue // can't get to this corner directly
     const cost = Math.hypot(c.x - ax, c.z - az) + Math.hypot(px - c.x, pz - c.z)
     if (cost < bestCost) {
       bestCost = cost
-      best = c
+      out.x = c.x
+      out.z = c.z
     }
   }
-  return best ?? { x: px, z: pz }
+  return out // the best corner, or the player if no corner was reachable
 }
 
-// Earliest t in [0,1] at which the XZ segment (ax,az)→(bx,bz) enters any box, or Infinity if
-// it never does (slab method per box). Used to stop a bolt at the wall it would pass through.
-export function segmentEntryT(ax: number, az: number, bx: number, bz: number, boxes: Box[]): number {
+// Earliest t in [0,1] at which the XZ segment enters ONE box, or Infinity (slab method).
+// Split out from segmentEntryT so a caller that already has a single box needn't wrap it in
+// a throwaway array — navigateAround does exactly that, per box, per agent, per frame.
+export function segmentEntryTBox(ax: number, az: number, bx: number, bz: number, b: Box): number {
   const dx = bx - ax
   const dz = bz - az
+  let tmin = 0
+  let tmax = 1
+  if (Math.abs(dx) < 1e-9) {
+    if (ax < b.minX || ax > b.maxX) return Infinity // parallel and outside the X slab
+  } else {
+    let t1 = (b.minX - ax) / dx
+    let t2 = (b.maxX - ax) / dx
+    if (t1 > t2) {
+      const s = t1
+      t1 = t2
+      t2 = s
+    }
+    tmin = Math.max(tmin, t1)
+    tmax = Math.min(tmax, t2)
+    if (tmin > tmax) return Infinity
+  }
+  if (Math.abs(dz) < 1e-9) {
+    if (az < b.minZ || az > b.maxZ) return Infinity
+  } else {
+    let t1 = (b.minZ - az) / dz
+    let t2 = (b.maxZ - az) / dz
+    if (t1 > t2) {
+      const s = t1
+      t1 = t2
+      t2 = s
+    }
+    tmin = Math.max(tmin, t1)
+    tmax = Math.min(tmax, t2)
+    if (tmin > tmax) return Infinity
+  }
+  return tmin
+}
+
+// Earliest t in [0,1] at which the XZ segment (ax,az)→(bx,bz) enters ANY box, or Infinity if
+// it never does. Used to stop a bolt at the wall it would pass through.
+export function segmentEntryT(ax: number, az: number, bx: number, bz: number, boxes: Box[]): number {
   let best = Infinity
   for (const b of boxes) {
-    let tmin = 0
-    let tmax = 1
-    if (Math.abs(dx) < 1e-9) {
-      if (ax < b.minX || ax > b.maxX) continue // parallel and outside the X slab
-    } else {
-      let t1 = (b.minX - ax) / dx
-      let t2 = (b.maxX - ax) / dx
-      if (t1 > t2) [t1, t2] = [t2, t1]
-      tmin = Math.max(tmin, t1)
-      tmax = Math.min(tmax, t2)
-      if (tmin > tmax) continue
-    }
-    if (Math.abs(dz) < 1e-9) {
-      if (az < b.minZ || az > b.maxZ) continue
-    } else {
-      let t1 = (b.minZ - az) / dz
-      let t2 = (b.maxZ - az) / dz
-      if (t1 > t2) [t1, t2] = [t2, t1]
-      tmin = Math.max(tmin, t1)
-      tmax = Math.min(tmax, t2)
-      if (tmin > tmax) continue
-    }
-    if (tmin < best) best = tmin
+    const t = segmentEntryTBox(ax, az, bx, bz, b)
+    if (t < best) best = t
   }
   return best
 }

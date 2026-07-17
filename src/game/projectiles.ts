@@ -46,9 +46,11 @@ export class Projectiles {
 
   constructor(
     scene: THREE.Scene,
-    private wallHalf = Infinity, // |x|/|z| beyond this = wall impact (reported for sparks)
-    private lights: LightPool | null = null, // optional dlights: one pooled light per bolt
-    private world = new CollisionWorld(), // interior walls that stop a bolt (cover)
+    // all REQUIRED — pass null to opt out visibly. A defaulted collaborator is a mistake
+    // that compiles (see the CollisionWorld note in zombies.ts).
+    private wallHalf: number, // |x|/|z| beyond this = wall impact (reported for sparks)
+    private lights: LightPool | null, // dlights: one pooled light per bolt
+    private world: CollisionWorld, // interior walls that stop a bolt (cover)
   ) {
     const geo = new THREE.BoxGeometry(0.014, 0.014, 0.4) // 50% thinner cross-section
     const mat = new MeshBasicNodeMaterial()

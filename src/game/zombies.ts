@@ -35,6 +35,7 @@ import { sim } from './clock'
 
 const MAX_CHUNKS = 120 // severed-limb chunk instances kept before the oldest are evicted
 const _scratch = { x: 0, z: 0 } // obstacle push-out target
+const _goal = { x: 0, z: 0 } // navigateAround out-param (hot path: one per enemy per frame)
 
 const STOP_DIST = 1.25 // keep out of the player's capsule
 const TURN_RATE = 7 // 1/s yaw damp
@@ -54,13 +55,14 @@ export interface EnemyTarget {
 }
 
 // per-TYPE data derived from the first built instance of that species. Cached once per
-// type so a second species can never overwrite the first's clip timing.
+// type so a second species can never overwrite the first's clip timing. Every clip here is
+// validated to exist when the record is built (see spawnAt) — nothing in it is a fallback.
 interface TypeRuntime {
   type: string
   def: EnemyDef
   deathDur: number
   walkDur: number // walk clip duration — feeds the loops-per-meter rate coupling
-  walkClip: THREE.AnimationClip | null
+  walkClip: THREE.AnimationClip
   // the clip's AUTHORED forward-motion profile (extracted from the FBX hips at merge):
   // when present, ground motion follows the gait's non-uniform rate — zero foot slip,
   // authentic lurch. Absent (in-place clip) → constant speed + loops-per-meter fallback.
@@ -118,12 +120,17 @@ export class Horde {
     // the horde REPORTS what happened (spawned/hit/died) and asks for nothing: blood,
     // sound, the ultimate's counter and the hit log are all subscribers (events.ts).
     private events: GameEvents,
-    private lights: LightPool | null = null, // per-enemy crystal glow (one pooled PointLight each)
+    // Every dependency below is REQUIRED — pass `null` to opt out, deliberately and
+    // visibly. None of these carry a default: a defaulted collaborator is a mistake that
+    // compiles, and the one that mattered (the CollisionWorld) would have handed a
+    // consumer its own private, permanently-empty world — walls that exist for everyone
+    // except that system, silently, forever.
+    private lights: LightPool | null, // per-enemy crystal glow (one pooled PointLight each)
     // when a death animation finishes the corpse is BAKED into this batch (a cheap static
     // instance) and its skinned entity is freed to the pool — so hundreds of corpses cost a
-    // handful of draw calls, not 4 each. Null = corpses just vanish (headless/test).
-    private corpses: CorpseBatch | null = null,
-    private world = new CollisionWorld(), // interior walls the horde must flow around, not through
+    // handful of draw calls, not 4 each. Null = corpses just vanish.
+    private corpses: CorpseBatch | null,
+    private world: CollisionWorld, // interior walls the horde must flow around, not through
   ) {
     // which wave a body belongs to is a fact the wave controller already reports — the
     // horde listens instead of being handed a closure back into the composition root
@@ -195,16 +202,26 @@ export class Horde {
       this.scene.add(built.group)
       let rt = this.types.get(type)
       if (!rt) {
-        // first body of this species: cache its clip timing under ITS OWN key
-        const death = built.clips?.find((c) => c.name === def.clips.death)
-        const walk = built.clips?.find((c) => c.name === def.clips.walk)
+        // first body of this species: VALIDATE its clip names against what the GLB actually
+        // has, then cache its timing under ITS OWN key. Clip names are the thing a new
+        // species is most likely to typo, and every silent fallback here is a different
+        // subtle wrongness hours later — a defaulted deathDur bakes the corpse mid-
+        // animation, a missing walk clip drops root motion to a foot-sliding fallback, a
+        // missing rise clip skips the getting-up entirely. So we don't fall back; we throw.
+        const clip = (name: string, role: string): THREE.AnimationClip => {
+          const c = built.clips?.find((x) => x.name === name)
+          if (!c) throw new Error(`horde: enemy "${type}" declares ${role} clip "${name}", which its model does not have (has: ${built.clips?.map((x) => x.name).join(', ') || 'none'}) — check enemies.ts against the GLB`)
+          return c
+        }
+        const walk = clip(def.clips.walk, 'walk')
+        clip(def.clips.rise, 'rise') // used by name at spawn; validated here so it fails at boot, not mid-wave
         rt = {
           type,
           def,
-          deathDur: death?.duration ?? 2,
-          walkDur: walk?.duration ?? 1,
-          walkClip: walk ?? null, // shared clip object across clones of this species
-          walkProfile: (walk?.userData.rootMotion as RootMotionProfile | undefined) ?? null,
+          deathDur: clip(def.clips.death, 'death').duration,
+          walkDur: walk.duration,
+          walkClip: walk, // shared clip object across clones of this species
+          walkProfile: (walk.userData.rootMotion as RootMotionProfile | undefined) ?? null, // absent = an in-place clip, a real case (see below)
         }
         this.types.set(type, rt)
       }
@@ -289,15 +306,19 @@ export class Horde {
           const step = Math.min(dt, z.deathLeft)
           z.preview.update(step)
           z.deathLeft -= step
-          for (const [, m] of z.built.emissiveParts ?? []) {
-            if (m.emissiveIntensity > 0) m.emissiveIntensity = Math.max(0, m.emissiveIntensity - (dt / GLOW_FADE) * (z.glowBase.get('crystals') ?? 1))
+          // fade each emissive part from ITS OWN authored base, so every part takes
+          // GLOW_FADE seconds to die regardless of how bright it started (and so a species
+          // whose glowing part isn't named 'crystals' fades at all — this line used to
+          // look the base up by that literal, the one species name left in this file)
+          for (const [part, m] of z.built.emissiveParts ?? []) {
+            if (m.emissiveIntensity > 0) m.emissiveIntensity = Math.max(0, m.emissiveIntensity - (dt / GLOW_FADE) * (z.glowBase.get(part) ?? 1))
           }
           this.updateLight(z) // the crystal light dims with the glow
           if (z.deathLeft <= 0) {
             // …then the death pose is BAKED into the batched-corpse mesh (cheap static
             // instance) and the expensive skinned entity is freed straight back to the pool.
             this.dropLight(z)
-            this.corpses?.add(z.built, z.rt.type, this.wave)
+            this.corpses?.add(z.built, z.rt.type, z.rt.def.skinPart, this.wave)
             this.byId.delete(z.id) // the handle dies with the body
             z.pooled = true
             z.built.group.visible = false
@@ -342,7 +363,7 @@ export class Horde {
         if (z.riseLeft <= 0) {
           z.preview.setState(z.rt.def.clips.walk)
           // grab the walk action for root-motion phase reads
-          z.walkAction = z.rt.walkClip && z.built.mixer ? z.built.mixer.existingAction(z.rt.walkClip) : null
+          z.walkAction = z.built.mixer ? z.built.mixer.existingAction(z.rt.walkClip) : null
           z.lastDist = 0
         }
         this.updateLight(z)
@@ -373,7 +394,7 @@ export class Horde {
       const zz = z.built.group.position.z
       // navigate around interior walls: steer toward a corner when the direct path to the
       // player is blocked, so the horde flows AROUND cover instead of pressing into it
-      const goal: { x: number; z: number } = this.world.empty ? playerPos : navigateAround(zx, zz, playerPos.x, playerPos.z, z.rt.def.radius, this.world.boxes)
+      const goal: { x: number; z: number } = this.world.empty ? playerPos : navigateAround(zx, zz, playerPos.x, playerPos.z, z.rt.def.radius, this.world.boxes, _goal)
       const gx = goal.x - zx
       const gz = goal.z - zz
       const gdist = Math.hypot(gx, gz)
@@ -452,21 +473,22 @@ export class Horde {
         z.preview.fireEvent(`dismember_${severed}`) // the shared derived-event path
       }
     }
-    const kind = z.rt.def.kind
-    this.events.emit('enemyHit', { kind, at, dir, hp: z.hp, severed })
-    if (z.hp <= 0) {
-      this.die(z)
-      // the death fact reports where the BODY is (the pool of blood belongs under the
-      // corpse), not where the bolt struck it
-      this.events.emit('enemyDied', { kind, at: z.built.group.position, wave: this.wave })
-    }
+    this.events.emit('enemyHit', { kind: z.rt.def.kind, at, dir, hp: z.hp, severed })
+    if (z.hp <= 0) this.die(z)
   }
 
+  // THE one way an enemy dies. The fact is emitted HERE, not at the call site: a death has
+  // exactly one meaning no matter what caused it, and every future cause (melee, fire,
+  // a wave timeout, the dev's clear-wave button) gets the sound, the pool of blood and the
+  // ultimate charge for free. Emitting from hit() instead meant killAll() dropped all of it.
   private die(z: Enemy): void {
     z.alive = false
     if (z.built.mixer) z.built.mixer.timeScale = 1 // death plays at authored speed
     z.preview.setState(z.rt.def.clips.death)
     z.deathLeft = z.rt.deathDur * 0.96
+    // the death fact reports where the BODY is (the pool of blood belongs under the corpse),
+    // not where a bolt happened to strike it
+    this.events.emit('enemyDied', { kind: z.rt.def.kind, at: z.built.group.position, wave: this.wave })
     // the corpse is handed to the CorpseBatch when the death animation finishes (update())
   }
 

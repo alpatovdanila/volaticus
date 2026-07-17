@@ -42,7 +42,8 @@ export class PlayerController {
     readonly built: BuiltEntity,
     private boundsHalf: number,
     private radius: number,
-    private world = new CollisionWorld(), // interior walls the player can't walk through
+    private world: CollisionWorld, // interior walls the player can't walk through (REQUIRED — a
+    // defaulted world would be private, empty and silently wall-less; see zombies.ts)
   ) {
     this.loco = new Locomotion(built.group, built.mixer!, built.clips ?? [], {
       idle: 'Idle Rifle',

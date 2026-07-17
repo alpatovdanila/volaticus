@@ -10,7 +10,7 @@
 //
 // The frame loop stays in main.ts and calls exactly two methods, in this order:
 //   chooseTarget(targets) → the aim the player controller then acts on
-//   update(dt, now, targets) → advance bolts, resolve hits
+//   update(dt, targets)   → advance bolts, resolve hits
 // (The gap between them is player.update — that's where shots actually fire.)
 import * as THREE from 'three'
 import type { GameEvents } from './events'
@@ -23,7 +23,7 @@ import type { UltimateController } from './ultimate'
 import type { LightPool } from './lights'
 import { Projectiles } from './projectiles'
 import { Targeting } from './targeting'
-import { segmentEntryT, type Box } from './obstacles'
+import { segmentEntryT, type CollisionWorld } from './obstacles'
 import { sfx, sfxAt } from './audio'
 import { system } from './system'
 
@@ -39,7 +39,7 @@ export interface CombatDeps {
   blood: BloodSplatters
   casings: Casings
   ultimate: UltimateController
-  obstacles: Box[]
+  world: CollisionWorld
   arenaHalf: number
   boltLights: LightPool | null
 }
@@ -55,7 +55,7 @@ export class CombatSystem {
   private pending: { left: number; id: string }[] = [] // sounds owed a beat from now (the recock)
 
   constructor(private d: CombatDeps) {
-    this.projectiles = new Projectiles(d.scene, d.arenaHalf + 0.75, d.boltLights, d.obstacles)
+    this.projectiles = new Projectiles(d.scene, d.arenaHalf + 0.75, d.boltLights, d.world)
     d.player.onShot = (aim) => this.fire(aim)
     d.player.onStep = () => sfx('footstep') // locomotion owns the cadence (see locomotion.advanceSteps)
     this.wireReactions()
@@ -70,9 +70,9 @@ export class CombatSystem {
   chooseTarget(targets: readonly EnemyTarget[]): THREE.Vector3 | null {
     if (this.pacifist) return null
     const px = this.d.player.position
-    const obs = this.d.obstacles
+    const world = this.d.world
     const cands = targets.filter(
-      (t) => t.point.distanceToSquared(px) < FIRE_RANGE * FIRE_RANGE && !(obs.length && segmentEntryT(px.x, px.z, t.point.x, t.point.z, obs) <= 1),
+      (t) => t.point.distanceToSquared(px) < FIRE_RANGE * FIRE_RANGE && !(!world.empty && segmentEntryT(px.x, px.z, t.point.x, t.point.z, world.boxes) <= 1),
     )
     const p = this.targeting.select(cands, px.x, px.z)
     // copy: the targeter hands back a point the horde owns and rewrites next frame, and

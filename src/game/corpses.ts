@@ -132,4 +132,13 @@ export class CorpseBatch {
   count(): number {
     return this.corpses.length
   }
+
+  // empty the battlefield (a new room, a new run). The baked geometry and the per-type
+  // materials are KEPT: they're this batch's own, they're what makes a corpse cheap, and
+  // the next room's dead will want exactly the same ones. Only the bodies go.
+  clear(): void {
+    this.corpses.length = 0
+    this.dirty = true
+    this.update()
+  }
 }

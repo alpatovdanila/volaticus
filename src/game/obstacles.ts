@@ -14,6 +14,36 @@ export function boxFrom(x: number, z: number, w: number, d: number): Box {
   return { minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 }
 }
 
+// The arena's solid geometry, and who owns it. Systems (player, horde, bolts) hold the
+// WORLD, not a naked Box[] — because rooms and doors (docs/GAME.md) mean this set changes
+// at runtime, and the array everyone reads must stay the same array when it does.
+//
+// That was already true and already load-bearing, just unwritten: a bare array was aliased
+// into four systems, and "mutate it in place, never reassign" was the sole safe protocol
+// with no owner to enforce it and no name to look up. set() is that protocol, said out loud.
+export class CollisionWorld {
+  // stable identity — never reassigned, so every holder sees every change
+  readonly boxes: Box[] = []
+
+  constructor(boxes: Box[] = []) {
+    this.set(boxes)
+  }
+
+  // replace the world's contents (a new room's walls) without breaking any holder's reference
+  set(boxes: Box[]): void {
+    this.boxes.length = 0
+    this.boxes.push(...boxes)
+  }
+
+  clear(): void {
+    this.boxes.length = 0
+  }
+
+  get empty(): boolean {
+    return this.boxes.length === 0
+  }
+}
+
 const clamp = (v: number, lo: number, hi: number): number => (v < lo ? lo : v > hi ? hi : v)
 
 // Push a circle (centre cx,cz, radius r) out of every box it overlaps. Writes the resolved

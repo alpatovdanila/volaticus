@@ -13,7 +13,7 @@ import * as THREE from 'three'
 import type { BuiltEntity } from '../inventory/factory'
 import type { MoveInput } from './input'
 import { Locomotion, type AimMove } from './locomotion'
-import { pushCircleOut, type Box } from './obstacles'
+import { pushCircleOut, CollisionWorld } from './obstacles'
 import { system } from './system'
 
 export type Stance = 'moving' | 'settling' | 'standing'
@@ -42,7 +42,7 @@ export class PlayerController {
     readonly built: BuiltEntity,
     private boundsHalf: number,
     private radius: number,
-    private obstacles: Box[] = [], // interior walls the player can't walk through
+    private world = new CollisionWorld(), // interior walls the player can't walk through
   ) {
     this.loco = new Locomotion(built.group, built.mixer!, built.clips ?? [], {
       idle: 'Idle Rifle',
@@ -122,8 +122,8 @@ export class PlayerController {
       const p = this.built.group.position
       p.x = THREE.MathUtils.clamp(p.x + dir.x * speed * dt, -this.boundsHalf + this.radius, this.boundsHalf - this.radius)
       p.z = THREE.MathUtils.clamp(p.z + dir.z * speed * dt, -this.boundsHalf + this.radius, this.boundsHalf - this.radius)
-      if (this.obstacles.length) {
-        pushCircleOut(p.x, p.z, this.radius, this.obstacles, _out) // slide along interior walls
+      if (!this.world.empty) {
+        pushCircleOut(p.x, p.z, this.radius, this.world.boxes, _out) // slide along interior walls
         p.x = _out.x
         p.z = _out.z
       }

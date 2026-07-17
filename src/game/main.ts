@@ -28,7 +28,7 @@ import { EffectsManager } from './effectsManager'
 import { BloodSplatters } from './blood'
 import { CorpseBatch } from './corpses'
 import { Casings } from './casings'
-import { boxFrom, type Box } from './obstacles'
+import { boxFrom, CollisionWorld, type Box } from './obstacles'
 import { system } from './system'
 import { sim } from './clock'
 import { markFirstRender, watchLightCount } from './tripwires'
@@ -216,14 +216,17 @@ async function start(): Promise<void> {
   const orbConfig = level.orbs ? { ...level.orbs, color: BOLT_COLOR } : null
   const orbs = orbConfig ? new Orbs(scene, orbConfig) : null
   await loadMaterialCatalog()
-  const obstacles = buildArena() // interior-wall footprints for player/horde/bolt collision
+  // the arena's solid geometry, with an owner. Systems below hold this world, not a copy
+  // of its contents: a room swap calls world.set(nextRoomsWalls) and every collision
+  // consumer follows in the same frame (obstacles.ts).
+  const world = new CollisionWorld(buildArena())
 
   const marineDoc = validatedDoc(marineRaw, 'marine2')
 
   // player controller: owns the stance machine (moving → settling → standing), analog
   // locomotion, movement integration and the hand-bone muzzle. Input stays external.
   const playerBuilt = await buildEntity(marineDoc, new THREE.Vector3(0, 0, 0), 0)
-  const player = new PlayerController(playerBuilt, ARENA_HALF, PLAYER_RADIUS, obstacles)
+  const player = new PlayerController(playerBuilt, ARENA_HALF, PLAYER_RADIUS, world)
 
   // shared effect system + the game-facing manager (semantic calls, budgets, throttling).
   // The flash provider is NOT optional here: left to its default, an effect doc with a
@@ -251,7 +254,7 @@ async function start(): Promise<void> {
   // the gameplay-fact bus: producers report, everyone else subscribes (events.ts)
   const events = new GameEvents()
   // ENEMIES is the archetype table (enemies.ts): hp/aim height/radius/clip names per species
-  const horde = new Horde(scene, ENEMIES, effects, events, zombieLights, corpseBatch, obstacles)
+  const horde = new Horde(scene, ENEMIES, effects, events, zombieLights, corpseBatch, world)
   const waves = new WaveController(horde, level.wave, events) // ctor validates the composition
 
   rig.fitShadow(new THREE.Box3(new THREE.Vector3(-ARENA_HALF - 2, 0, -ARENA_HALF - 2), new THREE.Vector3(ARENA_HALF + 2, 3, ARENA_HALF + 2)))
@@ -274,7 +277,7 @@ async function start(): Promise<void> {
   const ultimate = new UltimateController(new ZombieEaterUltimate())
   // combat owns aim policy, the fire path and the hit fan-out (combat.ts); it subscribes
   // the presentation reactions to the fact bus and wires itself to the player's shot/step
-  const combat = new CombatSystem({ scene, events, horde, player, fx: fxm, blood, casings, ultimate, obstacles, arenaHalf: ARENA_HALF, boltLights: lightPool })
+  const combat = new CombatSystem({ scene, events, horde, player, fx: fxm, blood, casings, ultimate, world, arenaHalf: ARENA_HALF, boltLights: lightPool })
 
   // dev chrome: the overlay container + fullscreen toggle + the panels. Everything a
   // developer needs and a player must never see goes in here (fullscreen hides it all).
@@ -316,7 +319,7 @@ async function start(): Promise<void> {
     ],
   })
 
-  ;(window as unknown as { __game: unknown }).__game = { player, horde, waves, effects, blood, casings, ultimate, combat, events, scene, camera, renderer, rig, post, hitLog: combat.hitLog }
+  ;(window as unknown as { __game: unknown }).__game = { player, horde, waves, effects, blood, casings, corpseBatch, ultimate, combat, events, world, scene, camera, renderer, rig, post, hitLog: combat.hitLog }
 
   // frame-scoped state the HUD getters read back. DECLARED BEFORE the getters that close
   // over them — a `let` used inside a closure defined above its declaration is a temporal

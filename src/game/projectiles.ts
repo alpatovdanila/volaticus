@@ -7,7 +7,7 @@ import { MeshBasicNodeMaterial } from 'three/webgpu'
 import { color } from 'three/tsl'
 import { system } from './system'
 import type { LightPool } from './lights'
-import { segmentEntryT, type Box } from './obstacles'
+import { segmentEntryT, CollisionWorld } from './obstacles'
 
 export const BOLT_COLOR = 0xff9a33 // the tracer's warm orange — also lent to the arena orbs
 const BOLT_LIGHT = { color: BOLT_COLOR, intensity: 7, range: 5 } // warm tracer pool on the PBR floor
@@ -48,7 +48,7 @@ export class Projectiles {
     scene: THREE.Scene,
     private wallHalf = Infinity, // |x|/|z| beyond this = wall impact (reported for sparks)
     private lights: LightPool | null = null, // optional dlights: one pooled light per bolt
-    private obstacles: Box[] = [], // interior walls that stop a bolt (cover)
+    private world = new CollisionWorld(), // interior walls that stop a bolt (cover)
   ) {
     const geo = new THREE.BoxGeometry(0.014, 0.014, 0.4) // 50% thinner cross-section
     const mat = new MeshBasicNodeMaterial()
@@ -114,7 +114,7 @@ export class Projectiles {
       }
       // an interior wall crossing the path first stops the bolt (cover): a zombie behind
       // the wall is safe, and the shot sparks on the wall instead
-      const obsT = this.obstacles.length ? segmentEntryT(b.pos.x, b.pos.z, b.pos.x + seg.x, b.pos.z + seg.z, this.obstacles) : Infinity
+      const obsT = this.world.empty ? Infinity : segmentEntryT(b.pos.x, b.pos.z, b.pos.x + seg.x, b.pos.z + seg.z, this.world.boxes)
       let dead = true
       if (obsT <= 1 && obsT < hitU) {
         walls.push(b.pos.clone().addScaledVector(seg, obsT)) // spark where it met the wall

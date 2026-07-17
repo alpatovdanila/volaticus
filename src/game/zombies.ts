@@ -28,7 +28,7 @@ import type { GameEvents } from './events'
 import type { EnemyDef } from './enemies'
 import type { CorpseBatch } from './corpses'
 import { LightPool } from './lights'
-import { pushCircleOut, navigateAround, type Box } from './obstacles'
+import { pushCircleOut, navigateAround, CollisionWorld } from './obstacles'
 import { separationOffsets } from './steering'
 import { system } from './system'
 import { sim } from './clock'
@@ -123,7 +123,7 @@ export class Horde {
     // instance) and its skinned entity is freed to the pool — so hundreds of corpses cost a
     // handful of draw calls, not 4 each. Null = corpses just vanish (headless/test).
     private corpses: CorpseBatch | null = null,
-    private obstacles: Box[] = [], // interior walls the horde must flow around, not through
+    private world = new CollisionWorld(), // interior walls the horde must flow around, not through
   ) {
     // which wave a body belongs to is a fact the wave controller already reports — the
     // horde listens instead of being handed a closure back into the composition root
@@ -373,7 +373,7 @@ export class Horde {
       const zz = z.built.group.position.z
       // navigate around interior walls: steer toward a corner when the direct path to the
       // player is blocked, so the horde flows AROUND cover instead of pressing into it
-      const goal: { x: number; z: number } = this.obstacles.length ? navigateAround(zx, zz, playerPos.x, playerPos.z, z.rt.def.radius, this.obstacles) : playerPos
+      const goal: { x: number; z: number } = this.world.empty ? playerPos : navigateAround(zx, zz, playerPos.x, playerPos.z, z.rt.def.radius, this.world.boxes)
       const gx = goal.x - zx
       const gz = goal.z - zz
       const gdist = Math.hypot(gx, gz)
@@ -402,15 +402,15 @@ export class Horde {
     const agents = this.list.filter((z) => this.onField(z))
     if (!agents.length) return
     const offs = agents.length >= 2 ? separationOffsets(agents.map((z) => z.built.group.position), SEP_RADIUS) : null
-    if (!offs && !this.obstacles.length) return
+    if (!offs && this.world.empty) return
     for (let i = 0; i < agents.length; i++) {
       const p = agents[i].built.group.position
       if (offs) {
         p.x += offs[i].x * SEP_STRENGTH * dt
         p.z += offs[i].z * SEP_STRENGTH * dt
       }
-      if (this.obstacles.length) {
-        pushCircleOut(p.x, p.z, agents[i].rt.def.radius, this.obstacles, _scratch) // out of interior walls
+      if (!this.world.empty) {
+        pushCircleOut(p.x, p.z, agents[i].rt.def.radius, this.world.boxes, _scratch) // out of interior walls
         p.x = _scratch.x
         p.z = _scratch.z
       }

@@ -135,4 +135,12 @@ export class BloodSplatters {
   count(): number {
     return this.splats.length
   }
+
+  // wipe the floor (a new room, a new run). The instanced mesh and its material stay —
+  // they're the reason a thousand splats cost one draw call.
+  clear(): void {
+    this.splats.length = 0
+    this.mesh.count = 0
+    this.mesh.instanceMatrix.needsUpdate = true
+  }
 }

@@ -1,0 +1,29 @@
+{
+  "scene": {
+    "background": "#DADADA",
+    "camera": {
+      "startingPosition": [0, 100, 20],
+      "startingRotation": [-0.6435011, 0, 0]
+    },
+    "objects": [
+      {
+        "type": "mesh",
+        "geometry": { "type": "plane", "width": 150, "height": 150, "tiles": 75 },
+        "material": "concrete_ground_01",
+        "rotation": [-1.5707963267948966, 0, 0]
+      },
+      {
+        "type": "directionalLight",
+        "color": "#ffffff",
+        "intensity": 2.5,
+        "position": [4, 10, 6]
+      },
+      {
+        "type": "hemisphereLight",
+        "skyColor": "#dfeaff",
+        "groundColor": "#20242a",
+        "intensity": 1
+      }
+    ]
+  }
+}

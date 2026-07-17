@@ -57,13 +57,15 @@ export function mountTuningPanel(fields: TuningField[], buttons: DevButton[] = [
     input.min = String(f.min)
     input.max = String(f.max)
     input.step = String(f.step)
-    input.value = String(system.params[f.key])
+    // BASE, not params: a slider sets what the value IS. Writing the derived surface
+    // would be erased by the next recompute (and would fight any active modifier).
+    input.value = String(system.base[f.key])
     input.style.cssText = 'width:140px;'
     const val = document.createElement('span')
-    val.textContent = String(system.params[f.key])
+    val.textContent = String(system.base[f.key])
     val.style.cssText = 'width:44px;text-align:right;'
     input.oninput = () => {
-      system.params[f.key] = +input.value
+      system.setBase(f.key, +input.value)
       val.textContent = input.value
     }
     row.append(label, input, val)

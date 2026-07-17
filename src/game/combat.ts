@@ -29,7 +29,6 @@ import { system } from './system'
 
 const FIRE_RANGE = 14 // m — beyond this nothing is worth aiming at
 const HIT_LOG_MAX = 120 // dev diagnostic ring (window.__game.hitLog)
-const RECOCK_DELAY = 0.28 // s after a shotgun blast before the pump-rack sound
 
 export interface CombatDeps {
   scene: THREE.Scene
@@ -115,15 +114,14 @@ export class CombatSystem {
   private wireReactions(): void {
     const { events, fx, blood, casings, ultimate } = this.d
 
-    events.on('shotFired', ({ muzzle, dir, pellets }) => {
+    events.on('shotFired', ({ muzzle, dir }) => {
       fx.muzzleSpark(muzzle, dir) // tiny 1px sparks off the barrel
       casings.eject(muzzle, dir) // one shell per shot, not per pellet
-      if (pellets > 1) {
-        sfx('shot_shotgun') // shotgun ultimate: blast now, pump-rack a beat later
-        this.pending.push({ left: RECOCK_DELAY, id: 'shotgun_recock' })
-      } else {
-        sfx('shot_rifle')
-      }
+      // the equipped weapon says what it sounds like (weapons.ts) — no guessing from the
+      // pellet count, and a weapon with a pump-rack declares its own delay
+      const w = system.weapon
+      sfx(w.sfxShot)
+      if (w.sfxAfter) this.pending.push({ left: w.afterDelay ?? 0.3, id: w.sfxAfter })
     })
 
     events.on('enemySpawned', ({ at }) => sfxAt('zombie_rise', at.x, at.y, at.z))

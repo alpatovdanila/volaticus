@@ -5,9 +5,12 @@
 //     ends: update() ends it on time, onKill() ends it on a kill condition. Either may fire.
 //   • UltimateController — the bar: charge accrual, the ready gate, activation, and polling
 //     the ability's end-conditions. It knows nothing about weapons or enemy kinds.
-// Abilities mutate the SYSTEM registry (system.ts is the runtime tuning surface upgrades and
-// ultimates modify), so every consumer of the tuned value sees the change instantly.
+// Abilities layer their effect onto the SYSTEM registry (system.ts is the runtime tuning
+// surface upgrades and ultimates modify), so every consumer of the tuned value sees the
+// change instantly — and, because the effect is a named modifier rather than a write, an
+// upgrade bought mid-ultimate survives the ultimate ending.
 import { system } from './system'
+import { RIFLE, ZOMBIE_EATER_SHOTGUN } from './weapons'
 
 export interface UltimateAbility {
   readonly name: string
@@ -18,34 +21,26 @@ export interface UltimateAbility {
   hudStatus(): string // short active-state readout for the HUD (e.g. "3/10")
 }
 
-// ZOMBIE EATER — swaps the rifle for a wide shotgun (12 pellets, half the fire rate) and
-// runs until it has EATEN 10 zombies. Only zombie kills count it down: any OTHER enemy can be
-// blasted for free, so used well it shreds a dangerous target while the ult refuses to
-// expire — as long as you keep the easy-to-hit zombie horde out of the cone (docs/DD_NOTES.md).
-const PELLETS = 12
-const SHOTGUN_SPREAD = 0.15 // cone (the rifle's is 0.05); tightened 25% from 0.2
-const ROF_MULT = 0.5 // fires at half the main gun's rate
+// ZOMBIE EATER — swaps the rifle for a wide shotgun and runs until it has EATEN 10
+// zombies. Only zombie kills count it down: any OTHER enemy can be blasted for free, so
+// used well it shreds a dangerous target while the ult refuses to expire — as long as you
+// keep the easy-to-hit zombie horde out of the cone (docs/DD_NOTES.md).
+//
+// What the gun DOES lives in weapons.ts; this ability's whole job is to decide when you're
+// holding it. That's the open/closed line: retuning the shotgun never touches this file.
 const GOAL = 10 // zombies to eat before it's spent
 
 export class ZombieEaterUltimate implements UltimateAbility {
   readonly name = 'ZOMBIE EATER'
   private eaten = 0
-  private saved = { fireRate: 0, spread: 0, pellets: 1 }
 
   activate(): void {
-    const p = system.params
-    this.saved = { fireRate: p.fireRate, spread: p.bulletSpread, pellets: p.pelletsPerShot }
-    p.fireRate = this.saved.fireRate * ROF_MULT
-    p.bulletSpread = SHOTGUN_SPREAD
-    p.pelletsPerShot = PELLETS
+    system.equip(ZOMBIE_EATER_SHOTGUN)
     this.eaten = 0
   }
 
   deactivate(): void {
-    const p = system.params
-    p.fireRate = this.saved.fireRate
-    p.bulletSpread = this.saved.spread
-    p.pelletsPerShot = this.saved.pellets
+    system.equip(RIFLE)
   }
 
   update(): boolean {
@@ -98,6 +93,13 @@ export class UltimateController {
 
   update(dt: number): void {
     if (this.active && this.active.update(dt)) this.deactivate()
+  }
+
+  // end an active ultimate from the outside — a room transition or a run ending must be
+  // able to, or the ability's registry layer leaks into whatever comes next. No-op when
+  // nothing is running.
+  cancel(): void {
+    this.deactivate()
   }
 
   private deactivate(): void {

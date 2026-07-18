@@ -56,10 +56,15 @@ export const MaterialSchema = z.object({
   //   stretch: the texture exactly once over the face — one-shot motifs (lids, doors, signs).
   uvMode: z
     .enum([
-      'tile', 'fit', 'stretch',
-      'tile fit', 'tile stretch',
-      'fit tile', 'fit stretch',
-      'stretch tile', 'stretch fit',
+      'tile',
+      'fit',
+      'stretch',
+      'tile fit',
+      'tile stretch',
+      'fit tile',
+      'fit stretch',
+      'stretch tile',
+      'stretch fit',
     ])
     .optional(),
   uvScale: z.number().positive().optional(), // density: repeats per meter in tile/fit modes (default 1)
@@ -94,8 +99,7 @@ export function resolveMaterials(materials: Record<string, MaterialDef>): Record
     while (cur !== undefined && materials[cur] && !seen.has(cur)) {
       seen.add(cur)
       const def = materials[cur] as Record<string, unknown>
-      for (const [k, v] of Object.entries(def))
-        if (k !== 'inherit' && v !== undefined && !(k in merged)) merged[k] = v
+      for (const [k, v] of Object.entries(def)) if (k !== 'inherit' && v !== undefined && !(k in merged)) merged[k] = v
       cur = materials[cur].inherit
     }
     out[slot] = merged as ResolvedMaterialDef
@@ -157,7 +161,19 @@ const faceMaterial = z.union([
 // relative to the OWNER node's local space, combined into it at bake time (CSG)
 export type BooleanMod = {
   op: 'subtract' | 'union' | 'intersect'
-  shape: 'box' | 'cylinder' | 'sphere' | 'capsule' | 'cone' | 'torus' | 'halfSphere' | 'quarterSphere' | 'halfCylinder' | 'arch' | 'halfTorus' | 'quarterTorus'
+  shape:
+    | 'box'
+    | 'cylinder'
+    | 'sphere'
+    | 'capsule'
+    | 'cone'
+    | 'torus'
+    | 'halfSphere'
+    | 'quarterSphere'
+    | 'halfCylinder'
+    | 'arch'
+    | 'halfTorus'
+    | 'quarterTorus'
   size?: number[]
   radius?: number
   radiusTop?: number
@@ -174,7 +190,30 @@ export type BooleanMod = {
 }
 
 export type NodeDef = {
-  shape?: 'box' | 'cylinder' | 'sphere' | 'capsule' | 'cone' | 'plane' | 'disk' | 'cross' | 'torus' | 'mesh' | 'plank' | 'post' | 'ring' | 'arrow' | 'star' | 'decal' | 'halfSphere' | 'quarterSphere' | 'halfCylinder' | 'arch' | 'halfTorus' | 'quarterTorus' | 'tree'
+  shape?:
+    | 'box'
+    | 'cylinder'
+    | 'sphere'
+    | 'capsule'
+    | 'cone'
+    | 'plane'
+    | 'disk'
+    | 'cross'
+    | 'torus'
+    | 'mesh'
+    | 'plank'
+    | 'post'
+    | 'ring'
+    | 'arrow'
+    | 'star'
+    | 'decal'
+    | 'halfSphere'
+    | 'quarterSphere'
+    | 'halfCylinder'
+    | 'arch'
+    | 'halfTorus'
+    | 'quarterTorus'
+    | 'tree'
   mesh?: string
   image?: string
   craft?: number
@@ -216,7 +255,20 @@ export type NodeDef = {
 // (the cut inherits the owner node's single slot), no craft/sub of their own.
 export const BooleanModSchema = z.object({
   op: z.enum(['subtract', 'union', 'intersect']),
-  shape: z.enum(['box', 'cylinder', 'sphere', 'capsule', 'cone', 'torus', 'halfSphere', 'quarterSphere', 'halfCylinder', 'arch', 'halfTorus', 'quarterTorus']),
+  shape: z.enum([
+    'box',
+    'cylinder',
+    'sphere',
+    'capsule',
+    'cone',
+    'torus',
+    'halfSphere',
+    'quarterSphere',
+    'halfCylinder',
+    'arch',
+    'halfTorus',
+    'quarterTorus',
+  ]),
   size: z.array(z.number().positive()).min(2).max(3).optional(),
   radius: z.number().positive().optional(),
   radiusTop: z.number().positive().optional(),
@@ -235,7 +287,31 @@ export const BooleanModSchema = z.object({
 export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
   z.object({
     shape: z
-      .enum(['box', 'cylinder', 'sphere', 'capsule', 'cone', 'plane', 'disk', 'cross', 'torus', 'mesh', 'plank', 'post', 'ring', 'arrow', 'star', 'decal', 'halfSphere', 'quarterSphere', 'halfCylinder', 'arch', 'halfTorus', 'quarterTorus', 'tree'])
+      .enum([
+        'box',
+        'cylinder',
+        'sphere',
+        'capsule',
+        'cone',
+        'plane',
+        'disk',
+        'cross',
+        'torus',
+        'mesh',
+        'plank',
+        'post',
+        'ring',
+        'arrow',
+        'star',
+        'decal',
+        'halfSphere',
+        'quarterSphere',
+        'halfCylinder',
+        'arch',
+        'halfTorus',
+        'quarterTorus',
+        'tree',
+      ])
       .optional(),
     mesh: z.string().optional(), // external model path relative to resources/ (fbx)
     // shape "decal" ONLY: the sprite itself, EMBEDDED as a base64 data URI (data:image/png;base64,…)
@@ -245,7 +321,7 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
     // along the surface normal so it can't z-fight (eyes, faces, labels, little painted details).
     image: z.string().optional(),
     craft: z.number().min(0).max(1).optional(), // craftsmanship: 1 = machine-perfect, 0 = crooked (any shape)
-    sub: z.number().int().min(0).max(4).optional(), // subdivision levels before craft jitter (4^n triangles)
+    sub: z.number().int().min(0).max(4).optional(), // subdivision world before craft jitter (4^n triangles)
     size: z.array(z.number().positive()).min(2).max(3).optional(),
     radius: z.number().positive().optional(),
     radiusTop: z.number().positive().optional(), // cylinder frustum (defaults to radius)
@@ -431,9 +507,7 @@ export const ModelSchema = z.object({
   // "<part>@exposeEmissive" opts in; the editor shows a colour+intensity control for it.
   // The part's material is cloned so only that part glows. Absent = the tagged part uses
   // a default glow until authored here.
-  emissive: z
-    .record(z.object({ color: hexColor, intensity: z.number().min(0).max(20) }))
-    .optional(),
+  emissive: z.record(z.object({ color: hexColor, intensity: z.number().min(0).max(20) })).optional(),
   // DISMEMBERABLE parts, keyed by GLB mesh name — the ONLY persisted dismemberment data
   // (checkbox + weight in the editor). Everything else is DERIVED at load: each entry gets a
   // virtual modifier "dismembered_<part>" (hides the mesh — reversible, stackable) and a
@@ -839,7 +913,8 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
   const checkBindingAnim = (where: string, b: unknown) => {
     const binding = b as Binding | undefined
     if (!binding) return
-    if (!isImported && binding.anim && !doc.anims?.[binding.anim]) issues.push(`${where}: unknown anim "${binding.anim}"`)
+    if (!isImported && binding.anim && !doc.anims?.[binding.anim])
+      issues.push(`${where}: unknown anim "${binding.anim}"`)
     if (binding.modifier && !modifierKnown(binding.modifier))
       issues.push(`${where}: unknown modifier "${binding.modifier}"`)
     for (const [key, override] of Object.entries(binding.byContext ?? {})) {

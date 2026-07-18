@@ -1,23 +1,24 @@
-
 import { scopeHmrReloads } from '../lib/hmr-scope'
+import devLevel from './levels/dev.json'
+import { ServicesRegistry } from './engine/services-registry'
+import { DeviceScreen } from './engine/services/device-screen'
+import { Renderer } from './engine/services/renderer'
 
-import {EngineSystemsRegistry} from "./services/engine-systems-registry";
-import {DeviceScreen} from "./services/device-screen";
-import {Renderer} from "./services/renderer";
-import {CameraManager} from "./services/camera-manager";
-import {Inventory} from "./services/inventory";
-import {Levels} from "./services/levels/levels";
+import { SceneSpawn } from './engine/services/scene-spawn'
+import { Inventory } from './engine/services/inventory'
+import { World } from './engine/services/world/world'
+import { LevelDeclaration } from './engine/services/world/level-loader'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
 
-const engine = new EngineSystemsRegistry()
+const engine = new ServicesRegistry()
 
+// Services would be updated  in that order. One common loop for now
 engine.register('deviceScreen', new DeviceScreen())
 engine.register('renderer', new Renderer())
-engine.register('cameraManager', new CameraManager())
 engine.register('inventory', new Inventory())
-engine.register('levels', new Levels())
-
+engine.register('sceneSpawn', new SceneSpawn())
+const world = engine.register('world', new World())
 
 await engine.start()
-
+await world.loadLevel(devLevel as LevelDeclaration)

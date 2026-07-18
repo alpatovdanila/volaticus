@@ -11,12 +11,7 @@ interface Ch {
 }
 const chan = (n: unknown): { r: Ch; g: Ch; b: Ch } => n as { r: Ch; g: Ch; b: Ch }
 
-import {
-  type MapKind,
-  type MaterialCatalogDoc,
-  type ResolvedMaterialDef,
-  type SurfaceDef,
-} from './schema'
+import { type MapKind, type MaterialCatalogDoc, type ResolvedMaterialDef, type SurfaceDef } from './schema'
 
 // default parallax depth for a height-map material that hasn't set tuning.height, so
 // toggling POM globally shows an effect the per-material slider can then tune.
@@ -112,25 +107,26 @@ function loadKtx2Into(placeholder: THREE.CompressedTexture, path: string, srgb: 
     pendingTextureLoads.delete(pending)
     settle()
   }
-  const start = (): void => ktx2Loader.load(
-    '/' + encodeURI(path),
-    (tex) => {
-      placeholder.copy(tex)
-      placeholder.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace
-      placeholder.wrapS = placeholder.wrapT = THREE.RepeatWrapping
-      placeholder.magFilter = THREE.LinearFilter
-      placeholder.minFilter = THREE.LinearMipmapLinearFilter
-      placeholder.anisotropy = anisotropyLevel
-      placeholder.generateMipmaps = false // baked chain; compressed can't generate
-      placeholder.needsUpdate = true
-      done()
-    },
-    undefined,
-    () => {
-      console.error('KTX2 load failed:', path)
-      done()
-    },
-  )
+  const start = (): void =>
+    ktx2Loader.load(
+      '/' + encodeURI(path),
+      (tex) => {
+        placeholder.copy(tex)
+        placeholder.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace
+        placeholder.wrapS = placeholder.wrapT = THREE.RepeatWrapping
+        placeholder.magFilter = THREE.LinearFilter
+        placeholder.minFilter = THREE.LinearMipmapLinearFilter
+        placeholder.anisotropy = anisotropyLevel
+        placeholder.generateMipmaps = false // baked chain; compressed can't generate
+        placeholder.needsUpdate = true
+        done()
+      },
+      undefined,
+      () => {
+        console.error('KTX2 load failed:', path)
+        done()
+      },
+    )
   if (ktx2Ready) start()
   else ktx2Queue.push(start)
 }
@@ -189,7 +185,10 @@ export function setMaterialCatalog(catalog: Record<string, MaterialCatalogDoc>):
 // that looks like a renderer bug hours later — so it's an error at the only point where
 // the cause is still obvious. (Boot order: fetch the catalog → setMaterialCatalog → build.)
 export function assertMaterialCatalog(where: string): void {
-  if (!catalogSet) throw new Error(`${where}: the material catalog has not been loaded yet — call setMaterialCatalog() first, or every material here builds untextured`)
+  if (!catalogSet)
+    throw new Error(
+      `${where}: the material catalog has not been loaded yet — call setMaterialCatalog() first, or every material here builds untextured`,
+    )
 }
 
 // Resolve one map kind's path. Maps are single-resolution now (one path per kind).
@@ -477,7 +476,7 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     mat.aoMapIntensity = t.aoIntensity
   }
 
-  // Parallax occlusion mapping: opt-in at TWO levels, both BUILD-TIME — the material's own
+  // Parallax occlusion mapping: opt-in at TWO world, both BUILD-TIME — the material's own
   // tuning.parallax flag AND the global Render-panel toggle (shipping a height map alone does
   // nothing). When both are on, replace every base-UV map with a march node; otherwise the material
   // stays the plain PBR built above (classic maps, no march) — 'off' compiles NO parallax shader
@@ -522,14 +521,17 @@ function makeCatalogMaterial(slot: string, def: ResolvedMaterialDef): EntityMate
     if (metalPath)
       mat.metalnessNode = chan(texture(loadTexture(metalPath, false), pUv).grad(gdx, gdy)).b.mul(metalnessU) as never
     if (aoPath)
-      mat.aoNode = chan(texture(loadTexture(aoPath, false), pUv).grad(gdx, gdy)).r.mul(aoU).add(aoU.oneMinus()) as never
+      mat.aoNode = chan(texture(loadTexture(aoPath, false), pUv).grad(gdx, gdy))
+        .r.mul(aoU)
+        .add(aoU.oneMinus()) as never
     // Classic map slots nulled → merge.ts/materialKey can't tell two parallax materials apart (all read
     // texture-less). Publish the node textures' identity + build-time depth so distinct materials don't
     // collapse into one bucket. (Live edits don't re-key: a merged bucket shares one material object, so
     // its live uniforms drive every folded slot — which is correct, they're the same catalog material.)
     mat.userData.parallaxKey =
       [colorPath, normalPath, roughPath, metalPath, aoPath, heightPath].map((p) => p ?? '_').join('|') +
-      '|' + (t.height ?? DEFAULT_HEIGHT)
+      '|' +
+      (t.height ?? DEFAULT_HEIGHT)
   }
 
   // shading is a GLOBAL artistic choice (Light panel "flat shading" checkbox) —
@@ -652,4 +654,3 @@ export function setLiveParam(mat: EntityMaterial, key: string, value: number): v
       break
   }
 }
-

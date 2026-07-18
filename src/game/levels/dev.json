@@ -1,28 +1,50 @@
 {
   "scene": {
-    "background": "#DADADA",
     "camera": {
-      "startingPosition": [0, 100, 20],
-      "startingRotation": [-0.6435011, 0, 0]
+      "initialPosition": [0, 0, 0],
+      "initialRotation": [0, 0, 0],
+      "initialOptions": {
+        "fov": 48,
+        "aspect": 1,
+        "far": 200,
+        "near": 0.1
+      }
     },
+    "background": "#DADADA",
     "objects": [
       {
         "type": "mesh",
-        "geometry": { "type": "plane", "width": 150, "height": 150, "tiles": 75 },
-        "material": "concrete_ground_01",
-        "rotation": [-1.5707963267948966, 0, 0]
+        "mesh": {
+          "geometry": { "type": "plane", "width": 150, "height": 150, "tiles": 75 },
+          "inventoryMaterial": "concrete_ground_01"
+        },
+        "rotation": [-1.5707963267948966, 0, 0],
+        "position": [10, 10, 10]
       },
+
       {
-        "type": "directionalLight",
-        "color": "#ffffff",
-        "intensity": 2.5,
+        "type": "light",
+        "directionalLightOptions": {
+          "color": "#ffffff",
+          "intensity": 2.5
+        },
         "position": [4, 10, 6]
       },
+
       {
-        "type": "hemisphereLight",
-        "skyColor": "#dfeaff",
-        "groundColor": "#20242a",
-        "intensity": 1
+        "type": "inventoryEntity",
+        "isPlayer": true,
+        "inventoryEntity": "marine2",
+        "rotation": [-1.5707963267948966, 0, 0],
+        "position": [0, 0, 0]
+      },
+      {
+        "type": "light",
+        "hemisphereLightOptions": {
+          "skyColor": "#dfeaff",
+          "groundColor": "#20242a",
+          "intensity": 1
+        }
       }
     ]
   }

@@ -37,3 +37,39 @@ Three things that differ from `Clock` and will bite if assumed:
 
 `update(timestamp)` takes the `requestAnimationFrame` timestamp. Pass it; without it Timer
 falls back to `performance.now()`, which is a second, slightly different clock.
+
+## Comments
+
+**A comment explains the code as it is now.** It is read by someone who has no idea what the
+code used to look like, and does not care. Write for that reader.
+
+- **Never write change history.** No "now a tag", "still hardcoded", "pre-existing", "moved
+  from X", "was Y before". Git holds that. A comment that only makes sense if you watched the
+  diff is noise the day after it is written.
+- **Keep them short.** One line where one line does. If a comment needs a paragraph to justify
+  the code, the code usually wants fixing instead.
+- **Explain *why*, not *what*.** The code already says what it does.
+
+**Multi-line comments use `/* */`, never a stack of `//`.**
+
+```ts
+/*
+ A component is an object reference; bitECS tracks membership and we own the storage.
+ Numeric data goes in parallel arrays, object refs in a plain array, tags carry nothing.
+*/
+export const Position = { x: [] as number[], y: [] as number[], z: [] as number[] }
+```
+
+Single-line `//` stays for a single line — including trailing notes on a line of code.
+
+## Functions
+
+**Prefer arrow functions.** Module-level helpers and callbacks are `const fn = () => {}`, not
+`function fn() {}` — one form, hoisting never in play.
+
+```ts
+const writeVec3 = (store: Vec3Store, eid: number, v: Vec3): void => { ... }
+```
+
+Class methods stay methods. The exception is a method used as a detached callback
+(`addEventListener(this.onResize)`), which must be a class-property arrow to keep `this`.

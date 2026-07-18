@@ -1,5 +1,7 @@
-// A minimal event emitter. Each system owns one and exposes typed onX() methods over it.
-// on/once return a disposer, so a caller can unsubscribe without keeping the handler.
+/*
+ A minimal event emitter. Each system owns one and exposes typed onX() methods over it.
+ on/once return a disposer, so a caller can unsubscribe without keeping the handler.
+*/
 type Handler = (...args: any[]) => void
 
 interface Entry {

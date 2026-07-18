@@ -1,22 +1,23 @@
-import { EventEmitter } from '../lib/event-emitter'
-import {EngineSystem} from "./base-engine-system";
+import { EventEmitter } from '../../lib/event-emitter'
+
+import { BaseService } from '../services-registry'
 
 interface Resolution {
   width: number
   height: number
 }
 
-export class DeviceScreen extends EngineSystem {
+export class DeviceScreen extends BaseService {
   private resolution: Resolution = { width: window.innerWidth, height: window.innerHeight }
   private aspectRatio = window.innerWidth / window.innerHeight
   private pixelRatio = window.devicePixelRatio
   private emitter = new EventEmitter()
 
   create() {
-    window.addEventListener('resize', this.onResize)
+    window.addEventListener('resize', this.reportResize)
   }
 
-  onResize = () => {
+  private reportResize = () => {
     this.resolution = { width: window.innerWidth, height: window.innerHeight }
     this.aspectRatio = this.resolution.width / this.resolution.height
     this.pixelRatio = window.devicePixelRatio
@@ -25,7 +26,7 @@ export class DeviceScreen extends EngineSystem {
   }
 
   start() {
-    this.onResize()
+    this.reportResize()
   }
 
   onResolutionChanged(handler: (resolution: Resolution) => void) {

@@ -2,8 +2,6 @@ import * as THREE from 'three'
 import { MeshStandardNodeMaterial, WebGPURenderer } from 'three/webgpu'
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js'
 
-
-
 export const DUMMY_MATERIAL = new MeshStandardNodeMaterial()
 DUMMY_MATERIAL.name = 'dummy'
 DUMMY_MATERIAL.color.set('#ff00ff')
@@ -29,27 +27,21 @@ interface SeparatePbrMaterialDoc {
   }
 }
 
-// Material docs live under inventory/ (outside publicDir), so they can't be fetched by
-// URL — bundle them by id. glob keys are the full paths, e.g.
-// '/inventory/materials/concrete_ground_01.json'.
 const MATERIAL_DOCS = import.meta.glob<{ default: SeparatePbrMaterialDoc }>('/inventory/materials/*.json')
 
-// KTX2: the catalog ships block-compressed textures. The transcoder needs the
-// initialized renderer to pick a target format, so every load waits on it. The Inventory
-// system calls configureKtx2 once the renderer is ready (see Inventory.init), which
-// unblocks every queued map load.
 const ktx2Loader = new KTX2Loader().setTranscoderPath('/basis/')
 let resolveKtx2Ready!: () => void
 const ktx2Ready = new Promise<void>((resolve) => {
   resolveKtx2Ready = resolve
 })
 
-export function configureKtx2(threeRenderer: WebGPURenderer): void {
+// the transcode target depends on the device, so maps can't load until the renderer is up
+export const configureKtx2 = (threeRenderer: WebGPURenderer): void => {
   ktx2Loader.detectSupport(threeRenderer as unknown as THREE.WebGLRenderer)
   resolveKtx2Ready()
 }
 
-async function loadMap(path: string | null, srgb: boolean): Promise<THREE.Texture | null> {
+const loadMap = async (path: string | null, srgb: boolean): Promise<THREE.Texture | null> => {
   if (!path) return null
   await ktx2Ready
   const tex = await ktx2Loader.loadAsync('/' + encodeURI(path))
@@ -59,7 +51,7 @@ async function loadMap(path: string | null, srgb: boolean): Promise<THREE.Textur
   return tex
 }
 
-export const loadSeparatePbrMaterial = async (id: string): Promise<THREE.Material> => {
+export const loadInventoryMaterial = async (id: string): Promise<THREE.Material> => {
   const entry = MATERIAL_DOCS[`/inventory/materials/${id}.json`]
   if (!entry) throw new Error(`inventory: no material '${id}'`)
   const doc = (await entry()).default

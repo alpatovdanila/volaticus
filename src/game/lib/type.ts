@@ -1,0 +1,1 @@
+export type Vec3Row = [number, number, number]

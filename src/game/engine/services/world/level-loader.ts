@@ -5,6 +5,8 @@ import { addEntity, addComponent, type World } from 'bitecs'
 import {
   Position,
   Rotation,
+  Velocity,
+  Animator,
   ThreeObject,
   NeedSpawn,
   writeVec3Row,
@@ -20,7 +22,7 @@ export class LevelLoader {
     private inventorySystem: KnownServices['inventory'],
   ) {}
 
-  async loadAndBuild(ecsWorld: World) {
+  async loadAndBuild(ecsWorld: World, aspect: number) {
     const declaration = this.declaration
 
     const allMaterials = declaration.scene.objects.flatMap((o) => (o.type === 'mesh' ? [o.mesh.inventoryMaterial] : []))
@@ -42,14 +44,14 @@ export class LevelLoader {
 
     return {
       scene: this.buildScene(declaration),
-      camera: this.buildCamera(declaration),
+      camera: this.buildCamera(declaration, aspect),
     }
   }
 
-  buildCamera(declaration: LevelDeclaration) {
+  buildCamera(declaration: LevelDeclaration, aspect: number) {
     const {
       initialPosition,
-      initialOptions: { fov, aspect, near, far },
+      initialOptions: { fov, near, far },
       initialRotation,
     } = declaration.scene.camera
 
@@ -67,7 +69,13 @@ export class LevelLoader {
   }
 
   ecsCommitMesh(world: World, obj: MeshObject) {
-    const geometry = new THREE.PlaneGeometry(obj.mesh.geometry.width, obj.mesh.geometry.height)
+    const { width, height, tiles } = obj.mesh.geometry
+    const geometry = new THREE.PlaneGeometry(width, height)
+
+    // tiling lives in the geometry's uvs, not in map.repeat: the material comes from the
+    // shared inventory cache, so scaling its textures would retile every other mesh using it.
+    if (tiles !== 1) geometry.attributes.uv.array.forEach((_, i, uv) => (uv[i] *= tiles))
+
     const material = this.inventorySystem.get('material', obj.mesh.inventoryMaterial)
     const mesh = new THREE.Mesh(geometry, material)
 
@@ -83,27 +91,34 @@ export class LevelLoader {
   }
 
   ecsCommitLight(world: World, obj: LightObject) {
-    const light =
-      obj.light.kind === 'hemisphere'
-        ? new THREE.HemisphereLight(obj.light.skyColor, obj.light.groundColor, obj.light.intensity)
-        : new THREE.DirectionalLight(obj.light.color, obj.light.intensity)
-
     const eid = addEntity(world)
-    addComponent(world, eid, Position)
-    addComponent(world, eid, Rotation)
     addComponent(world, eid, ThreeObject)
     addComponent(world, eid, NeedSpawn)
 
-    ThreeObject[eid] = light
+    if (obj.light.kind === 'hemisphere') {
+      // A hemisphere light has no location: three reads its sky *axis* from `position`, and
+      // normalize(0,0,0) is NaN — which propagates through the lighting and blacks out every
+      // lit material in the frame. So it gets no transform components on purpose, leaving
+      // three's (0,1,0) default standing. TransformSync must never write to this entity.
+      const { skyColor, groundColor, intensity } = obj.light
+      ThreeObject[eid] = new THREE.HemisphereLight(skyColor, groundColor, intensity)
+      return
+    }
+
+    addComponent(world, eid, Position)
+    addComponent(world, eid, Rotation)
+
+    ThreeObject[eid] = new THREE.DirectionalLight(obj.light.color, obj.light.intensity)
     writeVec3Row(Position, eid, obj.position)
     writeVec3Row(Rotation, eid, obj.rotation)
   }
 
   ecsCommitInventoryEntity(world: World, obj: InventoryEntityObject) {
-    const { threeObject, entityDeclaration } = this.inventorySystem.get('entity', obj.inventoryEntity)
+    const { threeObject, entityDeclaration, clips } = this.inventorySystem.get('entity', obj.inventoryEntity)
     const eid = addEntity(world)
     addComponent(world, eid, Position)
     addComponent(world, eid, Rotation)
+    addComponent(world, eid, Velocity)
     addComponent(world, eid, ThreeObject)
     addComponent(world, eid, NeedSpawn)
     addComponent(world, eid, InventoryEntityDeclaration)
@@ -113,5 +128,15 @@ export class LevelLoader {
     InventoryEntityDeclaration[eid] = entityDeclaration
     writeVec3Row(Position, eid, obj.position)
     writeVec3Row(Rotation, eid, obj.rotation)
+    writeVec3Row(Velocity, eid, [0, 0, 0])
+
+    if (clips.length) {
+      const mixer = new THREE.AnimationMixer(threeObject)
+      const actions: Record<string, THREE.AnimationAction> = {}
+      for (const clip of clips) actions[clip.name] = mixer.clipAction(clip)
+
+      addComponent(world, eid, Animator)
+      Animator[eid] = { mixer, actions, current: '' }
+    }
   }
 }

@@ -29,7 +29,7 @@ export class Renderer extends BaseService {
 
   async start() {
     await this.threeRenderer.init()
-    this.emitter.emit('start')
+    this.emitter.emit('ready')
     this.threeRenderer.setAnimationLoop((time) => this.animationLoopCallback(time))
   }
 

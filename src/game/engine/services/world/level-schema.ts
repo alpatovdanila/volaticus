@@ -60,9 +60,9 @@ export const LevelDeclarationSchema = z.object({
     camera: z.object({
       initialPosition: Vec3.default(originVec3),
       initialRotation: Vec3.default(originVec3),
+      // no aspect: it belongs to the screen, not the level — DeviceScreen owns it
       initialOptions: z.object({
         fov: z.number(),
-        aspect: z.number(),
         near: z.number(),
         far: z.number(),
       }),

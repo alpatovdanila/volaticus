@@ -9,6 +9,7 @@
     "anims": ["Death From Front Headshot.fbx", "Firing Rifle.fbx", "Hit Reaction.fbx", "Idle Rifle.fbx", "Idle Stretch.fbx", "Rifle Run.fbx", "Rifle Walk.fbx", "Run Backward.fbx", "Sprint Forward.fbx", "Strafe Run Left.fbx", "Strafe Run Right.fbx"],
     "emissive": { "glass": { "color": "#fba7a7", "intensity": 2.5 } }
   },
+  "locomotion": { "idle": "Idle Rifle", "walk": "Rifle Walk", "run": "Rifle Run" },
   "materials": {},
   "rig": {},
   "states": {

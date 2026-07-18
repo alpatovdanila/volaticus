@@ -6,6 +6,12 @@ import type { IRenderer } from './services/renderer'
 import type { IInventory } from './services/inventory'
 import { ISceneSpawn } from './services/scene-spawn'
 import { IWorld } from './services/world/world'
+import type { IInput } from './services/input'
+import type { IPlayerControl } from './services/player-control'
+import type { IMovement } from './services/movement'
+import type { ITransformSync } from './services/transform-sync'
+import type { IAnimation } from './services/animation'
+import type { IDebugOverlay } from './services/debug-overlay'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
@@ -13,6 +19,12 @@ export interface KnownServices {
   world: IWorld
   inventory: IInventory
   sceneSpawn: ISceneSpawn
+  input: IInput
+  playerControl: IPlayerControl
+  movement: IMovement
+  transformSync: ITransformSync
+  animation: IAnimation
+  debugOverlay: IDebugOverlay
 }
 
 export interface IService {

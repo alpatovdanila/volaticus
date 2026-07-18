@@ -4,13 +4,14 @@ import { DUMMY_MATERIAL, loadInventoryMaterial, configureKtx2 } from './inventor
 import { DUMMY_ENTITY, loadEntity } from './inventory-entity'
 
 import { BaseService, KnownServices, ServicesRegistry } from '../../services-registry'
-import { InventoryEntityDeclaration } from '../../../../shared/type'
+import { InventoryEntityDeclaration } from '../../../../shared/inventory-schema'
 
 interface InventoryTypes {
   material: THREE.Material
   entity: {
     entityDeclaration: InventoryEntityDeclaration
     threeObject: THREE.Object3D
+    clips: THREE.AnimationClip[]
   }
 }
 

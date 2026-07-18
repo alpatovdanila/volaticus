@@ -8,17 +8,35 @@ import { SceneSpawn } from './engine/services/scene-spawn'
 import { Inventory } from './engine/services/inventory'
 import { World } from './engine/services/world/world'
 import { parseLevelDeclaration } from './engine/services/world/level-schema'
+import { Input } from './engine/services/input'
+import { PlayerControl } from './engine/services/player-control'
+import { Movement } from './engine/services/movement'
+import { Animation } from './engine/services/animation'
+import { TransformSync } from './engine/services/transform-sync'
+import { DebugOverlay } from './engine/services/debug-overlay'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
 
 const engine = new ServicesRegistry()
 
-// Services would be updated  in that order. One common loop for now
+/*
+ Registration order IS update order, and it matters:
+ read input, act on it, integrate, animate, then push the result at three.js and draw.
+*/
 engine.register('deviceScreen', new DeviceScreen())
-engine.register('renderer', new Renderer())
+engine.register('input', new Input())
 engine.register('inventory', new Inventory())
-engine.register('sceneSpawn', new SceneSpawn())
 const world = engine.register('world', new World())
+engine.register('playerControl', new PlayerControl())
+engine.register('movement', new Movement())
+engine.register('animation', new Animation())
+engine.register('sceneSpawn', new SceneSpawn())
+engine.register('transformSync', new TransformSync())
+engine.register('renderer', new Renderer())
+// last: it reports on the frame everything else just produced
+engine.register('debugOverlay', new DebugOverlay())
 
 await engine.start()
 await world.loadLevel(parseLevelDeclaration(devLevel))
+
+if (import.meta.env.DEV) (window as any).__engine = engine

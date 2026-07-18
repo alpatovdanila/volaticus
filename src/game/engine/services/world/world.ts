@@ -17,6 +17,7 @@ export class World extends BaseService {
 
     // todo: find a better place? Separate CameraResize controller? Camera wrapper?
     this.screen.onAspectRatioChanged((aspect) => {
+      console.log('aspect ratio changed')
       if (this.camera) {
         this.camera.aspect = aspect
         this.camera.updateProjectionMatrix()
@@ -26,7 +27,7 @@ export class World extends BaseService {
 
   async loadLevel(levelDeclaration: LevelDeclaration) {
     const levelLoader = new LevelLoader(levelDeclaration, this.inventory)
-    const { camera, scene } = await levelLoader.loadAndBuild(this.ecs)
+    const { camera, scene } = await levelLoader.loadAndBuild(this.ecs, this.screen.aspect)
     this.camera = camera
     this.scene = scene
   }

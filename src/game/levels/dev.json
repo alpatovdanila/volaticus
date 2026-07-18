@@ -1,11 +1,10 @@
 {
   "scene": {
     "camera": {
-      "initialPosition": [0, 0, 0],
-      "initialRotation": [0, 0, 0],
+      "initialPosition": [0, 1.4, 2.6],
+      "initialRotation": [-0.37, 0, 0],
       "initialOptions": {
         "fov": 48,
-        "aspect": 1,
         "far": 200,
         "near": 0.1
       }
@@ -15,11 +14,11 @@
       {
         "type": "mesh",
         "mesh": {
-          "geometry": { "type": "plane", "width": 150, "height": 150, "tiles": 75 },
+          "geometry": { "type": "plane", "width": 60, "height": 60, "tiles": 60 },
           "inventoryMaterial": "concrete_ground_01"
         },
-        "rotation": [-1.5707963267948966, 0, 0],
-        "position": [10, 10, 10]
+        "rotation": [-1.5708, 0, 0],
+        "position": [0, 0, 0]
       },
 
       {
@@ -32,7 +31,7 @@
         "type": "inventoryEntity",
         "isPlayer": true,
         "inventoryEntity": "marine2",
-        "rotation": [-1.5707963267948966, 0, 0],
+        "rotation": [0, 0, 0],
         "position": [0, 0, 0]
       },
       {

@@ -29,6 +29,10 @@ export class DeviceScreen extends BaseService {
     this.reportResize()
   }
 
+  get aspect() {
+    return this.aspectRatio
+  }
+
   onResolutionChanged(handler: (resolution: Resolution) => void) {
     this.emitter.on('resolutionChange', handler)
   }

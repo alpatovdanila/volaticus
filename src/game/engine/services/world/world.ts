@@ -1,8 +1,8 @@
-import { LevelLoader, type LevelDeclaration } from './level-loader'
-
 import { createWorld as createEcsWorld } from 'bitecs'
 import { PerspectiveCamera, Scene } from 'three'
 import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
+import { LevelDeclaration } from './level-schema'
+import { LevelLoader } from './level-loader'
 
 export class World extends BaseService {
   private inventory!: KnownServices['inventory']

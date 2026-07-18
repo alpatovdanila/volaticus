@@ -25,7 +25,7 @@ export class DeviceScreen extends BaseService {
     this.emitter.emit('aspectRatioChange', this.aspectRatio)
   }
 
-  start() {
+  async start() {
     this.reportResize()
   }
 

@@ -1,7 +1,6 @@
 import { WebGPURenderer } from 'three/webgpu'
 import { EventEmitter } from '../../lib/event-emitter'
 
-import { Timer } from 'three'
 import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
 
 export class Renderer extends BaseService {
@@ -9,10 +8,15 @@ export class Renderer extends BaseService {
   private world!: KnownServices['world']
   private deviceScreen!: KnownServices['deviceScreen']
   private emitter = new EventEmitter()
+  private animationLoopCallback = (time: number) => {}
 
   create() {
     this.threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     document.body.appendChild(this.threeRenderer.domElement)
+  }
+
+  setAnimationLoopCallback(cb: (time: number) => void) {
+    this.animationLoopCallback = cb
   }
 
   init(registry: IServicesRegistry): void {
@@ -25,30 +29,19 @@ export class Renderer extends BaseService {
 
   async start() {
     await this.threeRenderer.init()
-
-    this.emitter.emit('ready')
-
-    const timer = new Timer()
-
-    timer.connect(document)
-
-    const frame = (timestamp: number): void => {
-      timer.update(timestamp) // advance ONCE per step, before any read
-      const dt = Math.min(0.05, timer.getDelta()) // Timer has no clamp; a stall must not teleport the world
-
-      //this.threeRenderer.render(this.world.getActive().getScene(), this.world.getCamera())
-
-      requestAnimationFrame(frame)
-    }
-
-    requestAnimationFrame(frame)
+    this.emitter.emit('start')
+    this.threeRenderer.setAnimationLoop((time) => this.animationLoopCallback(time))
   }
 
-  onReady(handler: VoidFunction) {
-    this.emitter.on('ready', handler)
+  public onReady(cb: VoidFunction) {
+    this.emitter.on('ready', cb)
   }
 
-  getThreeRenderer(): WebGPURenderer {
+  update() {
+    this.threeRenderer.render(this.world.scene, this.world.camera)
+  }
+
+  getThreeRenderer() {
     return this.threeRenderer
   }
 }

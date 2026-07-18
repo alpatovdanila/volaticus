@@ -20,7 +20,7 @@ export interface IService {
 
   init(registry: IServicesRegistry): void
 
-  start(): void
+  start(): Promise<void>
 
   update(dt: number): void
 }
@@ -30,7 +30,7 @@ export class BaseService implements IService {
 
   init(registry: IServicesRegistry) {}
 
-  start() {}
+  async start() {}
 
   update(dt: number) {}
 }
@@ -55,18 +55,19 @@ export class ServicesRegistry {
 
     for (const service of servicesList) service.create()
     for (const service of servicesList) service.init(this)
-    for (const service of servicesList) void service.start()
+    await Promise.all(servicesList.map((s) => s.start()))
 
-    const clock = new Timer()
-    clock.connect(document)
+    const render = this.get('renderer')
+    if (!render) throw new Error('Renderer service is not optional, please, register it')
 
-    const loop = () => {
-      const delta = clock.getDelta()
-      for (const service of servicesList) service.update(delta)
-      requestAnimationFrame(loop)
-    }
+    const timer = new Timer()
+    timer.connect(document)
 
-    loop()
+    render.setAnimationLoopCallback((time) => {
+      timer.update(time)
+      const dt = Math.min(0.05, timer.getDelta())
+      for (const service of servicesList) service.update(dt)
+    })
   }
 }
 

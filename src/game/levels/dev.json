@@ -24,10 +24,7 @@
 
       {
         "type": "light",
-        "directionalLightOptions": {
-          "color": "#ffffff",
-          "intensity": 2.5
-        },
+        "light": { "kind": "directional", "color": "#ffffff", "intensity": 2.5 },
         "position": [4, 10, 6]
       },
 
@@ -40,11 +37,7 @@
       },
       {
         "type": "light",
-        "hemisphereLightOptions": {
-          "skyColor": "#dfeaff",
-          "groundColor": "#20242a",
-          "intensity": 1
-        }
+        "light": { "kind": "hemisphere", "skyColor": "#dfeaff", "groundColor": "#20242a", "intensity": 1 }
       }
     ]
   }

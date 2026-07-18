@@ -7,7 +7,7 @@ import { Renderer } from './engine/services/renderer'
 import { SceneSpawn } from './engine/services/scene-spawn'
 import { Inventory } from './engine/services/inventory'
 import { World } from './engine/services/world/world'
-import { LevelDeclaration } from './engine/services/world/level-loader'
+import { parseLevelDeclaration } from './engine/services/world/level-schema'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
 
@@ -21,4 +21,4 @@ engine.register('sceneSpawn', new SceneSpawn())
 const world = engine.register('world', new World())
 
 await engine.start()
-await world.loadLevel(devLevel as LevelDeclaration)
+await world.loadLevel(parseLevelDeclaration(devLevel))

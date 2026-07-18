@@ -5,8 +5,7 @@
   "category": "character",
   "notes": "Imported GLB via scripts/import-glb.ts. Parts: body, glass@exposeEmissive, hand_l, hand_r. Clips: index, Death From Front Headshot, Firing Rifle, Hit Reaction, Idle Rifle, Idle Stretch, Rifle Run, Rifle Walk, Run Backward, Sprint Forward, Strafe Run Left, Strafe Run Right. Strafe clips merge at load (sibling FBX) and drive aim-locked lateral movement.",
   "model": {
-    "src": "models/marine2/index.glb",
-    "anims": ["Death From Front Headshot.fbx", "Firing Rifle.fbx", "Hit Reaction.fbx", "Idle Rifle.fbx", "Idle Stretch.fbx", "Rifle Run.fbx", "Rifle Walk.fbx", "Run Backward.fbx", "Sprint Forward.fbx", "Strafe Run Left.fbx", "Strafe Run Right.fbx"],
+    "src": "models/marine2/index.baked.glb",
     "emissive": { "glass": { "color": "#fba7a7", "intensity": 2.5 } }
   },
   "locomotion": { "idle": "Idle Rifle", "walk": "Rifle Walk", "run": "Rifle Run" },

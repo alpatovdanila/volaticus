@@ -24,8 +24,11 @@ export const createEvent = <T = void>(): AtomicEvent<T> => {
 
   emit.once = (handler: AtomicEventHandler<T>) => {
     const oneTimer = (payload: T) => {
-      handler(payload)
-      emit.off(oneTimer)
+      try {
+        handler(payload)
+      } finally {
+        emit.off(oneTimer)
+      }
     }
     return emit.on(oneTimer)
   }

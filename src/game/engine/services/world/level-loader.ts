@@ -12,9 +12,11 @@ import {
   writeVec3Row,
   IsPlayer,
   InventoryEntityDoc,
+  LocomotionAnimationProfile,
 } from './ecs/components'
 import type { LevelDeclaration, MeshObject, LightObject, InventoryEntityObject } from './level-schema'
 import { KnownServices } from '../../services-registry'
+import { characterFor, warnMissingClips } from '../../../characters'
 
 export class LevelLoader {
   constructor(
@@ -102,6 +104,14 @@ export class LevelLoader {
     addComponent(world, eid, NeedSpawn)
     addComponent(world, eid, InventoryEntityDoc)
     if (obj.isPlayer) addComponent(world, eid, IsPlayer)
+
+    // entities absent from the character table are props, not bodies — they simply get none of this
+    const character = characterFor(obj.inventoryEntity)
+    if (character) {
+      addComponent(world, eid, LocomotionAnimationProfile)
+      LocomotionAnimationProfile[eid] = character.locomotion
+      warnMissingClips(obj.inventoryEntity, character.locomotion, clips)
+    }
 
     ThreeObject[eid] = threeObject
     InventoryEntityDoc[eid] = entityDeclaration

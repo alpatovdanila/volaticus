@@ -8,14 +8,14 @@ import { Inventory } from './engine/services/inventory'
 import { World } from './engine/services/world/world'
 import { parseLevelDeclaration } from './engine/services/world/level-schema'
 import { Input } from './engine/services/input'
-import { PlayerControl } from './engine/services/player-control'
+import { PlayerControl } from './engine/services/player/player-control'
 import { Movement } from './engine/services/movement'
 import { AnimationsDriver } from './engine/services/animations-driver'
 
 import { ThreeSceneSync } from './engine/services/three-scene-sync'
 import { DebugOverlay } from './engine/services/debug-overlay'
 import { CameraControl } from './engine/services/camera-control'
-import { LocomotionAnimation } from './engine/services/locomotion-animation/locomotion-animation'
+import { LocomotionAnimation } from './engine/services/locomotion-animation'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
 

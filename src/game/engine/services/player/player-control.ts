@@ -2,19 +2,15 @@ import { addComponent, hasComponent, query, removeComponent } from 'bitecs'
 
 import {
   AnimationTask,
-  ThreeAnimator,
   IsPlayer,
   LockOn,
-  Locomotion,
-  LocomotionAnimationProfile,
   Position,
   Rotation,
   Sprintable,
   Velocity,
   type LocomotionDirection,
-} from './world/ecs/components'
-import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
-import { BRUNO_LOCOMOTION as playerLocomotionAnimationProfile } from './locomotion-animation/locomotion-profiles'
+} from '../world/ecs/components'
+import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
 
 const WALK_SPEED = 1.5625
 const RUN_SPEED = 4.6875
@@ -53,19 +49,19 @@ const relativeDirection = (moveYaw: number, facingYaw: number): LocomotionDirect
 }
 
 /*
- Drives the player: turns stick input into velocity and facing, publishes the resulting movement
- state to Locomotion for LocomotionAnimation to turn into a clip. Facing follows the direction of
- travel, or LockOn's target while that component is present —
- in which case movement is classified relative to that facing so the strafe and backpedal clips
- are used.
+ Drives the player: turns stick input into velocity and facing. Facing follows the direction of
+ travel, or LockOn's target while that component is present — in which case movement is
+ classified relative to that facing so the backpedal and strafe speeds apply.
 
- Everything it decides lives on the entity, so a second controllable character would work
- without touching this class.
+ It publishes no movement state. Velocity and Rotation are the whole output, and
+ LocomotionAnimation derives what to play from them, so nothing here has to know a clip exists.
+
+ Speeds are still module constants, so a second character driven by this class would be a
+ clone of the first. Making them per-entity is what a stat block is for.
 */
 export class PlayerControl extends BaseService {
   private input!: KnownServices['input']
   private world!: KnownServices['world']
-  private checkedClips = false
 
   init(registry: IServicesRegistry) {
     this.input = registry.get('input')
@@ -106,12 +102,9 @@ export class PlayerControl extends BaseService {
     const magnitude = Math.hypot(x, z)
     const ecs = this.world.ecs
 
-    for (const eid of query(ecs, [IsPlayer, Velocity, Rotation, Position, ThreeAnimator])) {
-      this.ensureComponents(ecs, eid)
-
+    for (const eid of query(ecs, [IsPlayer, Velocity, Rotation, Position])) {
       const locked = hasComponent(ecs, eid, LockOn)
       const lock = LockOn[eid]
-      const state = Locomotion[eid]
 
       const facingTarget = locked
         ? Math.atan2(lock.x - Position.x[eid], lock.z - Position.z[eid])
@@ -123,60 +116,32 @@ export class PlayerControl extends BaseService {
       if (magnitude === 0) {
         Velocity.x[eid] = 0
         Velocity.z[eid] = 0
-        state.gait = 'idle'
-        state.direction = 'forward'
       } else {
         const canSprint = hasComponent(ecs, eid, Sprintable) && !locked
         const gaitSpeed =
           canSprint && magnitude > SPRINT_AT ? SPRINT_SPEED : magnitude > RUN_AT ? RUN_SPEED : WALK_SPEED
-        state.gait = gaitSpeed === SPRINT_SPEED ? 'sprint' : gaitSpeed === RUN_SPEED ? 'run' : 'walk'
 
         const dirX = x / magnitude
         const dirZ = z / magnitude
-        state.direction = locked ? relativeDirection(Math.atan2(dirX, dirZ), Rotation.y[eid]) : 'forward'
+        const direction = locked ? relativeDirection(Math.atan2(dirX, dirZ), Rotation.y[eid]) : 'forward'
 
-        const speed = locked ? gaitSpeed * LOCKED_DIRECTION_SPEED[state.direction] : gaitSpeed
+        const speed = locked ? gaitSpeed * LOCKED_DIRECTION_SPEED[direction] : gaitSpeed
         Velocity.x[eid] = dirX * speed
         Velocity.z[eid] = dirZ * speed
       }
     }
   }
 
-  private ensureComponents(ecs: KnownServices['world']['ecs'], eid: number) {
-    if (!Locomotion[eid]) {
-      addComponent(ecs, eid, Locomotion)
-      Locomotion[eid] = { gait: 'idle', direction: 'forward' }
-    }
-    if (!LocomotionAnimationProfile[eid]) {
-      addComponent(ecs, eid, LocomotionAnimationProfile)
-      LocomotionAnimationProfile[eid] = playerLocomotionAnimationProfile
-    }
-    if (!this.checkedClips) this.reportMissingClips(eid)
-  }
-
-  // a clip the profile names but the model lacks would freeze the character silently
-  private reportMissingClips(eid: number) {
-    this.checkedClips = true
-    const root = ThreeAnimator[eid]?.mixer.getRoot() as { animations?: { name: string }[] } | undefined
-    const profile = LocomotionAnimationProfile[eid]
-    if (!root || !profile) return
-    const available = new Set((root.animations ?? []).map((c) => c.name))
-    const wanted = [
-      ...Object.values(profile.free),
-      ...Object.values(profile.locked).flatMap((g) => Object.values(g)),
-    ].map((s) => s.clip)
-    const missing = [...new Set(wanted)].filter((c) => !available.has(c))
-    if (missing.length) console.warn(`PlayerControl: model has no clip(s): ${missing.join(', ')}`)
-  }
-
+  // reads the same components the animator does, so the panel reports what is actually driving
+  // the character rather than a parallel copy kept for it
   getDebugState() {
-    const eid = query(this.world.ecs, [IsPlayer, Locomotion])[0]
+    const ecs = this.world.ecs
+    const eid = query(ecs, [IsPlayer, Velocity, Rotation])[0]
     if (eid === undefined) return null
+
     const task = AnimationTask[eid]
     return {
-      locked: hasComponent(this.world.ecs, eid, LockOn),
-      gait: Locomotion[eid].gait,
-      direction: Locomotion[eid].direction,
+      locked: hasComponent(ecs, eid, LockOn),
       speed: Math.hypot(Velocity.x[eid], Velocity.z[eid]),
       clip: task?.clip ?? '-',
       rate: task?.rate ?? 0,

@@ -7,14 +7,14 @@ import type { IInventory } from './services/inventory'
 
 import { IWorld } from './services/world/world'
 import type { IInput } from './services/input'
-import type { IPlayerControl } from './services/player-control'
+import type { IPlayerControl } from './services/player/player-control'
 import type { IMovement } from './services/movement'
 import type { IThreeSceneSync } from './services/three-scene-sync'
 import type { IAnimation } from './services/animations-driver'
 
 import type { IDebugOverlay } from './services/debug-overlay'
 import type { ICameraControl } from './services/camera-control'
-import { ILocomotionAnimation } from './services/locomotion-animation/locomotion-animation'
+import { ILocomotionAnimation } from './services/locomotion-animation'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen

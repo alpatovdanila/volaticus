@@ -126,7 +126,6 @@ export class DebugOverlay extends BaseService {
     if (!state) return ['player none']
     return [
       `mode   ${state.locked ? 'aim-locked -> arena centre' : 'free'}`,
-      `gait   ${state.gait}${state.locked ? ' ' + state.direction : ''}`,
       `speed  ${state.speed.toFixed(2)} m/s   clip ${state.clip} @${state.rate.toFixed(2)}x`,
     ]
   }

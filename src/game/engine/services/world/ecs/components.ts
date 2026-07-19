@@ -34,15 +34,35 @@ export const Sprintable = {}
 export type LockOnState = { x: number; z: number }
 export const LockOn: LockOnState[] = []
 
-export type LocomotionGait = 'idle' | 'walk' | 'run' | 'sprint'
 export type LocomotionDirection = 'forward' | 'back' | 'left' | 'right'
-export type LocomotionState = { gait: LocomotionGait; direction: LocomotionDirection }
-export const Locomotion: LocomotionState[] = []
 
-export type LocomotionClip = { clip: string; rate: number; fade: number }
+/*
+ One clip and the speed band it covers. `above` is the band's lower bound in m/s: a direction's
+ bands are scanned from the end, so the last bound the entity has passed wins, and the first
+ band omits it to cover everything below.
+
+ `nativeSpeed` is the ground speed the clip depicts at rate 1 — measured by eye once, per clip.
+ Playback rate is speed / nativeSpeed, so retuning how fast a character moves cannot desync the
+ feet from the floor. 0 means the clip depicts no travel (idle) and plays at rate 1.
+*/
+export type LocomotionBand = {
+  above?: number
+  clip: string
+  nativeSpeed: number
+  fade: number
+}
+
+/*
+ The directions a rig actually has clips for. A heading resolves to the NEAREST declared
+ direction, so the shape scales with the rig rather than with the engine: declare `forward`
+ alone and it plays for all movement, declare four and the usual quarter-split falls out
+ without anyone naming a boundary. Only `forward` is required — it is what standing still uses.
+*/
 export type LocomotionAnimationProfileState = {
-  free: Record<LocomotionGait, LocomotionClip>
-  locked: Record<'walk' | 'run', Record<LocomotionDirection, LocomotionClip>>
+  forward: LocomotionBand[]
+  back?: LocomotionBand[]
+  left?: LocomotionBand[]
+  right?: LocomotionBand[]
 }
 export const LocomotionAnimationProfile: LocomotionAnimationProfileState[] = []
 

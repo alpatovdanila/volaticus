@@ -1,4 +1,4 @@
-import { getComponent, query, removeComponent } from 'bitecs'
+import { query, removeComponent } from 'bitecs'
 
 import { NeedSpawn, Position, Rotation, ThreeObject } from './world/ecs/components'
 import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
@@ -14,14 +14,17 @@ export class ThreeSceneSync extends BaseService {
   }
 
   update() {
+    for (const eid of query(this.world.ecs, [ThreeObject, NeedSpawn])) {
+      const object = ThreeObject[eid]
+      if (!object) continue
+      this.world.scene.add(object)
+      removeComponent(this.world.ecs, eid, NeedSpawn)
+    }
+
     for (const eid of query(this.world.ecs, [ThreeObject, Position, Rotation])) {
       const object = ThreeObject[eid]
       if (!object) continue
 
-      if (getComponent(this.world.ecs, eid, NeedSpawn)) {
-        this.world.scene.add(object)
-        removeComponent(this.world.ecs, eid, NeedSpawn)
-      }
       object.position.set(Position.x[eid], Position.y[eid], Position.z[eid])
       object.rotation.set(Rotation.x[eid], Rotation.y[eid], Rotation.z[eid])
     }

@@ -1,5 +1,4 @@
-import { EventEmitter } from '../../lib/event-emitter'
-
+import { createEvent } from '../../../lib/atomic-event'
 import { BaseService } from '../services-registry'
 
 interface Resolution {
@@ -10,8 +9,9 @@ interface Resolution {
 export class DeviceScreen extends BaseService {
   private resolution: Resolution = { width: window.innerWidth, height: window.innerHeight }
   private aspectRatio = window.innerWidth / window.innerHeight
-  private pixelRatio = window.devicePixelRatio
-  private emitter = new EventEmitter()
+
+  resolutionChanged = createEvent<Resolution>()
+  aspectRatioChanged = createEvent<number>()
 
   create() {
     window.addEventListener('resize', this.reportResize)
@@ -20,25 +20,13 @@ export class DeviceScreen extends BaseService {
   private reportResize = () => {
     this.resolution = { width: window.innerWidth, height: window.innerHeight }
     this.aspectRatio = this.resolution.width / this.resolution.height
-    this.pixelRatio = window.devicePixelRatio
-    this.emitter.emit('resolutionChange', this.resolution)
-    this.emitter.emit('aspectRatioChange', this.aspectRatio)
+
+    this.resolutionChanged(this.resolution)
+    this.aspectRatioChanged(this.aspectRatio)
   }
 
   async start() {
     this.reportResize()
-  }
-
-  get aspect() {
-    return this.aspectRatio
-  }
-
-  onResolutionChanged(handler: (resolution: Resolution) => void) {
-    this.emitter.on('resolutionChange', handler)
-  }
-
-  onAspectRatioChanged(handler: (aspectRatio: number) => void) {
-    this.emitter.on('aspectRatioChange', handler)
   }
 }
 

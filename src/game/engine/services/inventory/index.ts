@@ -40,7 +40,7 @@ export class Inventory extends BaseService {
 
   init(registry: ServicesRegistry) {
     this.renderer = registry.get('renderer')
-    this.renderer.onReady(() => configureKtx2(this.renderer.getThreeRenderer()))
+    this.renderer.becomeReady.once(() => configureKtx2(this.renderer.getThreeRenderer()))
   }
 
   async load<K extends keyof InventoryTypes>(type: K, id: string) {

@@ -1,7 +1,7 @@
 // Imported glTF/GLB character models (resources/models/**/index.glb). Unlike meshes.ts
 // (static FBX, merged into one geometry, skin/anim dropped), this preserves the model's
 // native SKELETON, per-mesh SkinnedMeshes, PBR MATERIALS and AnimationClips — the model
-// is used AS-IS (its own textures included; no in-editor material editing). Animation
+// is used AS-IS (its own textures included; no in-editor material editing). AnimationsDriver
 // clips are assumed already named (see scripts/import-glb.ts).
 //
 // Loading is async. The raw parse is cached once per path; each build gets a fresh
@@ -14,8 +14,6 @@ import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
 import { clone as cloneHierarchy } from 'three/addons/utils/SkeletonUtils.js'
 
 import { mergeFbxClips, type FbxAnimSource } from './fbx-anim-merge'
-
-export type { RootMotionProfile } from './fbx-anim-merge'
 
 export interface GltfModel {
   scene: THREE.Object3D // the model, WITH its own materials (a fresh clone)
@@ -106,8 +104,11 @@ function toNodeMaterials(scene: THREE.Object3D): void {
     if (cached) return cached
     if ((m as { isNodeMaterial?: boolean }).isNodeMaterial) return m
     if (!(m as THREE.MeshStandardMaterial).isMeshStandardMaterial) return m // unlit/basic — leave alone
-    const nm = (m as THREE.MeshPhysicalMaterial).isMeshPhysicalMaterial ? new MeshPhysicalNodeMaterial() : new MeshStandardNodeMaterial()
-    for (const key in m) (nm as unknown as Record<string, unknown>)[key] = (m as unknown as Record<string, unknown>)[key]
+    const nm = (m as THREE.MeshPhysicalMaterial).isMeshPhysicalMaterial
+      ? new MeshPhysicalNodeMaterial()
+      : new MeshStandardNodeMaterial()
+    for (const key in m)
+      (nm as unknown as Record<string, unknown>)[key] = (m as unknown as Record<string, unknown>)[key]
     converted.set(m, nm)
     return nm
   }
@@ -131,7 +132,12 @@ export function preloadGltf(path: string, animFiles: string[] = []): Promise<voi
         normalizeGlbMaterials(gltf.scene)
         toNodeMaterials(gltf.scene)
         const merged = animFiles.length ? await loadAndMergeFbxClips(gltf.scene, path, animFiles) : []
-        rawCache.set(key, { scene: gltf.scene, clips: [...gltf.animations, ...merged] })
+        const clips = [...gltf.animations, ...merged]
+        // GLTFLoader hands animations back as a sibling of the scene, never attached to it.
+        // Attaching them lets mixer.clipAction(name) resolve; Object3D.copy slices the array,
+        // so every clone gets its own list pointing at the same shared clips.
+        gltf.scene.animations = clips
+        rawCache.set(key, { scene: gltf.scene, clips })
       })
       .catch((e) => {
         console.warn('GLB load failed:', path, e)

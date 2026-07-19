@@ -535,7 +535,7 @@ export const EntitySchema = z.object({
   // empty ({}); `states` map state names to GLB clip names (see scripts/import-glb.ts).
   model: ModelSchema.optional(),
   materials: z.record(MaterialSchema),
-  rig: z.record(NodeSchema),
+  rig: z.record(NodeSchema).optional(), // imported GLB entities have no procedural rig
   physics: z
     .object({
       body: z.enum(['fixed', 'dynamic', 'kinematicCharacter']),
@@ -853,9 +853,12 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
   // (Parent slots referenced by no geometry are LEGAL — they're group knobs.)
   checkSlotInheritance(doc.materials, issues)
 
-  const nodeNames = rigNodeNames(doc.rig)
+  // an imported GLB carries its own hierarchy; anything else needs a rig to be anything at all
+  if (!isImported && !doc.rig) issues.push('rig: required for non-imported entities')
+
+  const nodeNames = rigNodeNames(doc.rig ?? {})
   const dupCheck = new Set<string>()
-  walkRig(doc.rig, (name, node) => {
+  walkRig(doc.rig ?? {}, (name, node) => {
     if (dupCheck.has(name)) issues.push(`rig: duplicate node name "${name}"`)
     dupCheck.add(name)
     checkShapeParams(name, node, issues)
@@ -1014,7 +1017,7 @@ export function crossCheckEntity(doc: EntityDoc, ctx: CrossContext): string[] {
   }
   // imported GLB source must exist on disk (mesh/clip coverage is checked in the browser)
   if (doc.model?.src && !ctx.hasModel(doc.model.src)) issues.push(`model.src: model file not found "${doc.model.src}"`)
-  walkRig(doc.rig, (name, node) => {
+  walkRig(doc.rig ?? {}, (name, node) => {
     if (node.shape === 'mesh' && node.mesh && !ctx.hasModel(node.mesh))
       issues.push(`rig.${name}: mesh file not found "${node.mesh}"`)
   })

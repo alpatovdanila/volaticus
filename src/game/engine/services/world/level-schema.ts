@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { Vec3Row } from '../../../lib/type'
+import { HDRIS, hdriExists } from '../../../../lib/hdri-registry'
 
 const Vec3 = z.tuple([z.number(), z.number(), z.number()])
 const originVec3 = (): Vec3Row => [0, 0, 0]
@@ -49,6 +50,28 @@ const InventoryEntityObjectSchema = z.object({
   isPlayer: z.boolean().default(false),
 })
 
+/*
+ Image-based lighting, named with the SAME hdri ids the editor uses (src/lib/hdri-registry.ts),
+ so a look set up in the studio can be transcribed into a level verbatim.
+
+ The id is VALIDATED against the catalog rather than falling back to a default: silently
+ lighting the level with the wrong sky because of a typo is far worse than refusing to load.
+*/
+const EnvironmentSchema = z.object({
+  hdri: z.string().refine(hdriExists, (id) => ({
+    message: `unknown hdri '${id}'. Known ids: ${HDRIS.map((h) => h.id).join(', ')}`,
+  })),
+  // display transform. none = WYSIWYG (clips >1), aces/agx = filmic HDR roll-off
+  tonemap: z.enum(['none', 'aces', 'agx']).default('agx'),
+  rotation: z.number().default(0), // env yaw in DEGREES — spins the sky and its lighting together
+  intensity: z.number().default(1), // IBL strength -> scene.environmentIntensity
+  // false keeps the HDRI's lighting but leaves `background` showing, for levels that want a
+  // flat backdrop rather than a photographic sky
+  showSky: z.boolean().default(true),
+})
+
+export type EnvironmentDeclaration = z.infer<typeof EnvironmentSchema>
+
 const SceneObjectSchema = z.discriminatedUnion('type', [
   MeshObjectSchema,
   LightObjectSchema,
@@ -57,17 +80,9 @@ const SceneObjectSchema = z.discriminatedUnion('type', [
 
 export const LevelDeclarationSchema = z.object({
   scene: z.object({
-    camera: z.object({
-      initialPosition: Vec3.default(originVec3),
-      initialRotation: Vec3.default(originVec3),
-      // no aspect: it belongs to the screen, not the level — DeviceScreen owns it
-      initialOptions: z.object({
-        fov: z.number(),
-        near: z.number(),
-        far: z.number(),
-      }),
-    }),
+    // shown when there is no environment, and behind it while the HDRI streams in
     background: z.string(),
+    environment: EnvironmentSchema.optional(),
     objects: z.array(SceneObjectSchema),
   }),
 })

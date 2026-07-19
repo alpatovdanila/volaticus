@@ -3,28 +3,14 @@
   "id": "marine2",
   "name": "Marine2",
   "category": "character",
-  "notes": "Imported GLB via scripts/import-glb.ts. Parts: body, glass@exposeEmissive, hand_l, hand_r. Clips: index, Death From Front Headshot, Firing Rifle, Hit Reaction, Idle Rifle, Idle Stretch, Rifle Run, Rifle Walk, Run Backward, Sprint Forward, Strafe Run Left, Strafe Run Right. Strafe clips merge at load (sibling FBX) and drive aim-locked lateral movement.",
   "model": {
     "src": "models/marine2/index.baked.glb",
-    "emissive": { "glass": { "color": "#fba7a7", "intensity": 2.5 } }
+    "emissive": {
+      "glass": {
+        "color": "#fba7a7",
+        "intensity": 2.5
+      }
+    }
   },
-  "locomotion": { "idle": "Idle Rifle", "walk": "Rifle Walk", "run": "Rifle Run" },
-  "materials": {},
-  "rig": {},
-  "states": {
-    "initial": "index",
-    "index": { "anim": "index" },
-    "Death From Front Headshot": { "anim": "Death From Front Headshot" },
-    "Firing Rifle": { "anim": "Firing Rifle" },
-    "Hit Reaction": { "anim": "Hit Reaction" },
-    "Idle Rifle": { "anim": "Idle Rifle" },
-    "Idle Stretch": { "anim": "Idle Stretch" },
-    "Rifle Run": { "anim": "Rifle Run" },
-    "Rifle Walk": { "anim": "Rifle Walk" },
-    "Run Backward": { "anim": "Run Backward" },
-    "Sprint Forward": { "anim": "Sprint Forward" },
-    "Strafe Run Left": { "anim": "Strafe Run Left" },
-    "Strafe Run Right": { "anim": "Strafe Run Right" }
-  },
-  "events": { "Hit Reaction": { "anim": "Hit Reaction" } }
+  "materials": {}
 }

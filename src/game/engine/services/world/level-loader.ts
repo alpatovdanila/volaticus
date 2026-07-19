@@ -6,12 +6,12 @@ import {
   Position,
   Rotation,
   Velocity,
-  Animator,
+  ThreeAnimator,
   ThreeObject,
   NeedSpawn,
   writeVec3Row,
   IsPlayer,
-  InventoryEntityDeclaration,
+  InventoryEntityDoc,
 } from './ecs/components'
 import type { LevelDeclaration, MeshObject, LightObject, InventoryEntityObject } from './level-schema'
 import { KnownServices } from '../../services-registry'
@@ -22,7 +22,7 @@ export class LevelLoader {
     private inventorySystem: KnownServices['inventory'],
   ) {}
 
-  async loadAndBuild(ecsWorld: World, aspect: number) {
+  async loadAndBuild(ecsWorld: World) {
     const declaration = this.declaration
 
     const allMaterials = declaration.scene.objects.flatMap((o) => (o.type === 'mesh' ? [o.mesh.inventoryMaterial] : []))
@@ -42,27 +42,6 @@ export class LevelLoader {
       if (obj.type === 'inventoryEntity') this.ecsCommitInventoryEntity(ecsWorld, obj)
     }
 
-    return {
-      scene: this.buildScene(declaration),
-      camera: this.buildCamera(declaration, aspect),
-    }
-  }
-
-  buildCamera(declaration: LevelDeclaration, aspect: number) {
-    const {
-      initialPosition,
-      initialOptions: { fov, near, far },
-      initialRotation,
-    } = declaration.scene.camera
-
-    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
-    camera.position.set(...initialPosition)
-    camera.rotation.set(...initialRotation)
-
-    return camera
-  }
-
-  buildScene(declaration: LevelDeclaration) {
     const scene = new Scene()
     scene.background = new Color(declaration.scene.background)
     return scene
@@ -99,7 +78,7 @@ export class LevelLoader {
       // A hemisphere light has no location: three reads its sky *axis* from `position`, and
       // normalize(0,0,0) is NaN — which propagates through the lighting and blacks out every
       // lit material in the frame. So it gets no transform components on purpose, leaving
-      // three's (0,1,0) default standing. TransformSync must never write to this entity.
+      // three's (0,1,0) default standing. ThreeSceneSync must never write to this entity.
       const { skyColor, groundColor, intensity } = obj.light
       ThreeObject[eid] = new THREE.HemisphereLight(skyColor, groundColor, intensity)
       return
@@ -121,22 +100,18 @@ export class LevelLoader {
     addComponent(world, eid, Velocity)
     addComponent(world, eid, ThreeObject)
     addComponent(world, eid, NeedSpawn)
-    addComponent(world, eid, InventoryEntityDeclaration)
+    addComponent(world, eid, InventoryEntityDoc)
     if (obj.isPlayer) addComponent(world, eid, IsPlayer)
 
     ThreeObject[eid] = threeObject
-    InventoryEntityDeclaration[eid] = entityDeclaration
+    InventoryEntityDoc[eid] = entityDeclaration
     writeVec3Row(Position, eid, obj.position)
     writeVec3Row(Rotation, eid, obj.rotation)
     writeVec3Row(Velocity, eid, [0, 0, 0])
 
     if (clips.length) {
-      const mixer = new THREE.AnimationMixer(threeObject)
-      const actions: Record<string, THREE.AnimationAction> = {}
-      for (const clip of clips) actions[clip.name] = mixer.clipAction(clip)
-
-      addComponent(world, eid, Animator)
-      Animator[eid] = { mixer, actions, current: '' }
+      addComponent(world, eid, ThreeAnimator)
+      ThreeAnimator[eid] = { mixer: new THREE.AnimationMixer(threeObject), currentClip: '' }
     }
   }
 }

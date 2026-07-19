@@ -64,7 +64,7 @@ export function preloadMesh(path: string): Promise<void> {
 
 export function collectMeshPaths(doc: EntityDoc): string[] {
   const paths: string[] = []
-  walkRig(doc.rig, (_name, node) => {
+  walkRig(doc.rig ?? {}, (_name, node) => {
     if (node.shape === 'mesh' && node.mesh) paths.push(node.mesh)
   })
   return paths

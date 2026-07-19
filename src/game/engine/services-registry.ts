@@ -4,30 +4,36 @@ import type { IDeviceScreen } from './services/device-screen'
 import type { IRenderer } from './services/renderer'
 
 import type { IInventory } from './services/inventory'
-import { ISceneSpawn } from './services/scene-spawn'
+
 import { IWorld } from './services/world/world'
 import type { IInput } from './services/input'
 import type { IPlayerControl } from './services/player-control'
 import type { IMovement } from './services/movement'
-import type { ITransformSync } from './services/transform-sync'
-import type { IAnimation } from './services/animation'
+import type { IThreeSceneSync } from './services/three-scene-sync'
+import type { IAnimation } from './services/animations-driver'
+
 import type { IDebugOverlay } from './services/debug-overlay'
+import type { ICameraControl } from './services/camera-control'
+import { ILocomotionAnimation } from './services/locomotion-animation/locomotion-animation'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
   renderer: IRenderer
   world: IWorld
   inventory: IInventory
-  sceneSpawn: ISceneSpawn
   input: IInput
   playerControl: IPlayerControl
   movement: IMovement
-  transformSync: ITransformSync
+  threeSceneSync: IThreeSceneSync
   animation: IAnimation
+  locomotionAnimation: ILocomotionAnimation
   debugOverlay: IDebugOverlay
+  cameraControl: ICameraControl
 }
 
 export interface IService {
+  shouldUpdate: boolean
+
   create(): void
 
   init(registry: IServicesRegistry): void
@@ -38,6 +44,8 @@ export interface IService {
 }
 
 export class BaseService implements IService {
+  shouldUpdate = true
+
   create() {}
 
   init(registry: IServicesRegistry) {}
@@ -78,7 +86,9 @@ export class ServicesRegistry {
     render.setAnimationLoopCallback((time) => {
       timer.update(time)
       const dt = Math.min(0.05, timer.getDelta())
-      for (const service of servicesList) service.update(dt)
+      for (const service of servicesList) {
+        if (service.shouldUpdate) service.update(dt)
+      }
     })
   }
 }

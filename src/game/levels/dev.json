@@ -1,42 +1,50 @@
 {
   "scene": {
-    "camera": {
-      "initialPosition": [0, 1.4, 2.6],
-      "initialRotation": [-0.37, 0, 0],
-      "initialOptions": {
-        "fov": 48,
-        "far": 200,
-        "near": 0.1
-      }
-    },
     "background": "#DADADA",
+    "environment": {
+      "hdri": "sky_linekotsi_23",
+      "tonemap": "aces",
+      "rotation": 0,
+      "intensity": 1,
+      "showSky": true
+    },
     "objects": [
       {
         "type": "mesh",
         "mesh": {
-          "geometry": { "type": "plane", "width": 60, "height": 60, "tiles": 60 },
+          "geometry": {
+            "type": "plane",
+            "width": 60,
+            "height": 60,
+            "tiles": 60
+          },
           "inventoryMaterial": "concrete_ground_01"
         },
-        "rotation": [-1.5708, 0, 0],
-        "position": [0, 0, 0]
+        "rotation": [
+          -1.5708,
+          0,
+          0
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
       },
-
-      {
-        "type": "light",
-        "light": { "kind": "directional", "color": "#ffffff", "intensity": 2.5 },
-        "position": [4, 10, 6]
-      },
-
       {
         "type": "inventoryEntity",
         "isPlayer": true,
-        "inventoryEntity": "marine2",
-        "rotation": [0, 0, 0],
-        "position": [0, 0, 0]
-      },
-      {
-        "type": "light",
-        "light": { "kind": "hemisphere", "skyColor": "#dfeaff", "groundColor": "#20242a", "intensity": 1 }
+        "inventoryEntity": "bruno",
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "position": [
+          0,
+          0,
+          0
+        ]
       }
     ]
   }

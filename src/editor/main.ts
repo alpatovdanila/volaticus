@@ -121,7 +121,7 @@ function variantCount(doc: EntityDoc | undefined): number {
 function hasCraftGeometry(doc: EntityDoc | undefined): boolean {
   if (!doc) return false
   let found = false
-  walkRig(doc.rig, (_n, node) => {
+  walkRig(doc.rig ?? {}, (_n, node) => {
     if (node.craft !== undefined || isGeneratedShape(node.shape)) found = true
   })
   return found
@@ -141,7 +141,7 @@ const GEOM_BAKE_VERSION = 9 // v9: sidecars welded to indexed + coords quantized
 // Stamped into each geom sidecar; a mismatch marks the entity stale in the overlay —
 // regeneration stays an explicit UI action, never part of loading.
 function rigStamp(doc: EntityDoc): string {
-  const s = JSON.stringify({ v: GEOM_BAKE_VERSION, rig: doc.rig, variants: doc.variants ?? null })
+  const s = JSON.stringify({ v: GEOM_BAKE_VERSION, rig: doc.rig ?? {}, variants: doc.variants ?? null })
   let h = 5381
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0
   return (h >>> 0).toString(36) + ':' + s.length
@@ -947,7 +947,7 @@ function geomTreeRows(doc: EntityDoc): GeomNodeInfo[] {
     for (const [cn, cd] of Object.entries(node.children ?? {}))
       walk(cn, cd, depth + 1, ownCraft ?? inhCraft, ownCraft !== null ? name : craftFrom, ownSub ?? inhSub, ownSub !== null ? name : subFrom)
   }
-  for (const [name, node] of Object.entries(doc.rig)) walk(name, node, 0, null, null, null, null)
+  for (const [name, node] of Object.entries(doc.rig ?? {})) walk(name, node, 0, null, null, null, null)
   return rows
 }
 
@@ -967,7 +967,7 @@ function setNodeGenKey(name: string, key: 'craft' | 'sub', value: number | null)
   const item = inv.entities.get(sel.id)
   if (!item?.doc) return
   for (const target of [item.raw as EntityDoc, item.doc]) {
-    const node = rigNodeByName(target.rig, name)
+    const node = rigNodeByName(target.rig ?? {}, name)
     if (!node) continue
     if (value === null) delete node[key]
     else node[key] = key === 'craft' ? Math.round(value * 100) / 100 : value
@@ -1026,7 +1026,7 @@ const collapsedGroups = new Set<string>()
 // with none are pure group knobs (badge on the chip)
 function slotHasGeometry(doc: EntityDoc, slot: string): boolean {
   let found = false
-  walkRig(doc.rig, (_name, n) => {
+  walkRig(doc.rig ?? {}, (_name, n) => {
     if (!n.material) return
     const slots = typeof n.material === 'string' ? [n.material] : Object.values(n.material)
     if (slots.includes(slot)) found = true

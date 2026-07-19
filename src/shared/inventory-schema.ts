@@ -26,24 +26,6 @@ const ModelSchema = z.object({
   dismember: z.record(DismemberPartSchema).optional(),
 })
 
-/*
- `states` mixes a scalar entry with named ones: { initial: "index", index: { anim: "index" } }.
- Modelled as-is rather than reshaped — this is the baked format, the bake scripts own it.
-*/
-const StatesSchema = z.record(z.union([z.string(), z.object({ anim: z.string() })]))
-
-const EventSchema = z.object({
-  anim: z.string().optional(),
-  modifier: z.string().optional(),
-  effect: z
-    .object({
-      id: z.string(),
-      part: z.string().optional(),
-      delay: z.number().optional(),
-    })
-    .optional(),
-})
-
 const ModifierSchema = z.object({
   hide: z.array(z.string()).optional(),
 })
@@ -53,21 +35,9 @@ export const InventoryEntityDeclarationSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
   category: z.string().optional(),
-  notes: z.string().optional(),
   model: ModelSchema,
   materials: z.record(z.unknown()).optional(),
-  rig: z.record(z.unknown()).optional(),
-  states: StatesSchema.optional(),
   modifiers: z.record(ModifierSchema).optional(),
-  events: z.record(EventSchema).optional(),
-  // which clips drive locomotion; clip names match the merged FBX filenames
-  locomotion: z
-    .object({
-      idle: z.string(),
-      walk: z.string(),
-      run: z.string(),
-    })
-    .optional(),
 })
 
 export type InventoryEntityDeclaration = z.infer<typeof InventoryEntityDeclarationSchema>

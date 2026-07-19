@@ -21,7 +21,15 @@ import {
   subdivideTriangleSoup,
   type GeneratedGeometry,
 } from './procgeom'
-import { resolveMaterials, walkRig, type BooleanMod, type EntityDoc, type FaceKey, type NodeDef, type ResolvedMaterialDef } from './schema'
+import {
+  resolveMaterials,
+  walkRig,
+  type BooleanMod,
+  type EntityDoc,
+  type FaceKey,
+  type NodeDef,
+  type ResolvedMaterialDef,
+} from './schema'
 
 // generated shapes: always jittered (craft defaults to 0.5), authored UVs
 const GENERATED_SHAPES = new Set<NodeDef['shape']>(['plank', 'post', 'ring', 'arrow', 'star'])
@@ -70,10 +78,18 @@ function computeCreasedNormals(geo: THREE.BufferGeometry): void {
   // area-weighted accumulation per index (identical to computeVertexNormals)
   const acc = new Float32Array(n * 3)
   for (let t = 0; t < idx.count; t += 3) {
-    const a = idx.getX(t), b = idx.getX(t + 1), c = idx.getX(t + 2)
-    const ax = pos.getX(a), ay = pos.getY(a), az = pos.getZ(a)
-    const e1x = pos.getX(b) - ax, e1y = pos.getY(b) - ay, e1z = pos.getZ(b) - az
-    const e2x = pos.getX(c) - ax, e2y = pos.getY(c) - ay, e2z = pos.getZ(c) - az
+    const a = idx.getX(t),
+      b = idx.getX(t + 1),
+      c = idx.getX(t + 2)
+    const ax = pos.getX(a),
+      ay = pos.getY(a),
+      az = pos.getZ(a)
+    const e1x = pos.getX(b) - ax,
+      e1y = pos.getY(b) - ay,
+      e1z = pos.getZ(b) - az
+    const e2x = pos.getX(c) - ax,
+      e2y = pos.getY(c) - ay,
+      e2z = pos.getZ(c) - az
     const fx = e1y * e2z - e1z * e2y
     const fy = e1z * e2x - e1x * e2z
     const fz = e1x * e2y - e1y * e2x
@@ -97,12 +113,16 @@ function computeCreasedNormals(geo: THREE.BufferGeometry): void {
     if (list.length < 2) continue
     // unit patch normals for the crease test; sums stay area-weighted
     const unit = list.map((i) => {
-      const x = acc[i * 3], y = acc[i * 3 + 1], z = acc[i * 3 + 2]
+      const x = acc[i * 3],
+        y = acc[i * 3 + 1],
+        z = acc[i * 3 + 2]
       const inv = 1 / (Math.hypot(x, y, z) || 1)
       return [x * inv, y * inv, z * inv]
     })
     for (let a = 0; a < list.length; a++) {
-      let sx = 0, sy = 0, sz = 0
+      let sx = 0,
+        sy = 0,
+        sz = 0
       for (let b = 0; b < list.length; b++) {
         if (unit[a][0] * unit[b][0] + unit[a][1] * unit[b][1] + unit[a][2] * unit[b][2] > CREASE_DOT) {
           const j = list[b]
@@ -118,7 +138,9 @@ function computeCreasedNormals(geo: THREE.BufferGeometry): void {
     }
   }
   for (let i = 0; i < n; i++) {
-    const x = out[i * 3], y = out[i * 3 + 1], z = out[i * 3 + 2]
+    const x = out[i * 3],
+      y = out[i * 3 + 1],
+      z = out[i * 3 + 2]
     const inv = 1 / (Math.hypot(x, y, z) || 1)
     out[i * 3] = x * inv
     out[i * 3 + 1] = y * inv
@@ -141,10 +163,18 @@ function computeCreasedNormalsSoup(geo: THREE.BufferGeometry): void {
   const face = new Float32Array(triCount * 3)
   const faceUnit = new Float32Array(triCount * 3)
   for (let t = 0; t < triCount; t++) {
-    const a = t * 3, b = a + 1, c = a + 2
-    const ax = pos.getX(a), ay = pos.getY(a), az = pos.getZ(a)
-    const e1x = pos.getX(b) - ax, e1y = pos.getY(b) - ay, e1z = pos.getZ(b) - az
-    const e2x = pos.getX(c) - ax, e2y = pos.getY(c) - ay, e2z = pos.getZ(c) - az
+    const a = t * 3,
+      b = a + 1,
+      c = a + 2
+    const ax = pos.getX(a),
+      ay = pos.getY(a),
+      az = pos.getZ(a)
+    const e1x = pos.getX(b) - ax,
+      e1y = pos.getY(b) - ay,
+      e1z = pos.getZ(b) - az
+    const e2x = pos.getX(c) - ax,
+      e2y = pos.getY(c) - ay,
+      e2z = pos.getZ(c) - az
     const fx = e1y * e2z - e1z * e2y
     const fy = e1z * e2x - e1x * e2z
     const fz = e1x * e2y - e1y * e2x
@@ -168,8 +198,12 @@ function computeCreasedNormalsSoup(geo: THREE.BufferGeometry): void {
   for (const list of clusters.values()) {
     for (const i of list) {
       const f = (i / 3) | 0
-      const nx = faceUnit[f * 3], ny = faceUnit[f * 3 + 1], nz = faceUnit[f * 3 + 2]
-      let sx = 0, sy = 0, sz = 0
+      const nx = faceUnit[f * 3],
+        ny = faceUnit[f * 3 + 1],
+        nz = faceUnit[f * 3 + 2]
+      let sx = 0,
+        sy = 0,
+        sz = 0
       for (const j of list) {
         const g = ((j / 3) | 0) * 3
         if (nx * faceUnit[g] + ny * faceUnit[g + 1] + nz * faceUnit[g + 2] > CREASE_DOT) {
@@ -228,7 +262,11 @@ function subdivideGeometry(geo: THREE.BufferGeometry, levels: number): THREE.Buf
   const pos = Array.from((src.getAttribute('position') as THREE.BufferAttribute).array as Float32Array)
   const uv = Array.from((src.getAttribute('uv') as THREE.BufferAttribute).array as Float32Array)
   const vertCount = pos.length / 3
-  const groups = src.groups.length ? src.groups : geo.groups.length ? geo.groups : [{ start: 0, count: vertCount, materialIndex: 0 }]
+  const groups = src.groups.length
+    ? src.groups
+    : geo.groups.length
+      ? geo.groups
+      : [{ start: 0, count: vertCount, materialIndex: 0 }]
 
   const out = new THREE.BufferGeometry()
   const outPos: number[] = []
@@ -397,9 +435,13 @@ function meterGroupUVs(
     if (scale !== 1) for (const vi of verts) uv.setXY(vi, uv.getX(vi) * scale, uv.getY(vi) * scale)
     return
   }
-  let minU = Infinity, maxU = -Infinity, minV = Infinity, maxV = -Infinity
+  let minU = Infinity,
+    maxU = -Infinity,
+    minV = Infinity,
+    maxV = -Infinity
   for (const vi of verts) {
-    const uu = uv.getX(vi), vv = uv.getY(vi)
+    const uu = uv.getX(vi),
+      vv = uv.getY(vi)
     if (uu < minU) minU = uu
     if (uu > maxU) maxU = uu
     if (vv < minV) minV = vv
@@ -501,7 +543,15 @@ function buildHalfSphere(r: number, seg: number, segY: number, t?: number): THRE
     scaleUv(new THREE.SphereGeometry(r, seg, segY, 0, Math.PI * 2, 0, Math.PI / 2), 2 * Math.PI * r, (Math.PI / 2) * r),
   ]
   if (t !== undefined) {
-    parts.push(flipInsideOut(scaleUv(new THREE.SphereGeometry(Math.max(0.001, r - t), seg, segY, 0, Math.PI * 2, 0, Math.PI / 2), 2 * Math.PI * r, (Math.PI / 2) * r)))
+    parts.push(
+      flipInsideOut(
+        scaleUv(
+          new THREE.SphereGeometry(Math.max(0.001, r - t), seg, segY, 0, Math.PI * 2, 0, Math.PI / 2),
+          2 * Math.PI * r,
+          (Math.PI / 2) * r,
+        ),
+      ),
+    )
     parts.push(scaleUv(new THREE.RingGeometry(Math.max(0.001, r - t), r, seg).rotateX(Math.PI / 2), 2 * r, 2 * r))
   } else {
     parts.push(scaleUv(new THREE.CircleGeometry(r, seg).rotateX(Math.PI / 2), 2 * r, 2 * r))
@@ -530,7 +580,14 @@ function buildQuarterSphere(r: number, seg: number, segY: number, t?: number): T
 
 // half column around Y (arc bulges +X, cut plane x=0). thickness → curved shell with
 // straight rim strips; open drops the flat closures (end caps + chord/annuli).
-function buildHalfCylinder(rt: number, rb: number, h: number, seg: number, t?: number, open?: boolean): THREE.BufferGeometry {
+function buildHalfCylinder(
+  rt: number,
+  rb: number,
+  h: number,
+  seg: number,
+  t?: number,
+  open?: boolean,
+): THREE.BufferGeometry {
   const halfSeg = Math.max(3, Math.round(seg / 2))
   const cMax = Math.PI * Math.max(rt, rb)
   const tube = (top: number, bot: number) =>
@@ -539,7 +596,10 @@ function buildHalfCylinder(rt: number, rb: number, h: number, seg: number, t?: n
   const quad = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3, d: THREE.Vector3, w: number, v: number) => {
     // two triangles a-b-c, a-c-d with meters uv (w × v)
     const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.Float32BufferAttribute([...a.toArray(), ...b.toArray(), ...c.toArray(), ...d.toArray()], 3))
+    g.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute([...a.toArray(), ...b.toArray(), ...c.toArray(), ...d.toArray()], 3),
+    )
     g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, w, 0, w, v, 0, v], 2))
     g.setIndex([0, 1, 2, 0, 2, 3])
     g.computeVertexNormals()
@@ -554,14 +614,42 @@ function buildHalfCylinder(rt: number, rb: number, h: number, seg: number, t?: n
     parts.push(quad(V(0, -h / 2, rib), V(0, -h / 2, rb), V(0, h / 2, rt), V(0, h / 2, rit), t, h))
     parts.push(quad(V(0, -h / 2, -rb), V(0, -h / 2, -rib), V(0, h / 2, -rit), V(0, h / 2, -rt), t, h))
     if (!open) {
-      parts.push(scaleUv(new THREE.RingGeometry(rit, rt, halfSeg, 1, -Math.PI / 2, Math.PI).rotateX(-Math.PI / 2).translate(0, h / 2, 0), 2 * rt, 2 * rt))
-      parts.push(scaleUv(new THREE.RingGeometry(rib, rb, halfSeg, 1, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2).translate(0, -h / 2, 0), 2 * rb, 2 * rb))
+      parts.push(
+        scaleUv(
+          new THREE.RingGeometry(rit, rt, halfSeg, 1, -Math.PI / 2, Math.PI)
+            .rotateX(-Math.PI / 2)
+            .translate(0, h / 2, 0),
+          2 * rt,
+          2 * rt,
+        ),
+      )
+      parts.push(
+        scaleUv(
+          new THREE.RingGeometry(rib, rb, halfSeg, 1, -Math.PI / 2, Math.PI)
+            .rotateX(Math.PI / 2)
+            .translate(0, -h / 2, 0),
+          2 * rb,
+          2 * rb,
+        ),
+      )
     }
   } else if (!open) {
     // chord face (trapezoid for a frustum) facing -X + half-disk end caps
     parts.push(quad(V(0, -h / 2, -rb), V(0, -h / 2, rb), V(0, h / 2, rt), V(0, h / 2, -rt), 2 * Math.max(rt, rb), h))
-    parts.push(scaleUv(new THREE.CircleGeometry(rt, halfSeg, -Math.PI / 2, Math.PI).rotateX(-Math.PI / 2).translate(0, h / 2, 0), 2 * rt, 2 * rt))
-    parts.push(scaleUv(new THREE.CircleGeometry(rb, halfSeg, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2).translate(0, -h / 2, 0), 2 * rb, 2 * rb))
+    parts.push(
+      scaleUv(
+        new THREE.CircleGeometry(rt, halfSeg, -Math.PI / 2, Math.PI).rotateX(-Math.PI / 2).translate(0, h / 2, 0),
+        2 * rt,
+        2 * rt,
+      ),
+    )
+    parts.push(
+      scaleUv(
+        new THREE.CircleGeometry(rb, halfSeg, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2).translate(0, -h / 2, 0),
+        2 * rb,
+        2 * rb,
+      ),
+    )
   }
   return mergeParts(parts)
 }
@@ -675,7 +763,11 @@ function applyBooleans(geo: THREE.BufferGeometry, mods: BooleanMod[]): THREE.Buf
   return out
 }
 
-function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo: THREE.BufferGeometry; faces: FaceRepeat[] } {
+function buildGeometry(
+  node: NodeDef,
+  effCraft?: number,
+  effSub?: number,
+): { geo: THREE.BufferGeometry; faces: FaceRepeat[] } {
   // deforming nodes get aspect-corrected sources so triangles stay ~uniform
   const deforms = effCraft !== undefined || (effSub ?? 0) > 0
   switch (node.shape) {
@@ -775,7 +867,9 @@ function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo
       const rb = node.radiusBottom ?? node.radius!
       const h = node.height!
       // uniform-density tube: side rings + concentric-ring caps (no dense fans)
-      const geo = toBufferGeometry(generateTube(rt, rb, h, node.segments ?? 24, { open: node.open ?? false, bulge: node.bulge }))
+      const geo = toBufferGeometry(
+        generateTube(rt, rb, h, node.segments ?? 24, { open: node.open ?? false, bulge: node.bulge }),
+      )
       const r = Math.max(rt, rb)
       const c = 2 * Math.PI * r
       const sideFaces: FaceRepeat[] = [{ face: 'side', su: c, sv: h }]
@@ -787,7 +881,8 @@ function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo
       }
     }
     case 'cone': {
-      const r = node.radius!, h = node.height!
+      const r = node.radius!,
+        h = node.height!
       const geo = toBufferGeometry(generateTube(0, r, h, node.segments ?? 24, {}))
       return {
         geo,
@@ -807,7 +902,8 @@ function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo
       return { geo, faces: [{ face: 'all', su: 2 * Math.PI * r, sv: Math.PI * r }] }
     }
     case 'torus': {
-      const r = node.radius!, t = node.tube!
+      const r = node.radius!,
+        t = node.tube!
       // tube segments from the tube/ring circumference ratio — uniform quads
       const ringSegs = node.segments ?? 24
       const tubeSegs = Math.max(6, Math.min(12, Math.round((2 * Math.PI * t) / ((2 * Math.PI * r) / ringSegs))))
@@ -816,19 +912,22 @@ function buildGeometry(node: NodeDef, effCraft?: number, effSub?: number): { geo
       return { geo, faces: [{ face: 'all', su: 2 * Math.PI * r, sv: 2 * Math.PI * t }] }
     }
     case 'capsule': {
-      const r = node.radius!, h = node.height!
+      const r = node.radius!,
+        h = node.height!
       const geo = new THREE.CapsuleGeometry(r, h, 8, node.segments ?? 20)
       return { geo, faces: [{ face: 'all', su: 2 * Math.PI * r, sv: h + Math.PI * r }] }
     }
     // half/quarter primitives + arch: UVs pre-baked to METERS by the builders
     // (su/sv 1 like the generated lumber) — one 'all' group, single slot.
     case 'halfSphere': {
-      const r = node.radius!, seg = node.segments ?? 24
+      const r = node.radius!,
+        seg = node.segments ?? 24
       const geo = buildHalfSphere(r, seg, node.segmentsY ?? Math.max(2, Math.round(seg / 4)), node.thickness)
       return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
     }
     case 'quarterSphere': {
-      const r = node.radius!, seg = node.segments ?? 24
+      const r = node.radius!,
+        seg = node.segments ?? 24
       const geo = buildQuarterSphere(r, seg, node.segmentsY ?? Math.max(2, Math.round(seg / 4)), node.thickness)
       return { geo, faces: [{ face: 'all', su: 1, sv: 1 }] }
     }
@@ -972,18 +1071,28 @@ export function projectGeometryUv(
     // texture horizontally MIRRORED, and every boundary between a correct and a
     // flipped region showed as a reflect-seam on round box-projected walls.
     for (let t = 0; t + 2 < n; t += 3) {
-      const ax = pts[t * 3], ay = pts[t * 3 + 1], az = pts[t * 3 + 2]
-      const e1x = pts[(t + 1) * 3] - ax, e1y = pts[(t + 1) * 3 + 1] - ay, e1z = pts[(t + 1) * 3 + 2] - az
-      const e2x = pts[(t + 2) * 3] - ax, e2y = pts[(t + 2) * 3 + 1] - ay, e2z = pts[(t + 2) * 3 + 2] - az
+      const ax = pts[t * 3],
+        ay = pts[t * 3 + 1],
+        az = pts[t * 3 + 2]
+      const e1x = pts[(t + 1) * 3] - ax,
+        e1y = pts[(t + 1) * 3 + 1] - ay,
+        e1z = pts[(t + 1) * 3 + 2] - az
+      const e2x = pts[(t + 2) * 3] - ax,
+        e2y = pts[(t + 2) * 3 + 1] - ay,
+        e2z = pts[(t + 2) * 3 + 2] - az
       const snx = e1y * e2z - e1z * e2y
       const sny = e1z * e2x - e1x * e2z
       const snz = e1x * e2y - e1y * e2x
-      const nx = Math.abs(snx), ny = Math.abs(sny), nz = Math.abs(snz)
+      const nx = Math.abs(snx),
+        ny = Math.abs(sny),
+        nz = Math.abs(snz)
       const axis = nx >= ny && nx >= nz ? 0 : ny >= nz ? 1 : 2
       const sign = (axis === 0 ? snx : axis === 1 ? sny : snz) < 0 ? -1 : 1
       for (let k = 0; k < 3; k++) {
         const i = t + k
-        const x = pts[i * 3], y = pts[i * 3 + 1], z = pts[i * 3 + 2]
+        const x = pts[i * 3],
+          y = pts[i * 3 + 1],
+          z = pts[i * 3 + 2]
         if (axis === 0) uv.setXY(i, -sign * z, y)
         else if (axis === 1) uv.setXY(i, x, -sign * z)
         else uv.setXY(i, sign * x, y)
@@ -1037,11 +1146,7 @@ function effectiveUvProject(
   materials: Record<string, ResolvedMaterialDef>,
 ): 'box' | 'planar' | 'sphere' | undefined {
   if (node.shape === 'mesh') return undefined
-  const slots = !node.material
-    ? []
-    : typeof node.material === 'string'
-      ? [node.material]
-      : Object.values(node.material)
+  const slots = !node.material ? [] : typeof node.material === 'string' ? [node.material] : Object.values(node.material)
   for (const slot of slots) {
     if (!slot) continue
     const p = materials[slot]?.uvProject
@@ -1073,7 +1178,11 @@ function bakeUvsToMeters(geo: THREE.BufferGeometry, faces: FaceRepeat[], node: N
 // LOAD steps 2+3 (non-projected path): meter the (already-meters) baked UVs by
 // uvMode + effective uvScale, then bake the slot's uvRot. Face keys derive from
 // the shape's group order (groupFacesOf). Shape "mesh" keeps atlas UVs (uvRot only).
-function meterBakedUvs(geo: THREE.BufferGeometry, node: RenderNode, materials: Record<string, ResolvedMaterialDef>): void {
+function meterBakedUvs(
+  geo: THREE.BufferGeometry,
+  node: RenderNode,
+  materials: Record<string, ResolvedMaterialDef>,
+): void {
   const uv = geo.getAttribute('uv') as THREE.BufferAttribute
   if (!uv) return
   const retile = node.shape !== 'mesh'
@@ -1117,7 +1226,8 @@ function weldGeometryExact(geo: THREE.BufferGeometry): WeldedArrays {
   const idx = geo.getIndex()
   const corners = idx ? idx.count : pos.count
   const srcGroups = (geo.groups.length ? geo.groups : [{ start: 0, count: corners, materialIndex: 0 }]).map(
-    (g) => [g.start, g.count === Infinity ? corners - g.start : g.count, g.materialIndex ?? 0] as [number, number, number],
+    (g) =>
+      [g.start, g.count === Infinity ? corners - g.start : g.count, g.materialIndex ?? 0] as [number, number, number],
   )
   const positions: number[] = []
   const normals: number[] = []
@@ -1129,9 +1239,14 @@ function weldGeometryExact(geo: THREE.BufferGeometry): WeldedArrays {
     const seen = new Map<string, number>()
     for (let c = start; c < start + count; c++) {
       const i = idx ? idx.getX(c) : c
-      const px = quant(pos.getX(i), Q_POS), py = quant(pos.getY(i), Q_POS), pz = quant(pos.getZ(i), Q_POS)
-      const nx = nrm ? quant(nrm.getX(i), Q_NRM) : 0, ny = nrm ? quant(nrm.getY(i), Q_NRM) : 0, nz = nrm ? quant(nrm.getZ(i), Q_NRM) : 0
-      const tu = uv ? quant(uv.getX(i), Q_POS) : 0, tv = uv ? quant(uv.getY(i), Q_POS) : 0
+      const px = quant(pos.getX(i), Q_POS),
+        py = quant(pos.getY(i), Q_POS),
+        pz = quant(pos.getZ(i), Q_POS)
+      const nx = nrm ? quant(nrm.getX(i), Q_NRM) : 0,
+        ny = nrm ? quant(nrm.getY(i), Q_NRM) : 0,
+        nz = nrm ? quant(nrm.getZ(i), Q_NRM) : 0
+      const tu = uv ? quant(uv.getX(i), Q_POS) : 0,
+        tv = uv ? quant(uv.getY(i), Q_POS) : 0
       const key = `${px},${py},${pz},${nx},${ny},${nz},${tu},${tv}`
       let vi = seen.get(key)
       if (vi === undefined) {
@@ -1181,7 +1296,11 @@ function composeNodeMatrix(node: NodeDef, rot: readonly number[], parentMatrix: 
   const pos = node.pos ?? [0, 0, 0]
   const outer = new THREE.Object3D()
   outer.position.set(pos[0] + pivot[0], pos[1] + pivot[1], pos[2] + pivot[2])
-  outer.rotation.set(THREE.MathUtils.degToRad(rot[0]), THREE.MathUtils.degToRad(rot[1]), THREE.MathUtils.degToRad(rot[2]))
+  outer.rotation.set(
+    THREE.MathUtils.degToRad(rot[0]),
+    THREE.MathUtils.degToRad(rot[1]),
+    THREE.MathUtils.degToRad(rot[2]),
+  )
   if (node.scale !== undefined) {
     if (typeof node.scale === 'number') outer.scale.setScalar(node.scale)
     else outer.scale.set(node.scale[0], node.scale[1], node.scale[2])
@@ -1205,18 +1324,29 @@ function foldBackfaces(geo: THREE.BufferGeometry): THREE.BufferGeometry {
   const uv = src.getAttribute('uv') as THREE.BufferAttribute | null
   const vertCount = pos.count
   const srcGroups = src.groups.length ? src.groups : [{ start: 0, count: vertCount, materialIndex: 0 }]
-  const outPos: number[] = [], outNrm: number[] = [], outUv: number[] = []
+  const outPos: number[] = [],
+    outNrm: number[] = [],
+    outUv: number[] = []
   const out = new THREE.BufferGeometry()
   const push = (i: number, flip: boolean) => {
     outPos.push(pos.getX(i), pos.getY(i), pos.getZ(i))
-    if (nrm) outNrm.push(flip ? -nrm.getX(i) : nrm.getX(i), flip ? -nrm.getY(i) : nrm.getY(i), flip ? -nrm.getZ(i) : nrm.getZ(i))
+    if (nrm)
+      outNrm.push(
+        flip ? -nrm.getX(i) : nrm.getX(i),
+        flip ? -nrm.getY(i) : nrm.getY(i),
+        flip ? -nrm.getZ(i) : nrm.getZ(i),
+      )
     if (uv) outUv.push(uv.getX(i), uv.getY(i))
   }
   for (const g of srcGroups) {
     const count = g.count === Infinity ? vertCount - g.start : g.count
     const start = outPos.length / 3
     for (let i = g.start; i < g.start + count; i++) push(i, false) // originals
-    for (let t = g.start; t < g.start + count; t += 3) { push(t, true); push(t + 2, true); push(t + 1, true) } // reversed
+    for (let t = g.start; t < g.start + count; t += 3) {
+      push(t, true)
+      push(t + 2, true)
+      push(t + 1, true)
+    } // reversed
     out.addGroup(start, count * 2, g.materialIndex ?? 0)
   }
   out.setAttribute('position', new THREE.Float32BufferAttribute(outPos, 3))
@@ -1231,7 +1361,13 @@ function foldBackfaces(geo: THREE.BufferGeometry): THREE.BufferGeometry {
 // doubleWall fold → serialize. Returns null for a mesh whose FBX isn't preloaded.
 // effCraft/effSub are the EFFECTIVE generation options after rig-tree inheritance
 // (caller resolves own ?? nearest ancestor) — this function never reads node.craft/sub.
-function bakeNodeGeometry(node: NodeDef, matrix: THREE.Matrix4, jitterSeed: number, effCraft?: number, effSub?: number): BakedNodeGeom | null {
+function bakeNodeGeometry(
+  node: NodeDef,
+  matrix: THREE.Matrix4,
+  jitterSeed: number,
+  effCraft?: number,
+  effSub?: number,
+): BakedNodeGeom | null {
   if (node.shape === 'mesh') {
     const g = getMeshGeometry(node.mesh!)
     return g ? extractGeom(g.clone()) : null
@@ -1341,7 +1477,7 @@ const randSeed = () => (Math.random() * 0x7fffffff) | 0
 
 function shapedNodes(doc: EntityDoc): [string, NodeDef][] {
   const out: [string, NodeDef][] = []
-  walkRig(doc.rig, (name, node) => {
+  walkRig(doc.rig ?? {}, (name, node) => {
     if (node.shape) out.push([name, node])
   })
   return out
@@ -1373,7 +1509,7 @@ function rollLayout(doc: EntityDoc, rng: () => number): VariantLayout {
     parts[name] = { pos: [bp[0], bp[1], bp[2]], rot }
     for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd)
   }
-  for (const [name, node] of Object.entries(doc.rig)) walk(name, node)
+  for (const [name, node] of Object.entries(doc.rig ?? {})) walk(name, node)
   return { parts }
 }
 
@@ -1405,7 +1541,7 @@ function bakeParts(doc: EntityDoc): Record<string, BakedNodeGeom> {
     for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix, craft, sub)
   }
   const identity = new THREE.Matrix4()
-  for (const [name, node] of Object.entries(doc.rig)) walk(name, node, identity)
+  for (const [name, node] of Object.entries(doc.rig ?? {})) walk(name, node, identity)
   return parts
 }
 
@@ -1428,7 +1564,10 @@ function composeVariant(doc: EntityDoc, parts: Record<string, BakedNodeGeom>, la
       // exactly what a fresh roll would emit — so hand-authored additions (decals, new
       // parts) appear without regenerating (= reshuffling) the stored variants.
       if (node.chance !== undefined || node.rotJitter !== undefined || oneOfNames.has(name)) return null
-      p = { pos: (node.pos ?? [0, 0, 0]) as [number, number, number], rot: (node.rot ?? [0, 0, 0]) as [number, number, number] }
+      p = {
+        pos: (node.pos ?? [0, 0, 0]) as [number, number, number],
+        rot: (node.rot ?? [0, 0, 0]) as [number, number, number],
+      }
     }
     const entry: BakedNode = { pos: p.pos, rot: p.rot }
     if (node.scale !== undefined) entry.scale = node.scale
@@ -1447,7 +1586,7 @@ function composeVariant(doc: EntityDoc, parts: Record<string, BakedNodeGeom>, la
     return entry
   }
   const nodes: Record<string, BakedNode> = {}
-  for (const [name, node] of Object.entries(doc.rig)) {
+  for (const [name, node] of Object.entries(doc.rig ?? {})) {
     const b = build(name, node)
     if (b) nodes[name] = b
   }
@@ -1489,7 +1628,8 @@ export function computeSeamGroups(doc: EntityDoc): string[][] {
     return r
   }
   const union = (a: string, b: string) => {
-    const ra = find(a), rb = find(b)
+    const ra = find(a),
+      rb = find(b)
     if (ra !== rb) dsu.set(ra, rb)
   }
   const v = new THREE.Vector3()
@@ -1523,7 +1663,7 @@ export function computeSeamGroups(doc: EntityDoc): string[][] {
     }
     for (const [cn, cd] of Object.entries(node.children ?? {})) walk(cn, cd, matrix, craft, sub)
   }
-  for (const [name, node] of Object.entries(doc.rig)) walk(name, node, new THREE.Matrix4())
+  for (const [name, node] of Object.entries(doc.rig ?? {})) walk(name, node, new THREE.Matrix4())
   const groups = new Map<string, string[]>()
   for (const name of dsu.keys()) {
     const r = find(name)
@@ -1617,7 +1757,11 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
     outer.name = name
     outer.position.set(pos[0] + pivot[0], pos[1] + pivot[1], pos[2] + pivot[2])
     const rot = b.rot
-    outer.rotation.set(THREE.MathUtils.degToRad(rot[0]), THREE.MathUtils.degToRad(rot[1]), THREE.MathUtils.degToRad(rot[2]))
+    outer.rotation.set(
+      THREE.MathUtils.degToRad(rot[0]),
+      THREE.MathUtils.degToRad(rot[1]),
+      THREE.MathUtils.degToRad(rot[2]),
+    )
     if (b.scale !== undefined) {
       if (typeof b.scale === 'number') outer.scale.setScalar(b.scale)
       else outer.scale.set(b.scale[0], b.scale[1], b.scale[2])
@@ -1739,7 +1883,7 @@ export function buildGlbEntity(doc: EntityDoc, model: GltfModel): BuiltEntity {
     }
 
     meshes.push(mesh)
-    // nodes are VISIBILITY-ONLY (show/hide + picking). Animation drives the BONES via
+    // nodes are VISIBILITY-ONLY (show/hide + picking). AnimationsDriver drives the BONES via
     // the mixer — a different set of objects — never these.
     nodes.set(name, {
       outer: mesh as unknown as THREE.Group,
@@ -1751,7 +1895,18 @@ export function buildGlbEntity(doc: EntityDoc, model: GltfModel): BuiltEntity {
 
   const bounds = new THREE.Box3().setFromObject(group)
   const mixer = new THREE.AnimationMixer(group)
-  return { group, nodes, meshes, slotMaterials: new Map(), bounds, seed: 0, tintK: 1, mixer, clips: model.clips, emissiveParts }
+  return {
+    group,
+    nodes,
+    meshes,
+    slotMaterials: new Map(),
+    bounds,
+    seed: 0,
+    tintK: 1,
+    mixer,
+    clips: model.clips,
+    emissiveParts,
+  }
 }
 
 export function disposeEntity(built: BuiltEntity): void {

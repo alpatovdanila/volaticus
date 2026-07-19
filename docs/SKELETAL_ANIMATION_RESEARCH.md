@@ -4,7 +4,7 @@
 
 ## What we have today
 
-Animation = keyframe tracks on **rig-node transforms** (`pos.*`, `rot.*`, `scale`), applied to each
+AnimationsDriver = keyframe tracks on **rig-node transforms** (`pos.*`, `rot.*`, `scale`), applied to each
 node's `outer` group by the anim player. Rendering-wise, the merge keeps every **animated node** as
 its own "frame" bucket (one mesh per material under the node's `inner` group), and the SceneBatcher
 pushes each frame's world matrix into its BatchedMesh instance per frame. Everything a clip touches

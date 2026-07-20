@@ -1,7 +1,7 @@
 import { addComponent, hasComponent, query, removeComponent } from 'bitecs'
 
-import { AnimationTask, IsPlayer, LockOn, Position, Rotation, Sprintable, Velocity } from '../world/ecs/components'
-import { STANDSTILL_SPEED } from '../locomotion-animation'
+import { AnimatorState, IsPlayer, LockOn, Position, Rotation, Sprintable, Velocity } from '../world/ecs/components'
+import { STANDSTILL_SPEED } from '../animations/locomotion-animation'
 import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
 
 // speed at full stick. Sprint raises the CEILING rather than adding a tier — every speed below
@@ -51,12 +51,12 @@ const turnToward = (current: number, target: number, maxStep: number): number =>
 export class PlayerControl extends BaseService {
   private input!: KnownServices['input']
   private world!: KnownServices['world']
-  private animationClips!: KnownServices['scriptedClips']
+  private eventsAnimations!: KnownServices['eventsAnimations']
 
   init(registry: IServicesRegistry) {
     this.input = registry.get('input')
     this.world = registry.get('world')
-    this.animationClips = registry.get('scriptedClips')
+    this.eventsAnimations = registry.get('eventsAnimations')
   }
 
   setSprintable(on: boolean) {
@@ -94,10 +94,8 @@ export class PlayerControl extends BaseService {
     const ecs = this.world.ecs
 
     for (const eid of query(ecs, [IsPlayer, Velocity, Rotation, Position])) {
-      // test wiring for one-shot clips: button 1 plays a hit react over locomotion
-      if (this.input.wasPressed(1)) {
-        this.animationClips.play(eid, { clip: 'Hit Stationary', rate: 0.2, fade: 0, remaining: 0.45 })
-      }
+      // test wiring for event animations: button 1 plays the profile's hit react
+      if (this.input.wasPressed(1)) this.eventsAnimations.play(eid, 'hit')
 
       const locked = hasComponent(ecs, eid, LockOn)
       const lock = LockOn[eid]
@@ -158,12 +156,12 @@ export class PlayerControl extends BaseService {
     const eid = query(ecs, [IsPlayer, Velocity, Rotation])[0]
     if (eid === undefined) return null
 
-    const task = AnimationTask[eid]
+    const current = AnimatorState[eid]
     return {
       locked: hasComponent(ecs, eid, LockOn),
       speed: Math.hypot(Velocity.x[eid], Velocity.z[eid]),
-      clip: task?.clip ?? '-',
-      rate: task?.rate ?? 0,
+      clip: current?.clip ?? '-',
+      rate: current ? (current.rate ?? 1) : 0,
     }
   }
 }

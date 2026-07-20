@@ -3,8 +3,8 @@ import { query } from 'bitecs'
 import { IsCamera, IsPlayer, Position, Rotation } from './world/ecs/components'
 import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
 
-const HEIGHT = 12
-const PITCH = -Math.PI / 3 // 60deg down from horizontal
+const HEIGHT = 7
+const PITCH = -Math.PI / 4 // 60deg down from horizontal
 
 // at this pitch the screen centre lands HEIGHT/tan(pitch) ahead, so sitting that far back is
 // what puts the player in the middle

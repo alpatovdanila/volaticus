@@ -1,15 +1,14 @@
-import { addComponent, hasComponent, query, Not, getComponent } from 'bitecs'
+import { addComponent, hasComponent, query } from 'bitecs'
 
 import {
   AnimationProfile,
-  AnimationTask,
-  PlaysAnimationClip,
-  InventoryEntityDoc,
+  AnimatorState,
+  IsAnimatorFree,
   Rotation,
   Velocity,
-} from './world/ecs/components'
-import type { LocomotionBand, LocomotionSet } from '../../../shared/inventory-schema'
-import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
+} from '../world/ecs/components'
+import type { LocomotionBand, LocomotionSet } from '../../../../shared/inventory-schema'
+import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
 
 type LocomotionDirection = 'forward' | 'back' | 'left' | 'right'
 
@@ -64,10 +63,8 @@ const bandAt = (bands: readonly LocomotionBand[], speed: number): LocomotionBand
  than published by a controller, so anything that moves a body — input, AI, a knockback impulse
  — animates correctly without knowing this system exists.
 
- Yields while the entity has a scripted clip, and resumes the moment it does not.
-
- Playback rate is speed / the band's nativeSpeed, which is what lets one clip cover a range of
- speeds and keeps the feet on the floor when a character's speed is retuned or modified.
+ Drives only FREE animators, directly: while a task occupies the animator this system stays
+ out, and it takes the channel back the moment the animator comes free.
 */
 export class LocomotionAnimation extends BaseService {
   private world!: KnownServices['world']
@@ -79,8 +76,10 @@ export class LocomotionAnimation extends BaseService {
   update() {
     const ecs = this.world.ecs
 
-    for (const eid of query(ecs, [Velocity, Rotation, AnimationProfile, Not(PlaysAnimationClip)])) {
+    for (const eid of query(ecs, [Velocity, Rotation, AnimationProfile, IsAnimatorFree])) {
       const locomotion = AnimationProfile[eid].locomotion
+      if (!locomotion) continue // a profile without locomotion does not animate from motion
+
       const speed = Math.hypot(Velocity.x[eid], Velocity.z[eid])
 
       // below standstill the travel angle is meaningless — atan2(~0, ~0) swings around as the
@@ -91,14 +90,9 @@ export class LocomotionAnimation extends BaseService {
           : bandsFor(locomotion, wrap(Math.atan2(Velocity.x[eid], Velocity.z[eid]) - Rotation.y[eid]))
 
       const band = bandAt(bands, speed)
-
-      if (!hasComponent(ecs, eid, AnimationTask)) addComponent(ecs, eid, AnimationTask)
-      AnimationTask[eid] = {
-        clip: band.clip,
-        rate: band.nativeSpeed > 0 ? speed / band.nativeSpeed : 1,
-        fade: band.fade,
-        once: false,
-      }
+      const bandRate = band.rate !== undefined ? band.rate : 1
+      if (!hasComponent(ecs, eid, AnimatorState)) addComponent(ecs, eid, AnimatorState)
+      AnimatorState[eid] = { clip: band.clip, rate: speed > 0 ? bandRate * speed : band.rate, fade: band.fade }
     }
   }
 }

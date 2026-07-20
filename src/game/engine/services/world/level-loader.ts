@@ -13,6 +13,7 @@ import {
   IsPlayer,
   InventoryEntityDoc,
   AnimationProfile,
+  IsAnimatorFree,
 } from './ecs/components'
 import type { LevelDeclaration, MeshObject, LightObject, InventoryEntityObject } from './level-schema'
 import { KnownServices } from '../../services-registry'
@@ -109,8 +110,9 @@ export class LevelLoader {
     if (entityDeclaration.animationProfile) {
       addComponent(world, eid, AnimationProfile)
       addComponent(world, eid, ThreeAnimator)
+      addComponent(world, eid, IsAnimatorFree) // an animator is born unoccupied
       AnimationProfile[eid] = entityDeclaration.animationProfile
-      ThreeAnimator[eid] = { mixer: new THREE.AnimationMixer(threeObject), currentClip: '' }
+      ThreeAnimator[eid] = { mixer: new THREE.AnimationMixer(threeObject), currentClip: '', restartPending: false }
     }
 
     ThreeObject[eid] = threeObject

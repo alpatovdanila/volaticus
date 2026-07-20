@@ -14,37 +14,21 @@
         "mesh": {
           "geometry": {
             "type": "plane",
-            "width": 60,
-            "height": 60,
-            "tiles": 60
+            "width": 10000,
+            "height": 10000,
+            "tiles": 10000
           },
           "inventoryMaterial": "concrete_ground_01"
         },
-        "rotation": [
-          -1.5708,
-          0,
-          0
-        ],
-        "position": [
-          0,
-          0,
-          0
-        ]
+        "rotation": [-1.5708, 0, 0],
+        "position": [0, 0, 0]
       },
       {
         "type": "inventoryEntity",
         "isPlayer": true,
         "inventoryEntity": "bruno",
-        "rotation": [
-          0,
-          0,
-          0
-        ],
-        "position": [
-          0,
-          0,
-          0
-        ]
+        "rotation": [0, 0, 0],
+        "position": [0, 0, 0]
       }
     ]
   }

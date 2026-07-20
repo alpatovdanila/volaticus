@@ -10,12 +10,12 @@ import type { IInput } from './services/input'
 import type { IPlayerControl } from './services/player/player-control'
 import type { IMovement } from './services/movement'
 import type { IThreeSceneSync } from './services/three-scene-sync'
-import type { IAnimation } from './services/animations-driver'
+import type { IAnimation } from './services/animations/animations-driver'
 
 import type { IDebugOverlay } from './services/debug-overlay'
 import type { ICameraControl } from './services/camera-control'
-import { ILocomotionAnimation } from './services/locomotion-animation'
-import type { IAnimationClips } from './services/animation-clips'
+import { ILocomotionAnimation } from './services/animations/locomotion-animation'
+import type { IEventsAnimations } from './services/animations/events-animations'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
@@ -28,7 +28,7 @@ export interface KnownServices {
   threeSceneSync: IThreeSceneSync
   animation: IAnimation
   locomotionAnimation: ILocomotionAnimation
-  scriptedClips: IAnimationClips
+  eventsAnimations: IEventsAnimations
   debugOverlay: IDebugOverlay
   cameraControl: ICameraControl
 }

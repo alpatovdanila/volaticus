@@ -1,4 +1,4 @@
-import { addComponent, addEntity, createWorld as createEcsWorld } from 'bitecs'
+import { addComponent, addEntity, createWorld as createEcsWorld, observe, onAdd, onRemove, onSet } from 'bitecs'
 import { PerspectiveCamera, Scene } from 'three'
 import { createEvent } from '../../../../lib/atomic-event'
 import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
@@ -6,7 +6,7 @@ import { BaseService, IServicesRegistry, KnownServices } from '../../services-re
 import { LevelDeclaration } from './level-schema'
 import { LevelLoader } from './level-loader'
 import { EnvironmentLoader } from './environment-loader'
-import { IsCamera, Position, Rotation, ThreeObject, writeVec3Row } from './ecs/components'
+import { AnimatorTask, IsAnimatorFree, IsCamera, Position, Rotation, ThreeObject, writeVec3Row } from './ecs/components'
 
 const CAMERA_FOV = 48
 const CAMERA_NEAR = 0.1
@@ -39,6 +39,9 @@ export class World extends BaseService {
       camera.aspect = aspect
       camera.updateProjectionMatrix()
     })
+
+    observe(this.ecs, onAdd(IsAnimatorFree), () => console.log('free'))
+    observe(this.ecs, onRemove(IsAnimatorFree), () => console.log('not free'))
   }
 
   async loadLevel(levelDeclaration: LevelDeclaration) {

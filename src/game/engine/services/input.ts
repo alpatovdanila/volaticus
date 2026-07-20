@@ -37,6 +37,7 @@ export class Input extends BaseService {
      Dropping input while unfocused is also just what a game should do: a held key or stick must
      not keep driving the character once the player has switched away.
     */
+
     if (!document.hasFocus()) return this.clear()
 
     const pad = this.pollPad()

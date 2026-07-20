@@ -35,15 +35,18 @@ const ModifierSchema = z.object({
 })
 
 /*
- The animation profile. Types are declared by hand (readonly: a profile is shared by reference
- by every entity of its archetype) and the schemas are ANNOTATED with them, so a schema that
- drifts from its type refuses to compile.
+ The animation profile: every clip an entity can play, with its tuning. Tuning lives HERE and
+ only here; systems reference entries, they do not copy numbers out.
+
+ Types are declared by hand (readonly: a profile is shared by reference by every entity of its
+ archetype) and the schemas are ANNOTATED with them, so a schema that drifts from its type
+ refuses to compile. Every block is optional — a profile states what its rig actually has.
 */
 export type LocomotionBand = {
   readonly above?: number // band lower bound, m/s; the first band omits it
   readonly clip: string
-  readonly nativeSpeed: number // ground speed the clip depicts at rate 1; 0 = depicts no travel
-  readonly fade: number
+  readonly rate?: number // playback rate; absent plays as authored (1)
+  readonly fade?: number // crossfade in, seconds; absent cuts
 }
 
 export type LocomotionSet = {
@@ -53,25 +56,39 @@ export type LocomotionSet = {
   readonly right?: readonly LocomotionBand[]
 }
 
-export type ClipPlay = {
+// a clip played at someone's command rather than resolved from movement
+export type EventClip = {
   readonly clip: string
-  readonly rate: number
-  readonly fade: number
+  readonly rate?: number // playback rate; absent plays as authored (1)
+  readonly fade?: number // crossfade in, seconds; absent cuts
+  readonly repeats?: number // how many passes; absent plays one
+}
+
+export type LifecycleSet = {
+  readonly rise?: EventClip
+  readonly death?: EventClip
+}
+
+export type ActionsSet = {
+  readonly hit?: EventClip
+  readonly sit?: EventClip
+  readonly jump?: EventClip
 }
 
 export type AnimationProfileState = {
-  readonly locomotion: LocomotionSet
-  readonly lifecycle?: {
-    readonly rise?: ClipPlay
-    readonly death?: ClipPlay
-  }
+  readonly locomotion?: LocomotionSet
+  readonly lifecycle?: LifecycleSet
+  readonly actions?: ActionsSet
 }
+
+// every animation an event can name; whether a PARTICULAR profile has it is that profile's business
+export type AnimationEventName = keyof LifecycleSet | keyof ActionsSet
 
 const LocomotionBandSchema: z.ZodType<LocomotionBand> = z.object({
   above: z.number().nonnegative().optional(),
   clip: z.string().min(1),
-  nativeSpeed: z.number().nonnegative(),
-  fade: z.number().nonnegative(),
+  rate: z.number().positive().optional(),
+  fade: z.number().nonnegative().optional(),
 })
 
 const LocomotionSetSchema: z.ZodType<LocomotionSet> = z.object({
@@ -81,18 +98,26 @@ const LocomotionSetSchema: z.ZodType<LocomotionSet> = z.object({
   right: z.array(LocomotionBandSchema).min(1).optional(),
 })
 
-const ClipPlaySchema: z.ZodType<ClipPlay> = z.object({
+const EventClipSchema: z.ZodType<EventClip> = z.object({
   clip: z.string().min(1),
-  rate: z.number().positive(),
-  fade: z.number().nonnegative(),
+  rate: z.number().positive().optional(),
+  fade: z.number().nonnegative().optional(),
+  repeats: z.number().int().positive().optional(),
 })
 
 const AnimationProfileSchema: z.ZodType<AnimationProfileState> = z.object({
-  locomotion: LocomotionSetSchema,
+  locomotion: LocomotionSetSchema.optional(),
   lifecycle: z
     .object({
-      rise: ClipPlaySchema.optional(),
-      death: ClipPlaySchema.optional(),
+      rise: EventClipSchema.optional(),
+      death: EventClipSchema.optional(),
+    })
+    .optional(),
+  actions: z
+    .object({
+      hit: EventClipSchema.optional(),
+      sit: EventClipSchema.optional(),
+      jump: EventClipSchema.optional(),
     })
     .optional(),
 })

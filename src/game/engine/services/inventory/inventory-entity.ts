@@ -9,9 +9,11 @@ import { loadGltfModel } from '../../../../inventory/gltf'
 
 // every clip name the profile refers to, locomotion bands and lifecycle stagings alike
 const profileClips = (profile: AnimationProfileState): string[] => {
-  const bands = Object.values(profile.locomotion).flatMap((direction) => (direction ?? []) as readonly LocomotionBand[])
-  const lifecycle = Object.values(profile.lifecycle ?? {}).flatMap((play) => (play ? [play.clip] : []))
-  return [...bands.map((b) => b.clip), ...lifecycle]
+  const bands = Object.values(profile.locomotion ?? {}).flatMap(
+    (direction) => (direction ?? []) as readonly LocomotionBand[],
+  )
+  const events = [...Object.values(profile.lifecycle ?? {}), ...Object.values(profile.actions ?? {})]
+  return [...bands.map((b) => b.clip), ...events.flatMap((play) => (play ? [play.clip] : []))]
 }
 
 /*

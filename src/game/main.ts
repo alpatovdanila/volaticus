@@ -10,13 +10,13 @@ import { parseLevelDeclaration } from './engine/services/world/level-schema'
 import { Input } from './engine/services/input'
 import { PlayerControl } from './engine/services/player/player-control'
 import { Movement } from './engine/services/movement'
-import { AnimationsDriver } from './engine/services/animations-driver'
+import { AnimationsDriver } from './engine/services/animations/animations-driver'
 
 import { ThreeSceneSync } from './engine/services/three-scene-sync'
 import { DebugOverlay } from './engine/services/debug-overlay'
 import { CameraControl } from './engine/services/camera-control'
-import { LocomotionAnimation } from './engine/services/locomotion-animation'
-import { AnimationClips } from './engine/services/animation-clips'
+import { LocomotionAnimation } from './engine/services/animations/locomotion-animation'
+import { EventsAnimations } from './engine/services/animations/events-animations'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
 
@@ -29,7 +29,7 @@ const world = engine.register('world', new World())
 engine.register('playerControl', new PlayerControl())
 engine.register('movement', new Movement())
 engine.register('locomotionAnimation', new LocomotionAnimation())
-engine.register('scriptedClips', new AnimationClips())
+engine.register('eventsAnimations', new EventsAnimations())
 engine.register('animation', new AnimationsDriver())
 engine.register('cameraControl', new CameraControl())
 engine.register('threeSceneSync', new ThreeSceneSync())

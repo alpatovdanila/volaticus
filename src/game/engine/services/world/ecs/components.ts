@@ -23,6 +23,8 @@ export type ThreeAnimatorState = {
   restartPending: boolean
 }
 
+export const LastFinishedAnimationTaskId: number[] = []
+
 export const ThreeAnimator: ThreeAnimatorState[] = []
 
 export const NeedSpawn = {}
@@ -36,13 +38,27 @@ export const IsCamera = {}
  to the clip. `repeats` bounds the playback: in AnimatorState absence means loop forever, in
  AnimatorTask absence means one pass — a task must end for the animator to come free.
 */
-export type AnimatorClip = { clip: string; rate?: number; fade?: number; repeats?: number }
+export type TAnimatorState = {
+  clip: string
+  rate?: number
+  fade?: number
+  repeats?: number
+  taskId?: number
+}
 
 // what the animator is playing right now — open state, writable by anyone at any time
-export const AnimatorState: AnimatorClip[] = []
+export const AnimatorState: TAnimatorState[] = []
+
+export type AnimatorTaskState = {
+  clip: string
+  rate?: number
+  fade?: number
+  repeats?: number
+  taskId: number
+}
 
 // a commanded playback, waiting for the animator to take it
-export const AnimatorTask: AnimatorClip[] = []
+export const AnimatorTask: AnimatorTaskState[] = []
 
 /**
  * the flag that indicates if any animation task is being played now. When tag is set, its is generally not recommended to write

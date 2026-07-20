@@ -1,7 +1,13 @@
 import { LoopOnce, LoopRepeat } from 'three'
 import { addComponent, hasComponent, observe, onAdd, query, removeComponent } from 'bitecs'
 
-import { AnimatorState, AnimatorTask, IsAnimatorFree, ThreeAnimator } from '../world/ecs/components'
+import {
+  AnimatorState,
+  AnimatorTask,
+  IsAnimatorFree,
+  LastFinishedAnimationTaskId,
+  ThreeAnimator,
+} from '../world/ecs/components'
 import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
 
 /*
@@ -30,9 +36,6 @@ export class AnimationsDriver extends BaseService {
       if (!hasComponent(ecs, eid, AnimatorState)) addComponent(ecs, eid, AnimatorState)
       AnimatorState[eid] = { ...task, repeats: task.repeats ?? 1 }
 
-      // a command always starts its clip from the beginning, even the one already playing.
-      // currentClip stays truthful — it is what the play pass crossfades AWAY from, and
-      // forgetting it here would leave the outgoing clip running at full weight forever.
       ThreeAnimator[eid].restartPending = true
 
       removeComponent(ecs, eid, AnimatorTask)
@@ -76,7 +79,15 @@ export class AnimationsDriver extends BaseService {
       targetAction.setEffectiveTimeScale(targetRate)
       animator.mixer.update(dt)
 
-      if (targetAction.paused) addComponent(ecs, eid, IsAnimatorFree)
+      if (targetAction.paused && !hasComponent(ecs, eid, IsAnimatorFree)) {
+        if (targetAnimatorState.taskId !== undefined) {
+          if (!hasComponent(ecs, eid, LastFinishedAnimationTaskId)) {
+            addComponent(ecs, eid, LastFinishedAnimationTaskId)
+          }
+          LastFinishedAnimationTaskId[eid] = targetAnimatorState.taskId
+        }
+        addComponent(ecs, eid, IsAnimatorFree)
+      }
     }
   }
 }

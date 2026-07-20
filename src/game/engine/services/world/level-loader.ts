@@ -12,11 +12,10 @@ import {
   writeVec3Row,
   IsPlayer,
   InventoryEntityDoc,
-  LocomotionAnimationProfile,
+  AnimationProfile,
 } from './ecs/components'
 import type { LevelDeclaration, MeshObject, LightObject, InventoryEntityObject } from './level-schema'
 import { KnownServices } from '../../services-registry'
-import { characterFor, warnMissingClips } from '../../../characters'
 
 export class LevelLoader {
   constructor(
@@ -95,7 +94,8 @@ export class LevelLoader {
   }
 
   ecsCommitInventoryEntity(world: World, obj: InventoryEntityObject) {
-    const { threeObject, entityDeclaration, clips } = this.inventorySystem.get('entity', obj.inventoryEntity)
+    const { threeObject, entityDeclaration } = this.inventorySystem.get('entity', obj.inventoryEntity)
+
     const eid = addEntity(world)
     addComponent(world, eid, Position)
     addComponent(world, eid, Rotation)
@@ -103,25 +103,21 @@ export class LevelLoader {
     addComponent(world, eid, ThreeObject)
     addComponent(world, eid, NeedSpawn)
     addComponent(world, eid, InventoryEntityDoc)
+
     if (obj.isPlayer) addComponent(world, eid, IsPlayer)
 
-    // entities absent from the character table are props, not bodies — they simply get none of this
-    const character = characterFor(obj.inventoryEntity)
-    if (character) {
-      addComponent(world, eid, LocomotionAnimationProfile)
-      LocomotionAnimationProfile[eid] = character.locomotion
-      warnMissingClips(obj.inventoryEntity, character.locomotion, clips)
+    if (entityDeclaration.animationProfile) {
+      addComponent(world, eid, AnimationProfile)
+      addComponent(world, eid, ThreeAnimator)
+      AnimationProfile[eid] = entityDeclaration.animationProfile
+      ThreeAnimator[eid] = { mixer: new THREE.AnimationMixer(threeObject), currentClip: '' }
     }
 
     ThreeObject[eid] = threeObject
     InventoryEntityDoc[eid] = entityDeclaration
+
     writeVec3Row(Position, eid, obj.position)
     writeVec3Row(Rotation, eid, obj.rotation)
     writeVec3Row(Velocity, eid, [0, 0, 0])
-
-    if (clips.length) {
-      addComponent(world, eid, ThreeAnimator)
-      ThreeAnimator[eid] = { mixer: new THREE.AnimationMixer(threeObject), currentClip: '' }
-    }
   }
 }

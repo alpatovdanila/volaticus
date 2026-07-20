@@ -11,7 +11,6 @@ interface InventoryTypes {
   entity: {
     entityDeclaration: InventoryEntityDeclaration
     threeObject: THREE.Object3D
-    clips: THREE.AnimationClip[]
   }
 }
 

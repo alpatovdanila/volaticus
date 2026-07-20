@@ -43,9 +43,38 @@ falls back to `performance.now()`, which is a second, slightly different clock.
 **A comment explains the code as it is now.** It is read by someone who has no idea what the
 code used to look like, and does not care. Write for that reader.
 
-- **Never write change history.** No "now a tag", "still hardcoded", "pre-existing", "moved
-  from X", "was Y before". Git holds that. A comment that only makes sense if you watched the
-  diff is noise the day after it is written.
+- **Time-independent — no past, no future.** No "now a tag", "still hardcoded", "moved from X",
+  "was Y before" — git holds that. And no "yet", "for now", "will be", "for when that day
+  comes" — plans are not facts about this code. A comment that dates itself is wrong the day
+  after it is written; history in a comment is justified almost never.
+
+  ```
+  Bad:  No `lifecycle` block yet: the player is level-placed and nothing stages a player
+        death. The model ships Death/Hit clips for when that day comes.
+  ```
+
+- **Stay inside the module.** A comment does not reference another system's implementation
+  details or absent features — the module's context stays pure and tightly composed. If the
+  sentence is about how some other file behaves, it belongs in that file or nowhere.
+
+  ```
+  Bad:  Aim-locked movement is not a separate mode here
+  ```
+
+- **Components carry no service knowledge.** A component is abstract and generic (or private,
+  in which case nobody reads it anyway); its comment cannot encode some service's
+  implementation prejudice — which system gates on it, who counts it down, what the writer's
+  timers do. That is the consumer's story, told at the consumer.
+
+  ```
+  Bad:  A clip that OWNS the animation channel while present — LocomotionAnimation is gated
+        on its absence. ... ScriptedClips counts it down and removes it, so callers fire
+        and forget; locomotion resumes by itself.
+  ```
+
+- **Say what it is, not how it behaves.** Identity and purpose, in the abstract — not runtime
+  choreography. Meta-information — intersystem quirks, game-wide mechanics — goes in a
+  separate overview document, not in a module's header.
 - **Keep them short.** One line where one line does. If a comment needs a paragraph to justify
   the code, the code usually wants fixing instead.
 - **Explain *why*, not *what*.** The code already says what it does.

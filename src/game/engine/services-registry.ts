@@ -15,6 +15,7 @@ import type { IAnimation } from './services/animations-driver'
 import type { IDebugOverlay } from './services/debug-overlay'
 import type { ICameraControl } from './services/camera-control'
 import { ILocomotionAnimation } from './services/locomotion-animation'
+import type { IAnimationClips } from './services/animation-clips'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
@@ -27,6 +28,7 @@ export interface KnownServices {
   threeSceneSync: IThreeSceneSync
   animation: IAnimation
   locomotionAnimation: ILocomotionAnimation
+  scriptedClips: IAnimationClips
   debugOverlay: IDebugOverlay
   cameraControl: ICameraControl
 }
@@ -71,14 +73,12 @@ export class ServicesRegistry {
 
   async start() {
     const servicesList = [...this.services.values()]
-    console.log(`[engine] Registered services`, servicesList)
 
     for (const service of servicesList) service.create()
     for (const service of servicesList) service.init(this)
     await Promise.all(servicesList.map((s) => s.start()))
 
     const render = this.get('renderer')
-    if (!render) throw new Error('Renderer service is not optional, please, register it')
 
     const timer = new Timer()
     timer.connect(document)

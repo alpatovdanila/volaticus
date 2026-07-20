@@ -1,14 +1,6 @@
 import { addComponent, hasComponent, query, removeComponent } from 'bitecs'
 
-import {
-  AnimationTask,
-  IsPlayer,
-  LockOn,
-  Position,
-  Rotation,
-  Sprintable,
-  Velocity,
-} from '../world/ecs/components'
+import { AnimationTask, IsPlayer, LockOn, Position, Rotation, Sprintable, Velocity } from '../world/ecs/components'
 import { STANDSTILL_SPEED } from '../locomotion-animation'
 import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
 
@@ -59,10 +51,12 @@ const turnToward = (current: number, target: number, maxStep: number): number =>
 export class PlayerControl extends BaseService {
   private input!: KnownServices['input']
   private world!: KnownServices['world']
+  private animationClips!: KnownServices['scriptedClips']
 
   init(registry: IServicesRegistry) {
     this.input = registry.get('input')
     this.world = registry.get('world')
+    this.animationClips = registry.get('scriptedClips')
   }
 
   setSprintable(on: boolean) {
@@ -100,6 +94,11 @@ export class PlayerControl extends BaseService {
     const ecs = this.world.ecs
 
     for (const eid of query(ecs, [IsPlayer, Velocity, Rotation, Position])) {
+      // test wiring for one-shot clips: button 1 plays a hit react over locomotion
+      if (this.input.wasPressed(1)) {
+        this.animationClips.play(eid, { clip: 'Hit Stationary', rate: 0.2, fade: 0, remaining: 0.45 })
+      }
+
       const locked = hasComponent(ecs, eid, LockOn)
       const lock = LockOn[eid]
 

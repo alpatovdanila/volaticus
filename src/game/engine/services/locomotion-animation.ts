@@ -1,15 +1,17 @@
-import { addComponent, hasComponent, query } from 'bitecs'
+import { addComponent, hasComponent, query, Not, getComponent } from 'bitecs'
 
 import {
+  AnimationProfile,
   AnimationTask,
-  LocomotionAnimationProfile,
+  PlaysAnimationClip,
+  InventoryEntityDoc,
   Rotation,
   Velocity,
-  type LocomotionAnimationProfileState,
-  type LocomotionBand,
-  type LocomotionDirection,
 } from './world/ecs/components'
+import type { LocomotionBand, LocomotionSet } from '../../../shared/inventory-schema'
 import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
+
+type LocomotionDirection = 'forward' | 'back' | 'left' | 'right'
 
 /*
  The speed below which a body counts as standing — this system's definition, exported because
@@ -34,12 +36,12 @@ const wrap = (angle: number): number => Math.atan2(Math.sin(angle), Math.cos(ang
 
 // nearest DECLARED direction: the bucket boundaries are a consequence of which clips the rig
 // has, so a one-clip rig answers `forward` for everything and a four-clip rig quarter-splits
-const bandsFor = (profile: LocomotionAnimationProfileState, heading: number): readonly LocomotionBand[] => {
-  let best = profile.forward
+const bandsFor = (locomotion: LocomotionSet, heading: number): readonly LocomotionBand[] => {
+  let best = locomotion.forward
   let bestDistance = Math.abs(wrap(heading))
 
   for (const direction of OFF_AXIS) {
-    const bands = profile[direction]
+    const bands = locomotion[direction]
     if (!bands) continue
     const distance = Math.abs(wrap(heading - DIRECTION_ANGLE[direction]))
     if (distance < bestDistance) {
@@ -62,6 +64,8 @@ const bandAt = (bands: readonly LocomotionBand[], speed: number): LocomotionBand
  than published by a controller, so anything that moves a body — input, AI, a knockback impulse
  — animates correctly without knowing this system exists.
 
+ Yields while the entity has a scripted clip, and resumes the moment it does not.
+
  Playback rate is speed / the band's nativeSpeed, which is what lets one clip cover a range of
  speeds and keeps the feet on the floor when a character's speed is retuned or modified.
 */
@@ -75,16 +79,16 @@ export class LocomotionAnimation extends BaseService {
   update() {
     const ecs = this.world.ecs
 
-    for (const eid of query(ecs, [Velocity, Rotation, LocomotionAnimationProfile])) {
-      const profile = LocomotionAnimationProfile[eid]
+    for (const eid of query(ecs, [Velocity, Rotation, AnimationProfile, Not(PlaysAnimationClip)])) {
+      const locomotion = AnimationProfile[eid].locomotion
       const speed = Math.hypot(Velocity.x[eid], Velocity.z[eid])
 
       // below standstill the travel angle is meaningless — atan2(~0, ~0) swings around as the
       // body turns — so standing is the forward set's lowest band, no direction resolution
       const bands =
         speed < STANDSTILL_SPEED
-          ? profile.forward
-          : bandsFor(profile, wrap(Math.atan2(Velocity.x[eid], Velocity.z[eid]) - Rotation.y[eid]))
+          ? locomotion.forward
+          : bandsFor(locomotion, wrap(Math.atan2(Velocity.x[eid], Velocity.z[eid]) - Rotation.y[eid]))
 
       const band = bandAt(bands, speed)
 
@@ -93,6 +97,7 @@ export class LocomotionAnimation extends BaseService {
         clip: band.clip,
         rate: band.nativeSpeed > 0 ? speed / band.nativeSpeed : 1,
         fade: band.fade,
+        once: false,
       }
     }
   }

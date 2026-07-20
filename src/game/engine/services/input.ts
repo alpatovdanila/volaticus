@@ -23,6 +23,10 @@ export class Input extends BaseService {
   private pad: Gamepad | null = null
   private activeIndex: number | null = null
 
+  // this frame's and last frame's held buttons — the pair is what makes edges detectable
+  private pressedNow = new Set<number>()
+  private pressedPrev = new Set<number>()
+
   update() {
     /*
      An unfocused page does not get fresh gamepad state — getGamepads() keeps handing back the
@@ -38,10 +42,14 @@ export class Input extends BaseService {
     const pad = this.pollPad()
     if (!pad) return this.clear()
 
+    // buttons are tracked BEFORE the stick deadzone gate — a press with the stick at rest
+    // is the normal case, not an edge case
+    this.trackButtons(pad)
+
     const x = pad.axes[0] ?? 0
     const y = pad.axes[1] ?? 0
     const magnitude = Math.hypot(x, y)
-    if (magnitude < DEADZONE) return this.clear()
+    if (magnitude < DEADZONE) return this.clearMove()
 
     /*
      Rescale past the deadzone so the first responsive input is 0, not a jump to 0.15, and CLAMP:
@@ -94,13 +102,37 @@ export class Input extends BaseService {
     return chosen
   }
 
-  private clear() {
+  // swap-and-refill: last frame's set becomes the comparison base, no per-frame allocation
+  private trackButtons(pad: Gamepad) {
+    const previous = this.pressedPrev
+    this.pressedPrev = this.pressedNow
+    previous.clear()
+    this.pressedNow = previous
+    for (let i = 0; i < pad.buttons.length; i++) if (pad.buttons[i].pressed) this.pressedNow.add(i)
+  }
+
+  private clearMove() {
     this.moveX = 0
     this.moveZ = 0
   }
 
+  private clear() {
+    this.clearMove()
+    this.pressedNow.clear()
+    this.pressedPrev.clear()
+  }
+
   getMove() {
     return { x: this.moveX, z: this.moveZ }
+  }
+
+  // true only on the frame the button went down
+  wasPressed(button: number): boolean {
+    return this.pressedNow.has(button) && !this.pressedPrev.has(button)
+  }
+
+  isDown(button: number): boolean {
+    return this.pressedNow.has(button)
   }
 
   getActivePad(): Gamepad | null {

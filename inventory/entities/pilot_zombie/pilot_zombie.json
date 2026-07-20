@@ -18,5 +18,17 @@
       }
     }
   },
-  "materials": {}
+  "materials": {},
+  "animationProfile": {
+    "locomotion": {
+      "forward": [
+        { "clip": "Zombie Idle", "nativeSpeed": 0, "fade": 0.3 },
+        { "above": 0.05, "clip": "Zombie Walk", "nativeSpeed": 1.0, "fade": 0.3 }
+      ]
+    },
+    "lifecycle": {
+      "rise": { "clip": "Zombie Stand Up", "rate": 1, "fade": 0.1 },
+      "death": { "clip": "Zombie Dying", "rate": 1, "fade": 0.15 }
+    }
+  }
 }

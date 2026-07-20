@@ -1,3 +1,4 @@
+import { LoopOnce, LoopRepeat } from 'three'
 import { query } from 'bitecs'
 
 import { AnimationTask, ThreeAnimator } from './world/ecs/components'
@@ -6,6 +7,7 @@ import { BaseService, IServicesRegistry, KnownServices } from '../services-regis
 /*
  Executes AnimationTask on ThreeAnimator: crossfades to the named clip whenever it changes, over the blend
  duration the task asks for, applies the requested playback rate, and advances the mixer.
+ `once` plays a single pass and holds its last frame.
 */
 export class AnimationsDriver extends BaseService {
   private world!: KnownServices['world']
@@ -28,6 +30,17 @@ export class AnimationsDriver extends BaseService {
 
       if (animator.currentClip !== task.clip) {
         const previous = animator.mixer.clipAction(animator.currentClip)
+
+        // loop mode persists on three's cached per-clip action, so it is set BOTH ways on
+        // every switch — a clip once played as a one-shot would otherwise stay one-shot forever
+        if (task.once) {
+          action.setLoop(LoopOnce, 1)
+          action.clampWhenFinished = true
+        } else {
+          action.setLoop(LoopRepeat, Infinity)
+          action.clampWhenFinished = false
+        }
+
         action.reset().play()
         if (previous) action.crossFadeFrom(previous, task.fade, false)
         animator.currentClip = task.clip

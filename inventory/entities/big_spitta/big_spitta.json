@@ -5,7 +5,8 @@
   "category": "enemy",
   "notes": "Imported GLB via scripts/import-glb.ts. Parts: tripo_node_202deb1b. Clips: index, Hit.",
   "model": {
-    "src": "models/big-spitta/index.glb"
+    "src": "models/big-spitta/index.glb",
+    "scale": 1
   },
   "materials": {},
   "rig": {},

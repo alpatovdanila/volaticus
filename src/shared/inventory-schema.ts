@@ -22,6 +22,10 @@ const DismemberPartSchema = z.object({
 const ModelSchema = z.object({
   src: z.string(), // relative to resources/, e.g. "models/marine2/index.glb"
   anims: z.array(z.string()).optional(),
+  // uniform scale applied to the instance root at build time. Character sizing is per-model
+  // tuning (a Tripo export's absolute size is arbitrary), so it lives in the doc, not in code.
+  // Required: every model states its size, 1 included — no absent-means-something convention.
+  scale: z.number().positive(),
   emissive: z.record(EmissiveSchema).optional(),
   dismember: z.record(DismemberPartSchema).optional(),
 })

@@ -249,6 +249,9 @@ function buildEntityDoc(
 ): any {
   const model: any = { src: srcPath }
 
+  // scale is required doc data the script cannot derive: carry the hand-tuned value, seed 1
+  model.scale = previous?.model?.scale ?? 1
+
   // emissive: default for a newly seen part, but never clobber a tuned value
   const emissiveParts = parts.filter((p) => p.emissive)
   if (emissiveParts.length) {

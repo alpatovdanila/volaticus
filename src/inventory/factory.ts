@@ -1855,6 +1855,10 @@ export function buildGlbEntity(doc: EntityDoc, model: GltfModel): BuiltEntity {
   group.name = doc.id
   group.add(model.scene)
 
+  // doc-authored uniform size — applied before the bounds below so camera-fit sees the real
+  // footprint. Same field the game applies at its own build site (inventory-entity.ts).
+  if (doc.model) model.scene.scale.setScalar(doc.model.scale)
+
   const nodes = new Map<string, BuiltNode>()
   const meshes: THREE.Mesh[] = []
   const emissiveParts = new Map<string, THREE.MeshStandardMaterial>()

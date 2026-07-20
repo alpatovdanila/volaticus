@@ -9,13 +9,16 @@
 */
 import type { LocomotionAnimationProfileState } from '../engine/services/world/ecs/components'
 import { BRUNO_LOCOMOTION } from './bruno'
+import { PILOT_ZOMBIE_LOCOMOTION } from './pilot-zombie'
 
 export type Character = {
   locomotion: LocomotionAnimationProfileState
 }
 
+// keyed by inventory entity id — characterFor(obj.inventoryEntity) at spawn
 const CHARACTERS: Record<string, Character> = {
   bruno: { locomotion: BRUNO_LOCOMOTION },
+  pilot_zombie: { locomotion: PILOT_ZOMBIE_LOCOMOTION },
 }
 
 export const characterFor = (inventoryEntityId: string): Character | undefined => CHARACTERS[inventoryEntityId]

@@ -503,6 +503,10 @@ export const ModelSchema = z.object({
   // .fbx). Use when the GLB ships only its base clip (clips already baked into the GLB need
   // no entry). e.g. ["Running.fbx", "Reaction Hit.fbx"].
   anims: z.array(z.string()).optional(),
+  // Uniform scale applied to the instance root at build time (game and editor preview alike).
+  // Per-model size tuning — an imported export's absolute size is arbitrary — so it is doc
+  // data, hand-edited. Required: every model states its size, 1 included.
+  scale: z.number().positive(),
   // Per-part uniform emissive (glow). Keyed by the EXPOSED part name — a GLB mesh named
   // "<part>@exposeEmissive" opts in; the editor shows a colour+intensity control for it.
   // The part's material is cloned so only that part glows. Absent = the tagged part uses

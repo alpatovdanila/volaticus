@@ -5,6 +5,7 @@
   "category": "character",
   "model": {
     "src": "models/bruno/index.baked.glb",
+    "scale": 1,
     "dismember": {
       "tripo_part_17001": {
         "weight": 1

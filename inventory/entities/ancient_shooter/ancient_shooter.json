@@ -6,6 +6,7 @@
   "notes": "Imported GLB via scripts/import-glb.ts. Parts: ball@exposeEmissive, body, gem2@exposeEmissive, gem@exposeEmissive. Clips: index, Hit.",
   "model": {
     "src": "models/ancient-shooter/index.glb",
+    "scale": 1,
     "emissive": {
       "ball": {
         "color": "#66ccff",

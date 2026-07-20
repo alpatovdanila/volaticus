@@ -6,16 +6,38 @@
   "notes": "Imported GLB via scripts/import-glb.ts. Parts: body, crystals@exposeEmissive, lhand, rhand. Clips: index, Walking, Zombie Death.",
   "model": {
     "src": "models/alyosha/index.glb",
-    "anims": ["Walking.fbx", "Zombie Death.fbx"],
-    "emissive": { "crystals": { "color": "#52bdff", "intensity": 1.6 } },
-    "dismember": { "lhand": { "weight": 1 }, "rhand": { "weight": 1 } }
+    "scale": 1,
+    "anims": [
+      "Walking.fbx",
+      "Zombie Death.fbx"
+    ],
+    "emissive": {
+      "crystals": {
+        "color": "#52bdff",
+        "intensity": 1.6
+      }
+    },
+    "dismember": {
+      "lhand": {
+        "weight": 1
+      },
+      "rhand": {
+        "weight": 1
+      }
+    }
   },
   "materials": {},
   "rig": {},
   "states": {
     "initial": "index",
-    "index": { "anim": "index" },
-    "Walking": { "anim": "Walking" },
-    "Zombie Death": { "anim": "Zombie Death" }
+    "index": {
+      "anim": "index"
+    },
+    "Walking": {
+      "anim": "Walking"
+    },
+    "Zombie Death": {
+      "anim": "Zombie Death"
+    }
   }
 }

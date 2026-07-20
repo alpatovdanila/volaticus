@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "id": "pilot_zombie",
+  "name": "Pilot Zombie",
+  "category": "character",
+  "model": {
+    "src": "models/pilot-zombie/index.baked.glb",
+    "scale": 1.75,
+    "dismember": {
+      "head": {
+        "weight": 1
+      },
+      "lhand": {
+        "weight": 1
+      },
+      "rhand": {
+        "weight": 1
+      }
+    }
+  },
+  "materials": {}
+}

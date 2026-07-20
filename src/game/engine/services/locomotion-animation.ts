@@ -12,11 +12,12 @@ import {
 import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
 
 /*
- Below this the travel angle is meaningless — atan2(0, 0) is 0, so a standing character would
- resolve to a direction that swings around as it turns. Standing still is the forward set's
- lowest band, no direction resolution at all.
+ The speed below which a body counts as standing — this system's definition, exported because
+ the rest of the game must agree with it: below it no travel direction is resolvable (atan2 of
+ ~0 swings around as the body turns) and the idle band plays, so PlayerControl snaps velocity
+ to zero against this same line and a profile's lowest moving band starts at it.
 */
-const IDLE_SPEED = 0.05
+export const STANDSTILL_SPEED = 0.05
 
 // the model faces +Z, so `forward x up` puts its right at -X: a positive angle is movement left
 const DIRECTION_ANGLE: Record<LocomotionDirection, number> = {
@@ -33,7 +34,7 @@ const wrap = (angle: number): number => Math.atan2(Math.sin(angle), Math.cos(ang
 
 // nearest DECLARED direction: the bucket boundaries are a consequence of which clips the rig
 // has, so a one-clip rig answers `forward` for everything and a four-clip rig quarter-splits
-const bandsFor = (profile: LocomotionAnimationProfileState, heading: number): LocomotionBand[] => {
+const bandsFor = (profile: LocomotionAnimationProfileState, heading: number): readonly LocomotionBand[] => {
   let best = profile.forward
   let bestDistance = Math.abs(wrap(heading))
 
@@ -50,7 +51,7 @@ const bandsFor = (profile: LocomotionAnimationProfileState, heading: number): Lo
 }
 
 // last band whose lower bound has been passed; the first has none and catches everything below
-const bandAt = (bands: LocomotionBand[], speed: number): LocomotionBand => {
+const bandAt = (bands: readonly LocomotionBand[], speed: number): LocomotionBand => {
   for (let i = bands.length - 1; i > 0; i--) if (speed >= (bands[i].above ?? 0)) return bands[i]
   return bands[0]
 }
@@ -78,8 +79,10 @@ export class LocomotionAnimation extends BaseService {
       const profile = LocomotionAnimationProfile[eid]
       const speed = Math.hypot(Velocity.x[eid], Velocity.z[eid])
 
+      // below standstill the travel angle is meaningless — atan2(~0, ~0) swings around as the
+      // body turns — so standing is the forward set's lowest band, no direction resolution
       const bands =
-        speed < IDLE_SPEED
+        speed < STANDSTILL_SPEED
           ? profile.forward
           : bandsFor(profile, wrap(Math.atan2(Velocity.x[eid], Velocity.z[eid]) - Rotation.y[eid]))
 

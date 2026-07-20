@@ -12,24 +12,25 @@
  Re-measure by eye if a clip is ever reimported.
 */
 import type { LocomotionAnimationProfileState } from '../engine/services/world/ecs/components'
+import { STANDSTILL_SPEED } from '../engine/services/locomotion-animation'
 
 export const BRUNO_LOCOMOTION: LocomotionAnimationProfileState = {
   forward: [
-    { clip: 'Rifle Idle', nativeSpeed: 0, fade: 0.1 },
-    { above: 0.05, clip: 'Rifle Walk', nativeSpeed: 1.0508, fade: 0.1 },
-    { above: 3.0, clip: 'Rifle Run', nativeSpeed: 3.6169, fade: 0.1 },
-    { above: 5.8, clip: 'Rifle Sprint', nativeSpeed: 5.9108, fade: 0.1 },
+    { clip: 'Rifle Idle', nativeSpeed: 0, fade: 0.4 },
+    { above: STANDSTILL_SPEED, clip: 'Rifle Walk', nativeSpeed: 1.22, fade: 0.4 },
+    { above: 2.5, clip: 'Rifle Run', nativeSpeed: 4.2, fade: 0.4 },
+    { above: 5.8, clip: 'Rifle Sprint', nativeSpeed: 6.3, fade: 0.4 },
   ],
   back: [
-    { clip: 'Backwards Rifle Walk', nativeSpeed: 0.8733, fade: 0.1 },
-    { above: 1.7, clip: 'Backwards Rifle Run', nativeSpeed: 1.8805, fade: 0.1 },
+    { clip: 'Backwards Rifle Walk', nativeSpeed: 1.6, fade: 0.4 },
+    { above: 1.7, clip: 'Backwards Rifle Run', nativeSpeed: 4.2, fade: 0.4 },
   ],
   left: [
-    { clip: 'Walk Rifle Left', nativeSpeed: 1.5006, fade: 0.1 },
-    { above: 2.4, clip: 'Run Rifle Left', nativeSpeed: 3.3393, fade: 0.1 },
+    { clip: 'Walk Rifle Left', nativeSpeed: 1.4, fade: 0.4 },
+    { above: 2.4, clip: 'Run Rifle Left', nativeSpeed: 4.2, fade: 0.4 },
   ],
   right: [
-    { clip: 'Walk Rifle Right', nativeSpeed: 1.5509, fade: 0.1 },
-    { above: 2.4, clip: 'Run Rifle Right', nativeSpeed: 4.0236, fade: 0.1 },
+    { clip: 'Walk Rifle Right', nativeSpeed: 1.4, fade: 0.1 },
+    { above: 2.4, clip: 'Run Rifle Right', nativeSpeed: 4.2, fade: 0.4 },
   ],
 }

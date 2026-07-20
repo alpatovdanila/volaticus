@@ -7,7 +7,7 @@
  exists. Entities absent from this table are not characters (props, scenery); they simply get
  no character components.
 */
-import type { LocomotionAnimationProfileState, LocomotionBand } from '../engine/services/world/ecs/components'
+import type { LocomotionAnimationProfileState } from '../engine/services/world/ecs/components'
 import { BRUNO_LOCOMOTION } from './bruno'
 
 export type Character = {
@@ -32,7 +32,9 @@ export const warnMissingClips = (
   clips: { name: string }[],
 ): void => {
   const available = new Set(clips.map((c) => c.name))
-  const bands = Object.values(profile).flat() as LocomotionBand[]
+  // flatMap over ?? [] instead of a cast: an explicitly-undefined direction key must yield
+  // nothing, not an undefined element that crashes on .clip
+  const bands = Object.values(profile).flatMap((direction) => direction ?? [])
   const missing = [...new Set(bands.map((b) => b.clip))].filter((c) => !available.has(c))
   if (missing.length) console.warn(`character '${id}': model has no clip(s): ${missing.join(', ')}`)
 }

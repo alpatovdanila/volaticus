@@ -131,6 +131,10 @@ export class DebugOverlay extends BaseService {
   }
 
   private inputLines(): string[] {
+    // an unfocused page stops receiving gamepad updates, so anything below is a frozen snapshot
+    // — worth saying out loud, because a stale readout looks exactly like a live one
+    if (!document.hasFocus()) return ['input  page unfocused — gamepad state is stale, input dropped']
+
     const pad = this.input.getActivePad()
     if (!pad) return ['input  none']
 
@@ -138,9 +142,15 @@ export class DebugOverlay extends BaseService {
       .map((b, i) => (b.pressed ? i : null))
       .filter((i) => i !== null)
 
+    // raw axes are always a little off zero at rest; `move` is what survives the deadzone, so
+    // that is the line that must read 0.00 with the stick released
+    const move = this.input.getMove()
+    const throttle = Math.hypot(move.x, move.z)
+
     return [
       `input  ${pad.id}`,
       `axes   ${Array.from(pad.axes).map(signed).join(' ')}`,
+      `move   ${signed(move.x)} ${signed(move.z)}   throttle ${throttle.toFixed(2)}${throttle > 0 ? '  <- should be 0.00 at rest' : ''}`,
       `btns   ${buttons.length ? buttons.join(' ') : '-'}`,
     ]
   }

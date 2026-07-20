@@ -24,6 +24,17 @@ export class Input extends BaseService {
   private activeIndex: number | null = null
 
   update() {
+    /*
+     An unfocused page does not get fresh gamepad state — getGamepads() keeps handing back the
+     LAST snapshot, indefinitely. Alt-tab (or click devtools) mid-movement and the engine reads a
+     stick frozen at whatever deflection it had, so the character walks off in that direction
+     forever, and no deadzone can help because the frozen values are real full-scale readings.
+
+     Dropping input while unfocused is also just what a game should do: a held key or stick must
+     not keep driving the character once the player has switched away.
+    */
+    if (!document.hasFocus()) return this.clear()
+
     const pad = this.pollPad()
     if (!pad) return this.clear()
 
@@ -32,8 +43,15 @@ export class Input extends BaseService {
     const magnitude = Math.hypot(x, y)
     if (magnitude < DEADZONE) return this.clear()
 
-    // rescale past the deadzone so the first responsive input is 0, not a jump to 0.15
-    const scaled = (magnitude - DEADZONE) / (1 - DEADZONE)
+    /*
+     Rescale past the deadzone so the first responsive input is 0, not a jump to 0.15, and CLAMP:
+     a square-gated stick reports up to 1.41 on the diagonal, and since deflection now maps
+     straight onto velocity that would be a 41% speed bonus for moving diagonally.
+
+     The clamp is on the throttle, not on the magnitude used to normalise — dividing by a
+     clamped magnitude would leave the direction vector itself over-long and reintroduce it.
+    */
+    const scaled = Math.min(1, (magnitude - DEADZONE) / (1 - DEADZONE))
     this.moveX = (x / magnitude) * scaled
     this.moveZ = (y / magnitude) * scaled // stick up is -1, which is forward (-Z) in three
   }

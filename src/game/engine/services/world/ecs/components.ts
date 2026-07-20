@@ -44,12 +44,17 @@ export type LocomotionDirection = 'forward' | 'back' | 'left' | 'right'
  `nativeSpeed` is the ground speed the clip depicts at rate 1 — measured by eye once, per clip.
  Playback rate is speed / nativeSpeed, so retuning how fast a character moves cannot desync the
  feet from the floor. 0 means the clip depicts no travel (idle) and plays at rate 1.
+
+ Everything here is readonly on purpose: a profile is SHARED BY REFERENCE by every entity of
+ its archetype — an upgrade that mutated a band would retune the whole species, and every
+ future spawn. Per-entity modifiers must multiply the RESULT (a stat component), never edit
+ the table.
 */
 export type LocomotionBand = {
-  above?: number
-  clip: string
-  nativeSpeed: number
-  fade: number
+  readonly above?: number
+  readonly clip: string
+  readonly nativeSpeed: number
+  readonly fade: number
 }
 
 /*
@@ -59,10 +64,10 @@ export type LocomotionBand = {
  without anyone naming a boundary. Only `forward` is required — it is what standing still uses.
 */
 export type LocomotionAnimationProfileState = {
-  forward: LocomotionBand[]
-  back?: LocomotionBand[]
-  left?: LocomotionBand[]
-  right?: LocomotionBand[]
+  readonly forward: readonly LocomotionBand[]
+  readonly back?: readonly LocomotionBand[]
+  readonly left?: readonly LocomotionBand[]
+  readonly right?: readonly LocomotionBand[]
 }
 export const LocomotionAnimationProfile: LocomotionAnimationProfileState[] = []
 

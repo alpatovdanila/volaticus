@@ -1,0 +1,8 @@
+{
+  "id": "plaster_wall_04",
+  "maps": {
+    "color": "color.ktx2",
+    "normal": "normal.ktx2",
+    "roughness": "roughness.ktx2"
+  }
+}

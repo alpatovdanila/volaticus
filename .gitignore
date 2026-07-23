@@ -3,3 +3,6 @@ dist/
 .dev/
 resources/
 .idea/
+
+# baked material payloads — regenerable from resources/PBR via inventory/scripts/bake-material.ts
+inventory/items/materials/*/*.ktx2

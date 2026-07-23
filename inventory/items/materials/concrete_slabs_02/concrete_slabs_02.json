@@ -1,0 +1,12 @@
+{
+  "id": "concrete_slabs_02",
+  "maps": {
+    "color": "color.ktx2",
+    "normal": "normal.ktx2",
+    "roughness": "roughness.ktx2",
+    "ao": "ao.ktx2"
+  },
+  "tuning": {
+    "normalScale": 1.49
+  }
+}

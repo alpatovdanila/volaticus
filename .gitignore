@@ -4,6 +4,8 @@ dist/
 resources/
 .idea/
 
-# baked material payloads — regenerable from resources/PBR via inventory/scripts/bake-material.ts
+# baked item payloads — regenerable from resources/ via inventory/scripts/bake-*.ts
 inventory/items/materials/*/*
 !inventory/items/materials/*/*.json
+inventory/items/hdri/*/*
+!inventory/items/hdri/*/*.json

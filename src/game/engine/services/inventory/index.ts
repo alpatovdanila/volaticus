@@ -4,12 +4,12 @@ import { DUMMY_MATERIAL, loadInventoryMaterial, configureKtx2 } from './inventor
 import { DUMMY_ENTITY, loadEntity } from './inventory-entity'
 
 import { BaseService, KnownServices, ServicesRegistry } from '../../services-registry'
-import { InventoryEntityDeclaration } from '../../../../shared/inventory-schema'
+import { ModelDeclaration } from '../../../../../inventory/schemas/model.schema'
 
 interface InventoryTypes {
   material: THREE.Material
   entity: {
-    entityDeclaration: InventoryEntityDeclaration
+    entityDeclaration: ModelDeclaration
     threeObject: THREE.Object3D
   }
 }

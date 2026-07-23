@@ -95,7 +95,9 @@ export function buildTriBVH(tris: Float32Array): TriBVH {
       return node
     }
     // split on the longest centroid axis at the median
-    const ex = bounds[b + 3] - bounds[b], ey = bounds[b + 4] - bounds[b + 1], ez = bounds[b + 5] - bounds[b + 2]
+    const ex = bounds[b + 3] - bounds[b],
+      ey = bounds[b + 4] - bounds[b + 1],
+      ez = bounds[b + 5] - bounds[b + 2]
     const axis = ex >= ey && ex >= ez ? 0 : ey >= ez ? 1 : 2
     const slice = Array.from(order.subarray(start, start + count))
     slice.sort((a, bb) => centroids[a * 3 + axis] - centroids[bb * 3 + axis])
@@ -113,23 +115,49 @@ export function buildTriBVH(tris: Float32Array): TriBVH {
 
 // nearest triangle hit along (o, d) within tMax, or Infinity. Möller–Trumbore
 // per leaf tri, slab test per node, nodes farther than the best hit pruned.
-function closestHit(bvh: TriBVH, ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, tMax: number): number {
+function closestHit(
+  bvh: TriBVH,
+  ox: number,
+  oy: number,
+  oz: number,
+  dx: number,
+  dy: number,
+  dz: number,
+  tMax: number,
+): number {
   if (bvh.tris.length === 0) return Infinity
-  const idx = 1 / dx, idy = 1 / dy, idz = 1 / dz
+  const idx = 1 / dx,
+    idy = 1 / dy,
+    idz = 1 / dz
   let best = tMax
   const stack = [0]
   while (stack.length) {
     const node = stack.pop()!
     const b = node * 6
     // slab test
-    let t0 = (bvh.bounds[b] - ox) * idx, t1 = (bvh.bounds[b + 3] - ox) * idx
-    if (t0 > t1) { const tmp = t0; t0 = t1; t1 = tmp }
-    let u0 = (bvh.bounds[b + 1] - oy) * idy, u1 = (bvh.bounds[b + 4] - oy) * idy
-    if (u0 > u1) { const tmp = u0; u0 = u1; u1 = tmp }
+    let t0 = (bvh.bounds[b] - ox) * idx,
+      t1 = (bvh.bounds[b + 3] - ox) * idx
+    if (t0 > t1) {
+      const tmp = t0
+      t0 = t1
+      t1 = tmp
+    }
+    let u0 = (bvh.bounds[b + 1] - oy) * idy,
+      u1 = (bvh.bounds[b + 4] - oy) * idy
+    if (u0 > u1) {
+      const tmp = u0
+      u0 = u1
+      u1 = tmp
+    }
     if (u0 > t0) t0 = u0
     if (u1 < t1) t1 = u1
-    let v0 = (bvh.bounds[b + 2] - oz) * idz, v1 = (bvh.bounds[b + 5] - oz) * idz
-    if (v0 > v1) { const tmp = v0; v0 = v1; v1 = tmp }
+    let v0 = (bvh.bounds[b + 2] - oz) * idz,
+      v1 = (bvh.bounds[b + 5] - oz) * idz
+    if (v0 > v1) {
+      const tmp = v0
+      v0 = v1
+      v1 = tmp
+    }
     if (v0 > t0) t0 = v0
     if (v1 < t1) t1 = v1
     if (t0 > t1 || t0 > best || t1 < 0) continue
@@ -141,17 +169,29 @@ function closestHit(bvh: TriBVH, ox: number, oy: number, oz: number, dx: number,
       const count = bvh.child[node * 2 + 1]
       for (let i = start; i < start + count; i++) {
         const o = bvh.order[i] * 9
-        const ax = bvh.tris[o], ay = bvh.tris[o + 1], az = bvh.tris[o + 2]
-        const e1x = bvh.tris[o + 3] - ax, e1y = bvh.tris[o + 4] - ay, e1z = bvh.tris[o + 5] - az
-        const e2x = bvh.tris[o + 6] - ax, e2y = bvh.tris[o + 7] - ay, e2z = bvh.tris[o + 8] - az
-        const px = dy * e2z - dz * e2y, py = dz * e2x - dx * e2z, pz = dx * e2y - dy * e2x
+        const ax = bvh.tris[o],
+          ay = bvh.tris[o + 1],
+          az = bvh.tris[o + 2]
+        const e1x = bvh.tris[o + 3] - ax,
+          e1y = bvh.tris[o + 4] - ay,
+          e1z = bvh.tris[o + 5] - az
+        const e2x = bvh.tris[o + 6] - ax,
+          e2y = bvh.tris[o + 7] - ay,
+          e2z = bvh.tris[o + 8] - az
+        const px = dy * e2z - dz * e2y,
+          py = dz * e2x - dx * e2z,
+          pz = dx * e2y - dy * e2x
         const det = e1x * px + e1y * py + e1z * pz
         if (det > -1e-9 && det < 1e-9) continue // parallel (both faces occlude)
         const inv = 1 / det
-        const sx = ox - ax, sy = oy - ay, sz = oz - az
+        const sx = ox - ax,
+          sy = oy - ay,
+          sz = oz - az
         const u = (sx * px + sy * py + sz * pz) * inv
         if (u < 0 || u > 1) continue
-        const qx = sy * e1z - sz * e1y, qy = sz * e1x - sx * e1z, qz = sx * e1y - sy * e1x
+        const qx = sy * e1z - sz * e1y,
+          qy = sz * e1x - sx * e1z,
+          qz = sx * e1y - sy * e1x
         const v = (dx * qx + dy * qy + dz * qz) * inv
         if (v < 0 || u + v > 1) continue
         const t = (e2x * qx + e2y * qy + e2z * qz) * inv
@@ -233,23 +273,42 @@ export function bakeVariantAO(variant: BakedVariant): void {
       normalMat.getNormalMatrix(m)
       for (let i = 0; i < count; i++) {
         v.set(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]).applyMatrix4(m)
-        nrm.set(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]).applyMatrix3(normalMat).normalize()
+        nrm
+          .set(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2])
+          .applyMatrix3(normalMat)
+          .normalize()
         // tangent frame around the normal
         let tx: number, ty: number, tz: number
-        if (Math.abs(nrm.y) < 0.99) { tx = nrm.z; ty = 0; tz = -nrm.x } // n × up
-        else { tx = 0; ty = -nrm.z; tz = nrm.y } // n × right (near-vertical normals)
+        if (Math.abs(nrm.y) < 0.99) {
+          tx = nrm.z
+          ty = 0
+          tz = -nrm.x
+        } // n × up
+        else {
+          tx = 0
+          ty = -nrm.z
+          tz = nrm.y
+        } // n × right (near-vertical normals)
         const tl = 1 / (Math.hypot(tx, ty, tz) || 1)
-        tx *= tl; ty *= tl; tz *= tl
-        const bx = nrm.y * tz - nrm.z * ty, by = nrm.z * tx - nrm.x * tz, bz = nrm.x * ty - nrm.y * tx
-        const ox = v.x + nrm.x * ORIGIN_EPS, oy = v.y + nrm.y * ORIGIN_EPS, oz = v.z + nrm.z * ORIGIN_EPS
+        tx *= tl
+        ty *= tl
+        tz *= tl
+        const bx = nrm.y * tz - nrm.z * ty,
+          by = nrm.z * tx - nrm.x * tz,
+          bz = nrm.x * ty - nrm.y * tx
+        const ox = v.x + nrm.x * ORIGIN_EPS,
+          oy = v.y + nrm.y * ORIGIN_EPS,
+          oz = v.z + nrm.z * ORIGIN_EPS
         let occl = 0
         for (let s = 0; s < SAMPLES; s++) {
-          const lx = SAMPLE_DIRS[s * 3], ly = SAMPLE_DIRS[s * 3 + 1], lz = SAMPLE_DIRS[s * 3 + 2]
+          const lx = SAMPLE_DIRS[s * 3],
+            ly = SAMPLE_DIRS[s * 3 + 1],
+            lz = SAMPLE_DIRS[s * 3 + 2]
           const dx = tx * lx + bx * ly + nrm.x * lz
           const dy = ty * lx + by * ly + nrm.y * lz
           const dz = tz * lx + bz * ly + nrm.z * lz
           let t = closestHit(bvh, ox, oy, oz, dx, dy, dz, MAX_DIST)
-          // assumed ground plane at y=0 — entities rest there by convention
+          // assumed ground plane at y=0 — models rest there by convention
           if (dy < -1e-6 && oy > 0) {
             const tf = oy / -dy
             if (tf < t) t = tf
@@ -288,7 +347,9 @@ function weldVertexAO(pos: number[], normals: number[], ao: number[]): void {
     // greedy-cluster by normal agreement, then average AO per cluster
     const clusters: { nx: number; ny: number; nz: number; members: number[] }[] = []
     for (const i of list) {
-      const nx = normals[i * 3], ny = normals[i * 3 + 1], nz = normals[i * 3 + 2]
+      const nx = normals[i * 3],
+        ny = normals[i * 3 + 1],
+        nz = normals[i * 3 + 2]
       const home = clusters.find((c) => c.nx * nx + c.ny * ny + c.nz * nz > CREASE)
       if (home) home.members.push(i)
       else clusters.push({ nx, ny, nz, members: [i] })

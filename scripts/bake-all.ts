@@ -1,5 +1,5 @@
 // bake-all.ts — phase-2 migration + bake. For every entity under
-// inventory/entities/<id>/:
+// inventory/models/<id>/:
 //   1. strip the retired fields from <id>.json: `behavior`, per-node `seed`, and
 //      the old variants jitter (`scale`/`yawJitter`/`tiltJitter`/`tintJitter`/`seeds`);
 //      reshape `variants` → { count, oneOf } (count carried over from seeds.length).
@@ -39,7 +39,7 @@ for (const id of fs.readdirSync(ENTITIES).filter((d) => fs.statSync(path.join(EN
   if (!fs.existsSync(file)) continue
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'))
 
-  // imported GLB entities have no procedural rig — nothing to bake (geometry, skeleton,
+  // imported GLB models have no procedural rig — nothing to bake (geometry, skeleton,
   // clips all live in the GLB). Never emit variants/geom sidecars for them.
   if (raw.model) {
     console.log(`  ${id}: imported model — skipped (no bake)`)

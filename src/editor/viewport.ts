@@ -1,6 +1,22 @@
 import * as THREE from 'three'
 import { WebGPURenderer, MeshBasicNodeMaterial, RenderPipeline, ShadowNodeMaterial } from 'three/webgpu'
-import { positionLocal, normalLocal, vec2, vec3, vec4, float, pass, mrt, output, normalView, rtt, screenUV, uniform, mix, smoothstep } from 'three/tsl'
+import {
+  positionLocal,
+  normalLocal,
+  vec2,
+  vec3,
+  vec4,
+  float,
+  pass,
+  mrt,
+  output,
+  normalView,
+  rtt,
+  screenUV,
+  uniform,
+  mix,
+  smoothstep,
+} from 'three/tsl'
 import { ao } from 'three/addons/tsl/display/GTAONode.js'
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js'
 import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
@@ -9,13 +25,7 @@ import { setLevelEnvMap } from '../inventory/envmap'
 import { setFlatShadingEnabled, configureKtx2 } from '../inventory/materials'
 import { EffectSystem } from '../inventory/effects'
 import { loadSkybox } from './skybox'
-import {
-  LightingRig,
-  LIGHT_DEFAULTS,
-  clampLightParams,
-  HDRIS,
-  type LightParams,
-} from '../lib/lighting'
+import { LightingRig, LIGHT_DEFAULTS, clampLightParams, HDRIS, type LightParams } from '../lib/lighting'
 
 // re-exported so main.ts can keep importing these from './viewport'
 export { HDRIS, type LightParams }
@@ -104,7 +114,10 @@ export class Viewport {
     // info.render.timestamp) — opt-out for hosts that ship no HUD (the game): the
     // query pool writes ride EVERY pass even when nothing resolves them.
     // antialias = 4× MSAA render targets (WebGPU default count).
-    this.renderer = new WebGPURenderer({ trackTimestamp: opts.perfTimestamps ?? true, antialias: opts.antialias ?? false })
+    this.renderer = new WebGPURenderer({
+      trackTimestamp: opts.perfTimestamps ?? true,
+      antialias: opts.antialias ?? false,
+    })
     container.appendChild(this.renderer.domElement)
 
     // Placeholder background: the sky_22 cubemap shows immediately while the 4k
@@ -331,7 +344,8 @@ export class Viewport {
       this.shake *= Math.max(0, 1 - dt * 6)
     }
     const t0 = performance.now()
-    if (this.post) this.post.render() // GTAO chain: scene pass → AO → denoise → multiply
+    if (this.post)
+      this.post.render() // GTAO chain: scene pass → AO → denoise → multiply
     else this.renderer.render(this.scene, this.camera) // direct to canvas
     this.rig.settleShadow() // cached-shadow pulse: freeze the map again after this render
     const t1 = performance.now()
@@ -421,7 +435,7 @@ export class Viewport {
     return this.getLights()
   }
 
-  // Shadow-catcher "ground": the editor floats entities over a grid, so their
+  // Shadow-catcher "ground": the editor floats models over a grid, so their
   // biggest shadow (onto the ground) would fall into the void. A ShadowNodeMaterial
   // disc at y=0 renders ONLY the received shadow — invisible when nothing shadows it.
   private shadowCatcher: THREE.Mesh | null = null
@@ -512,7 +526,10 @@ export class Viewport {
     // the given meshes are explicit pick targets — hit them regardless of render
     // layer (post-merge, the source primitives live on a non-rendered layer).
     this.raycaster.layers.enableAll()
-    const hits = this.raycaster.intersectObjects(meshes.filter((m) => visibleInTree(m)), false)
+    const hits = this.raycaster.intersectObjects(
+      meshes.filter((m) => visibleInTree(m)),
+      false,
+    )
     const hit = hits[0]
     if (!hit) return null
     const mesh = hit.object as THREE.Mesh
@@ -529,9 +546,14 @@ export class Viewport {
         }
       }
     }
-    const faceNames = geo.groups.length === 6 ? ['right', 'left', 'top', 'bottom', 'front', 'back']
-      : geo.groups.length === 3 ? ['side', 'top', 'bottom']
-      : geo.groups.length === 2 ? ['side', 'bottom'] : ['all']
+    const faceNames =
+      geo.groups.length === 6
+        ? ['right', 'left', 'top', 'bottom', 'front', 'back']
+        : geo.groups.length === 3
+          ? ['side', 'top', 'bottom']
+          : geo.groups.length === 2
+            ? ['side', 'bottom']
+            : ['all']
     return {
       mesh,
       nodeName: mesh.userData.nodeName,

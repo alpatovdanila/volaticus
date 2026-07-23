@@ -7,7 +7,7 @@ import {
   Rotation,
   Velocity,
 } from '../world/ecs/components'
-import type { LocomotionBand, LocomotionSet } from '../../../../shared/inventory-schema'
+import type { LocomotionBand, LocomotionSet } from '../../../../../inventory/schemas/model.schema'
 import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
 
 type LocomotionDirection = 'forward' | 'back' | 'left' | 'right'

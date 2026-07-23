@@ -59,12 +59,29 @@ function keepSeparateNodes(doc: EntityDoc): Set<string> {
 function keyOf(m: EntityMaterial, withColor: boolean): string {
   const u = (t: THREE.Texture | null): string => (t ? t.uuid : '_')
   return [
-    u(m.map), u(m.normalMap), u(m.roughnessMap), u(m.metalnessMap),
-    u(m.aoMap), u(m.emissiveMap), u(m.bumpMap), u(m.alphaMap),
-    withColor ? m.color.getHexString() : '_', m.emissive.getHexString(),
-    m.roughness, m.metalness, m.aoMapIntensity, m.bumpScale, m.emissiveIntensity, m.envMapIntensity,
+    u(m.map),
+    u(m.normalMap),
+    u(m.roughnessMap),
+    u(m.metalnessMap),
+    u(m.aoMap),
+    u(m.emissiveMap),
+    u(m.bumpMap),
+    u(m.alphaMap),
+    withColor ? m.color.getHexString() : '_',
+    m.emissive.getHexString(),
+    m.roughness,
+    m.metalness,
+    m.aoMapIntensity,
+    m.bumpScale,
+    m.emissiveIntensity,
+    m.envMapIntensity,
     m.normalScale ? `${m.normalScale.x},${m.normalScale.y}` : '_',
-    m.flatShading ? 1 : 0, m.side, m.transparent ? 1 : 0, m.opacity, m.alphaTest, m.vertexColors ? 1 : 0,
+    m.flatShading ? 1 : 0,
+    m.side,
+    m.transparent ? 1 : 0,
+    m.opacity,
+    m.alphaTest,
+    m.vertexColors ? 1 : 0,
     (m.userData.parallaxKey as string | undefined) ?? '_',
   ].join('|')
 }
@@ -112,7 +129,8 @@ function sliceGroup(src: THREE.BufferGeometry, start: number, count: number): TH
       const a = src.getAttribute(name) as THREE.BufferAttribute | undefined
       if (!a) return
       const out = new Float32Array(vertCount * size)
-      for (const [from, to] of map) for (let k = 0; k < size; k++) out[to * size + k] = a.array[from * size + k] as number
+      for (const [from, to] of map)
+        for (let k = 0; k < size; k++) out[to * size + k] = a.array[from * size + k] as number
       sub.setAttribute(name, new THREE.BufferAttribute(out, size))
     }
     cut('position', 3)
@@ -123,7 +141,10 @@ function sliceGroup(src: THREE.BufferGeometry, start: number, count: number): TH
     const cut = (name: string, size: number): void => {
       const a = src.getAttribute(name) as THREE.BufferAttribute | undefined
       if (!a) return
-      sub.setAttribute(name, new THREE.Float32BufferAttribute((a.array as Float32Array).slice(start * size, (start + count) * size), size))
+      sub.setAttribute(
+        name,
+        new THREE.Float32BufferAttribute((a.array as Float32Array).slice(start * size, (start + count) * size), size),
+      )
     }
     cut('position', 3)
     cut('normal', 3)
@@ -131,7 +152,8 @@ function sliceGroup(src: THREE.BufferGeometry, start: number, count: number): TH
     sub.setIndex([...Array(count).keys()])
   }
   if (!sub.getAttribute('normal')) sub.computeVertexNormals()
-  if (!sub.getAttribute('uv')) sub.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(vertCount * 2), 2))
+  if (!sub.getAttribute('uv'))
+    sub.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(vertCount * 2), 2))
   return sub
 }
 
@@ -171,7 +193,8 @@ export function computeMergeBuckets(
   const frameOf = (mesh: THREE.Mesh): { name: string; parent: THREE.Object3D } => {
     let o: THREE.Object3D | null = mesh
     while (o && o !== built.group) {
-      if (o.name && keep.has(o.name) && built.nodes.has(o.name)) return { name: o.name, parent: built.nodes.get(o.name)!.inner }
+      if (o.name && keep.has(o.name) && built.nodes.has(o.name))
+        return { name: o.name, parent: built.nodes.get(o.name)!.inner }
       o = o.parent
     }
     return { name: '', parent: built.group }
@@ -232,9 +255,9 @@ export function computeMergeBuckets(
 }
 
 export function mergeBuiltEntity(built: BuiltEntity, doc: EntityDoc, opts: { keepSource: boolean }): void {
-  // SKELETAL entities are already assembled as SkinnedMeshes bound to a bone tree —
+  // SKELETAL models are already assembled as SkinnedMeshes bound to a bone tree —
   // folding them into rigid merged meshes would freeze the bind pose. Skip entirely.
-  // Imported GLB entities (doc.model) are likewise native SkinnedMeshes — same reason.
+  // Imported GLB models (doc.model) are likewise native SkinnedMeshes — same reason.
   if (doc.skinned || doc.model) return
   const { buckets, replaced } = computeMergeBuckets(built, doc)
   if (!buckets.length) return // nothing static to merge (e.g. a fully-animated rig)

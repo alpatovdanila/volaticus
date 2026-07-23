@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url'
 import { stringifyPretty } from '../src/inventory/json'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const entitiesDir = path.resolve(__dirname, '../inventory/entities')
+const entitiesDir = path.resolve(__dirname, '../inventory/models')
 let filesTouched = 0
 let keysStripped = 0
 

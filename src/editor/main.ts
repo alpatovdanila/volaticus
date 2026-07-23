@@ -1,21 +1,62 @@
 import * as THREE from 'three'
 import { warmEffects } from '../inventory/effects'
 import { applyEnvReflection } from '../inventory/envmap'
-import { bakeEntityGeometry, bakeVariantLayouts, buildColliderViz, buildEntity, buildGlbEntity, disposeEntity, ensureCraftSeeds, projectGeometryUv, rerollCraftSeeds, rerollPartSeed, type BakedGeometry, type BuiltEntity, type VariantLayout } from '../inventory/factory'
+import {
+  bakeEntityGeometry,
+  bakeVariantLayouts,
+  buildColliderViz,
+  buildEntity,
+  buildGlbEntity,
+  disposeEntity,
+  ensureCraftSeeds,
+  projectGeometryUv,
+  rerollCraftSeeds,
+  rerollPartSeed,
+  type BakedGeometry,
+  type BuiltEntity,
+  type VariantLayout,
+} from '../inventory/factory'
 import { loadGltfModel } from '../inventory/gltf'
 import { mergeBuiltEntity } from '../inventory/merge'
 import { SceneBatcher, type BatchInput } from '../inventory/sceneBatcher'
 import { scopeHmrReloads } from '../lib/hmr-scope'
 import { stringifyPretty } from '../inventory/json'
-import { applyLiveTuning, catalogColorPath, DEFAULT_HEIGHT, makeSlotMaterial, materialLoadState, setAnisotropy, setLiveParam, setMaterialCatalog, setSurfacePresets, setTexturePack, whenTexturesReady, type EntityMaterial } from '../inventory/materials'
-import { MaterialPreview, previewShapeGeometry, PREVIEW_SHAPES, type PreviewShape, type PreviewUvProject } from './matpreview'
+import {
+  applyLiveTuning,
+  catalogColorPath,
+  DEFAULT_HEIGHT,
+  makeSlotMaterial,
+  materialLoadState,
+  setAnisotropy,
+  setLiveParam,
+  setMaterialCatalog,
+  setSurfacePresets,
+  setTexturePack,
+  whenTexturesReady,
+  type EntityMaterial,
+} from '../inventory/materials'
+import {
+  MaterialPreview,
+  previewShapeGeometry,
+  PREVIEW_SHAPES,
+  type PreviewShape,
+  type PreviewUvProject,
+} from './matpreview'
 import { preloadEntityMeshes } from '../inventory/meshes'
 import { setParallaxConfig, getParallaxSamples } from '../inventory/parallax'
 import { startBusy, type BusyHandle } from './busy'
 import { EntityPreview } from '../inventory/preview'
 import { Inventory, SETTINGS_PATH, type ItemKind } from '../inventory/registry'
 import { ensureAudio, playSfx, preloadSfx } from '../inventory/sfx'
-import { contextDimsOf, resolveMaterials, walkRig, type EntityDoc, type MaterialCatalogDoc, type MaterialDef, type NodeDef } from '../inventory/schema'
+import {
+  contextDimsOf,
+  resolveMaterials,
+  walkRig,
+  type EntityDoc,
+  type MaterialCatalogDoc,
+  type MaterialDef,
+  type NodeDef,
+} from '../inventory/schema'
 import {
   $,
   initMatPicker,
@@ -46,8 +87,24 @@ const inv = new Inventory()
 // is a renderer-CREATION option (SSAA render scale applies live; MSAA needs the reload).
 type AAMode = 'off' | 'ssaa2' | 'msaa' | 'msaa_ssaa15'
 const RENDER_KEY = 'volaticus.render'
-const renderPrefs: { parallax: boolean; samples: number; aa: AAMode; gtao: boolean; gtaoRes: number; aniso: number; tilt: boolean; tiltStrength: number } = {
-  parallax: false, samples: 24, aa: 'off', gtao: false, gtaoRes: 1, aniso: 1, tilt: false, tiltStrength: 0.5,
+const renderPrefs: {
+  parallax: boolean
+  samples: number
+  aa: AAMode
+  gtao: boolean
+  gtaoRes: number
+  aniso: number
+  tilt: boolean
+  tiltStrength: number
+} = {
+  parallax: false,
+  samples: 24,
+  aa: 'off',
+  gtao: false,
+  gtaoRes: 1,
+  aniso: 1,
+  tilt: false,
+  tiltStrength: 0.5,
 }
 try {
   const raw = localStorage.getItem(RENDER_KEY)
@@ -60,7 +117,8 @@ try {
     if (s.gtaoRes === 1 || s.gtaoRes === 0.75 || s.gtaoRes === 0.5) renderPrefs.gtaoRes = s.gtaoRes
     if ([1, 2, 4, 8, 16].includes(s.aniso as number)) renderPrefs.aniso = s.aniso as number
     renderPrefs.tilt = s.tilt === true
-    if (typeof s.tiltStrength === 'number' && s.tiltStrength >= 0 && s.tiltStrength <= 1) renderPrefs.tiltStrength = s.tiltStrength
+    if (typeof s.tiltStrength === 'number' && s.tiltStrength >= 0 && s.tiltStrength <= 1)
+      renderPrefs.tiltStrength = s.tiltStrength
   }
 } catch {
   /* non-fatal */
@@ -86,7 +144,7 @@ vp.setTiltShift(renderPrefs.tilt)
     return mgrPreview
   },
   // bulk re-bake (console tooling for bake-version bumps) — same explicit-regen
-  // policy as the ⟲ button, just over many entities. Returns ids as they finish.
+  // policy as the ⟲ button, just over many models. Returns ids as they finish.
   async regenAll(ids?: string[]): Promise<string[]> {
     const all = ids ?? [...inv.entities.keys()]
     const done: string[] = []
@@ -202,7 +260,10 @@ function applySeedMap(rig: Record<string, unknown>, map: Record<string, number>)
 // Ensure the doc's per-part craft seeds exist (or apply a supplied reroll map),
 // mirror them into the raw JSON, and persist the entity file if they changed. Seeds
 // live IN the entity JSON, so a geom bake that assigns/rerolls them must save it.
-async function persistSeeds(item: { path: string; raw: unknown; doc: EntityDoc }, seedMap?: Record<string, number>): Promise<void> {
+async function persistSeeds(
+  item: { path: string; raw: unknown; doc: EntityDoc },
+  seedMap?: Record<string, number>,
+): Promise<void> {
   const map = seedMap ?? ensureCraftSeeds(item.doc)
   const changed = applySeedMap((item.raw as EntityDoc).rig as never, map)
   if (changed) await inv.save(item.path, stringifyPretty(item.raw))
@@ -380,7 +441,8 @@ function triCount(meshes: THREE.Mesh[]): number {
 
 function updateStats(): void {
   if (sel?.built) setStats(`▲ ${triCount(sel.built.meshes).toLocaleString('en-US')} tris`)
-  else if (lineup) setStats(`▲ ${triCount(lineup.flatMap((l) => l.built.meshes)).toLocaleString('en-US')} tris (lineup)`)
+  else if (lineup)
+    setStats(`▲ ${triCount(lineup.flatMap((l) => l.built.meshes)).toLocaleString('en-US')} tris (lineup)`)
   else setStats('')
 }
 
@@ -396,7 +458,10 @@ function select(kind: ItemKind, id: string, opts: { keepCamera?: boolean; keepSt
   localStorage.setItem('volaticus.sel', kind + ':' + id)
 
   const item = kind === 'entity' ? inv.entities.get(id) : kind === 'effect' ? inv.effects.get(id) : inv.sfx.get(id)
-  setTitle(id + (item?.doc && 'name' in item.doc && item.doc.name ? ' — ' + (item.doc as { name: string }).name : ''), false)
+  setTitle(
+    id + (item?.doc && 'name' in item.doc && item.doc.name ? ' — ' + (item.doc as { name: string }).name : ''),
+    false,
+  )
   setValidation(item?.issues ?? [])
 
   if (kind === 'entity') {
@@ -587,7 +652,7 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
   // pre-clone this build's materials into the shatter pool and compile them in
   // the background — clicking "died" (shatter) must never link shaders. Skipped
   // pre-env (boot's warmEffects covers the booted selection once the HDRI
-  // lands) and for entities whose states never shatter.
+  // lands) and for models whose states never shatter.
   if (vp.scene.environment && canShatter(doc) && sel.built)
     void warmEffects(vp.renderer, vp.scene, vp.camera, [], sel.built.meshes).catch(() => {})
 }
@@ -621,7 +686,7 @@ function refreshOverlay(): void {
       activeModifiers: sel.preview ? [...sel.preview.activeModifiers] : [],
       contextDims: doc ? contextDimsOf(doc) : undefined,
       context: sel.preview?.context,
-      // imported GLB entities have no procedural variants / craft geometry / bake sidecars
+      // imported GLB models have no procedural variants / craft geometry / bake sidecars
       variant: doc && !doc.model ? { index: sel.variantIndex, count: variantCount(doc) } : undefined,
       canReroll: !doc?.model && hasCraftGeometry(doc),
       // stale = sidecars were baked from a DIFFERENT rig (hand-edited JSON / generator
@@ -742,11 +807,7 @@ function bindingAtPath(obj: unknown, path: (string | number)[]): { effect?: unkn
   return cur as { effect?: unknown } | undefined
 }
 
-function setSlotParam(
-  slot: string,
-  param: 'uvMode' | 'uvRot' | 'uvScale' | 'uvProject',
-  value: string,
-): void {
+function setSlotParam(slot: string, param: 'uvMode' | 'uvRot' | 'uvScale' | 'uvProject', value: string): void {
   if (!sel || sel.kind !== 'entity') return
   const item = inv.entities.get(sel.id)
   if (!item?.doc) return
@@ -945,7 +1006,15 @@ function geomTreeRows(doc: EntityDoc): GeomNodeInfo[] {
       },
     })
     for (const [cn, cd] of Object.entries(node.children ?? {}))
-      walk(cn, cd, depth + 1, ownCraft ?? inhCraft, ownCraft !== null ? name : craftFrom, ownSub ?? inhSub, ownSub !== null ? name : subFrom)
+      walk(
+        cn,
+        cd,
+        depth + 1,
+        ownCraft ?? inhCraft,
+        ownCraft !== null ? name : craftFrom,
+        ownSub ?? inhSub,
+        ownSub !== null ? name : subFrom,
+      )
   }
   for (const [name, node] of Object.entries(doc.rig ?? {})) walk(name, node, 0, null, null, null, null)
   return rows
@@ -1282,7 +1351,9 @@ function refreshSlots(): void {
         sel.pickedSlot = key
         highlightSlot(key)
         setPickInfo(
-          key.startsWith('fx:') ? 'effect texture — click a texture to assign' : `part: ${key} — click a texture to assign`,
+          key.startsWith('fx:')
+            ? 'effect texture — click a texture to assign'
+            : `part: ${key} — click a texture to assign`,
         )
         refreshSlots()
         matPicker?.refresh()
@@ -1534,7 +1605,13 @@ function initLightPanel(cfg: { btn: string; pop: string; wrap: string; fp: strin
   sync(vp.getLights())
 }
 initLightPanel({ btn: '#btn-lights', pop: '#light-pop', wrap: '#light-wrap', fp: '#lt-', reset: '#lt-reset' })
-initLightPanel({ btn: '#mgr-btn-lights', pop: '#mgr-light-pop', wrap: '#mgr-light-wrap', fp: '#mgr-lt-', reset: '#mgr-lt-reset' })
+initLightPanel({
+  btn: '#mgr-btn-lights',
+  pop: '#mgr-light-pop',
+  wrap: '#mgr-light-wrap',
+  fp: '#mgr-lt-',
+  reset: '#mgr-lt-reset',
+})
 
 // Render-options popover — global render settings (parallax on/off + quality). Live via the
 // shared parallax uniforms; persisted to localStorage.
@@ -1718,7 +1795,7 @@ const lineupTick = (dt: number) => {
 // shadow ground the props properly.
 //
 // Texture density is the toolbar "ground" slider (repeats per meter, an editor pref) —
-// the catalog deliberately carries no uvScale (that's per-SLOT on entities), so the
+// the catalog deliberately carries no uvScale (that's per-SLOT on models), so the
 // ground's density knob lives with the ground.
 const LINEUP_GROUND_MAT = 'grass_02'
 const GROUND_KEY = 'volaticus.ground'
@@ -1749,7 +1826,7 @@ function buildLineupGround(box: THREE.Box3): THREE.Mesh {
   const mesh = new THREE.Mesh(geo, makeSlotMaterial('lineup-ground', { material: LINEUP_GROUND_MAT }))
   mesh.userData.groundSize = size
   meterGroundUv(mesh, groundPrefs.uvScale)
-  // exactly y=0 — entities stand ON it (their bottom faces are downward-facing and
+  // exactly y=0 — models stand ON it (their bottom faces are downward-facing and
   // never render from above, so the coplanar plane can't shimmer against them)
   mesh.position.set(c.x, 0, c.z)
   mesh.receiveShadow = true
@@ -1804,7 +1881,7 @@ function exitLineup(): void {
 // Build the lineup ASYNCHRONOUSLY: entity building and batch feeding run on a per-frame
 // time budget (the UI never freezes), everything stays HIDDEN until every texture has
 // decoded and every pipeline has compiled, then the whole scene reveals in one frame.
-// The veil narrates each stage. Local ownership: entities/batcher are committed to the
+// The veil narrates each stage. Local ownership: models/batcher are committed to the
 // module-level lineup/lineupBatcher only at the very end — an aborted build disposes
 // its own partial work and exitLineup never sees it.
 async function enterLineup(): Promise<void> {
@@ -1836,10 +1913,7 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
   const order = ['prop', 'pickup', 'enemy', 'character', 'levelpart']
   const items = [...inv.entities.values()]
     .filter((i) => i.doc)
-    .sort(
-      (a, b) =>
-        order.indexOf(a.doc!.category) - order.indexOf(b.doc!.category) || a.id.localeCompare(b.id),
-    )
+    .sort((a, b) => order.indexOf(a.doc!.category) - order.indexOf(b.doc!.category) || a.id.localeCompare(b.id))
   const GAP = 0.7
   const MAX_ROW_WIDTH = 15
   let x = 0
@@ -1924,12 +1998,11 @@ async function enterLineupInner(busy: BusyHandle): Promise<void> {
     }
   }
   // cross-entity batching, same budgeted-yield contract (buildAsync cleans up after
-  // itself on abort; our entities are ours to dispose).
+  // itself on abort; our models are ours to dispose).
   const batcher = new SceneBatcher()
   const ok = await batcher.buildAsync(inputs, {
     aborted: () => gen !== lineupGen,
-    onProgress: (p) =>
-      busy.update(`lineup — ${p.phase === 'bucket' ? 'merging' : 'batching'} ${p.done}/${p.total}…`),
+    onProgress: (p) => busy.update(`lineup — ${p.phase === 'bucket' ? 'merging' : 'batching'} ${p.done}/${p.total}…`),
   })
   if (!ok) return abort()
   // Stage HIDDEN until textures + pipelines are ready, then reveal the whole lineup
@@ -2082,8 +2155,7 @@ function mgrTuningOf(id: string): MgrTuning | null {
 // Drives the tuning panel's show-if-present rules + the roughness/metalness badges.
 function mgrMapsOf(id: string | null): MgrMaps {
   const doc = id ? inv.materialCatalog()[id] : undefined
-  const has = (k: 'roughness' | 'metallic' | 'normal' | 'ao' | 'height'): boolean =>
-    !!(doc && doc.maps[k])
+  const has = (k: 'roughness' | 'metallic' | 'normal' | 'ao' | 'height'): boolean => !!(doc && doc.maps[k])
   return {
     roughness: has('roughness'),
     metallic: has('metallic'),
@@ -2107,7 +2179,13 @@ function refreshMgrList(): void {
 function refreshMgrTuning(): void {
   if (!mgrSelId) return renderMgrTuning('Material', '', null, mgrMapsOf(null), mgrTuneCb)
   const doc = inv.materialCatalog()[mgrSelId]
-  renderMgrTuning(mgrSelId + (mgrDirty ? ' •' : ''), doc?.category ?? '', mgrTuningOf(mgrSelId), mgrMapsOf(mgrSelId), mgrTuneCb)
+  renderMgrTuning(
+    mgrSelId + (mgrDirty ? ' •' : ''),
+    doc?.category ?? '',
+    mgrTuningOf(mgrSelId),
+    mgrMapsOf(mgrSelId),
+    mgrTuneCb,
+  )
 }
 
 // The material overlay owns its OWN dirty state (separate from the entity's), with
@@ -2129,7 +2207,10 @@ function setMgrTuning(mut: (t: Record<string, unknown>) => void): void {
   if (!mgrSelId) return
   const item = inv.materials.get(mgrSelId)
   if (!item?.doc) return
-  for (const target of [item.raw as { tuning?: Record<string, unknown> }, item.doc as unknown as { tuning: Record<string, unknown> }]) {
+  for (const target of [
+    item.raw as { tuning?: Record<string, unknown> },
+    item.doc as unknown as { tuning: Record<string, unknown> },
+  ]) {
     if (target.tuning) mut(target.tuning)
   }
   mgrDirty = true
@@ -2196,7 +2277,7 @@ function selectMaterial(id: string): void {
   refreshMgrTuning()
 }
 
-// #16: entities whose slots still reference a material id (referrers for the
+// #16: models whose slots still reference a material id (referrers for the
 // delete warning). Returns "<entity>.<slot>" strings.
 function materialReferrers(id: string): string[] {
   const out: string[] = []
@@ -2366,7 +2447,12 @@ function mgrEnterSetup(): void {
     // PREVIEW-ONLY UV projection — a viewing aid (never written to the material).
     const uvProjSel = $('#mgr-uvproject') as HTMLSelectElement
     uvProjSel.innerHTML = ''
-    for (const [val, lbl] of [['', '—'], ['box', 'box'], ['planar', 'planar'], ['sphere', 'sphere']]) {
+    for (const [val, lbl] of [
+      ['', '—'],
+      ['box', 'box'],
+      ['planar', 'planar'],
+      ['sphere', 'sphere'],
+    ]) {
       const o = document.createElement('option')
       o.value = val
       o.textContent = lbl
@@ -2477,7 +2563,12 @@ async function boot(): Promise<void> {
       matPicker?.refresh()
       if (mgrMode) {
         // don't stomp an in-progress tuning edit; otherwise reflect the change
-        if (mgrSelId && paths.some((p) => p.replace(/\.json$/, '').endsWith('/' + mgrSelId) || p === 'materials/' + mgrSelId + '.json')) {
+        if (
+          mgrSelId &&
+          paths.some(
+            (p) => p.replace(/\.json$/, '').endsWith('/' + mgrSelId) || p === 'materials/' + mgrSelId + '.json',
+          )
+        ) {
           if (!mgrDirty) {
             rebuildMgrPreview()
             refreshMgrTuning()
@@ -2489,7 +2580,13 @@ async function boot(): Promise<void> {
     // external edit (usually Claude editing JSON by prompt) — rebuild in place
     renderItemList(inv, listFilter, sel ? sel.kind + ':' + sel.id : null, { onSelect: select })
     if (!sel) return
-    const mine = paths.some((p) => p.split('/').pop()!.replace(/\.json$/, '') === sel!.id)
+    const mine = paths.some(
+      (p) =>
+        p
+          .split('/')
+          .pop()!
+          .replace(/\.json$/, '') === sel!.id,
+    )
     const refsChanged = paths.some((p) => p.startsWith('effects/') || p.startsWith('sfx/'))
     if (mine && sel.kind === 'entity') {
       if (sel.dirty) toast('file changed on disk (you have unsaved changes!)')
@@ -2499,7 +2596,8 @@ async function boot(): Promise<void> {
       }
     } else if (mine || refsChanged) {
       setValidation(
-        (sel.kind === 'entity' ? inv.entities : sel.kind === 'effect' ? inv.effects : inv.sfx).get(sel.id)?.issues ?? [],
+        (sel.kind === 'entity' ? inv.entities : sel.kind === 'effect' ? inv.effects : inv.sfx).get(sel.id)?.issues ??
+          [],
       )
     }
   })
@@ -2667,7 +2765,10 @@ window.__ed = {
     sel?.built?.meshes.map((m) => ({
       node: m.userData.nodeName as string,
       visible: m.visible,
-      worldScale: m.getWorldScale(new THREE.Vector3()).toArray().map((v) => +v.toFixed(3)),
+      worldScale: m
+        .getWorldScale(new THREE.Vector3())
+        .toArray()
+        .map((v) => +v.toFixed(3)),
       mats: (Array.isArray(m.material) ? m.material : [m.material]).map(
         (x) => `${x.name}#${(x as THREE.MeshStandardMaterial).color?.getHexString?.() ?? '??'}`,
       ),

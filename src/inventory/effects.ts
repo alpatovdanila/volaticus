@@ -148,14 +148,20 @@ function dominantBoneIndex(sm: THREE.SkinnedMesh): number {
 // location, so it tumbles in place. Every instance of the pool shares this one geometry;
 // the spawn matrix places it at the live limb:
 //   skinned: meshWorld · bindInv · boneWorld · T(centre)     plain: meshWorld · T(centre)
-function bakeCanonicalChunk(mesh: THREE.Mesh): { geo: THREE.BufferGeometry; centre: THREE.Vector3; size: THREE.Vector3; boneIndex: number } {
+function bakeCanonicalChunk(mesh: THREE.Mesh): {
+  geo: THREE.BufferGeometry
+  centre: THREE.Vector3
+  size: THREE.Vector3
+  boneIndex: number
+} {
   const sm = (mesh as THREE.SkinnedMesh).isSkinnedMesh ? (mesh as THREE.SkinnedMesh) : null
   const geo = mesh.geometry.clone()
   let boneIndex = -1
   if (sm) {
     boneIndex = dominantBoneIndex(sm)
     // bone-local at bind: boneInverse · bindMatrix (applyMatrix4 also fixes normals/tangents)
-    if (boneIndex >= 0) geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(sm.skeleton.boneInverses[boneIndex], sm.bindMatrix))
+    if (boneIndex >= 0)
+      geo.applyMatrix4(new THREE.Matrix4().multiplyMatrices(sm.skeleton.boneInverses[boneIndex], sm.bindMatrix))
   }
   geo.deleteAttribute('skinIndex') // instances are rigid — drop skin attributes
   geo.deleteAttribute('skinWeight')
@@ -191,7 +197,7 @@ interface Shard {
 }
 
 // One InstancedMesh per (source geometry, part): every severed copy of that part — across
-// ALL live entities of the model, whenever they were severed — is one instance slot, so a
+// ALL live models of the model, whenever they were severed — is one instance slot, so a
 // horde's worth of severed hands stays ONE draw call. Canonical geometry is baked once in
 // the dominant bone's bind frame, re-centred on its own bbox (a chunk tumbles about its
 // own middle); the spawn matrix places it at the live limb.
@@ -306,7 +312,7 @@ export class EffectSystem {
   }
 
   // Dismemberment: sever ONE mesh part and let it tumble away. Chunks are INSTANCED — every
-  // severed copy of the same (geometry, part), across all entities and moments in time, is a
+  // severed copy of the same (geometry, part), across all models and moments in time, is a
   // slot of one shared InstancedMesh: 100 severed hands = 1 draw call. The pool's canonical
   // geometry is baked once in the part's dominant-bone bind frame; each spawn is placed at
   // THIS entity's live limb via meshWorld · bindInv · boneWorld · T(centre) — exact for
@@ -368,10 +374,15 @@ export class EffectSystem {
       // hit-from-front knock-back: mostly horizontal (flies behind), a small pop up → lands + rests
       vel: v
         .multiplyScalar((2.2 + Math.random()) * kick)
-        .add(new THREE.Vector3((Math.random() - 0.5) * 0.6 * kick, (1.4 + Math.random() * 0.5) * Math.min(kick, 1.6), 0)),
+        .add(
+          new THREE.Vector3((Math.random() - 0.5) * 0.6 * kick, (1.4 + Math.random() * 0.5) * Math.min(kick, 1.6), 0),
+        ),
       axis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
       spin: (7 + Math.random() * 5) * THREE.MathUtils.clamp(1 / w, 0.5, 2.2),
-      restY: Math.max(0.02, (Math.min(pool.size.x * Math.abs(scl.x), pool.size.y * Math.abs(scl.y), pool.size.z * Math.abs(scl.z)) / 2)),
+      restY: Math.max(
+        0.02,
+        Math.min(pool.size.x * Math.abs(scl.x), pool.size.y * Math.abs(scl.y), pool.size.z * Math.abs(scl.z)) / 2,
+      ),
       resting: false,
     }
     pool.slots.push(rec)
@@ -461,9 +472,7 @@ export class EffectSystem {
         sprites = []
       } else {
         const mat =
-          def.inherit && params?.texture
-            ? acquireBurstMaterial(params.texture, params.uvRot)
-            : acquireBurstMaterial()
+          def.inherit && params?.texture ? acquireBurstMaterial(params.texture, params.uvRot) : acquireBurstMaterial()
         const geo = def.geometry === 'plank' ? plankDebrisGeometry(def.aspect ?? [2.8, 0.5, 0.35]) : BOX
         mesh = new THREE.InstancedMesh(geo, mat, def.count)
         mesh.userData.ownGeometry = def.geometry === 'plank'
@@ -481,7 +490,7 @@ export class EffectSystem {
           dir = new THREE.Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1)
           if (dir.lengthSq() < 1e-4) dir = new THREE.Vector3(0, 1, 0)
           dir.normalize()
-          if (def.dir === 'up') dir.y = Math.abs(dir.y) * 1.5, dir.normalize()
+          if (def.dir === 'up') ((dir.y = Math.abs(dir.y) * 1.5), dir.normalize())
           if (params?.aim) dir.add(params.aim).normalize()
         }
         const speed = def.speed[0] + Math.random() * (def.speed[1] - def.speed[0])
@@ -529,7 +538,11 @@ export class EffectSystem {
       if (!b.started) {
         b.started = true
         if (b.mesh) this.scene.add(b.mesh)
-        if (b.sprites) for (const s of b.sprites) { s.visible = true; this.scene.add(s) }
+        if (b.sprites)
+          for (const s of b.sprites) {
+            s.visible = true
+            this.scene.add(s)
+          }
       }
       let alive = 0
       for (let i = 0; i < b.particles.length; i++) {

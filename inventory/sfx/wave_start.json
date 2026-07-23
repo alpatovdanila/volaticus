@@ -1,7 +1,0 @@
-{
-  "format": 1,
-  "id": "wave_start",
-  "name": "Wave incoming",
-  "volume": 0.6,
-  "files": ["sounds/UI/sci_fi_select_big.wav"]
-}

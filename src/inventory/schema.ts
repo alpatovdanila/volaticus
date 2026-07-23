@@ -531,7 +531,7 @@ export const EntitySchema = z.object({
   // SKELETAL assembly (phase 1, rigid weights — see docs/SKELETAL_ANIMATION_RESEARCH.md):
   // build this entity as bones + SkinnedMesh instead of rigid groups. Node names become
   // bone names 1:1, so the anim tracks drive bones unchanged. Opt-in per entity —
-  // skinned entities skip the per-entity merge (BatchedMesh cannot skin).
+  // skinned models skip the per-entity merge (BatchedMesh cannot skin).
   skinned: z.boolean().optional(),
   // Imported glTF/GLB model. When present, this entity is NOT procedural: geometry,
   // skeleton, materials AND animation clips all come from the GLB (which ships its own
@@ -539,7 +539,7 @@ export const EntitySchema = z.object({
   // empty ({}); `states` map state names to GLB clip names (see scripts/import-glb.ts).
   model: ModelSchema.optional(),
   materials: z.record(MaterialSchema),
-  rig: z.record(NodeSchema).optional(), // imported GLB entities have no procedural rig
+  rig: z.record(NodeSchema).optional(), // imported GLB models have no procedural rig
   physics: z
     .object({
       body: z.enum(['fixed', 'dynamic', 'kinematicCharacter']),
@@ -858,7 +858,7 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
   checkSlotInheritance(doc.materials, issues)
 
   // an imported GLB carries its own hierarchy; anything else needs a rig to be anything at all
-  if (!isImported && !doc.rig) issues.push('rig: required for non-imported entities')
+  if (!isImported && !doc.rig) issues.push('rig: required for non-imported models')
 
   const nodeNames = rigNodeNames(doc.rig ?? {})
   const dupCheck = new Set<string>()

@@ -1,5 +1,5 @@
 // migrate-layout.ts — flatten the entity category folders into a single
-// inventory/entities/<id>/<id>.json layout.
+// inventory/models/<id>/<id>.json layout.
 //
 // The category subfolders (props/enemies/characters/pickups/levelparts) were
 // redundant with the `category` field in each JSON — the studio's item list

@@ -1,6 +1,6 @@
-// SceneBatcher — the cross-entity draw-call collapser. Given a set of built entities +
+// SceneBatcher — the cross-entity draw-call collapser. Given a set of built models +
 // their world placements, it runs the shared merge (computeMergeBuckets) on each DISTINCT
-// built entity, then pools every (frame, material) bucket ACROSS ALL entities into one
+// built entity, then pools every (frame, material) bucket ACROSS ALL models into one
 // THREE.BatchedMesh per distinct batchMaterialKey. Draw calls for the whole scene =
 // distinct-material count, independent of entity/placement count.
 //
@@ -33,7 +33,7 @@ export interface BatchInput {
   placement: THREE.Matrix4
 }
 
-// buildAsync progress: 'bucket' = merging entities into (frame, material) blobs,
+// buildAsync progress: 'bucket' = merging models into (frame, material) blobs,
 // 'batch' = feeding blobs into the pooled BatchedMesh buffers.
 export interface BatchProgress {
   phase: 'bucket' | 'batch'
@@ -93,14 +93,14 @@ export class SceneBatcher {
   readonly batches = new Map<string, THREE.BatchedMesh>() // batch key → batch (one draw call each)
   private instances: Instance[] = []
   private animated: Instance[] = [] // subset needing per-frame matrix/visibility refresh
-  private animatedEntities = new Set<BuiltEntity>() // entities owning ≥1 animated instance
+  private animatedEntities = new Set<BuiltEntity>() // models owning ≥1 animated instance
   private registry = new Map<BuiltEntity, RegisteredBucket[]>() // built → its pooled buckets (dedup + spawn)
 
   constructor() {
     this.group.name = 'scene-batcher'
   }
 
-  // Build all batches from the given entities. One-shot: call dispose() then build()
+  // Build all batches from the given models. One-shot: call dispose() then build()
   // again to rebuild (the preview does this on every edit; the lineup once on enter).
   // Synchronous drain of buildSteps — the game/preview path, unchanged behaviour.
   build(inputs: BatchInput[], opts: Pick<BatchBuildOptions, 'instanceHeadroom'> = {}): void {
@@ -165,7 +165,7 @@ export class SceneBatcher {
     let finished = false
     try {
       // 1. bucket every DISTINCT built entity (repeat placements reuse the plan);
-      //    group buckets across entities by batch key; sum pool sizes once per bucket,
+      //    group buckets across models by batch key; sum pool sizes once per bucket,
       //    instance counts once per placement.
       let bucketed = 0
       for (const input of inputs) {
@@ -176,7 +176,11 @@ export class SceneBatcher {
           for (const bucket of plan.buckets) {
             const key = batchMaterialKey(bucket.mat) + (bucket.frame ? '|A' : '|S')
             let g = groups.get(key)
-            if (!g) groups.set(key, (g = { mat: bucket.mat, anim: !!bucket.frame, items: [], verts: 0, indices: 0, instances: 0 }))
+            if (!g)
+              groups.set(
+                key,
+                (g = { mat: bucket.mat, anim: !!bucket.frame, items: [], verts: 0, indices: 0, instances: 0 }),
+              )
             g.items.push({ bucket, plan })
             g.verts += bucket.geo.getAttribute('position').count
             g.indices += bucket.geo.getIndex()?.count ?? 0
@@ -184,7 +188,8 @@ export class SceneBatcher {
           yield { phase: 'bucket', done: ++bucketed, total: inputs.length }
         }
         plan.inputs.push(input)
-        for (const bucket of plan.buckets) groups.get(batchMaterialKey(bucket.mat) + (bucket.frame ? '|A' : '|S'))!.instances++
+        for (const bucket of plan.buckets)
+          groups.get(batchMaterialKey(bucket.mat) + (bucket.frame ? '|A' : '|S'))!.instances++
       }
 
       // 2. one exact-sized BatchedMesh per key (+ optional instance headroom for spawn).
@@ -283,7 +288,7 @@ export class SceneBatcher {
     l.set(e)
   }
 
-  // Per frame: the AnimPlayers already mutated the entities' node `outer` transforms
+  // Per frame: the AnimPlayers already mutated the models' node `outer` transforms
   // (via EntityPreview.update). Refresh each animated instance's matrix + visibility from
   // the freshly-updated sim graph — writes reach the batch only on actual change.
   // Static instances never change, so they're skipped (and live in separate batches).

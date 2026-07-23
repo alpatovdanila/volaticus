@@ -172,12 +172,24 @@ export class EntityPreview {
   private applyVisibility(): void {
     const st = this.current ? this.states[this.current] : undefined
     for (const bn of this.built.nodes.values()) bn.outer.visible = bn.defaultVisible
-    for (const n of st?.show ?? []) { const bn = this.built.nodes.get(n); if (bn) bn.outer.visible = true }
-    for (const n of st?.hide ?? []) { const bn = this.built.nodes.get(n); if (bn) bn.outer.visible = false }
+    for (const n of st?.show ?? []) {
+      const bn = this.built.nodes.get(n)
+      if (bn) bn.outer.visible = true
+    }
+    for (const n of st?.hide ?? []) {
+      const bn = this.built.nodes.get(n)
+      if (bn) bn.outer.visible = false
+    }
     for (const name of this.activeModifiers) {
       const mod = this.modifierDef(name)
-      for (const n of mod?.show ?? []) { const bn = this.built.nodes.get(n); if (bn) bn.outer.visible = true }
-      for (const n of mod?.hide ?? []) { const bn = this.built.nodes.get(n); if (bn) bn.outer.visible = false }
+      for (const n of mod?.show ?? []) {
+        const bn = this.built.nodes.get(n)
+        if (bn) bn.outer.visible = true
+      }
+      for (const n of mod?.hide ?? []) {
+        const bn = this.built.nodes.get(n)
+        if (bn) bn.outer.visible = false
+      }
     }
   }
 
@@ -247,7 +259,8 @@ export class EntityPreview {
       const next = this.mixer.clipAction(clip)
       next.setLoop(THREE.LoopRepeat, Infinity)
       next.reset().play()
-      if (this.currentAction && this.currentAction !== next) this.currentAction.crossFadeTo(next, Math.max(0.02, blend), false)
+      if (this.currentAction && this.currentAction !== next)
+        this.currentAction.crossFadeTo(next, Math.max(0.02, blend), false)
       this.currentAction = next
     }
     if (st?.enter) this.fireBinding(st.enter) // reactions (effects/sfx/dismember) fire on state entry
@@ -264,7 +277,7 @@ export class EntityPreview {
   }
 
   // Offset the current state's LOOPING anim into a stable mid-cycle phase
-  // (u = 0..1 of the clip duration) so identical entities de-sync. State/cue
+  // (u = 0..1 of the clip duration) so identical models de-sync. State/cue
   // timers stay anchored to spawn — only the loop clock shifts.
   setAnimPhase(u: number): void {
     this.anim?.setPhase(u)
@@ -294,7 +307,9 @@ export class EntityPreview {
         this.overlayLeft -= dt
         if (this.overlayLeft <= 0) {
           this.overlayLeft = null
-          const stateClip = this.current ? this.clipsByName?.get(this.states[this.current]?.anim ?? this.current) : undefined
+          const stateClip = this.current
+            ? this.clipsByName?.get(this.states[this.current]?.anim ?? this.current)
+            : undefined
           if (stateClip) {
             const next = this.mixer.clipAction(stateClip)
             next.setLoop(THREE.LoopRepeat, Infinity)
@@ -321,9 +336,7 @@ export class EntityPreview {
     const step = this.anim?.update(dt) ?? { t0: 0, t1: 0, wrapped: false, duration: 1 }
     // fire cues whose time was crossed this frame (handling loop wrap)
     for (const cue of this.cueTimes) {
-      const crossed = step.wrapped
-        ? cue.t > step.t0 || cue.t <= step.t1
-        : cue.t > step.t0 && cue.t <= step.t1
+      const crossed = step.wrapped ? cue.t > step.t0 || cue.t <= step.t1 : cue.t > step.t0 && cue.t <= step.t1
       // also fire t=0 cues on the very first frame of the state
       const firstFrame = this.stateTime === 0 && cue.t === 0
       if (crossed || firstFrame) this.fireBinding(cue.binding)

@@ -20,7 +20,7 @@
    3. REPACK textures (optional, --maxtex N). Character exports routinely ship 2K/4K maps that
       dominate the file.
 
-   4. GENERATE the entity doc at inventory/entities/<id>/<id>.json — model.src pointing at the
+   4. GENERATE the entity doc at inventory/models/<id>/<id>.json — model.src pointing at the
       baked GLB (and NO model.anims, since the clips are inside it now), plus emissive controls
       for @exposeEmissive parts and dismemberable parts derived from skin weights. Clip names are
       not restated in the doc — they are readable from the GLB itself.
@@ -109,14 +109,18 @@ if (!target) {
   process.exit(1)
 }
 
-const dir = target.includes('/') || target.includes('\\') || path.isAbsolute(target)
-  ? path.resolve(ROOT, target)
-  : path.join(ROOT, 'resources', 'models', target)
+const dir =
+  target.includes('/') || target.includes('\\') || path.isAbsolute(target)
+    ? path.resolve(ROOT, target)
+    : path.join(ROOT, 'resources', 'models', target)
 
 const source = path.join(dir, 'index.glb')
 const outName = flag('out') ?? 'index.baked.glb'
 const outFile = path.join(dir, outName)
-const id = (flag('id') ?? path.basename(dir)).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+const id = (flag('id') ?? path.basename(dir))
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '_')
+  .replace(/^_|_$/g, '')
 const category = flag('category') ?? 'character'
 const maxTex = flag('maxtex') ? Number(flag('maxtex')) : 0
 const force = has('force')
@@ -185,7 +189,8 @@ function pickDismemberable(parts: PartInfo[], override: string[] | null): PartIn
   if (override) {
     const wanted = new Set(override)
     const picked = parts.filter((p) => wanted.has(p.key))
-    for (const key of wanted) if (!picked.some((p) => p.key === key)) console.warn(`  ! --dismember "${key}" is not a part of this model`)
+    for (const key of wanted)
+      if (!picked.some((p) => p.key === key)) console.warn(`  ! --dismember "${key}" is not a part of this model`)
     return picked
   }
 
@@ -300,7 +305,9 @@ async function main() {
   if (!fs.existsSync(source)) throw new Error(`no index.glb at ${source}`)
 
   const animFiles = (
-    flag('anims')?.split(',').map((s) => s.trim()) ?? fs.readdirSync(dir).filter((f) => /\.fbx$/i.test(f))
+    flag('anims')
+      ?.split(',')
+      .map((s) => s.trim()) ?? fs.readdirSync(dir).filter((f) => /\.fbx$/i.test(f))
   ).sort()
 
   console.log(`source   ${path.relative(ROOT, source)}`)
@@ -327,7 +334,9 @@ async function main() {
   const merged = mergeFbxClips(scene, sources)
   const stats = injectClips(glb, merged)
   for (const warning of stats.warnings) console.warn(`  ! ${warning}`)
-  console.log(`merged   ${merged.length} clip(s), ${stats.tracks} tracks${stats.skipped ? `, ${stats.skipped} skipped` : ''}`)
+  console.log(
+    `merged   ${merged.length} clip(s), ${stats.tracks} tracks${stats.skipped ? `, ${stats.skipped} skipped` : ''}`,
+  )
 
   // 3. repack
   if (maxTex > 0) {
@@ -345,7 +354,12 @@ async function main() {
 
   // 5. entity doc
   const parts = analyseParts(scene)
-  const dismemberable = pickDismemberable(parts, flag('dismember')?.split(',').map((s) => s.trim()) ?? null)
+  const dismemberable = pickDismemberable(
+    parts,
+    flag('dismember')
+      ?.split(',')
+      .map((s) => s.trim()) ?? null,
+  )
   // from what injectClips ACTUALLY wrote: a clip whose tracks all failed node lookup is not
   // in the file, and naming it in states/locomotion would dangle
   const clipNames = [...kept, ...stats.written]
@@ -353,10 +367,9 @@ async function main() {
   console.log('\nparts')
   const totalVertices = parts.reduce((sum, p) => sum + p.vertices, 0) || 1
   for (const p of parts) {
-    const marks = [
-      dismemberable.includes(p) ? 'dismember' : '',
-      p.emissive ? 'emissive' : '',
-    ].filter(Boolean).join(' + ')
+    const marks = [dismemberable.includes(p) ? 'dismember' : '', p.emissive ? 'emissive' : '']
+      .filter(Boolean)
+      .join(' + ')
     console.log(
       `  ${p.key.padEnd(22)} ${String(p.vertices).padStart(6)}v  ` +
         `${(p.dominantShare * 100).toFixed(0).padStart(3)}% ${p.dominantBone.padEnd(24)} ` +

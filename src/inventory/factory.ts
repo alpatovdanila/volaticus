@@ -291,7 +291,7 @@ function subdivideGeometry(geo: THREE.BufferGeometry, levels: number): THREE.Buf
 }
 
 export interface BuiltNode {
-  // animation target, origin at the node's pivot point. A Group for rigid entities,
+  // animation target, origin at the node's pivot point. A Group for rigid models,
   // a Bone for skinned ones (doc.skinned) — identical Object3D interface either way.
   outer: THREE.Group | THREE.Bone
   inner: THREE.Group // geometry + children live here (offset by -pivot)
@@ -309,9 +309,9 @@ export interface BuiltEntity {
   // legacy per-instance tint multiplier — always 1 now (tint jitter moved to the
   // level editor). Kept so batching code that divides it back out still compiles.
   tintK: number
-  // IMPORTED GLB entities only (buildGlbEntity): the model's own AnimationMixer + clips
+  // IMPORTED GLB models only (buildGlbEntity): the model's own AnimationMixer + clips
   // drive its native skeleton. EntityPreview plays these via the mixer instead of
-  // AnimPlayer. Undefined for procedural entities (the AnimPlayer path is unchanged).
+  // AnimPlayer. Undefined for procedural models (the AnimPlayer path is unchanged).
   mixer?: THREE.AnimationMixer
   clips?: THREE.AnimationClip[]
   // GLB meshes tagged "<part>@exposeEmissive": their CLONED materials (so only that part
@@ -1919,7 +1919,7 @@ export function disposeEntity(built: BuiltEntity): void {
     if (o instanceof THREE.Mesh) o.geometry.dispose()
   })
   // slot materials are SHARED via the materials.ts cache (one instance per resolved
-  // def across all entities) — never disposed per entity. The cache owns them for
+  // def across all models) — never disposed per entity. The cache owns them for
   // the session; setMaterialCatalog turns the generation over.
 }
 

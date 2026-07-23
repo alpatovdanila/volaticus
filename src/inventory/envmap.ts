@@ -41,7 +41,7 @@ export function attachEnv(m: THREE.Material): void {
   }
 }
 
-// walk freshly built content (instances, vegetation entities) and attach
+// walk freshly built content (instances, vegetation models) and attach
 // reflections to every opted-in material
 export function applyEnvReflection(root: THREE.Object3D): void {
   root.traverse((o) => {

@@ -9,7 +9,7 @@ import {
   LastFinishedAnimationTaskId,
 } from '../world/ecs/components'
 
-import { AnimationEventName, AnimationProfileState, EventClip } from '../../../../shared/inventory-schema'
+import { AnimationEventName, AnimationProfileState, EventClip } from '../../../../../inventory/schemas/model.schema'
 import { AnimationProfile } from '../world/ecs/components'
 
 let nextTaskId = 1

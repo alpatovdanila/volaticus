@@ -10,7 +10,7 @@
 //      downscaling to ≤N px shrinks the file ~50×. Decode → resize (sharp) → re-encode, then
 //      rebuild the binary chunk. Everything else (mesh, skeleton, animation data) is untouched.
 //
-//   3. GENERATE the entity doc → inventory/entities/<id>/<id>.json: model.src, sibling FBX to
+//   3. GENERATE the entity doc → inventory/models/<id>/<id>.json: model.src, sibling FBX to
 //      merge (model.anims), a state per clip, and an emissive control for every mesh named
 //      "<part>@exposeEmissive" (glow, colour+intensity — tweak live in the editor). Skipped if
 //      the doc already exists (won't clobber hand edits) unless --force.
@@ -63,7 +63,7 @@ for (let i = 0; i < args.length; i++) {
   const a = args[i]
   if (a === '--maxtex') {
     const n = parseInt(args[i + 1] ?? '', 10)
-    maxTex = Number.isFinite(n) && n > 0 ? ((i++, n)) : 512 // bare flag → 512
+    maxTex = Number.isFinite(n) && n > 0 ? (i++, n) : 512 // bare flag → 512
   } else if (a.startsWith('--maxtex=')) {
     maxTex = parseInt(a.slice(9), 10) || 512
   } else if (a === '--id') {
@@ -164,7 +164,9 @@ if (glbAnims.length) {
       name = baseN === 0 ? 'index' : `index.${String(baseN).padStart(3, '0')}`
       baseN++
     } while (fbxNames.has(name))
-    console.log(`  "${name}"  ←  baked clip ${ga.dur.toFixed(2)}s (${junk ? 'junk name "' + ga.a.name + '"' : 'name collided with FBX "' + ga.a.name + '"'})`)
+    console.log(
+      `  "${name}"  ←  baked clip ${ga.dur.toFixed(2)}s (${junk ? 'junk name "' + ga.a.name + '"' : 'name collided with FBX "' + ga.a.name + '"'})`,
+    )
     ga.a.name = name
   }
 }
@@ -196,9 +198,14 @@ async function repack(): Promise<void> {
       continue
     }
     const pipe = sharp(src).resize({ width: maxTex, height: maxTex, fit: 'inside', withoutEnlargement: true })
-    const out = img.mime === 'image/jpeg' ? await pipe.jpeg({ quality: 90 }).toBuffer() : await pipe.png({ compressionLevel: 9 }).toBuffer()
+    const out =
+      img.mime === 'image/jpeg'
+        ? await pipe.jpeg({ quality: 90 }).toBuffer()
+        : await pipe.png({ compressionLevel: 9 }).toBuffer()
     newData.set(img.bv, out)
-    console.log(`  ${img.name.slice(0, 42)}  ${w}×${h} → ≤${maxTex}   ${(bv.byteLength / 1e6).toFixed(1)}MB → ${(out.length / 1e6).toFixed(2)}MB`)
+    console.log(
+      `  ${img.name.slice(0, 42)}  ${w}×${h} → ≤${maxTex}   ${(bv.byteLength / 1e6).toFixed(1)}MB → ${(out.length / 1e6).toFixed(2)}MB`,
+    )
   }
   if (!newData.size) return
 
@@ -275,13 +282,23 @@ function appendAccessor(floats: number[], type: 'SCALAR' | 'VEC3' | 'VEC4' | 'MA
 }
 // unsigned-byte VEC4 accessor (JOINTS_0 — plain integer joint indices, never normalized)
 function appendAccessorU8Vec4(bytes: number[]): number {
-  const acc = { bufferView: appendBufferView(Buffer.from(bytes)), componentType: 5121, count: bytes.length / 4, type: 'VEC4' }
+  const acc = {
+    bufferView: appendBufferView(Buffer.from(bytes)),
+    componentType: 5121,
+    count: bytes.length / 4,
+    type: 'VEC4',
+  }
   const idx = json.accessors.length
   json.accessors.push(acc)
   return idx
 }
 // read/write a float32 VEC3 attribute in place (handles accessor/view offsets + optional stride)
-function vec3Attr(accIdx: number): { count: number; get(i: number): [number, number, number]; set(i: number, v: [number, number, number]): void; acc: Record<string, unknown> } {
+function vec3Attr(accIdx: number): {
+  count: number
+  get(i: number): [number, number, number]
+  set(i: number, v: [number, number, number]): void
+  acc: Record<string, unknown>
+} {
   const acc = json.accessors[accIdx]
   if (acc.componentType !== 5126 || acc.type !== 'VEC3') throw new Error('expected float32 VEC3 accessor')
   const bv = json.bufferViews[acc.bufferView]
@@ -325,17 +342,36 @@ function quatMul(a: number[], b: number[]): number[] {
 function quatToMat3(q: number[]): number[] {
   const [x, y, z, w] = q
   return [
-    1 - 2 * (y * y + z * z), 2 * (x * y + z * w), 2 * (x * z - y * w),
-    2 * (x * y - z * w), 1 - 2 * (x * x + z * z), 2 * (y * z + x * w),
-    2 * (x * z + y * w), 2 * (y * z - x * w), 1 - 2 * (x * x + y * y),
+    1 - 2 * (y * y + z * z),
+    2 * (x * y + z * w),
+    2 * (x * z - y * w),
+    2 * (x * y - z * w),
+    1 - 2 * (x * x + z * z),
+    2 * (y * z + x * w),
+    2 * (x * z + y * w),
+    2 * (y * z - x * w),
+    1 - 2 * (x * x + y * y),
   ] // column-major 3×3
 }
-interface Xform { m: number[]; t: number[] } // linear part (col-major 3×3) + translation
+interface Xform {
+  m: number[]
+  t: number[]
+} // linear part (col-major 3×3) + translation
 function nodeXform(n: { translation?: number[]; rotation?: number[]; scale?: number[] }): Xform {
   const r = quatToMat3(n.rotation ?? [0, 0, 0, 1])
   const s = n.scale ?? [1, 1, 1]
   // columns scaled by the node scale (R·S)
-  const m = [r[0] * s[0], r[1] * s[0], r[2] * s[0], r[3] * s[1], r[4] * s[1], r[5] * s[1], r[6] * s[2], r[7] * s[2], r[8] * s[2]]
+  const m = [
+    r[0] * s[0],
+    r[1] * s[0],
+    r[2] * s[0],
+    r[3] * s[1],
+    r[4] * s[1],
+    r[5] * s[1],
+    r[6] * s[2],
+    r[7] * s[2],
+    r[8] * s[2],
+  ]
   return { m, t: n.translation ?? [0, 0, 0] }
 }
 function xformCompose(p: Xform, c: Xform): Xform {
@@ -343,7 +379,8 @@ function xformCompose(p: Xform, c: Xform): Xform {
   const b = c.m
   const m = new Array(9).fill(0)
   for (let col = 0; col < 3; col++)
-    for (let row = 0; row < 3; row++) m[col * 3 + row] = a[row] * b[col * 3] + a[3 + row] * b[col * 3 + 1] + a[6 + row] * b[col * 3 + 2]
+    for (let row = 0; row < 3; row++)
+      m[col * 3 + row] = a[row] * b[col * 3] + a[3 + row] * b[col * 3 + 1] + a[6 + row] * b[col * 3 + 2]
   return { m, t: [0, 1, 2].map((r) => p.t[r] + a[r] * c.t[0] + a[3 + r] * c.t[1] + a[6 + r] * c.t[2]) }
 }
 function xformPoint(x: Xform, v: [number, number, number]): [number, number, number] {
@@ -423,7 +460,13 @@ function synthesizeStemRig(): void {
   json.scenes[json.scene ?? 0].nodes.push(rootIdx)
   // IBM = inverse(T(base)) for both joints (vertices are in scene space post-bake)
   const ibm = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -base[0], -base[1], -base[2], 1]
-  json.skins = [{ inverseBindMatrices: appendAccessor([...ibm, ...ibm], 'MAT4', false), joints: [rootIdx, bendIdx], skeleton: rootIdx }]
+  json.skins = [
+    {
+      inverseBindMatrices: appendAccessor([...ibm, ...ibm], 'MAT4', false),
+      joints: [rootIdx, bendIdx],
+      skeleton: rootIdx,
+    },
+  ]
 
   // 3) per-vertex weights: height-gradient root→bend (smoothstep, small planted dead-zone)
   const h0 = min[1]
@@ -450,7 +493,9 @@ function synthesizeStemRig(): void {
     }
   }
   json.buffers[0].byteLength = binBuf!.length
-  console.log(`  stem rig: ${meshNodes.length} mesh(es) skinned to stem_root+stem_bend @ base [${base.map((v) => v.toFixed(3)).join(', ')}], height ${hSpan.toFixed(2)}m`)
+  console.log(
+    `  stem rig: ${meshNodes.length} mesh(es) skinned to stem_root+stem_bend @ base [${base.map((v) => v.toFixed(3)).join(', ')}], height ${hSpan.toFixed(2)}m`,
+  )
 }
 
 // ---- 2e. forced normal recompute (optional, --recalc-normals) ----
@@ -572,7 +617,10 @@ function generateTangentsPass(): void {
       const uvBv = json.bufferViews[uvAcc.bufferView]
       const uvBase = (uvBv.byteOffset ?? 0) + (uvAcc.byteOffset ?? 0)
       const uvStride = uvBv.byteStride ?? 8
-      const uv = (i: number): [number, number] => [binBuf!.readFloatLE(uvBase + i * uvStride), binBuf!.readFloatLE(uvBase + i * uvStride + 4)]
+      const uv = (i: number): [number, number] => [
+        binBuf!.readFloatLE(uvBase + i * uvStride),
+        binBuf!.readFloatLE(uvBase + i * uvStride + 4),
+      ]
       const idx = prim.indices != null ? readIndices(prim.indices) : [...Array(pos.count).keys()]
 
       const tan1 = new Float64Array(pos.count * 3)
@@ -585,10 +633,16 @@ function generateTangentsPass(): void {
         const w1 = uv(i1)
         const w2 = uv(i2)
         const w3 = uv(i3)
-        const x1 = p2[0] - p1[0], y1 = p2[1] - p1[1], z1 = p2[2] - p1[2]
-        const x2 = p3[0] - p1[0], y2 = p3[1] - p1[1], z2 = p3[2] - p1[2]
-        const s1 = w2[0] - w1[0], t1 = w2[1] - w1[1]
-        const s2 = w3[0] - w1[0], t2 = w3[1] - w1[1]
+        const x1 = p2[0] - p1[0],
+          y1 = p2[1] - p1[1],
+          z1 = p2[2] - p1[2]
+        const x2 = p3[0] - p1[0],
+          y2 = p3[1] - p1[1],
+          z2 = p3[2] - p1[2]
+        const s1 = w2[0] - w1[0],
+          t1 = w2[1] - w1[1]
+        const s2 = w3[0] - w1[0],
+          t2 = w3[1] - w1[1]
         const denom = s1 * t2 - s2 * t1
         if (Math.abs(denom) < 1e-12) continue // degenerate UV mapping — skip
         const r = 1 / denom
@@ -609,7 +663,9 @@ function generateTangentsPass(): void {
         const t = [tan1[i * 3], tan1[i * 3 + 1], tan1[i * 3 + 2]]
         // Gram-Schmidt orthonormalize against the normal
         const nd = n[0] * t[0] + n[1] * t[1] + n[2] * t[2]
-        let tx = t[0] - n[0] * nd, ty = t[1] - n[1] * nd, tz = t[2] - n[2] * nd
+        let tx = t[0] - n[0] * nd,
+          ty = t[1] - n[1] * nd,
+          tz = t[2] - n[2] * nd
         const l = Math.hypot(tx, ty, tz)
         if (l < 1e-8) {
           out.push(1, 0, 0, 1) // degenerate — arbitrary orthogonal default
@@ -619,7 +675,9 @@ function generateTangentsPass(): void {
         ty /= l
         tz /= l
         // handedness: sign of dot(cross(n, t), tan2)
-        const cx = n[1] * tz - n[2] * ty, cy = n[2] * tx - n[0] * tz, cz = n[0] * ty - n[1] * tx
+        const cx = n[1] * tz - n[2] * ty,
+          cy = n[2] * tx - n[0] * tz,
+          cz = n[0] * ty - n[1] * tx
         const w = cx * tan2[i * 3] + cy * tan2[i * 3 + 1] + cz * tan2[i * 3 + 2] < 0 ? -1 : 1
         out.push(tx, ty, tz, w)
       }
@@ -648,7 +706,8 @@ function generateAnims(): void {
   // stem clips target the bend joint (post-bake its bind rotation is identity and its axes are
   // WORLD axes: X = front/back pitch, Z = side roll — the base stays planted, the top bends)
   const bendIdx = json.nodes.findIndex((n: { name?: string }) => n.name === 'stem_bend')
-  if ((genSway || genPushback) && bendIdx < 0) throw new Error('--gen-sway/--gen-pushback need the stem rig (no "stem_bend" joint found)')
+  if ((genSway || genPushback) && bendIdx < 0)
+    throw new Error('--gen-sway/--gen-pushback need the stem rig (no "stem_bend" joint found)')
   const eulerXZ = (xDeg: number, zDeg: number): number[] => {
     const hx = (xDeg * Math.PI) / 360
     const hz = (zDeg * Math.PI) / 360
@@ -672,7 +731,13 @@ function generateAnims(): void {
     json.animations.push({
       name: 'index',
       channels: [{ sampler: 0, target: { node: bendIdx, path: 'rotation' } }],
-      samplers: [{ input: appendAccessor(times, 'SCALAR', true), output: appendAccessor(values, 'VEC4', false), interpolation: 'LINEAR' }],
+      samplers: [
+        {
+          input: appendAccessor(times, 'SCALAR', true),
+          output: appendAccessor(values, 'VEC4', false),
+          interpolation: 'LINEAR',
+        },
+      ],
     })
     console.log(`  generated "index" (stem sway ${T}s, ±${ax}°/${az}°) → joint "stem_bend"`)
   }
@@ -689,11 +754,21 @@ function generateAnims(): void {
     json.animations.push({
       name: 'Hit',
       channels: [{ sampler: 0, target: { node: bendIdx, path: 'rotation' } }],
-      samplers: [{
-        input: appendAccessor(keys.map(([t]) => t), 'SCALAR', true),
-        output: appendAccessor(keys.flatMap(([, d]) => eulerXZ(d, 0)), 'VEC4', false),
-        interpolation: 'LINEAR',
-      }],
+      samplers: [
+        {
+          input: appendAccessor(
+            keys.map(([t]) => t),
+            'SCALAR',
+            true,
+          ),
+          output: appendAccessor(
+            keys.flatMap(([, d]) => eulerXZ(d, 0)),
+            'VEC4',
+            false,
+          ),
+          interpolation: 'LINEAR',
+        },
+      ],
     })
     console.log(`  generated "Hit" (stem pushback 0.65s, 18° spring) → joint "stem_bend"`)
   }
@@ -713,7 +788,13 @@ function generateAnims(): void {
     json.animations.push({
       name: 'index',
       channels: [{ sampler: 0, target: { node: rootIdx, path: 'translation' } }],
-      samplers: [{ input: appendAccessor(times, 'SCALAR', true), output: appendAccessor(values, 'VEC3', false), interpolation: 'LINEAR' }],
+      samplers: [
+        {
+          input: appendAccessor(times, 'SCALAR', true),
+          output: appendAccessor(values, 'VEC3', false),
+          interpolation: 'LINEAR',
+        },
+      ],
     })
     console.log(`  generated "index" (hover-bob ${T}s, ±${amp}m) → node "${root.name}"`)
   }
@@ -736,7 +817,13 @@ function generateAnims(): void {
     json.animations.push({
       name: 'Hit',
       channels: [{ sampler: 0, target: { node: rootIdx, path: 'rotation' } }],
-      samplers: [{ input: appendAccessor(times, 'SCALAR', true), output: appendAccessor(values, 'VEC4', false), interpolation: 'LINEAR' }],
+      samplers: [
+        {
+          input: appendAccessor(times, 'SCALAR', true),
+          output: appendAccessor(values, 'VEC4', false),
+          interpolation: 'LINEAR',
+        },
+      ],
     })
     console.log(`  generated "Hit" (lean-back 0.55s, 16°) → node "${root.name}"`)
   }
@@ -789,7 +876,10 @@ await main()
 
 // ---- 3. generate the entity doc (so the model shows up in the editor, ready to use) ----
 function generateEntityDoc(): void {
-  const id = (idArg || path.basename(dir)).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+  const id = (idArg || path.basename(dir))
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
   const entDir = path.resolve(ROOT, 'inventory', 'entities', id)
   const entFile = path.join(entDir, `${id}.json`)
   if (fs.existsSync(entFile) && !force) {
@@ -812,7 +902,9 @@ function generateEntityDoc(): void {
 
   // final clip names already in the GLB (after step 1 naming) + emissive parts from mesh names
   const glbClipNames: string[] = (json.animations ?? []).map((a: { name: string }) => a.name)
-  const meshNodeNames: string[] = (json.nodes ?? []).filter((n: { mesh?: number }) => n.mesh != null).map((n: { name?: string }) => n.name ?? '')
+  const meshNodeNames: string[] = (json.nodes ?? [])
+    .filter((n: { mesh?: number }) => n.mesh != null)
+    .map((n: { name?: string }) => n.name ?? '')
   const emissive: Record<string, { color: string; intensity: number }> = {}
   for (const nm of meshNodeNames) {
     const m = /^(.+?)@exposeEmissive/.exec(nm)
@@ -825,7 +917,9 @@ function generateEntityDoc(): void {
   // duration. The FBX sources are ground truth: some Blender exports bake the NLA in the wrong
   // frame (a broken bake plays face-down), and a same-name merged clip cleanly overrides the
   // baked one at play time. Baked clips with no FBX counterpart (e.g. an "index" base) survive.
-  const animFiles = fs.readdirSync(dir).filter((x) => x.toLowerCase().endsWith('.fbx') && fbxAnims.some((m) => x.replace(/\.fbx$/i, '') === m.name))
+  const animFiles = fs
+    .readdirSync(dir)
+    .filter((x) => x.toLowerCase().endsWith('.fbx') && fbxAnims.some((m) => x.replace(/\.fbx$/i, '') === m.name))
 
   // every playable clip = GLB clips + merged FBX (deduped) → one state each. Hit-like clips
   // ALSO become one-shot EVENTS (overlay: the reaction plays, then the state clip resumes).
@@ -874,4 +968,3 @@ function generateEntityDoc(): void {
   )
 }
 generateEntityDoc()
-

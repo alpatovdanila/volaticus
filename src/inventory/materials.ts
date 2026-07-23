@@ -207,7 +207,7 @@ export function catalogColorPath(materialId: string): string {
 
 // #32: the material's DEFAULT tiling density (tuning.uvScale, repeats per meter).
 // Multiplied with the per-slot uvScale by the factory's geometry UV metering —
-// NEVER applied via texture.repeat on entities (UVs are baked into geometry, so
+// NEVER applied via texture.repeat on models (UVs are baked into geometry, so
 // a texture.repeat would double-apply on top of the baked metering).
 export function catalogDefaultUvScale(materialId: string): number {
   return materialCatalog[materialId]?.tuning.uvScale ?? 1

@@ -2,8 +2,8 @@ import * as THREE from 'three'
 import { Vec3Row } from '../../../../lib/type'
 import type {
   AnimationProfileState,
-  InventoryEntityDeclaration as InventoryEntityDocType,
-} from '../../../../../shared/inventory-schema'
+  ModelDeclaration as InventoryEntityDocType,
+} from '../../../../../../inventory/schemas/model.schema'
 
 export type Vec3Component = { x: number[]; y: number[]; z: number[] }
 

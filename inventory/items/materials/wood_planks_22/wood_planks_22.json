@@ -1,14 +1,4 @@
 {
   "id": "wood_planks_22",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2",
-    "metallic": "metallic.ktx2"
-  },
-  "tuning": {
-    "normalScale": 1.9,
-    "aoIntensity": 1.69
-  }
+  "file": "wood_planks_22.glb"
 }

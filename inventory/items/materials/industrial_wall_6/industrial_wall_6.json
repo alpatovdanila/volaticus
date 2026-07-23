@@ -1,10 +1,4 @@
 {
   "id": "industrial_wall_6",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2",
-    "metallic": "metallic.ktx2"
-  }
+  "file": "industrial_wall_6.glb"
 }

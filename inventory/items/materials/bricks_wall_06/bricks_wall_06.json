@@ -1,9 +1,4 @@
 {
   "id": "bricks_wall_06",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2"
-  }
+  "file": "bricks_wall_06.glb"
 }

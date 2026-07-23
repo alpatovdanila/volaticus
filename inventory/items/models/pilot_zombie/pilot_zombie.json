@@ -1,18 +1,16 @@
 {
   "format": 1,
   "id": "pilot_zombie",
-  "model": {
-    "src": "index.baked.glb",
-    "dismember": {
-      "head": {
-        "weight": 1
-      },
-      "lhand": {
-        "weight": 1
-      },
-      "rhand": {
-        "weight": 1
-      }
+  "file": "index.baked.glb",
+  "dismember": {
+    "head": {
+      "weight": 1
+    },
+    "lhand": {
+      "weight": 1
+    },
+    "rhand": {
+      "weight": 1
     }
   },
   "animationProfile": {

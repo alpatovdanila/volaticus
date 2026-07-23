@@ -1,10 +1,4 @@
 {
   "id": "ancient_trimsheet_01",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2",
-    "metallic": "metallic.ktx2"
-  }
+  "file": "ancient_trimsheet_01.glb"
 }

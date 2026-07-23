@@ -1,13 +1,4 @@
 {
   "id": "roof_tiles_01",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2"
-  },
-  "tuning": {
-    "normalScale": 3,
-    "aoIntensity": 0.35
-  }
+  "file": "roof_tiles_01.glb"
 }

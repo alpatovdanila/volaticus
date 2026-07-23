@@ -1,6 +1,4 @@
 {
   "id": "flags_01",
-  "maps": {
-    "color": "color.ktx2"
-  }
+  "file": "flags_01.glb"
 }

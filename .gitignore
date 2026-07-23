@@ -5,4 +5,5 @@ resources/
 .idea/
 
 # baked material payloads — regenerable from resources/PBR via inventory/scripts/bake-material.ts
-inventory/items/materials/*/*.ktx2
+inventory/items/materials/*/*
+!inventory/items/materials/*/*.json

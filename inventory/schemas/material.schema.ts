@@ -1,35 +1,19 @@
 import { z } from 'zod'
 
 /*
- The material item format (inventory/items/materials/<id>/<id>.json) — written by
- inventory/scripts/bake-material.ts, hand-tuned afterward. Defined once as a schema; the type
- is inferred from it so a doc and the type describing it cannot drift apart.
+ The material item format (inventory/items/materials/<id>/<id>.json) — a POINTER doc. The
+ material itself lives entirely inside the GLB that inventory/scripts/bake-material.ts
+ writes: textures embedded via KHR_texture_basisu, AO/roughness/metallic packed into one ORM
+ image, tuning carried as real glTF material factors. `file` is the GLB's doc-relative name.
 
- `maps` values are doc-relative filenames ("color.ktx2" beside the json). `color` is the only
- required map — a material states what it actually ships. `tuning` carries the scalars the
- renderer applies; every field is defaulted, so a bare doc means "as authored".
+ Tune by editing the GLB's factors (the baker preserves them on re-bake) — this doc does not
+ grow fields.
 */
-
-const MapsSchema = z.object({
-  color: z.string().min(1),
-  normal: z.string().min(1).optional(),
-  roughness: z.string().min(1).optional(),
-  ao: z.string().min(1).optional(),
-  metallic: z.string().min(1).optional(),
-})
-
-const TuningSchema = z.object({
-  roughness: z.number().min(0).max(2).default(1),
-  metalness: z.number().min(0).max(1).default(0),
-  normalScale: z.number().min(0).max(4).default(1),
-  aoIntensity: z.number().min(0).max(2).default(1),
-})
 
 export const MaterialDeclarationSchema = z.object({
   format: z.number().optional(),
   id: z.string(),
-  maps: MapsSchema,
-  tuning: TuningSchema.default({}),
+  file: z.string().min(1),
 })
 
 export type MaterialDeclaration = z.infer<typeof MaterialDeclarationSchema>

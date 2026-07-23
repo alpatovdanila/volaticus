@@ -1,9 +1,4 @@
 {
   "id": "wooden_roof_tiles_03",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2"
-  }
+  "file": "wooden_roof_tiles_03.glb"
 }

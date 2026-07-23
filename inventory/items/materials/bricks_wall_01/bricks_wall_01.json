@@ -1,15 +1,4 @@
 {
   "id": "bricks_wall_01",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2"
-  },
-  "tuning": {
-    "roughness": 0.87,
-    "metalness": 0.11,
-    "normalScale": 1.95,
-    "aoIntensity": 0.35
-  }
+  "file": "bricks_wall_01.glb"
 }

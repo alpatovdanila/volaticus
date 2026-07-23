@@ -1,9 +1,4 @@
 {
   "id": "hay_roof_01",
-  "maps": {
-    "color": "color.ktx2",
-    "normal": "normal.ktx2",
-    "roughness": "roughness.ktx2",
-    "ao": "ao.ktx2"
-  }
+  "file": "hay_roof_01.glb"
 }

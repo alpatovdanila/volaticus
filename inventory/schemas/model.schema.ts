@@ -5,18 +5,12 @@ import { z } from 'zod'
  before building an entity. Defined once as a schema; types are inferred from it (or annotate
  it) so a doc and the type describing it cannot drift apart.
 
- Only `id` and `model.src` are required. Everything else is hand tuning, authored after the
- bake — absent means "not tuned yet", never a hidden default beyond the ones stated here.
+ Only `id` and `file` are required — uniform with every other item type. Everything else is
+ hand tuning, authored after the bake — absent means "not tuned yet", never a hidden default.
 */
 
 const DismemberPartSchema = z.object({
   weight: z.number(),
-})
-
-const ModelSchema = z.object({
-  // doc-relative: the baked GLB sits beside the json ("index.baked.glb")
-  src: z.string().min(1),
-  dismember: z.record(DismemberPartSchema).optional(),
 })
 
 /*
@@ -110,7 +104,9 @@ const AnimationProfileSchema: z.ZodType<AnimationProfileState> = z.object({
 export const ModelDeclarationSchema = z.object({
   format: z.number().optional(),
   id: z.string(),
-  model: ModelSchema,
+  // doc-relative: the baked GLB sits beside the json ("index.baked.glb")
+  file: z.string().min(1),
+  dismember: z.record(DismemberPartSchema).optional(),
   animationProfile: AnimationProfileSchema.optional(),
 })
 

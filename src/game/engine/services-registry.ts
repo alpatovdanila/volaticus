@@ -4,6 +4,7 @@ import { IRenderer } from './renderer'
 import { IWorld } from './world'
 import { IThreeSceneSync } from '@systems/three-scene-sync'
 import { IMovement } from '@systems/movement'
+import { IDestroy } from '@systems/destroy'
 import { ILevel } from './level'
 
 export interface KnownServices {
@@ -13,6 +14,7 @@ export interface KnownServices {
   world: IWorld
   movement: IMovement
   threeSceneSync: IThreeSceneSync
+  destroy: IDestroy
 }
 
 export interface IService {

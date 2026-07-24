@@ -9,7 +9,11 @@ export const Rotation: Vec3Component = { x: [], y: [], z: [] }
 
 export const SceneObject: THREE.Object3D[] = []
 
-export const NeedSpawn = {}
+export const NeedsSpawn = {}
+
+export const NeedsDespawn = {}
+
+export const NeedsDestroy = {}
 
 export const writeVec3Row = (component: Vec3Component, eid: number, vr: Vec3Row): void => {
   component.x[eid] = vr[0]

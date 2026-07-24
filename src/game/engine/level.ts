@@ -1,6 +1,6 @@
 import { BoxGeometry, Mesh, MeshNormalMaterial, PerspectiveCamera, Scene } from 'three'
 
-import { NeedSpawn, Position, Rotation, SceneObject, Velocity } from '@components'
+import { NeedsSpawn, Position, Rotation, SceneObject, Velocity } from '@components'
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
 
 export class Level extends BaseService {
@@ -24,7 +24,7 @@ export class Level extends BaseService {
     // SCAFFOLDING for the movement system — one cube drifting along +x.
     // Delete once the level loader builds the scene for real.
     // Rotation is required: ThreeSceneSync's transform query is [SceneObject, Position, Rotation]
-    const eid = this.world.addEntity(Position, Rotation, Velocity, SceneObject, NeedSpawn)
+    const eid = this.world.addEntity(Position, Rotation, Velocity, SceneObject, NeedsSpawn)
     SceneObject[eid] = new Mesh(new BoxGeometry(1, 1, 1), new MeshNormalMaterial())
     Position.x[eid] = Position.y[eid] = Position.z[eid] = 0
     Rotation.x[eid] = Rotation.y[eid] = Rotation.z[eid] = 0

@@ -1,5 +1,5 @@
 import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-registry'
-import { NeedSpawn, SceneObject, Position, Rotation } from '@components'
+import { NeedsSpawn, SceneObject, Position, Rotation, NeedsDespawn } from '@components'
 
 /*
 The boundary between an ECS and the tree js scene - controls spawn/despawn, and positioning
@@ -15,11 +15,19 @@ export class ThreeSceneSync extends BaseService {
     const { query, removeComponent, scene } = this.world
     if (!scene) return
 
-    for (const eid of query([SceneObject, NeedSpawn])) {
+    // copy: removeComponent swap-pops out of the live query array mid-iteration
+    for (const eid of [...query([SceneObject, NeedsSpawn])]) {
       const object = SceneObject[eid]
       if (!object) continue
       scene.add(object)
-      removeComponent(eid, NeedSpawn)
+      removeComponent(eid, NeedsSpawn)
+    }
+
+    for (const eid of [...query([SceneObject, NeedsDespawn])]) {
+      const object = SceneObject[eid]
+      if (!object) continue
+      object.removeFromParent()
+      removeComponent(eid, NeedsDespawn)
     }
 
     for (const eid of query([SceneObject, Position, Rotation])) {

@@ -2,6 +2,7 @@ import { ServicesRegistry } from '@engine/services-registry'
 import { scopeHmrReloads } from '@shared/lib/hmr-scope'
 import { DeviceScreen } from '@engine/device-screen'
 import { ThreeSceneSync } from '@systems/three-scene-sync'
+import { Movement } from '@systems/movement'
 import { Renderer } from '@engine/renderer'
 import { World } from '@engine/world'
 import { Level } from '@engine/level'
@@ -19,8 +20,10 @@ engine.register('level', new Level())
 engine.register('renderer', new Renderer())
 
 /**
- * Ecs systems
+ * Ecs systems — update order is registration order; threeSceneSync goes last so it
+ * publishes whatever the systems above wrote this frame
  */
+engine.register('movement', new Movement())
 engine.register('threeSceneSync', new ThreeSceneSync())
 
 await engine.start()

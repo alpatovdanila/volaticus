@@ -1,14 +1,14 @@
 import { Camera, Scene } from 'three'
 import {
-  addComponents,
-  addEntity,
+  addComponents as ecsAddComponents,
+  addEntity as ecsAddEntity,
   createWorld,
-  entityExists,
-  getEntityComponents,
-  hasComponent,
-  query,
-  removeComponent,
-  removeEntity,
+  entityExists as ecsEntityExists,
+  getEntityComponents as ecsGetEntityComponents,
+  hasComponent as ecsHasComponent,
+  query as ecsQuery,
+  removeComponent as ecsRemoveComponent,
+  removeEntity as ecsRemoveEntity,
   type ComponentRef,
   type EntityId,
   type QueryModifier,
@@ -33,37 +33,27 @@ export class World extends BaseService {
   private _scene: Scene | null = null
   private _camera: Camera | null = null
 
-  addEntity(...components: ComponentRef[]): EntityId {
-    return addEntity(this.ecs, ...components)
-  }
+  // arrow properties, not methods: systems destructure these off the world
+  // (`const { query } = this.world`), which would strip `this` from a prototype method
 
-  removeEntity(eid: EntityId): void {
-    removeEntity(this.ecs, eid)
-  }
+  addEntity = (...components: ComponentRef[]): EntityId => ecsAddEntity(this.ecs, ...components)
 
-  entityExists(eid: EntityId): boolean {
-    return entityExists(this.ecs, eid)
-  }
+  removeEntity = (eid: EntityId): void => ecsRemoveEntity(this.ecs, eid)
 
-  entityComponents(eid: EntityId): ComponentRef[] {
-    return getEntityComponents(this.ecs, eid)
-  }
+  entityExists = (eid: EntityId): boolean => ecsEntityExists(this.ecs, eid)
 
-  addComponent(eid: EntityId, ...components: Parameters<typeof addComponents>[2][]): void {
-    addComponents(this.ecs, eid, ...components)
-  }
+  entityComponents = (eid: EntityId): ComponentRef[] => ecsGetEntityComponents(this.ecs, eid)
 
-  removeComponent(eid: EntityId, ...components: ComponentRef[]): void {
-    removeComponent(this.ecs, eid, ...components)
-  }
+  addComponent = (eid: EntityId, ...components: Parameters<typeof ecsAddComponents>[2][]): void =>
+    ecsAddComponents(this.ecs, eid, ...components)
 
-  hasComponent(eid: EntityId, component: ComponentRef): boolean {
-    return hasComponent(this.ecs, eid, component)
-  }
+  removeComponent = (eid: EntityId, ...components: ComponentRef[]): void =>
+    ecsRemoveComponent(this.ecs, eid, ...components)
 
-  query(terms: QueryTerm[], ...modifiers: (QueryModifier | QueryOptions)[]): QueryResult {
-    return query(this.ecs, terms, ...modifiers)
-  }
+  hasComponent = (eid: EntityId, component: ComponentRef): boolean => ecsHasComponent(this.ecs, eid, component)
+
+  query = (terms: QueryTerm[], ...modifiers: (QueryModifier | QueryOptions)[]): QueryResult =>
+    ecsQuery(this.ecs, terms, ...modifiers)
 
   set camera(camera: Camera) {
     this._camera = camera

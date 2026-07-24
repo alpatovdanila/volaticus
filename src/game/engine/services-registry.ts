@@ -3,6 +3,7 @@ import { IDeviceScreen } from './device-screen'
 import { IRenderer } from './renderer'
 import { IWorld } from './world'
 import { IThreeSceneSync } from '@systems/three-scene-sync'
+import { IMovement } from '@systems/movement'
 import { ILevel } from './level'
 
 export interface KnownServices {
@@ -10,6 +11,7 @@ export interface KnownServices {
   renderer: IRenderer
   level: ILevel
   world: IWorld
+  movement: IMovement
   threeSceneSync: IThreeSceneSync
 }
 

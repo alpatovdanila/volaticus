@@ -15,15 +15,14 @@ export class ThreeSceneSync extends BaseService {
     const { query, removeComponent, scene } = this.world
     if (!scene) return
 
-    // copy: removeComponent swap-pops out of the live query array mid-iteration
-    for (const eid of [...query([SceneObject, NeedsSpawn])]) {
+    for (const eid of query([SceneObject, NeedsSpawn])) {
       const object = SceneObject[eid]
       if (!object) continue
       scene.add(object)
       removeComponent(eid, NeedsSpawn)
     }
 
-    for (const eid of [...query([SceneObject, NeedsDespawn])]) {
+    for (const eid of query([SceneObject, NeedsDespawn])) {
       const object = SceneObject[eid]
       if (!object) continue
       object.removeFromParent()

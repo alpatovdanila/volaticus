@@ -15,8 +15,7 @@ export class Destroy extends BaseService {
   update() {
     const { query, removeEntity } = this.world
 
-    // copy: removeEntity swap-pops out of the live query array mid-iteration
-    for (const eid of [...query([NeedsDestroy])]) removeEntity(eid)
+    for (const eid of query([NeedsDestroy])) removeEntity(eid)
   }
 }
 

@@ -1,4 +1,4 @@
-// migrate-events.ts — event/reaction model refactor (one-off):
+// migrate-events.ts — event/reaction components refactor (one-off):
 //   • behavior "destructible" → "dynamic"  (destructibility is a runtime decision)
 //   • binding `despawn: true` → `hideGeometry: true`  (a reaction hide, not removal)
 //   • binding `shatter: true` → `effect: "SCRIPT_EFFECT_SHATTER"`  (reserved script

@@ -17,7 +17,7 @@ const profileClips = (profile: AnimationProfileState): string[] => {
 }
 
 /*
- A clip the profile names but the model never shipped would freeze the character silently, so
+ A clip the profile names but the components never shipped would freeze the character silently, so
  the two are checked against each other here — the one moment doc and clips are both in hand.
 */
 const getMissingClips = (profile: AnimationProfileState, clips: { name: string }[]) => {

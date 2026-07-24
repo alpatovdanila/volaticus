@@ -313,7 +313,7 @@ export const NodeSchema: z.ZodType<NodeDef> = z.lazy(() =>
         'tree',
       ])
       .optional(),
-    mesh: z.string().optional(), // external model path relative to resources/ (fbx)
+    mesh: z.string().optional(), // external components path relative to resources/ (fbx)
     // shape "decal" ONLY: the sprite itself, EMBEDDED as a base64 data URI (data:image/png;base64,…)
     // — the entity JSON stays a full self-contained declaration, no sidecar files. A decal is a flat
     // w×h quad (size, meters, facing +Z pre-rot) carrying this image once (0..1 UVs, never tiled),
@@ -494,7 +494,7 @@ export const ClipSchema = z.object({
 })
 export type ClipDef = z.infer<typeof ClipSchema>
 
-// Imported model descriptor — the GLB is the single source of truth for its geometry,
+// Imported components descriptor — the GLB is the single source of truth for its geometry,
 // materials, skeleton and clip names (we never mirror mesh/clip lists into the doc).
 export const ModelSchema = z.object({
   src: z.string().min(1), // resources-relative, e.g. 'models/player-test/index.glb'
@@ -504,8 +504,8 @@ export const ModelSchema = z.object({
   // no entry). e.g. ["Running.fbx", "Reaction Hit.fbx"].
   anims: z.array(z.string()).optional(),
   // Uniform scale applied to the instance root at build time (game and editor preview alike).
-  // Per-model size tuning — an imported export's absolute size is arbitrary — so it is doc
-  // data, hand-edited. Required: every model states its size, 1 included.
+  // Per-components size tuning — an imported export's absolute size is arbitrary — so it is doc
+  // data, hand-edited. Required: every components states its size, 1 included.
   scale: z.number().positive(),
   // Per-part uniform emissive (glow). Keyed by the EXPOSED part name — a GLB mesh named
   // "<part>@exposeEmissive" opts in; the editor shows a colour+intensity control for it.
@@ -533,7 +533,7 @@ export const EntitySchema = z.object({
   // bone names 1:1, so the anim tracks drive bones unchanged. Opt-in per entity —
   // skinned models skip the per-entity merge (BatchedMesh cannot skin).
   skinned: z.boolean().optional(),
-  // Imported glTF/GLB model. When present, this entity is NOT procedural: geometry,
+  // Imported glTF/GLB components. When present, this entity is NOT procedural: geometry,
   // skeleton, materials AND animation clips all come from the GLB (which ships its own
   // PBR maps — kept as-is, no in-editor material editing). `rig` + `materials` are then
   // empty ({}); `states` map state names to GLB clip names (see scripts/import-glb.ts).
@@ -850,7 +850,7 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
 
   // Imported GLB entity: geometry/skeleton/materials/clips all live in the GLB. Its
   // state.anim values are GLB CLIP names (validated in the browser against the loaded
-  // model, not here), and it has no procedural rig/anims. `rig`/`materials` are empty {}.
+  // components, not here), and it has no procedural rig/anims. `rig`/`materials` are empty {}.
   const isImported = !!doc.model
 
   // item 34: inherit targets exist, no cycles, chains terminate in a material.
@@ -911,7 +911,7 @@ export function validateEntity(raw: unknown): Validated<EntityDoc> {
 
   // binding.anim must reference a real clip (imported models: GLB clip names — checked in the
   // browser, not here); binding.modifier a declared modifier OR a derived dismemberment one
-  // ("dismembered_<part>" exists implicitly for every model.dismember part); byContext keys "dim=value"
+  // ("dismembered_<part>" exists implicitly for every components.dismember part); byContext keys "dim=value"
   const modifierKnown = (name: string): boolean => {
     if (doc.modifiers?.[name]) return true
     const part = /^dismembered_(.+)$/.exec(name)?.[1]

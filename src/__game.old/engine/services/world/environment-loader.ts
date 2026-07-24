@@ -13,7 +13,7 @@ import type { LevelDeclaration } from './level-schema'
 
  The light lives on the SCENE (scene.environment / environmentIntensity / environmentRotation),
  never as a per-material envMap snapshot. A material holding a pointer to a PMREM texture keeps
- pointing at it after an environment swap disposes it — the model goes black and never recovers.
+ pointing at it after an environment swap disposes it — the components goes black and never recovers.
  Scene properties are re-read every frame, so they survive swaps.
 */
 export class EnvironmentLoader {

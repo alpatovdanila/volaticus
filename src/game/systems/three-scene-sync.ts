@@ -1,7 +1,5 @@
-import { query, removeComponent } from 'bitecs'
-
-import { NeedSpawn, Position, Rotation, ThreeObject } from './world/model/components'
-import { BaseService, IServicesRegistry, KnownServices } from '../services-registry'
+import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-registry'
+import { NeedSpawn, Position, Rotation, SceneObject } from '@components/components'
 
 /*
 The boundary between an ECS and the tree js scene - controls spawn/despawn, and positioning
@@ -14,15 +12,18 @@ export class ThreeSceneSync extends BaseService {
   }
 
   update() {
-    for (const eid of query(this.world.ecs, [ThreeObject, NeedSpawn])) {
-      const object = ThreeObject[eid]
+    const { query, removeComponent, scene } = this.world
+    if (!scene) return
+
+    for (const eid of query([SceneObject, NeedSpawn])) {
+      const object = SceneObject[eid]
       if (!object) continue
-      this.world.scene.add(object)
-      removeComponent(this.world.ecs, eid, NeedSpawn)
+      scene.add(object)
+      removeComponent(eid, NeedSpawn)
     }
 
-    for (const eid of query(this.world.ecs, [ThreeObject, Position, Rotation])) {
-      const object = ThreeObject[eid]
+    for (const eid of query([SceneObject, Position, Rotation])) {
+      const object = SceneObject[eid]
       if (!object) continue
 
       object.position.set(Position.x[eid], Position.y[eid], Position.z[eid])

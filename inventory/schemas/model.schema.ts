@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /*
- The model item format (inventory/items/models/<id>/<id>.json) — the doc the loader validates
+ The components item format (inventory/items/models/<id>/<id>.json) — the doc the loader validates
  before building an entity. Defined once as a schema; types are inferred from it (or annotate
  it) so a doc and the type describing it cannot drift apart.
 

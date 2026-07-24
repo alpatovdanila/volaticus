@@ -16,7 +16,7 @@ let loadQueue: Promise<unknown> = Promise.resolve()
 
 // FBX files reference their textures by the artist's local paths — we apply our
 // own slot materials anyway, so feed the loader a 1px placeholder for anything
-// that isn't the model file itself (avoids 404 spam).
+// that isn't the components file itself (avoids 404 spam).
 const PIXEL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 const manager = new THREE.LoadingManager()

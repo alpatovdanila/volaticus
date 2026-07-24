@@ -197,7 +197,7 @@ interface Shard {
 }
 
 // One InstancedMesh per (source geometry, part): every severed copy of that part — across
-// ALL live models of the model, whenever they were severed — is one instance slot, so a
+// ALL live models of the components, whenever they were severed — is one instance slot, so a
 // horde's worth of severed hands stays ONE draw call. Canonical geometry is baked once in
 // the dominant bone's bind frame, re-centred on its own bbox (a chunk tumbles about its
 // own middle); the spawn matrix places it at the live limb.
@@ -361,7 +361,7 @@ export class EffectSystem {
     v.normalize()
     // weight feel: constant hit impulse → velocity ∝ 1/weight. A light hand flies and
     // tumbles fast; a heavy arm drops short and rolls. Vertical pop is capped so feather
-    // parts don't moonshot; all weights share the SAME animation model (tumble → settle).
+    // parts don't moonshot; all weights share the SAME animation components (tumble → settle).
     const w = Math.max(0.05, opts?.weight ?? 1)
     const kick = THREE.MathUtils.clamp(1 / w, 0.25, 3)
     const rec: DismemberedPart = {
@@ -447,7 +447,7 @@ export class EffectSystem {
     }
     this.dismembered = keep
     // full clear (editor rebuild / entity switch): drop the pools too — the next sever
-    // re-bakes its canonical chunk (cheap, once) against whatever model is loaded then
+    // re-bakes its canonical chunk (cheap, once) against whatever components is loaded then
     if (part === undefined) {
       for (const pool of this.chunkPools.values()) {
         this.scene.remove(pool.imesh)

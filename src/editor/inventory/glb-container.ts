@@ -1,6 +1,6 @@
 /*
- Low-level GLB container surgery, shared by the offline model scripts (scripts/bake-anims.ts,
- scripts/import-model.ts). Node-only: reads and writes the raw chunks.
+ Low-level GLB container surgery, shared by the offline components scripts (scripts/bake-anims.ts,
+ scripts/import-components.ts). Node-only: reads and writes the raw chunks.
 
  Everything here edits the container IN PLACE rather than round-tripping through three's
  GLTFExporter. Exporting would re-encode embedded textures through a canvas (which does not
@@ -80,7 +80,7 @@ export function toGlbBuffer(glb: Glb): Buffer {
 export const writeGlb = (file: string, glb: Glb): void => fs.writeFileSync(file, toGlbBuffer(glb))
 
 /*
- Parse the model headless for its skeleton, meshes and clips.
+ Parse the components headless for its skeleton, meshes and clips.
 
  GLTFLoader needs the geometry, not the pixels — and headless there is no canvas to decode a
  PNG into. Stripping images/textures/materials yields the identical node hierarchy, skin, bind

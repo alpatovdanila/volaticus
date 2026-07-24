@@ -1,15 +1,15 @@
 /*
- import-model.ts — one command for the CURRENT model format: a t-pose `index.glb` with no real
+ import-components.ts — one command for the CURRENT components format: a t-pose `index.glb` with no real
  animation, plus sibling `<Clip Name>.fbx` files.
 
-   npx tsx scripts/import-model.ts bruno
-   npx tsx scripts/import-model.ts bruno --maxtex 1024 --force
-   npx tsx scripts/import-model.ts resources/models/bruno --anims "Walk Forward.fbx,Run Forward.fbx"
+   npx tsx scripts/import-components.ts bruno
+   npx tsx scripts/import-components.ts bruno --maxtex 1024 --force
+   npx tsx scripts/import-components.ts resources/models/bruno --anims "Walk Forward.fbx,Run Forward.fbx"
 
  It does four things:
 
    1. MERGE  every sibling FBX clip onto the GLB skeleton and inject them as real glTF
-      animations, so the model is ONE file and ONE request at runtime. The retarget itself is
+      animations, so the components is ONE file and ONE request at runtime. The retarget itself is
       src/inventory/fbx-anim-merge.ts — the same code the runtime loader uses, so a baked clip
       is identical to a merged one rather than a second implementation that can drift.
 
@@ -20,8 +20,8 @@
    3. REPACK textures (optional, --maxtex N). Character exports routinely ship 2K/4K maps that
       dominate the file.
 
-   4. GENERATE the entity doc at inventory/models/<id>/<id>.json — model.src pointing at the
-      baked GLB (and NO model.anims, since the clips are inside it now), plus emissive controls
+   4. GENERATE the entity doc at inventory/models/<id>/<id>.json — components.src pointing at the
+      baked GLB (and NO components.anims, since the clips are inside it now), plus emissive controls
       for @exposeEmissive parts and dismemberable parts derived from skin weights. Clip names are
       not restated in the doc — they are readable from the GLB itself.
 
@@ -102,7 +102,7 @@ const has = (name: string) => argv.includes(`--${name}`)
 const target = positional[0]
 if (!target) {
   console.error(
-    'usage: tsx scripts/import-model.ts <model-dir|name> [--id <id>] [--category <cat>]\n' +
+    'usage: tsx scripts/import-components.ts <components-dir|name> [--id <id>] [--category <cat>]\n' +
       '                                  [--maxtex N] [--anims "a.fbx,b.fbx"] [--dismember "a,b"]\n' +
       '                                  [--out name.glb] [--force]',
   )
@@ -268,7 +268,7 @@ function buildEntityDoc(
   /*
    dismember: carry over a hand-tuned block when its keys still exist, otherwise seed from the
    skin-weight analysis. The filter compares against the SANITIZED runtime keys — comparing
-   against raw glTF node names silently discards every correct key on a model whose nodes carry
+   against raw glTF node names silently discards every correct key on a components whose nodes carry
    dots (e.g. "tripo_part_15.001" vs the runtime "tripo_part_15001").
   */
   const liveKeys = new Set(parts.map((p) => p.key))

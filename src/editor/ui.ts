@@ -4,11 +4,7 @@ import type { Inventory, Item, ItemKind } from '../inventory/registry'
 
 export const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector(sel) as T
 
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  cls?: string,
-  text?: string,
-): HTMLElementTagNameMap[K] {
+function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag)
   if (cls) e.className = cls
   if (text !== undefined) e.textContent = text
@@ -54,7 +50,9 @@ export function renderItemList(inv: Inventory, filter: string, selected: string 
     section(cat + 's')
     for (const i of items) row('entity', i, i.doc?.name ?? i.id)
   }
-  const effects = [...inv.effects.values()].filter((i) => match(i.id, i.doc?.name)).sort((a, b) => a.id.localeCompare(b.id))
+  const effects = [...inv.effects.values()]
+    .filter((i) => match(i.id, i.doc?.name))
+    .sort((a, b) => a.id.localeCompare(b.id))
   if (effects.length) {
     section('effects')
     for (const i of effects) row('effect', i, i.doc?.name ?? i.id)
@@ -267,10 +265,10 @@ export interface GeomCallbacks {
   onNodeRegen(name: string): void // fresh craft seed for this node (+ its seam group)
 }
 
-// Imported-model "materials" tab: a colour + intensity control per @exposeEmissive part
+// Imported-components "materials" tab: a colour + intensity control per @exposeEmissive part
 // (e.g. the zombie's crystal), plus metalness/roughness sliders per glTF MATERIAL. PBR
 // changes preview live ('input') and are SAVED INTO THE .glb on release ('change') — the
-// model file stays the single source of truth for its materials.
+// components file stays the single source of truth for its materials.
 export interface ModelEmissivePart {
   name: string
   color: string // #rrggbb
@@ -281,7 +279,7 @@ export interface ModelPbrMaterial {
   metalness: number
   roughness: number
 }
-// every mesh part of the imported model — checkbox marks it dismemberable (+ weight)
+// every mesh part of the imported components — checkbox marks it dismemberable (+ weight)
 export interface ModelDismemberPart {
   name: string
   on: boolean
@@ -292,7 +290,7 @@ export interface ModelMaterialCallbacks {
   onIntensity(part: string, value: number): void
   // live preview every input; commit=true on release → persisted into the GLB
   onPbr(material: string, key: 'metalness' | 'roughness', value: number, commit: boolean): void
-  onDismember(part: string, on: boolean): void // dismemberable checkbox → doc model.dismember
+  onDismember(part: string, on: boolean): void // dismemberable checkbox → doc components.dismember
   onWeight(part: string, weight: number): void // throw scales with 1/weight
 }
 export function renderModelMaterials(
@@ -304,7 +302,7 @@ export function renderModelMaterials(
   const wrap = $('#slot-chips')
   wrap.innerHTML = ''
   if (!parts.length && !mats.length && !dparts.length) {
-    wrap.appendChild(el('div', 'hint', 'imported model — no editable materials'))
+    wrap.appendChild(el('div', 'hint', 'imported components — no editable materials'))
     return
   }
   if (mats.length) {
@@ -453,7 +451,13 @@ export function renderGeomTree(rows: GeomNodeInfo[], cb: GeomCallbacks): void {
     num.step = '0.01'
     num.value = r.eff.craft === null ? '' : String(r.eff.craft)
     const craftSrc =
-      r.own.craft !== null ? 'set on this node' : r.from.craft ? `inherited from "${r.from.craft}"` : r.eff.craft !== null ? 'shape default' : 'off (machine-perfect)'
+      r.own.craft !== null
+        ? 'set on this node'
+        : r.from.craft
+          ? `inherited from "${r.from.craft}"`
+          : r.eff.craft !== null
+            ? 'shape default'
+            : 'off (machine-perfect)'
     slider.title = `craftsmanship: 1 = machine-perfect (off), 0.4 = crooked hand-hewn — ${craftSrc}; propagates to children unless they set their own`
     num.title = slider.title
     slider.oninput = () => (num.value = parseFloat(slider.value).toFixed(2))
@@ -468,7 +472,10 @@ export function renderGeomTree(rows: GeomNodeInfo[], cb: GeomCallbacks): void {
     craftRow.appendChild(num)
     if (r.own.craft !== null) {
       const rst = el('button', 'ovr-reset', '↺') as HTMLButtonElement
-      rst.title = r.from.craft !== null || r.depth > 0 ? 'craft is set on this node — reset to inherit from the parent chain' : 'craft is set on this node — remove it'
+      rst.title =
+        r.from.craft !== null || r.depth > 0
+          ? 'craft is set on this node — reset to inherit from the parent chain'
+          : 'craft is set on this node — remove it'
       rst.onclick = () => cb.onNodeCraft(r.name, null)
       craftRow.appendChild(rst)
     } else {
@@ -480,7 +487,11 @@ export function renderGeomTree(rows: GeomNodeInfo[], cb: GeomCallbacks): void {
     // sub — '—' = inherit; explicit 0 overrides an inherited subdivision back to none
     const row2 = el('div', 'gen-row')
     const subSel = el('select', 'slot-select') as HTMLSelectElement
-    const subNone = el('option', undefined, r.eff.sub !== null && r.own.sub === null ? `sub: (${r.eff.sub})` : 'sub: —') as HTMLOptionElement
+    const subNone = el(
+      'option',
+      undefined,
+      r.eff.sub !== null && r.own.sub === null ? `sub: (${r.eff.sub})` : 'sub: —',
+    ) as HTMLOptionElement
     subNone.value = ''
     subSel.appendChild(subNone)
     for (const n of [0, 1, 2, 3]) {
@@ -526,7 +537,7 @@ export function renderSlotChips(
   const wrap = $('#slot-chips')
   wrap.innerHTML = ''
   if (!slots.length && !fx.length) {
-    wrap.appendChild(el('div', 'hint', 'no model parts'))
+    wrap.appendChild(el('div', 'hint', 'no components parts'))
     return
   }
   for (const s of slots) {
@@ -621,8 +632,7 @@ export function renderSlotChips(
       // item 34 fix: after a freeze, re-checking must re-bind to the FORMER
       // parent, not the first candidate — prefer inherit, then lastInherit
       // (only if still a legal choice), then the first option.
-      const remembered =
-        s.inherit ?? (s.lastInherit && s.inheritOptions.includes(s.lastInherit) ? s.lastInherit : null)
+      const remembered = s.inherit ?? (s.lastInherit && s.inheritOptions.includes(s.lastInherit) ? s.lastInherit : null)
       inhSel.value = remembered ?? s.inheritOptions[0]
       inhSel.disabled = !inhBox.checked
       inhSel.title = 'the parent slot this part inherits every unset property from'
@@ -720,7 +730,7 @@ export function renderSlotChips(
     projSel.onclick = (e) => e.stopPropagation()
     projSel.onchange = () => cb.onParam(s.slot, 'uvProject', projSel.value)
     // The per-slot chip is THE single source of projection (factory.effectiveUvProject
-    // reads only the slot), so it always changes the model — no node/catalog fallback.
+    // reads only the slot), so it always changes the components — no node/catalog fallback.
     projSel.title =
       'UV projection for this part: box = per-face planar, planar = from above, sphere = around center (— = no projection; on an inheriting part, choosing — PINS no-projection over the parent’s projection — ↺ to re-follow the parent)'
     decorate(uvWrap, 'uvMode', controls)
@@ -1071,23 +1081,68 @@ export function renderMgrTuning(
 
   // roughness + metalness ALWAYS show (they act as scalars even with no map); a
   // "▦" badge marks the ones a texture map backs.
-  slider('roughness', 'roughness', 0, 1, 0.01, t.roughness,
-    'Micro-surface roughness (scalar × the roughness map). 0 = mirror-smooth/glossy, 1 = fully matte. Affects how sharp reflections and highlights are.', maps.roughness)
-  slider('metalness', 'metalness', 0, 1, 0.01, t.metalness,
-    'Metallic vs. dielectric. 1 = metal (albedo tints the reflection, needs the skybox to show), 0 = non-metal (plastic/wood/stone).', maps.metallic)
+  slider(
+    'roughness',
+    'roughness',
+    0,
+    1,
+    0.01,
+    t.roughness,
+    'Micro-surface roughness (scalar × the roughness map). 0 = mirror-smooth/glossy, 1 = fully matte. Affects how sharp reflections and highlights are.',
+    maps.roughness,
+  )
+  slider(
+    'metalness',
+    'metalness',
+    0,
+    1,
+    0.01,
+    t.metalness,
+    'Metallic vs. dielectric. 1 = metal (albedo tints the reflection, needs the skybox to show), 0 = non-metal (plastic/wood/stone).',
+    maps.metallic,
+  )
   // normal / AO are meaningless without their map — show ONLY if present.
   if (maps.normal)
-    slider('normalScale', 'normalScale', 0, 3, 0.01, t.normalScale,
-      'Strength of the normal map — how much the baked surface bumps catch light. 0 = flat, 3 = strongly exaggerated relief.')
+    slider(
+      'normalScale',
+      'normalScale',
+      0,
+      3,
+      0.01,
+      t.normalScale,
+      'Strength of the normal map — how much the baked surface bumps catch light. 0 = flat, 3 = strongly exaggerated relief.',
+    )
   // parallax occlusion depth — only meaningful with a height map + both parallax switches on
   if (maps.height)
-    slider('height', 'height', 0, 0.3, 0.005, t.height,
-      'Parallax occlusion depth — how deep the height map recesses the surface. Takes effect when the "parallax (POM)" flag below AND the global Render-panel parallax are both on. 0 = flat.', true)
+    slider(
+      'height',
+      'height',
+      0,
+      0.3,
+      0.005,
+      t.height,
+      'Parallax occlusion depth — how deep the height map recesses the surface. Takes effect when the "parallax (POM)" flag below AND the global Render-panel parallax are both on. 0 = flat.',
+      true,
+    )
   if (maps.ao)
-    slider('aoIntensity', 'aoIntensity', 0, 2, 0.01, t.aoIntensity,
-      'Ambient-occlusion map strength — darkens crevices under indirect (skybox/IBL) light. 0 = off, 1 = baked strength, 2 = deepened.')
-  slider('opacity', 'opacity', 0, 1, 0.01, t.opacity,
-    'Whole-material transparency. <1 turns on alpha blending (depthWrite off) — for glass/water. 1 = opaque.')
+    slider(
+      'aoIntensity',
+      'aoIntensity',
+      0,
+      2,
+      0.01,
+      t.aoIntensity,
+      'Ambient-occlusion map strength — darkens crevices under indirect (skybox/IBL) light. 0 = off, 1 = baked strength, 2 = deepened.',
+    )
+  slider(
+    'opacity',
+    'opacity',
+    0,
+    1,
+    0.01,
+    t.opacity,
+    'Whole-material transparency. <1 turns on alpha blending (depthWrite off) — for glass/water. 1 = opaque.',
+  )
 
   // (uvScale + uvProject moved OUT of the material tuning — they are now
   // PREVIEW-ONLY view controls in the preview bar, never written to the material.)
@@ -1139,12 +1194,24 @@ export function renderMgrTuning(
   wrap.appendChild(el('div', 'tune-sep', 'flags'))
   // per-material POM opt-in — only offered when the material ships a height map
   if (maps.height)
-    check('parallax (POM)', 'parallax', t.parallax,
-      'Parallax occlusion mapping for THIS material — the height map recesses the surface with real view-dependent depth. Runs only while the global Render-panel parallax is also on. Costs GPU per pixel; enable where the relief sells (bricks, cobbles, bark).')
-  check('cutout (alphaTest)', 'cutout', t.cutout,
-    'Alpha cutout — pixels below 50% alpha are discarded (hard edges, no blending). For leaves, flags, fences. Cheaper than opacity blending.')
-  check('double-sided', 'doubleSided', t.doubleSided,
-    'Render both faces (disables back-face culling). For thin planes/cards seen from both sides.')
+    check(
+      'parallax (POM)',
+      'parallax',
+      t.parallax,
+      'Parallax occlusion mapping for THIS material — the height map recesses the surface with real view-dependent depth. Runs only while the global Render-panel parallax is also on. Costs GPU per pixel; enable where the relief sells (bricks, cobbles, bark).',
+    )
+  check(
+    'cutout (alphaTest)',
+    'cutout',
+    t.cutout,
+    'Alpha cutout — pixels below 50% alpha are discarded (hard edges, no blending). For leaves, flags, fences. Cheaper than opacity blending.',
+  )
+  check(
+    'double-sided',
+    'doubleSided',
+    t.doubleSided,
+    'Render both faces (disables back-face culling). For thin planes/cards seen from both sides.',
+  )
   // (flat shading is deliberately NOT here — it describes the surface, not the
   // substance, so it lives on the entity slot chips: "shade: smooth | flat".)
 }
@@ -1235,7 +1302,8 @@ export function renderOverlay(
       top.appendChild(btn)
       // re-roll the LAYOUTS (which oneOf/chance/rotJitter per variant) → new arrangement
       const rv = el('button', undefined, '⟳ variants')
-      rv.title = 're-roll the variant layouts (oneOf/chance/rotJitter) in <id>.variants.json, then re-compose — the arrangement changes; craft crookedness stays'
+      rv.title =
+        're-roll the variant layouts (oneOf/chance/rotJitter) in <id>.variants.json, then re-compose — the arrangement changes; craft crookedness stays'
       rv.onclick = () => cb.onRegenVariants()
       top.appendChild(rv)
     }
@@ -1250,7 +1318,8 @@ export function renderOverlay(
     // the tool for geometry whose rig JSON changed after it was baked.
     if (item.geomStale) {
       const rs = el('button', 'btn-stale', '⟲ stale geometry')
-      rs.title = 'the rig was edited after this geometry was baked (or the generator version changed) — click to re-bake now; loading NEVER re-bakes automatically'
+      rs.title =
+        'the rig was edited after this geometry was baked (or the generator version changed) — click to re-bake now; loading NEVER re-bakes automatically'
       rs.onclick = () => cb.onRegenGeometry()
       top.appendChild(rs)
     }

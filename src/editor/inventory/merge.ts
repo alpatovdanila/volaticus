@@ -257,7 +257,7 @@ export function computeMergeBuckets(
 export function mergeBuiltEntity(built: BuiltEntity, doc: EntityDoc, opts: { keepSource: boolean }): void {
   // SKELETAL models are already assembled as SkinnedMeshes bound to a bone tree —
   // folding them into rigid merged meshes would freeze the bind pose. Skip entirely.
-  // Imported GLB models (doc.model) are likewise native SkinnedMeshes — same reason.
+  // Imported GLB models (doc.components) are likewise native SkinnedMeshes — same reason.
   if (doc.skinned || doc.model) return
   const { buckets, replaced } = computeMergeBuckets(built, doc)
   if (!buckets.length) return // nothing static to merge (e.g. a fully-animated rig)

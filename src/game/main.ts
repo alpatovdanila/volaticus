@@ -1,42 +1,26 @@
-import { scopeHmrReloads } from '../lib/hmr-scope'
-import devLevel from './levels/dev.json'
-import { ServicesRegistry } from './engine/engine-registry'
-import { DeviceScreen } from './engine/engine/device-screen'
-import { Renderer } from './engine/engine/renderer'
-
-import { Inventory } from './engine/engine/inventory'
-import { World } from './engine/engine/world/world'
-import { parseLevelDeclaration } from './engine/engine/world/level-schema'
-import { Input } from './engine/engine/input'
-import { PlayerControl } from './engine/engine/player/player-control'
-import { Movement } from './engine/engine/movement'
-import { AnimationsDriver } from './engine/engine/animations/animations-driver'
-
-import { ThreeSceneSync } from './engine/engine/three-scene-sync'
-import { DebugOverlay } from './engine/engine/debug-overlay'
-import { CameraControl } from './engine/engine/camera-control'
-import { LocomotionAnimation } from './engine/engine/animations/locomotion-animation'
-import { EventsAnimations } from './engine/engine/animations/events-animations'
+import { ServicesRegistry } from '@engine/services-registry'
+import { scopeHmrReloads } from '@shared/lib/hmr-scope'
+import { DeviceScreen } from '@engine/device-screen'
+import { ThreeSceneSync } from '@systems/three-scene-sync'
+import { Renderer } from '@engine/renderer'
+import { World } from '@engine/world'
+import { Level } from '@engine/level'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
 
 const engine = new ServicesRegistry()
 
+/**
+ * Engine services
+ */
 engine.register('deviceScreen', new DeviceScreen())
-engine.register('input', new Input())
-engine.register('inventory', new Inventory())
-const world = engine.register('world', new World())
-engine.register('playerControl', new PlayerControl())
-engine.register('movement', new Movement())
-engine.register('locomotionAnimation', new LocomotionAnimation())
-engine.register('eventsAnimations', new EventsAnimations())
-engine.register('animation', new AnimationsDriver())
-engine.register('cameraControl', new CameraControl())
-engine.register('threeSceneSync', new ThreeSceneSync())
+engine.register('world', new World())
+engine.register('level', new Level())
 engine.register('renderer', new Renderer())
-engine.register('debugOverlay', new DebugOverlay())
+
+/**
+ * Ecs systems
+ */
+engine.register('threeSceneSync', new ThreeSceneSync())
 
 await engine.start()
-await world.loadLevel(parseLevelDeclaration(devLevel))
-
-if (import.meta.env.DEV) (window as any).__engine = engine

@@ -22,7 +22,7 @@ export interface PreviewDeps {
   playEffect(id: string, at: THREE.Vector3, params?: { texture?: string; tint?: string }): void
   shatter(): void // effect === SCRIPT_EFFECT_SHATTER — throw the entity's parts apart
   // effect === SCRIPT_EFFECT_DISMEMBER — sever + throw one named mesh part; weight
-  // (model.dismember[part].weight, default 1) scales the throw: velocity ∝ 1/weight
+  // (components.dismember[part].weight, default 1) scales the throw: velocity ∝ 1/weight
   dismember(part: string, weight: number): void
   // a "dismembered_<part>" modifier was deactivated — the part is visible again, so the
   // host should despawn its severed ground chunk (limb and chunk never coexist)
@@ -36,7 +36,7 @@ export class EntityPreview {
   readonly initial: string | null
   private states: Record<string, StateDef>
   private anim?: AnimPlayer // procedural path; undefined for an imported GLB (mixer path)
-  private mixer?: THREE.AnimationMixer // imported GLB: drives the model's own skeleton
+  private mixer?: THREE.AnimationMixer // imported GLB: drives the components's own skeleton
   private clipsByName?: Map<string, THREE.AnimationClip>
   private currentAction?: THREE.AnimationAction
   private overlayAction?: THREE.AnimationAction // one-shot reaction clip riding over the state clip
@@ -53,8 +53,8 @@ export class EntityPreview {
   // game-provided modifiers (surface underfoot etc.); bindings resolve byContext against this
   context: Record<string, string> = {}
 
-  // Declared + DERIVED names, computed live from the doc (the editor edits model.dismember
-  // in place — new checkboxes surface here without a rebuild). Every model.dismember part
+  // Declared + DERIVED names, computed live from the doc (the editor edits components.dismember
+  // in place — new checkboxes surface here without a rebuild). Every components.dismember part
   // gets a virtual "dismembered_<part>" modifier and "dismember_<part>" event for free.
   get modifierNames(): string[] {
     const declared = Object.keys(this.doc.modifiers ?? {})
@@ -76,7 +76,7 @@ export class EntityPreview {
     const { initial, states } = statesOf(doc)
     this.states = states
     if (built.mixer) {
-      // IMPORTED GLB: play the model's own AnimationClips via its mixer (NOT AnimPlayer,
+      // IMPORTED GLB: play the components's own AnimationClips via its mixer (NOT AnimPlayer,
       // which would clobber the mesh transforms each frame — the mixer drives the bones).
       this.mixer = built.mixer
       this.clipsByName = new Map((built.clips ?? []).map((c) => [c.name, c]))
@@ -194,7 +194,7 @@ export class EntityPreview {
   }
 
   // a modifier's show/hide: declared in doc.modifiers, or DERIVED — "dismembered_<part>"
-  // hides that mesh for any model.dismember part (no doc authoring needed)
+  // hides that mesh for any components.dismember part (no doc authoring needed)
   private modifierDef(name: string): { show?: string[]; hide?: string[] } | undefined {
     const declared = this.doc.modifiers?.[name]
     if (declared) return declared
@@ -269,7 +269,7 @@ export class EntityPreview {
   fireEvent(name: string): void {
     const declared = this.doc.events?.[name]
     if (declared) return this.fireBinding(declared)
-    // DERIVED event: "dismember_<part>" for any model.dismember part — sever + throw the
+    // DERIVED event: "dismember_<part>" for any components.dismember part — sever + throw the
     // chunk (weight-scaled) and activate the matching derived modifier. Zero doc authoring.
     const part = /^dismember_(.+)$/.exec(name)?.[1]
     if (part && this.doc.model?.dismember?.[part])
@@ -299,7 +299,7 @@ export class EntityPreview {
       }
     }
     if (this.mixer) {
-      // IMPORTED GLB: the mixer advances the model's own clips (drives the skeleton).
+      // IMPORTED GLB: the mixer advances the components's own clips (drives the skeleton).
       this.mixer.update(dt)
       this.stateTime += dt
       // one-shot overlay (reaction clip) finished — crossfade back to the state's clip

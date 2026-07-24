@@ -1,12 +1,6 @@
 import { addComponent, hasComponent, query } from 'bitecs'
 
-import {
-  AnimationProfile,
-  AnimatorState,
-  IsAnimatorFree,
-  Rotation,
-  Velocity,
-} from '../world/ecs/components'
+import { AnimationProfile, AnimatorState, IsAnimatorFree, Rotation, Velocity } from '../world/ecs/components'
 import type { LocomotionBand, LocomotionSet } from '../../../../../inventory/schemas/model.schema'
 import { BaseService, IServicesRegistry, KnownServices } from '../../services-registry'
 
@@ -20,7 +14,7 @@ type LocomotionDirection = 'forward' | 'back' | 'left' | 'right'
 */
 export const STANDSTILL_SPEED = 0.05
 
-// the model faces +Z, so `forward x up` puts its right at -X: a positive angle is movement left
+// the components faces +Z, so `forward x up` puts its right at -X: a positive angle is movement left
 const DIRECTION_ANGLE: Record<LocomotionDirection, number> = {
   forward: 0,
   left: Math.PI / 2,

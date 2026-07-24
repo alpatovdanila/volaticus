@@ -309,7 +309,7 @@ export interface BuiltEntity {
   // legacy per-instance tint multiplier — always 1 now (tint jitter moved to the
   // level editor). Kept so batching code that divides it back out still compiles.
   tintK: number
-  // IMPORTED GLB models only (buildGlbEntity): the model's own AnimationMixer + clips
+  // IMPORTED GLB models only (buildGlbEntity): the components's own AnimationMixer + clips
   // drive its native skeleton. EntityPreview plays these via the mixer instead of
   // AnimPlayer. Undefined for procedural models (the AnimPlayer path is unchanged).
   mixer?: THREE.AnimationMixer
@@ -320,7 +320,7 @@ export interface BuiltEntity {
 }
 
 // A GLB mesh named "<part>@exposeEmissive[.NNN]" opts into a per-part emissive glow. Returns
-// the exposed part name ("crystal") or null. The tag lives in the mesh name so the model
+// the exposed part name ("crystal") or null. The tag lives in the mesh name so the components
 // author declares intent in Blender; the editor surfaces a colour+intensity control for it.
 export function exposedEmissiveName(meshName: string): string | null {
   const m = /^(.+?)@exposeEmissive/.exec(meshName)
@@ -1848,7 +1848,7 @@ export function buildEntity(doc: EntityDoc, baked: BakedVariant): BuiltEntity {
 
 // IMPORTED-GLB path — parallel to buildEntity. No procgeom, no baked variant, no CSG,
 // no merge: the GLB's native meshes / skeleton / PBR materials / clips are used verbatim
-// (the model ships its own textures — nothing is retextured). Produces the same
+// (the components ships its own textures — nothing is retextured). Produces the same
 // BuiltEntity contract the editor + preview consume, plus mixer/clips for animation.
 export function buildGlbEntity(doc: EntityDoc, model: GltfModel): BuiltEntity {
   const group = new THREE.Group()

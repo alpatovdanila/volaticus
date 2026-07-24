@@ -1,11 +1,11 @@
 /*
- Bake sibling FBX animation clips into a GLB: one model file, one request at runtime.
+ Bake sibling FBX animation clips into a GLB: one components file, one request at runtime.
 
-   npx tsx inventory/scripts/bake-gltf.ts <model-dir> [out.glb]
+   npx tsx inventory/scripts/bake-gltf.ts <components-dir> [out.glb]
 
- <model-dir> holds index.glb plus any number of .fbx files — every .fbx becomes a clip named
+ <components-dir> holds index.glb plus any number of .fbx files — every .fbx becomes a clip named
  after its file, and any animation authored inside index.glb is DROPPED: the sibling FBX set
- is exactly what ships. [out.glb] defaults to <model-dir>/index.baked.glb.
+ is exactly what ships. [out.glb] defaults to <components-dir>/index.baked.glb.
 
  Besides the merge, the container is NORMALIZED so any viewer renders it the same way:
  per-vertex tangents are baked wherever a normal-mapped primitive ships none, and skinned mesh
@@ -163,12 +163,17 @@ function readAccessor(glb: Glb, index: number): number[] | null {
     for (let c = 0; c < components; c++) {
       const o = base + el * stride + c * compSize
       out[el * components + c] =
-        a.componentType === 5126 ? dv.getFloat32(o, true)
-        : a.componentType === 5125 ? dv.getUint32(o, true)
-        : a.componentType === 5123 ? dv.getUint16(o, true)
-        : a.componentType === 5122 ? dv.getInt16(o, true)
-        : a.componentType === 5121 ? dv.getUint8(o)
-        : dv.getInt8(o)
+        a.componentType === 5126
+          ? dv.getFloat32(o, true)
+          : a.componentType === 5125
+            ? dv.getUint32(o, true)
+            : a.componentType === 5123
+              ? dv.getUint16(o, true)
+              : a.componentType === 5122
+                ? dv.getInt16(o, true)
+                : a.componentType === 5121
+                  ? dv.getUint8(o)
+                  : dv.getInt8(o)
     }
   }
   return out
@@ -472,7 +477,7 @@ function lengyelTangents(pos: number[], nrm: number[], uv: number[], indices: nu
 // ───────────────────────────────────────────────────────────────── headless parse
 
 /*
- Parse the model headless, for its skeleton. GLTFLoader needs the geometry, not the pixels —
+ Parse the components headless, for its skeleton. GLTFLoader needs the geometry, not the pixels —
  and there is no canvas to decode a PNG into. Stripping images/textures/materials yields the
  identical node hierarchy, skin and bind poses while skipping every image decode. Done on a
  deep copy; the container itself is untouched.
@@ -711,7 +716,7 @@ function premultiplyTrack(track: THREE.QuaternionKeyframeTrack, corr: THREE.Quat
 async function main() {
   const [dir, out] = process.argv.slice(2)
   if (!dir || !fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) {
-    console.error('usage: npx tsx inventory/scripts/bake-gltf.ts <model-dir> [out.glb]')
+    console.error('usage: npx tsx inventory/scripts/bake-gltf.ts <components-dir> [out.glb]')
     process.exit(1)
   }
 
@@ -732,7 +737,7 @@ async function main() {
   if (tangents) console.log(`baked tangents for ${tangents} primitive(s)`)
 
   // authored/exporter clips (frozen T-poses, "mixamo.com" leftovers) never ship: the sibling
-  // FBX set is the model's entire animation vocabulary. Their data falls to the prune below.
+  // FBX set is the components's entire animation vocabulary. Their data falls to the prune below.
   delete glb.json.animations
 
   const scene = await parseHeadless(glb, dir)

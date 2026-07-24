@@ -530,7 +530,7 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
   const myToken = ++buildToken
   vp.effects.clearDismembered() // drop any severed limbs from a prior build/entity (they live in the scene, not the group)
   if (doc.model) {
-    // IMPORTED GLB path: load the model (geometry + PBR materials + skeleton + clips) and
+    // IMPORTED GLB path: load the components (geometry + PBR materials + skeleton + clips) and
     // build directly — no procgeom, no bake, no merge, no material editing. The shared
     // tail below (env, shadow graft, reveal gate, fit, overlay) is reused unchanged.
     let model
@@ -618,7 +618,7 @@ async function buildSelectedEntityInner(doc: EntityDoc, restoreState?: string): 
       if (!mesh) return
       // throw toward the entity's BACK in MODEL space: glTF characters face +Z, so backward is
       // local -Z rotated by the entity's current world orientation (hit-from-the-front knock-back
-      // that stays correct however the model or camera is turned).
+      // that stays correct however the components or camera is turned).
       const q = sel.built.group.getWorldQuaternion(new THREE.Quaternion())
       const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(q)
       const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q)
@@ -680,7 +680,7 @@ function refreshOverlay(): void {
       kind: sel.kind,
       states: sel.preview?.stateNames ?? [],
       current: sel.preview?.current ?? null,
-      // declared + DERIVED (dismember_<part>/dismembered_<part> from model.dismember)
+      // declared + DERIVED (dismember_<part>/dismembered_<part> from components.dismember)
       events: sel.preview?.eventNames ?? Object.keys(doc?.events ?? {}),
       modifiers: sel.preview?.modifierNames ?? Object.keys(doc?.modifiers ?? {}),
       activeModifiers: sel.preview ? [...sel.preview.activeModifiers] : [],
@@ -1119,9 +1119,9 @@ function inheritCandidates(mats: Record<string, MaterialDef>, slot: string): str
   })
 }
 
-// Imported-model emissive control (materials tab). Reads LIVE from the built materials
+// Imported-components emissive control (materials tab). Reads LIVE from the built materials
 // (source of truth after build) and writes both the live material (real-time glow) and the
-// doc (model.emissive, persisted on save).
+// doc (components.emissive, persisted on save).
 function modelEmissiveParts(): { name: string; color: string; intensity: number }[] {
   const mats = sel?.built?.emissiveParts
   if (!mats) return []
@@ -1150,7 +1150,7 @@ function setModelEmissive(part: string, patch: { color?: string; intensity?: num
   sel.dirty = true
   setTitle(sel.id, true)
 }
-// Unique glTF materials on the built model (by material name — GLTFLoader carries it over;
+// Unique glTF materials on the built components (by material name — GLTFLoader carries it over;
 // emissive part clones keep the name, so tuning reaches them too).
 function modelPbrMaterials(): { name: string; metalness: number; roughness: number }[] {
   const out = new Map<string, { name: string; metalness: number; roughness: number }>()
@@ -1164,8 +1164,8 @@ function modelPbrMaterials(): { name: string; metalness: number; roughness: numb
   }
   return [...out.values()]
 }
-// Dismemberable parts (materials tab): EVERY mesh part of the imported model, with a
-// checkbox + weight. Checked parts are stored as doc model.dismember — the ONLY persisted
+// Dismemberable parts (materials tab): EVERY mesh part of the imported components, with a
+// checkbox + weight. Checked parts are stored as doc components.dismember — the ONLY persisted
 // data; the preview DERIVES "dismember_<part>" events and reversible "dismembered_<part>"
 // modifiers from it live (no rebuild — the preview reads the same doc object).
 function modelDismemberParts(): { name: string; on: boolean; weight: number }[] {
@@ -1220,7 +1220,7 @@ const modelEmissiveCb = {
       }
     }
     if (commit) {
-      // persist into the .glb — the model file is the single source of truth for its materials
+      // persist into the .glb — the components file is the single source of truth for its materials
       const doc = sel.kind === 'entity' ? inv.entities.get(sel.id)?.doc : undefined
       if (!doc?.model) return
       void fetch('/__model/tune', {
@@ -1238,9 +1238,9 @@ const modelEmissiveCb = {
 function refreshSlots(): void {
   const doc = sel?.kind === 'entity' ? inv.entities.get(sel.id)?.doc : undefined
   if (doc?.model) {
-    // imported model: no procedural geometry / material slots — the materials tab shows the
+    // imported components: no procedural geometry / material slots — the materials tab shows the
     // per-part emissive (@exposeEmissive) controls, per-material PBR (metal/rough → .glb),
-    // and the dismemberable-parts list (checkbox + weight → doc model.dismember).
+    // and the dismemberable-parts list (checkbox + weight → doc components.dismember).
     renderModelMaterials(modelEmissiveParts(), modelPbrMaterials(), modelDismemberParts(), modelEmissiveCb)
     return
   }

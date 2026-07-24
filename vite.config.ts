@@ -32,8 +32,11 @@ function readBody(req: import('node:http').IncomingMessage): Promise<any> {
     const chunks: Buffer[] = []
     req.on('data', (c) => chunks.push(c))
     req.on('end', () => {
-      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))) }
-      catch (e) { reject(e) }
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')))
+      } catch (e) {
+        reject(e)
+      }
     })
     req.on('error', reject)
   })
@@ -106,7 +109,11 @@ function devApi(): Plugin {
             // resources/user-textures/ and return its resources-relative path so
             // it can be referenced like any other texture (alpha mask etc.).
             const body = await readBody(req)
-            const rawName = String(body.name ?? 'upload.png').replace(/\\/g, '/').split('/').pop() ?? 'upload.png'
+            const rawName =
+              String(body.name ?? 'upload.png')
+                .replace(/\\/g, '/')
+                .split('/')
+                .pop() ?? 'upload.png'
             const safeName = rawName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.+/, '.')
             const file = /\.(png|jpg|jpeg)$/i.test(safeName) ? safeName : safeName + '.png'
             const b64 = String(body.dataBase64 ?? '').replace(/^data:[^,]*,/, '')
@@ -118,7 +125,7 @@ function devApi(): Plugin {
             return send(200, { ok: true, path: 'user-textures/' + file })
           }
           if (url.pathname.startsWith('/models/') && req.method === 'GET') {
-            // Serve model files straight from disk. resources/models/** is EXCLUDED from the
+            // Serve components files straight from disk. resources/models/** is EXCLUDED from the
             // vite watcher (so /__model/tune GLB writes don't full-reload the studio), but the
             // publicDir registry is watcher-fed — models added after boot would 404 through it.
             // This middleware bypasses the registry entirely: always fresh, no restart needed.
@@ -126,8 +133,12 @@ function devApi(): Plugin {
             const abs = safePath(RES_DIR, rel)
             if (!abs || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) return next()
             const types: Record<string, string> = {
-              '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.fbx': 'application/octet-stream',
-              '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+              '.glb': 'components/gltf-binary',
+              '.gltf': 'components/gltf+json',
+              '.fbx': 'application/octet-stream',
+              '.png': 'image/png',
+              '.jpg': 'image/jpeg',
+              '.jpeg': 'image/jpeg',
             }
             res.statusCode = 200
             res.setHeader('Content-Type', types[path.extname(abs).toLowerCase()] ?? 'application/octet-stream')
@@ -136,7 +147,7 @@ function devApi(): Plugin {
           }
           if (url.pathname === '/__model/tune' && req.method === 'POST') {
             // Imported-GLB material tuning: patch metallicFactor/roughnessFactor of a named
-            // glTF material INSIDE the .glb (the model file is the single source of truth for
+            // glTF material INSIDE the .glb (the components file is the single source of truth for
             // its materials — no doc-side override). Rewrites only the JSON chunk; the binary
             // chunk (geometry/textures/animations) is copied through byte-for-byte.
             const body = await readBody(req)
@@ -146,7 +157,7 @@ function devApi(): Plugin {
             const glb = fs.readFileSync(abs)
             if (glb.readUInt32LE(0) !== 0x46546c67) return send(400, { error: 'not a GLB' })
             const chunks: { type: number; data: Buffer }[] = []
-            for (let off = 12; off < glb.length; ) {
+            for (let off = 12; off < glb.length;) {
               const clen = glb.readUInt32LE(off)
               const ctype = glb.readUInt32LE(off + 4)
               chunks.push({ type: ctype, data: glb.subarray(off + 8, off + 8 + clen) })
@@ -291,7 +302,10 @@ function devApi(): Plugin {
                   geomSeed,
                 ),
               )
-            return send(400, { error: 'type must be plank|post|ring|arrow|star; params: w/h/d(+tip for arrow) or radius(+Top/Bottom)/height/segments(+thickness for ring; +innerRatio/points/depth for star), craft, seed' })
+            return send(400, {
+              error:
+                'type must be plank|post|ring|arrow|star; params: w/h/d(+tip for arrow) or radius(+Top/Bottom)/height/segments(+thickness for ring; +innerRatio/points/depth for star), craft, seed',
+            })
           }
           if (url.pathname === '/__shot' && req.method === 'POST') {
             const body = await readBody(req)
@@ -334,9 +348,20 @@ export default defineConfig({
   // WebGPU migration: alias bare `three` to the WebGPU build (which bundles core +
   // WebGPURenderer + node materials) so the whole app shares ONE THREE instance.
   // Exact-match regex so `three/webgpu`, `three/tsl`, `three/addons/*` resolve normally.
-  resolve: { alias: [{ find: /^three$/, replacement: 'three/webgpu' }] },
+  resolve: {
+    alias: [
+      { find: /^three$/, replacement: 'three/webgpu' },
+      { find: '@engine', replacement: path.join(ROOT, 'src/game/engine') },
+      { find: '@systems', replacement: path.join(ROOT, 'src/game/systems') },
+      { find: '@components', replacement: path.join(ROOT, 'src/game/components') },
+      { find: '@levels', replacement: path.join(ROOT, 'src/game/levels') },
+      { find: '@lib', replacement: path.join(ROOT, 'src/game/lib') },
+      { find: '@shared', replacement: path.join(ROOT, 'src/shared') },
+      { find: '@inventory', replacement: INV_DIR },
+    ],
+  },
   plugins: [devApi(), scopedReload()],
-  // don't full-reload the studio when a model file is rewritten (the /__model/tune endpoint
+  // don't full-reload the studio when a components file is rewritten (the /__model/tune endpoint
   // saves material tuning into the .glb while the user is dragging sliders)
   server: { port: 5173, strictPort: true, watch: { ignored: ['**/resources/models/**'] } },
   build: {

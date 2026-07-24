@@ -1,4 +1,4 @@
-// import-glb.ts — the ONE-COMMAND import pipeline for a GLB character-model folder. Given a
+// import-glb.ts — the ONE-COMMAND import pipeline for a GLB character-components folder. Given a
 // folder with index.glb (+ optional sibling Mixamo *.fbx), it produces an editor-ready entity.
 // Three steps:
 //
@@ -10,8 +10,8 @@
 //      downscaling to ≤N px shrinks the file ~50×. Decode → resize (sharp) → re-encode, then
 //      rebuild the binary chunk. Everything else (mesh, skeleton, animation data) is untouched.
 //
-//   3. GENERATE the entity doc → inventory/models/<id>/<id>.json: model.src, sibling FBX to
-//      merge (model.anims), a state per clip, and an emissive control for every mesh named
+//   3. GENERATE the entity doc → inventory/models/<id>/<id>.json: components.src, sibling FBX to
+//      merge (components.anims), a state per clip, and an emissive control for every mesh named
 //      "<part>@exposeEmissive" (glow, colour+intensity — tweak live in the editor). Skipped if
 //      the doc already exists (won't clobber hand edits) unless --force.
 //
@@ -243,7 +243,7 @@ async function repack(): Promise<void> {
 
 // ---- 2c. generate animations (optional) — rigid node-transform clips, NO skeleton needed ----
 // glTF clips can target plain NODES, so a floating/hovering prop needs no bone: we synthesize
-// keyframes against the model's scene-root node (the whole model moves as one rigid transform).
+// keyframes against the components's scene-root node (the whole components moves as one rigid transform).
 // A 1-bone rigid skin would render identically but pay per-vertex skinning forever — never do it.
 //   --gen-float → "index": looping hover-bob (position.y sine, ~3.2s)
 //   --gen-hit   → "Hit":   one-shot lean-back (rotation kick + recover, ~0.55s)
@@ -332,7 +332,7 @@ function quatMul(a: number[], b: number[]): number[] {
 // A flower must BEND: base planted, deflection growing with height. One rigidly-weighted bone
 // can't bend (that's just a rigid tilt = plain node animation) — a bend needs a per-vertex
 // weight GRADIENT, which needs TWO joints to blend between: a static "stem_root" anchor and one
-// ANIMATED "stem_bend" bone, both pivoted at the model's base. Vertices weight root→bend by
+// ANIMATED "stem_bend" bone, both pivoted at the components's base. Vertices weight root→bend by
 // normalized height, so rotating stem_bend tips the top the most → smooth stem bend.
 //
 // The synthesis: bake each mesh node's transform into its POSITION/NORMAL data (vertices land in
@@ -874,7 +874,7 @@ async function main(): Promise<void> {
 
 await main()
 
-// ---- 3. generate the entity doc (so the model shows up in the editor, ready to use) ----
+// ---- 3. generate the entity doc (so the components shows up in the editor, ready to use) ----
 function generateEntityDoc(): void {
   const id = (idArg || path.basename(dir))
     .toLowerCase()
@@ -913,7 +913,7 @@ function generateEntityDoc(): void {
     emissive[m[1]] = prev?.model?.emissive?.[m[1]] ?? { color: '#66ccff', intensity: 2.5 }
   }
 
-  // merge ALL sibling FBX at load (model.anims) — even when a baked GLB clip matches by name/
+  // merge ALL sibling FBX at load (components.anims) — even when a baked GLB clip matches by name/
   // duration. The FBX sources are ground truth: some Blender exports bake the NLA in the wrong
   // frame (a broken bake plays face-down), and a same-name merged clip cleanly overrides the
   // baked one at play time. Baked clips with no FBX counterpart (e.g. an "index" base) survive.
@@ -933,7 +933,7 @@ function generateEntityDoc(): void {
   const model: Record<string, unknown> = { src }
   if (animFiles.length) model.anims = animFiles
   if (Object.keys(emissive).length) model.emissive = emissive
-  // dismemberable parts (editor checkboxes → model.dismember) survive a --force regen,
+  // dismemberable parts (editor checkboxes → components.dismember) survive a --force regen,
   // dropping entries whose mesh no longer exists in the re-exported GLB
   const prevDismember = prev?.model?.dismember
   if (prevDismember) {

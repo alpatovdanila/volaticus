@@ -1,5 +1,5 @@
-import { createEvent } from '../../../lib/atomic-event'
-import { BaseService } from '../services-registry'
+import { BaseService } from './services-registry'
+import { createEvent } from '@shared/lib/atomic-event'
 
 interface Resolution {
   width: number
@@ -11,10 +11,15 @@ export class DeviceScreen extends BaseService {
   private aspectRatio = window.innerWidth / window.innerHeight
 
   resolutionChanged = createEvent<Resolution>()
+
   aspectRatioChanged = createEvent<number>()
 
   create() {
     window.addEventListener('resize', this.reportResize)
+  }
+
+  async start() {
+    this.reportResize()
   }
 
   private reportResize = () => {
@@ -23,10 +28,6 @@ export class DeviceScreen extends BaseService {
 
     this.resolutionChanged(this.resolution)
     this.aspectRatioChanged(this.aspectRatio)
-  }
-
-  async start() {
-    this.reportResize()
   }
 }
 

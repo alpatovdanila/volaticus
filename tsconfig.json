@@ -9,7 +9,16 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": ["vite/client", "node"]
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@engine/*": ["./src/game/engine/*"],
+      "@systems/*": ["./src/game/systems/*"],
+      "@components/*": ["./src/game/components/*"],
+      "@levels/*": ["./src/game/levels/*"],
+      "@lib/*": ["./src/game/lib/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@inventory/*": ["./inventory/*"]
+    }
   },
   "include": ["src", "scripts", "inventory", "vite.config.ts"]
 }

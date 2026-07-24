@@ -1,6 +1,6 @@
 // Imported glTF/GLB character models (resources/models/**/index.glb). Unlike meshes.ts
-// (static FBX, merged into one geometry, skin/anim dropped), this preserves the model's
-// native SKELETON, per-mesh SkinnedMeshes, PBR MATERIALS and AnimationClips — the model
+// (static FBX, merged into one geometry, skin/anim dropped), this preserves the components's
+// native SKELETON, per-mesh SkinnedMeshes, PBR MATERIALS and AnimationClips — the components
 // is used AS-IS (its own textures included; no in-editor material editing). AnimationsDriver
 // clips are assumed already named (see scripts/import-glb.ts).
 //
@@ -16,9 +16,9 @@ import { clone as cloneHierarchy } from 'three/addons/utils/SkeletonUtils.js'
 import { mergeFbxClips, type FbxAnimSource } from './fbx-anim-merge'
 
 export interface GltfModel {
-  scene: THREE.Object3D // the model, WITH its own materials (a fresh clone)
+  scene: THREE.Object3D // the components, WITH its own materials (a fresh clone)
   meshes: THREE.Mesh[] // every (skinned) mesh, for picking / visibility / shadow flags
-  clips: THREE.AnimationClip[] // the model's animation clips (already named), shared across clones
+  clips: THREE.AnimationClip[] // the components's animation clips (already named), shared across clones
 }
 
 interface RawGltf {
@@ -60,7 +60,7 @@ async function loadAndMergeFbxClips(
 
 // Tripo/Blender character exports frequently flag the material `alphaMode: BLEND` even
 // though the mesh is fully opaque (opacity 1, no alpha/cutout). glTF→three turns that into
-// transparent + depthWrite:false — so on a SOLID model the depth buffer isn't written and
+// transparent + depthWrite:false — so on a SOLID components the depth buffer isn't written and
 // back/inside faces bleed through the front, reading as "flipped normals" (Blender's
 // viewport hides it since it sorts differently). Revert those spuriously-transparent
 // materials to opaque so depth sorting works. Genuinely translucent (opacity<1) or cutout
@@ -82,7 +82,7 @@ function normalizeGlbMaterials(scene: THREE.Object3D): void {
       // IBL rides scene.environment (live), NOT a per-material envMap snapshot: GLTFLoader
       // makes a CLASSIC MeshStandardMaterial, which attachEnv would otherwise hand the
       // current PMREM env texture — that texture is DISPOSED on the next HDRI swap, leaving
-      // the material pointing at freed memory → the model goes black and never recovers.
+      // the material pointing at freed memory → the components goes black and never recovers.
       // scene.environment is a live scene property (re-read each frame), so it survives swaps.
       m.userData.iblFromScene = true
     }
@@ -172,7 +172,7 @@ export async function loadGltfModel(path: string, animFiles: string[] = []): Pro
   return inst
 }
 
-// Clip names for a loaded model (for the states dropdown / browser-side validation).
+// Clip names for a loaded components (for the states dropdown / browser-side validation).
 export function gltfClipNames(path: string, animFiles: string[] = []): string[] {
   return rawCache.get(keyFor(path, animFiles))?.clips.map((c) => c.name) ?? []
 }

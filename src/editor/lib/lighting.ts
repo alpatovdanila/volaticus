@@ -38,7 +38,6 @@ const v3n = (n: unknown): Node<'vec3'> => n as Node<'vec3'>
 // still guarantees pure black lifts a little at full crank.
 const LIFT_FLOOR = 0.12
 
-
 // HDRI catalog + tone-map table now live in hdri-registry.ts so the game can name the same
 // environments without importing this rig. Re-exported here: the editor imports them from
 // this module and there is no reason to churn those call sites.
@@ -73,7 +72,7 @@ export interface LightParams {
   shadow: number
   // GLOBAL flat lift (a scene-wide AmbientLight): adds `ambient × albedo` to every lit
   // material — fills the pitch-black crevices the HDRI can't reach WITHOUT blowing out the
-  // already-lit areas (which cranking `intensity` does). One scene knob, no per-model or
+  // already-lit areas (which cranking `intensity` does). One scene knob, no per-components or
   // per-material emissive data. 0 = off (pure-HDRI look).
   ambient: number
 }
@@ -434,15 +433,24 @@ export class LightingRig {
             // global ambient lift: + ambient × mix(albedo^0.5, white, floor) — hue-preserving
             // brighten (see LIFT_FLOOR); × dark so the fill still darkens inside sun
             // shadows. Live via ambientLiftU — no recompiles.
-            nm.emissiveNode = v3n(mix(pow(albedo, vec3(0.5, 0.5, 0.5)), vec3(1, 1, 1), float(LIFT_FLOOR))).mul(dark).mul(fl(this.ambientLiftU))
+            nm.emissiveNode = v3n(mix(pow(albedo, vec3(0.5, 0.5, 0.5)), vec3(1, 1, 1), float(LIFT_FLOOR)))
+              .mul(dark)
+              .mul(fl(this.ambientLiftU))
             nm.needsUpdate = true
-          } else if (!nm.userData.shadowPatched && nm.userData.iblFromScene && !nm.userData.exposedEmissive && !nm.emissiveMap) {
+          } else if (
+            !nm.userData.shadowPatched &&
+            nm.userData.iblFromScene &&
+            !nm.userData.exposedEmissive &&
+            !nm.emissiveMap
+          ) {
             // imported-GLB node material (converted at load): the SAME lift, minus the
             // catalog shadow-darkening colorNode graft (GLBs take the sun shadow through
             // the light itself). Skips @exposeEmissive clones (their emissive IS the glow)
             // and authored emissive maps (the graft would override that channel).
             nm.userData.shadowPatched = true
-            nm.emissiveNode = v3n(mix(pow(v3n(materialColor), vec3(0.5, 0.5, 0.5)), vec3(1, 1, 1), float(LIFT_FLOOR))).mul(fl(this.ambientLiftU))
+            nm.emissiveNode = v3n(
+              mix(pow(v3n(materialColor), vec3(0.5, 0.5, 0.5)), vec3(1, 1, 1), float(LIFT_FLOOR)),
+            ).mul(fl(this.ambientLiftU))
             nm.needsUpdate = true
           }
           continue

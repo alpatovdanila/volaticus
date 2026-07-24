@@ -1,5 +1,5 @@
 /*
- Bake sibling Mixamo FBX clips into a GLB, so a model is ONE file and ONE request at runtime
+ Bake sibling Mixamo FBX clips into a GLB, so a components is ONE file and ONE request at runtime
  instead of index.glb + N .fbx.
 
    npx tsx scripts/bake-anims.ts resources/models/marine2
@@ -7,7 +7,7 @@
    npx tsx scripts/bake-anims.ts resources/models/marine2 --anims "Rifle Walk.fbx,Rifle Run.fbx"
 
  This is the ANIMATION-ONLY tool. For a full import — bake + texture repack + entity doc with
- emissive/dismember/locomotion — use scripts/import-model.ts, which wraps the same steps.
+ emissive/dismember/locomotion — use scripts/import-components.ts, which wraps the same steps.
 
  The clips are produced by src/inventory/fbx-anim-merge.ts and the container is edited by
  src/inventory/glb-container.ts, both shared with the runtime loader and the importer, so
@@ -30,7 +30,9 @@ async function main() {
 
   const target = positional[0]
   if (!target) {
-    console.error('usage: tsx scripts/bake-anims.ts <model-dir|index.glb> [--out name.glb] [--anims "a.fbx,b.fbx"]')
+    console.error(
+      'usage: tsx scripts/bake-anims.ts <components-dir|index.glb> [--out name.glb] [--anims "a.fbx,b.fbx"]',
+    )
     process.exit(1)
   }
 
@@ -40,7 +42,9 @@ async function main() {
   if (!fs.existsSync(source)) throw new Error(`no GLB at ${source}`)
 
   const animFiles = (
-    flag('anims')?.split(',').map((s) => s.trim()) ?? fs.readdirSync(dir).filter((f) => /\.fbx$/i.test(f))
+    flag('anims')
+      ?.split(',')
+      .map((s) => s.trim()) ?? fs.readdirSync(dir).filter((f) => /\.fbx$/i.test(f))
   ).sort()
   if (!animFiles.length) throw new Error(`no .fbx animations beside ${source}`)
 

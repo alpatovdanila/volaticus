@@ -1,6 +1,6 @@
 ---
-name: new-model
-description: Add a model to the game inventory — bake its animations into one GLB and create the inventory entry. Use when asked to create/add/import a model or character ("create a model of X", "add X to the inventory", "new model X"). Sources are rigged GLBs with sibling FBX animations under resources/models.
+name: new-components
+description: Add a components to the game inventory — bake its animations into one GLB and create the inventory entry. Use when asked to create/add/import a components or character ("create a components of X", "add X to the inventory", "new components X"). Sources are rigged GLBs with sibling FBX animations under resources/models.
 ---
 
 # New model

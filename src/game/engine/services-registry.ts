@@ -1,41 +1,19 @@
 import { Timer } from 'three'
-
-import type { IDeviceScreen } from './engine/device-screen'
-import type { IRenderer } from './engine/renderer'
-
-import type { IInventory } from './engine/inventory'
-
-import { IWorld } from './engine/world/world'
-import type { IInput } from './engine/input'
-import type { IPlayerControl } from './engine/player/player-control'
-import type { IMovement } from './engine/movement'
-import type { IThreeSceneSync } from './engine/three-scene-sync'
-import type { IAnimation } from './engine/animations/animations-driver'
-
-import type { IDebugOverlay } from './engine/debug-overlay'
-import type { ICameraControl } from './engine/camera-control'
-import { ILocomotionAnimation } from './engine/animations/locomotion-animation'
-import type { IEventsAnimations } from './engine/animations/events-animations'
+import { IDeviceScreen } from './device-screen'
+import { IRenderer } from './renderer'
+import { IWorld } from './world'
+import { IThreeSceneSync } from '@systems/three-scene-sync'
+import { ILevel } from './level'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
   renderer: IRenderer
+  level: ILevel
   world: IWorld
-  inventory: IInventory
-  input: IInput
-  playerControl: IPlayerControl
-  movement: IMovement
   threeSceneSync: IThreeSceneSync
-  animation: IAnimation
-  locomotionAnimation: ILocomotionAnimation
-  eventsAnimations: IEventsAnimations
-  debugOverlay: IDebugOverlay
-  cameraControl: ICameraControl
 }
 
 export interface IService {
-  shouldUpdate: boolean
-
   create(): void
 
   init(registry: IServicesRegistry): void
@@ -46,8 +24,6 @@ export interface IService {
 }
 
 export class BaseService implements IService {
-  shouldUpdate = true
-
   create() {}
 
   init(registry: IServicesRegistry) {}
@@ -86,9 +62,7 @@ export class ServicesRegistry {
     render.setAnimationLoopCallback((time) => {
       timer.update(time)
       const dt = Math.min(0.05, timer.getDelta())
-      for (const service of servicesList) {
-        if (service.shouldUpdate) service.update(dt)
-      }
+      for (const service of servicesList) service.update(dt)
     })
   }
 }

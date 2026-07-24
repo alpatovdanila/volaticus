@@ -2,7 +2,13 @@ import { defineConfig, type Plugin } from 'vite'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { generateArrowPlank, generatePlank, generatePost, generateRing, generateStar } from './src/inventory/procgeom'
+import {
+  generateArrowPlank,
+  generatePlank,
+  generatePost,
+  generateRing,
+  generateStar,
+} from './src/editor/inventory/procgeom'
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const INV_DIR = path.join(ROOT, 'inventory')

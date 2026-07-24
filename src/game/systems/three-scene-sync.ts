@@ -1,5 +1,5 @@
 import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-registry'
-import { NeedSpawn, Position, Rotation, SceneObject } from '@components/components'
+import { NeedSpawn, SceneObject, Position, Rotation } from '@components'
 
 /*
 The boundary between an ECS and the tree js scene - controls spawn/despawn, and positioning

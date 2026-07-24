@@ -105,7 +105,11 @@ async function decode(file: string, size: number): Promise<Decoded> {
     // itself — so flip to bottom-up, resize with sharp, and hand it a fresh PNG
     const meta = await sharp(file).metadata()
     const dims = targetDims(meta.width!, meta.height!, size)
-    const data = await sharp(file).flip().resize({ ...dims, fit: 'fill' }).png().toBuffer()
+    const data = await sharp(file)
+      .flip()
+      .resize({ ...dims, fit: 'fill' })
+      .png()
+      .toBuffer()
     return { ldr: true, data, ...dims }
   }
 
@@ -116,7 +120,8 @@ async function decode(file: string, size: number): Promise<Decoded> {
     const parsed: any = (loader as any).parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength))
     const { width, height } = parsed
     let data: Float32Array = parsed.data
-    if (data.length !== width * height * 4) throw new Error(`${file}: expected RGBA float data, got length ${data.length}`)
+    if (data.length !== width * height * 4)
+      throw new Error(`${file}: expected RGBA float data, got length ${data.length}`)
     const dims = targetDims(width, height, size)
     if (dims.width !== width) data = boxResizeFloat(data, width, height, dims.width, dims.height)
     if (ext === '.hdr') data = flipRows(data, dims.width, dims.height) // HDRLoader emits top-down

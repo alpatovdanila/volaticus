@@ -1,10 +1,10 @@
 /*
- import-components.ts — one command for the CURRENT components format: a t-pose `index.glb` with no real
+ import-index.ts — one command for the CURRENT components format: a t-pose `index.glb` with no real
  animation, plus sibling `<Clip Name>.fbx` files.
 
-   npx tsx scripts/import-components.ts bruno
-   npx tsx scripts/import-components.ts bruno --maxtex 1024 --force
-   npx tsx scripts/import-components.ts resources/models/bruno --anims "Walk Forward.fbx,Run Forward.fbx"
+   npx tsx scripts/import-index.ts bruno
+   npx tsx scripts/import-index.ts bruno --maxtex 1024 --force
+   npx tsx scripts/import-index.ts resources/models/bruno --anims "Walk Forward.fbx,Run Forward.fbx"
 
  It does four things:
 
@@ -102,7 +102,7 @@ const has = (name: string) => argv.includes(`--${name}`)
 const target = positional[0]
 if (!target) {
   console.error(
-    'usage: tsx scripts/import-components.ts <components-dir|name> [--id <id>] [--category <cat>]\n' +
+    'usage: tsx scripts/import-index.ts <components-dir|name> [--id <id>] [--category <cat>]\n' +
       '                                  [--maxtex N] [--anims "a.fbx,b.fbx"] [--dismember "a,b"]\n' +
       '                                  [--out name.glb] [--force]',
   )

@@ -20,7 +20,7 @@ export class Renderer extends BaseService {
 
   init(registry: IServicesRegistry): void {
     const deviceScreen = registry.get('deviceScreen')
-
+    this.world = registry.get('world')
     deviceScreen.resolutionChanged.on((resolution) => {
       this.threeRenderer.setSize(resolution.width, resolution.height)
     })

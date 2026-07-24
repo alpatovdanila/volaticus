@@ -7,7 +7,7 @@
    npx tsx scripts/bake-anims.ts resources/models/marine2 --anims "Rifle Walk.fbx,Rifle Run.fbx"
 
  This is the ANIMATION-ONLY tool. For a full import — bake + texture repack + entity doc with
- emissive/dismember/locomotion — use scripts/import-components.ts, which wraps the same steps.
+ emissive/dismember/locomotion — use scripts/import-index.ts, which wraps the same steps.
 
  The clips are produced by src/inventory/fbx-anim-merge.ts and the container is edited by
  src/inventory/glb-container.ts, both shared with the runtime loader and the importer, so

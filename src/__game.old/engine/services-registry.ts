@@ -1,21 +1,21 @@
 import { Timer } from 'three'
 
-import type { IDeviceScreen } from './engine/device-screen'
-import type { IRenderer } from './engine/renderer'
+import type { IDeviceScreen } from './services/device-screen'
+import type { IRenderer } from './services/renderer'
 
-import type { IInventory } from './engine/inventory'
+import type { IInventory } from './services/inventory'
 
-import { IWorld } from './engine/world/world'
-import type { IInput } from './engine/input'
-import type { IPlayerControl } from './engine/player/player-control'
-import type { IMovement } from './engine/movement'
-import type { IThreeSceneSync } from './engine/three-scene-sync'
-import type { IAnimation } from './engine/animations/animations-driver'
+import { IWorld } from './services/world/world'
+import type { IInput } from './services/input'
+import type { IPlayerControl } from './services/player/player-control'
+import type { IMovement } from './services/movement'
+import type { IThreeSceneSync } from './services/three-scene-sync'
+import type { IAnimation } from './services/animations/animations-driver'
 
-import type { IDebugOverlay } from './engine/debug-overlay'
-import type { ICameraControl } from './engine/camera-control'
-import { ILocomotionAnimation } from './engine/animations/locomotion-animation'
-import type { IEventsAnimations } from './engine/animations/events-animations'
+import type { IDebugOverlay } from './services/debug-overlay'
+import type { ICameraControl } from './services/camera-control'
+import { ILocomotionAnimation } from './services/animations/locomotion-animation'
+import type { IEventsAnimations } from './services/animations/events-animations'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen

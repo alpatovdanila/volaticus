@@ -1,0 +1,35 @@
+{
+  "scene": {
+    "background": "#DADADA",
+    "environment": {
+      "hdri": "sky_linekotsi_23",
+      "tonemap": "aces",
+      "rotation": 0,
+      "intensity": 1,
+      "showSky": true
+    },
+    "objects": [
+      {
+        "type": "mesh",
+        "mesh": {
+          "geometry": {
+            "type": "plane",
+            "width": 10000,
+            "height": 10000,
+            "tiles": 10000
+          },
+          "inventoryMaterial": "concrete_ground_01"
+        },
+        "rotation": [-1.5708, 0, 0],
+        "position": [0, 0, 0]
+      },
+      {
+        "type": "inventoryEntity",
+        "isPlayer": true,
+        "inventoryEntity": "bruno",
+        "rotation": [0, 0, 0],
+        "position": [0, 0, 0]
+      }
+    ]
+  }
+}

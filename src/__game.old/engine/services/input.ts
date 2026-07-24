@@ -1,0 +1,144 @@
+import { BaseService } from '../services-registry'
+
+const DEADZONE = 0.15
+
+// a pad is "live" if the player is visibly touching it right now
+const isProducingInput = (pad: Gamepad) => {
+  for (let i = 0; i < pad.axes.length; i++) if (Math.abs(pad.axes[i]) > DEADZONE) return true
+  for (let i = 0; i < pad.buttons.length; i++) if (pad.buttons[i].pressed) return true
+  return false
+}
+
+/*
+ Left stick, polled once per frame. The magnitude survives (it is not normalised to 1) so
+ callers can tell a gentle push from a full one — that is what selects walk vs run.
+*/
+export class Input extends BaseService {
+  private moveX = 0
+  private moveZ = 0
+
+  // the pad the last poll actually chose. The debug overlay reads this rather than re-polling,
+  // so the panel can never disagree with the device that is driving the game.
+  private pads: Gamepad[] = []
+  private pad: Gamepad | null = null
+  private activeIndex: number | null = null
+
+  // this frame's and last frame's held buttons — the pair is what makes edges detectable
+  private pressedNow = new Set<number>()
+  private pressedPrev = new Set<number>()
+
+  update() {
+    /*
+     An unfocused page does not get fresh gamepad state — getGamepads() keeps handing back the
+     LAST snapshot, indefinitely. Alt-tab (or click devtools) mid-movement and the engine reads a
+     stick frozen at whatever deflection it had, so the character walks off in that direction
+     forever, and no deadzone can help because the frozen values are real full-scale readings.
+
+     Dropping input while unfocused is also just what a game should do: a held key or stick must
+     not keep driving the character once the player has switched away.
+    */
+
+    if (!document.hasFocus()) return this.clear()
+
+    const pad = this.pollPad()
+    if (!pad) return this.clear()
+
+    // buttons are tracked BEFORE the stick deadzone gate — a press with the stick at rest
+    // is the normal case, not an edge case
+    this.trackButtons(pad)
+
+    const x = pad.axes[0] ?? 0
+    const y = pad.axes[1] ?? 0
+    const magnitude = Math.hypot(x, y)
+    if (magnitude < DEADZONE) return this.clearMove()
+
+    /*
+     Rescale past the deadzone so the first responsive input is 0, not a jump to 0.15, and CLAMP:
+     a square-gated stick reports up to 1.41 on the diagonal, and since deflection now maps
+     straight onto velocity that would be a 41% speed bonus for moving diagonally.
+
+     The clamp is on the throttle, not on the magnitude used to normalise — dividing by a
+     clamped magnitude would leave the direction vector itself over-long and reintroduce it.
+    */
+    const scaled = Math.min(1, (magnitude - DEADZONE) / (1 - DEADZONE))
+    this.moveX = (x / magnitude) * scaled
+    this.moveZ = (y / magnitude) * scaled // stick up is -1, which is forward (-Z) in three
+  }
+
+  /*
+   Picking the pad is not "take the first one": the browser enumerates plenty of things as
+   gamepads that nobody is holding — keyboards, dongles, wheels — and those sit at low slots
+   reporting axes that never leave zero. So, in order of confidence:
+
+     1. a pad producing input right now — unambiguous evidence of the one in the player's hands
+     2. the pad already chosen, while it stays connected, so the choice does not flicker
+     3. a standard-mapping pad — the impostors almost always report a non-standard mapping
+     4. anything left
+
+   getGamepads() also hands back a snapshot that must be re-read every frame, and in some
+   engines it is a sparse array-like (GamepadList) rather than a real Array — hence indexing
+   rather than Array methods, which would throw there.
+  */
+  private pollPad(): Gamepad | null {
+    const polled = navigator.getGamepads ? navigator.getGamepads() : []
+
+    this.pads.length = 0
+    let live: Gamepad | null = null
+    let sticky: Gamepad | null = null
+    let standard: Gamepad | null = null
+
+    for (let i = 0; i < polled.length; i++) {
+      const pad = polled[i]
+      if (!pad || !pad.connected) continue
+
+      this.pads.push(pad)
+      if (!live && isProducingInput(pad)) live = pad
+      if (pad.index === this.activeIndex) sticky = pad
+      if (!standard && pad.mapping === 'standard') standard = pad
+    }
+
+    const chosen = live ?? sticky ?? standard ?? this.pads[0] ?? null
+    this.activeIndex = chosen ? chosen.index : null
+    this.pad = chosen
+    return chosen
+  }
+
+  // swap-and-refill: last frame's set becomes the comparison base, no per-frame allocation
+  private trackButtons(pad: Gamepad) {
+    const previous = this.pressedPrev
+    this.pressedPrev = this.pressedNow
+    previous.clear()
+    this.pressedNow = previous
+    for (let i = 0; i < pad.buttons.length; i++) if (pad.buttons[i].pressed) this.pressedNow.add(i)
+  }
+
+  private clearMove() {
+    this.moveX = 0
+    this.moveZ = 0
+  }
+
+  private clear() {
+    this.clearMove()
+    this.pressedNow.clear()
+    this.pressedPrev.clear()
+  }
+
+  getMove() {
+    return { x: this.moveX, z: this.moveZ }
+  }
+
+  // true only on the frame the button went down
+  wasPressed(button: number): boolean {
+    return this.pressedNow.has(button) && !this.pressedPrev.has(button)
+  }
+
+  isDown(button: number): boolean {
+    return this.pressedNow.has(button)
+  }
+
+  getActivePad(): Gamepad | null {
+    return this.pad
+  }
+}
+
+export type IInput = InstanceType<typeof Input>

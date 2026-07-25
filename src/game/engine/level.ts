@@ -1,7 +1,7 @@
-import { AmbientLight, BoxGeometry, BufferGeometry, DirectionalLight, Material, Mesh, MeshNormalMaterial, PlaneGeometry } from 'three'
+import { BoxGeometry, BufferGeometry, Material, Mesh, MeshNormalMaterial, PlaneGeometry } from 'three'
 
 import { IsPlayer, IsSolid, NeedsSpawn, Position, Rotation, SceneObject, writeVec3Row } from '@components'
-import { Behaviour, LevelObject, PrimitiveObject, parseLevelDeclaration } from '@lib/level.schema'
+import { Behaviour, LevelDeclaration, LevelObject, PrimitiveObject, parseLevelDeclaration } from '@lib/level.schema'
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
 
 const BEHAVIOUR_TAGS: Record<Behaviour, object> = {
@@ -30,24 +30,36 @@ export class Level extends BaseService {
     // no camera in the level format yet — a viewpoint that can see a ground plane
     this.world.camera.position.set(0, 3, 9)
     this.world.camera.lookAt(0, 1, 0)
-
-    // THROWAWAY lighting so standard materials are visible before the hdri loader lands.
-    // On the scene, not worldRoot, so unloading a level leaves it be
-    const sun = new DirectionalLight(0xffffff, 2)
-    sun.position.set(4, 8, 6)
-    this.world.scene.add(sun, new AmbientLight(0xffffff, 0.4))
   }
 
   async load(name: string) {
     const level = parseLevelDeclaration(name, await this.loader.json.load(levelUrl(name)))
 
-    // resolve every material first so spawning stays synchronous — no half-built level on screen
+    // environment and materials are independent fetches — resolve everything before spawning so
+    // the level appears at once rather than half-built
     const ids = level.objects.filter(isPrimitive).map((object) => object.primitive.material.inventoryId)
-    const materials = new Map(
-      await Promise.all([...new Set(ids)].map(async (id) => [id, await this.loader.material.load(id)] as const)),
-    )
+    const [materials] = await Promise.all([
+      Promise.all([...new Set(ids)].map(async (id) => [id, await this.loader.material.load(id)] as const)),
+      this.applyEnvironment(level.environment),
+    ])
 
-    for (const object of level.objects) this.spawn(object, materials)
+    for (const object of level.objects) this.spawn(object, new Map(materials))
+  }
+
+  private async applyEnvironment(environment: LevelDeclaration['environment']) {
+    if (!environment) return
+
+    const { scene } = this.world
+    const texture = await this.loader.hdri.load(environment.hdri.inventoryId)
+
+    scene.environment = texture
+    scene.environmentIntensity = environment.hdri.intensity
+    scene.environmentRotation.set(...environment.hdri.rotation)
+
+    if (!environment.showSky) return
+    scene.background = texture
+    // rotate the visible sky with the lighting, so the two cannot drift apart
+    scene.backgroundRotation.copy(scene.environmentRotation)
   }
 
   private spawn(object: LevelObject, materials: Map<string, Material>) {

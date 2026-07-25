@@ -57,6 +57,8 @@ const EnvironmentSchema = z.object({
     intensity: z.number().default(1),
     rotation: Vec3.default(originVec3),
   }),
+  // false keeps the hdri's lighting but leaves the flat background showing
+  showSky: z.boolean().default(true),
 })
 
 const LevelObjectSchema = z.discriminatedUnion('type', [PrimitiveObjectSchema, ModelObjectSchema])

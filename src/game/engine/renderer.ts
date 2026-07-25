@@ -4,7 +4,9 @@ import { BaseService, IServicesRegistry, KnownServices } from './services-regist
 import { createEvent } from '@shared/lib/atomic-event'
 
 export class Renderer extends BaseService {
-  readonly webGPURenderer = new WebGPURenderer({ antialias: true })
+  // trackTimestamp puts gpu frame time in info.render.timestamp. It obliges us to drain the
+  // query pool every frame (see update) — an unresolved pool fills up and stops recording
+  readonly webGPURenderer = new WebGPURenderer({ antialias: true, trackTimestamp: true })
   private world!: KnownServices['world']
   private animationLoopCallback = (time: number) => {}
   public becomeReady = createEvent()
@@ -34,6 +36,9 @@ export class Renderer extends BaseService {
 
   update() {
     this.webGPURenderer.render(this.world.scene, this.world.camera)
+    // not awaited: repeat calls return the in-flight resolve, and the value lands in
+    // info.render.timestamp a frame or so later, which is soon enough to read
+    void this.webGPURenderer.resolveTimestampsAsync()
   }
 }
 

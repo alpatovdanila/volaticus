@@ -6,7 +6,8 @@
       "inventoryId": "concrete_tunnel",
       "intensity": 1,
       "rotation": [0, 0, 0]
-    }
+    },
+    "showSky": false
   },
   "objects": [
     {

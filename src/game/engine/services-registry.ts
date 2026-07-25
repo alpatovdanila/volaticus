@@ -7,6 +7,7 @@ import { IMovement } from '@systems/movement'
 import { IDestroy } from '@systems/destroy'
 import { ILoader } from './loader'
 import { ILevel } from './level'
+import { IDevOverlay } from './dev-overlay'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
@@ -17,7 +18,10 @@ export interface KnownServices {
   movement: IMovement
   threeSceneSync: IThreeSceneSync
   destroy: IDestroy
+  devOverlay: IDevOverlay
 }
+
+export type ServiceTimings = Partial<Record<keyof KnownServices, number>>
 
 export interface IService {
   create(): void
@@ -42,6 +46,11 @@ export class BaseService implements IService {
 export class ServicesRegistry {
   private services = new Map<keyof KnownServices, IService>()
 
+  // wall time of the last frame's update loop, and where it went. The registry owns the loop,
+  // so it is the only place that can measure this
+  cpuTime = 0
+  readonly timings: ServiceTimings = {}
+
   register<K extends keyof KnownServices>(name: K, system: KnownServices[K]) {
     this.services.set(name, system)
     return system
@@ -55,6 +64,7 @@ export class ServicesRegistry {
 
   async start() {
     const servicesList = [...this.services.values()]
+    const named = [...this.services.entries()]
 
     for (const service of servicesList) service.create()
     for (const service of servicesList) service.init(this)
@@ -68,7 +78,14 @@ export class ServicesRegistry {
     render.setAnimationLoopCallback((time) => {
       timer.update(time)
       const dt = Math.min(0.05, timer.getDelta())
-      for (const service of servicesList) service.update(dt)
+
+      const frameStart = performance.now()
+      for (const [name, service] of named) {
+        const serviceStart = performance.now()
+        service.update(dt)
+        this.timings[name] = performance.now() - serviceStart
+      }
+      this.cpuTime = performance.now() - frameStart
     })
   }
 }

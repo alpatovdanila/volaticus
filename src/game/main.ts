@@ -7,6 +7,7 @@ import { Destroy } from '@systems/destroy'
 import { Renderer } from '@engine/renderer'
 import { World } from '@engine/world'
 import { Loader } from '@engine/loader'
+import { DevOverlay } from '@engine/dev-overlay'
 import { Level } from '@engine/level'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
@@ -29,6 +30,9 @@ engine.register('renderer', new Renderer())
 engine.register('movement', new Movement())
 engine.register('threeSceneSync', new ThreeSceneSync())
 engine.register('destroy', new Destroy())
+
+// last, so its readout covers every other service's work this frame
+engine.register('devOverlay', new DevOverlay())
 
 await engine.start()
 

@@ -1,1 +1,39 @@
-{}
+{
+  "name": "Dev Level",
+  "description": "Level to test things on",
+  "envinroment": {
+    "hdri": {
+      "inventoryId": "concrete_tunnel",
+      "intensity": 1,
+      "rotation": [0, 0, 0]
+    }
+  },
+  "objects": [
+    {
+      "type": "primitive",
+      "primitive": {
+        "type": "plane",
+        "solid": true,
+        "size": [100, 100],
+        "material": {
+          "inventoryId": "bark_01",
+          "uv": {
+            "projection": "box",
+            "fit": "tile"
+          }
+        }
+      },
+      "position": [0, 0, 0],
+      "rotation": [0, 0, 0]
+    },
+    {
+      "type": "model",
+      "model": {
+        "inventoryId": "bruno"
+      },
+      "position": [0, 0, 0],
+      "rotation": [0, 0, 0],
+      "behaviour": ["player"]
+    }
+  ]
+}

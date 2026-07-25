@@ -3,10 +3,8 @@ import { WebGPURenderer } from 'three/webgpu'
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
 
 export class Renderer extends BaseService {
-  private threeRenderer = new WebGPURenderer()
+  private threeRenderer = new WebGPURenderer({ antialias: true })
   private world!: KnownServices['world']
-  private deviceScreen!: KnownServices['deviceScreen']
-  private renderable = false
   private animationLoopCallback = (time: number) => {}
 
   create() {
@@ -32,11 +30,7 @@ export class Renderer extends BaseService {
   }
 
   update() {
-    const camera = this.world.camera
-    const scene = this.world.scene
-    if (camera && scene) {
-      this.threeRenderer.render(scene, camera)
-    }
+    this.threeRenderer.render(this.world.scene, this.world.camera)
   }
 }
 

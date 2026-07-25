@@ -1,25 +1,17 @@
-import { BoxGeometry, Mesh, MeshNormalMaterial, PerspectiveCamera, Scene } from 'three'
+import { BoxGeometry, Mesh, MeshNormalMaterial } from 'three'
 
 import { NeedsSpawn, Position, Rotation, SceneObject, Velocity } from '@components'
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
 
 export class Level extends BaseService {
   private world!: KnownServices['world']
-  private camera = new PerspectiveCamera(60, 1, 0.1, 1000)
 
   init(registry: IServicesRegistry) {
     this.world = registry.get('world')
-
-    registry.get('deviceScreen').aspectRatioChanged.on((aspectRatio) => {
-      this.camera.aspect = aspectRatio
-      this.camera.updateProjectionMatrix()
-    })
   }
 
   async start() {
-    this.camera.position.set(0, 0, 6)
-    this.world.scene = new Scene()
-    this.world.camera = this.camera
+    this.world.camera.position.set(0, 0, 6)
 
     // SCAFFOLDING for the movement system — one cube drifting along +x.
     // Delete once the level loader builds the scene for real.

@@ -13,12 +13,11 @@ export class ThreeSceneSync extends BaseService {
 
   update() {
     const { query, removeComponent, scene } = this.world
-    if (!scene) return
 
     for (const eid of query([SceneObject, NeedsSpawn])) {
       const object = SceneObject[eid]
       if (!object) continue
-      scene.add(object)
+      scene.worldRoot.add(object)
       removeComponent(eid, NeedsSpawn)
     }
 

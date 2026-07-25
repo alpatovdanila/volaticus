@@ -1,4 +1,4 @@
-import { Camera, Scene } from 'three'
+import { Group, PerspectiveCamera, Scene } from 'three'
 import {
   addComponents as ecsAddComponents,
   addEntity as ecsAddEntity,
@@ -17,21 +17,38 @@ import {
   type QueryTerm,
 } from 'bitecs'
 
-import { createEvent } from '@shared/lib/atomic-event'
-import { BaseService } from './services-registry'
+import { BaseService, IServicesRegistry } from './services-registry'
+
+/*
+Everything the simulation spawns lives under worldRoot, so unloading a level clears that node
+instead of the scene — the scene itself keeps whatever has to outlive a level change.
+*/
+class GameScene extends Scene {
+  readonly worldRoot = new Group()
+
+  constructor() {
+    super()
+    this.worldRoot.name = 'worldRoot'
+    this.add(this.worldRoot)
+  }
+}
 
 /**
  * World is what is getting computed/rendered on every frame.
- * It holds ECS+shortcut ecs methods, current camera that should be rendered, current scene
- * The creation and the loading of all of these is reserved to Level service and others
+ * It owns the ecs (+shortcut ecs methods), the scene and the camera — all three live as long as
+ * the game does. Placing the camera and filling the scene is left to Level service and others
  */
 export class World extends BaseService {
-  readyStateChange = createEvent<boolean>()
-  ready = createEvent()
   readonly ecs = createWorld()
-  readyState: boolean = false
-  private _scene: Scene | null = null
-  private _camera: Camera | null = null
+  readonly scene = new GameScene()
+  readonly camera = new PerspectiveCamera(60, 1, 0.1, 1000)
+
+  init(registry: IServicesRegistry) {
+    registry.get('deviceScreen').aspectRatioChanged.on((aspectRatio) => {
+      this.camera.aspect = aspectRatio
+      this.camera.updateProjectionMatrix()
+    })
+  }
 
   // arrow properties, not methods: systems destructure these off the world
   // (`const { query } = this.world`), which would strip `this` from a prototype method
@@ -54,32 +71,6 @@ export class World extends BaseService {
 
   query = (terms: QueryTerm[], ...modifiers: (QueryModifier | QueryOptions)[]): QueryResult =>
     ecsQuery(this.ecs, terms, ...modifiers)
-
-  set camera(camera: Camera) {
-    this._camera = camera
-    this.emitPossibleReadiness()
-  }
-
-  set scene(scene: Scene) {
-    this._scene = scene
-    this.emitPossibleReadiness()
-  }
-
-  get camera(): Camera | null {
-    return this._camera
-  }
-
-  get scene(): Scene | null {
-    return this._scene
-  }
-
-  private emitPossibleReadiness() {
-    if (this.camera && this.scene) {
-      this.readyStateChange((this.readyState = true))
-    } else {
-      this.readyStateChange((this.readyState = false))
-    }
-  }
 }
 
 export type IWorld = InstanceType<typeof World>

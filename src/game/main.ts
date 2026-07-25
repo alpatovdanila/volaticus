@@ -6,6 +6,7 @@ import { Movement } from '@systems/movement'
 import { Destroy } from '@systems/destroy'
 import { Renderer } from '@engine/renderer'
 import { World } from '@engine/world'
+import { Loader } from '@engine/loader'
 import { Level } from '@engine/level'
 
 scopeHmrReloads(['src/game/', 'src/lib/', 'src/inventory/'])
@@ -17,7 +18,8 @@ const engine = new ServicesRegistry()
  */
 engine.register('deviceScreen', new DeviceScreen())
 engine.register('world', new World())
-engine.register('level', new Level())
+engine.register('loader', new Loader())
+const level = engine.register('level', new Level())
 engine.register('renderer', new Renderer())
 
 /**
@@ -29,3 +31,5 @@ engine.register('threeSceneSync', new ThreeSceneSync())
 engine.register('destroy', new Destroy())
 
 await engine.start()
+
+await level.load('dev')

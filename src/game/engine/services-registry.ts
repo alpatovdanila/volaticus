@@ -5,11 +5,13 @@ import { IWorld } from './world'
 import { IThreeSceneSync } from '@systems/three-scene-sync'
 import { IMovement } from '@systems/movement'
 import { IDestroy } from '@systems/destroy'
+import { ILoader } from './loader'
 import { ILevel } from './level'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
   renderer: IRenderer
+  loader: ILoader
   level: ILevel
   world: IWorld
   movement: IMovement

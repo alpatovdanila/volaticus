@@ -15,6 +15,10 @@ export const NeedsDespawn = {}
 
 export const NeedsDestroy = {}
 
+export const IsPlayer = {}
+
+export const IsSolid = {}
+
 export const writeVec3Row = (component: Vec3Component, eid: number, vr: Vec3Row): void => {
   component.x[eid] = vr[0]
   component.y[eid] = vr[1]

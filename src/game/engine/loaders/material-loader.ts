@@ -22,6 +22,7 @@ export class MaterialLoader {
   private gltf: GLTFLoader
   private cache = new Map<string, Promise<Material>>()
   private ktxSupportDetection!: Promise<void>
+  private maxAnisotropy = 1
 
   constructor(
     manager: LoadingManager,
@@ -46,6 +47,7 @@ export class MaterialLoader {
 
     renderer.becomeReady.on(() => {
       this.ktx2.detectSupport(renderer.webGPURenderer)
+      this.maxAnisotropy = renderer.webGPURenderer.getMaxAnisotropy()
       resolve()
     })
   }
@@ -64,7 +66,10 @@ export class MaterialLoader {
     })
     if (!material) throw new Error(`material '${inventoryId}': ${doc.file} carries no mesh to take a material from`)
 
-    for (const map of maps(material)) map.wrapS = map.wrapT = RepeatWrapping
+    for (const map of maps(material)) {
+      map.wrapS = map.wrapT = RepeatWrapping
+      map.anisotropy = this.maxAnisotropy
+    }
     return material
   }
 }

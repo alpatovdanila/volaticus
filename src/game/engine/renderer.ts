@@ -1,36 +1,39 @@
 import { WebGPURenderer } from 'three/webgpu'
 
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
+import { createEvent } from '@shared/lib/atomic-event'
 
 export class Renderer extends BaseService {
-  private threeRenderer = new WebGPURenderer({ antialias: true })
+  readonly webGPURenderer = new WebGPURenderer({ antialias: true })
   private world!: KnownServices['world']
   private animationLoopCallback = (time: number) => {}
+  public becomeReady = createEvent()
 
   create() {
-    this.threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    document.body.appendChild(this.threeRenderer.domElement)
+    this.webGPURenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    document.body.appendChild(this.webGPURenderer.domElement)
   }
 
   setAnimationLoopCallback(cb: (time: number) => void) {
     this.animationLoopCallback = cb
   }
 
-  init(registry: IServicesRegistry): void {
+  init(registry: IServicesRegistry) {
     const deviceScreen = registry.get('deviceScreen')
     this.world = registry.get('world')
     deviceScreen.resolutionChanged.on((resolution) => {
-      this.threeRenderer.setSize(resolution.width, resolution.height)
+      this.webGPURenderer.setSize(resolution.width, resolution.height)
     })
   }
 
   async start() {
-    await this.threeRenderer.init()
-    this.threeRenderer.setAnimationLoop((time) => this.animationLoopCallback(time))
+    await this.webGPURenderer.init()
+    this.becomeReady()
+    this.webGPURenderer.setAnimationLoop((time) => this.animationLoopCallback(time))
   }
 
   update() {
-    this.threeRenderer.render(this.world.scene, this.world.camera)
+    this.webGPURenderer.render(this.world.scene, this.world.camera)
   }
 }
 

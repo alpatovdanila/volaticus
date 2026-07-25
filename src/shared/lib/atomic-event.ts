@@ -3,6 +3,7 @@ type AtomicEventHandlerOffShortcut = VoidFunction
 export type AtomicEvent<T> = {
   (payload: T): void
   on(handler: AtomicEventHandler<T>): AtomicEventHandlerOffShortcut
+
   off(handler: AtomicEventHandler<T>): void
   once(handler: AtomicEventHandler<T>): AtomicEventHandlerOffShortcut
 }

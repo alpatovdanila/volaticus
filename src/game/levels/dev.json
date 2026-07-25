@@ -13,12 +13,11 @@
       "type": "primitive",
       "primitive": {
         "type": "plane",
-
         "size": [100, 100],
         "material": {
-          "inventoryId": "bark_01",
+          "inventoryId": "ground_01",
           "uv": {
-            "projection": "box",
+            "projection": "planar",
             "mode": "tile"
           }
         }

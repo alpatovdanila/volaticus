@@ -1,4 +1,4 @@
-import { BaseService, IServicesRegistry, KnownServices, ServiceTimings } from './services-registry'
+import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
 
 const REDRAW_INTERVAL = 0.2 // seconds — the dom write is the only part of this with real cost
 const SMOOTHING = 0.1 // ema weight of the newest sample; raw per-frame times are unreadable

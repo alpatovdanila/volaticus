@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { AnimationProfileState } from '@inventory/schemas/model.schema'
+import { AnimationProfileState, AnimationTask as AnimationTaskDeclaration } from '@inventory/schemas/model.schema'
 import { Vec3Row } from '@lib/type'
 
 export type Vec3Component = { x: number[]; y: number[]; z: number[] }
@@ -15,6 +15,18 @@ export const AnimationProfile: AnimationProfileState[] = []
 
 // per entity, unlike AnimationProfile: a mixer holds playback state
 export const ThreeAnimator: THREE.AnimationMixer[] = []
+
+// what the model declares, plus the two things only the caller decides
+export type AnimationTaskState = AnimationTaskDeclaration & {
+  repeats?: number // passes; Infinity = endless; absent = 1
+  lock?: boolean // hold the animator until this clip finishes; refused with endless repeats
+}
+
+// a request to play a clip. Consumed by ThreeAnimatorSync, played or not
+export const AnimationTask: AnimationTaskState[] = []
+
+// presence is the lock; the value is the action whose completion releases it
+export const AnimatorLocked: THREE.AnimationAction[] = []
 
 export const NeedsSpawn = {}
 

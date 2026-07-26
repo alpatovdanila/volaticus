@@ -35,23 +35,24 @@ export type LocomotionSet = {
   readonly right?: readonly LocomotionBand[]
 }
 
-// a clip played at someone's command rather than resolved from movement
-export type EventClip = {
+// a clip played at someone's command rather than resolved from movement. WHAT the model has —
+// how many passes to play it for, and whether that playback holds the animator, are decided at
+// the moment of commanding and live on the runtime task, not here
+export type AnimationTask = {
   readonly clip: string
   readonly rate?: number // playback rate; absent plays as authored (1)
   readonly fade?: number // crossfade in, seconds; absent cuts
-  readonly repeats?: number // how many passes; absent plays one
 }
 
 export type LifecycleSet = {
-  readonly rise?: EventClip
-  readonly death?: EventClip
+  readonly rise?: AnimationTask
+  readonly death?: AnimationTask
 }
 
 export type ActionsSet = {
-  readonly hit?: EventClip
-  readonly sit?: EventClip
-  readonly jump?: EventClip
+  readonly hit?: AnimationTask
+  readonly sit?: AnimationTask
+  readonly jump?: AnimationTask
 }
 
 export type AnimationProfileState = {
@@ -77,26 +78,25 @@ const LocomotionSetSchema: z.ZodType<LocomotionSet> = z.object({
   right: z.array(LocomotionBandSchema).min(1).optional(),
 })
 
-const EventClipSchema: z.ZodType<EventClip> = z.object({
+const AnimationTaskSchema: z.ZodType<AnimationTask> = z.object({
   clip: z.string().min(1),
   rate: z.number().positive().optional(),
   fade: z.number().nonnegative().optional(),
-  repeats: z.number().int().positive().optional(),
 })
 
 const AnimationProfileSchema: z.ZodType<AnimationProfileState> = z.object({
   locomotion: LocomotionSetSchema.optional(),
   lifecycle: z
     .object({
-      rise: EventClipSchema.optional(),
-      death: EventClipSchema.optional(),
+      rise: AnimationTaskSchema.optional(),
+      death: AnimationTaskSchema.optional(),
     })
     .optional(),
   actions: z
     .object({
-      hit: EventClipSchema.optional(),
-      sit: EventClipSchema.optional(),
-      jump: EventClipSchema.optional(),
+      hit: AnimationTaskSchema.optional(),
+      sit: AnimationTaskSchema.optional(),
+      jump: AnimationTaskSchema.optional(),
     })
     .optional(),
 })

@@ -3,6 +3,7 @@ import { scopeHmrReloads } from '@shared/lib/hmr-scope'
 import { DeviceScreen } from '@engine/device-screen'
 import { ThreeSceneSync } from '@systems/three-scene-sync'
 import { Movement } from '@systems/movement'
+import { ThreeAnimatorSync } from '@systems/three-animator-sync'
 import { Destroy } from '@systems/destroy'
 import { Renderer } from '@engine/renderer'
 import { World } from '@engine/world'
@@ -28,6 +29,7 @@ engine.register('renderer', new Renderer())
  * systems above wrote this frame, destroy tears down last so everything else saw the entity
  */
 engine.register('movement', new Movement())
+engine.register('threeAnimatorSync', new ThreeAnimatorSync())
 engine.register('threeSceneSync', new ThreeSceneSync())
 engine.register('destroy', new Destroy())
 

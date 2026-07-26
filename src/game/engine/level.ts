@@ -1,6 +1,16 @@
-import { BufferGeometry, Material, Mesh, Object3D, PlaneGeometry } from 'three'
+import { AnimationMixer, BufferGeometry, Material, Mesh, Object3D, PlaneGeometry } from 'three'
 
-import { AnimationProfile, IsPlayer, IsSolid, NeedsSpawn, Position, Rotation, SceneObject, writeVec3Row } from '@components'
+import {
+  AnimationProfile,
+  IsPlayer,
+  IsSolid,
+  NeedsSpawn,
+  Position,
+  Rotation,
+  SceneObject,
+  ThreeAnimator,
+  writeVec3Row,
+} from '@components'
 import { LoadedModel } from './loaders/model-loader'
 import {
   Behaviour,
@@ -85,6 +95,15 @@ export class Level extends BaseService {
     if (profile) {
       this.world.addComponent(eid, AnimationProfile)
       AnimationProfile[eid] = profile
+    }
+
+    // a mixer is worth having wherever there are clips to bind, profile or not.
+    // NOTE model objects are shared per id — two entities on one model would get two mixers
+    // driving the same skeleton. Whoever adds the second model entity owns that
+    const animated = SceneObject[eid].animations
+    if (animated?.length) {
+      this.world.addComponent(eid, ThreeAnimator)
+      ThreeAnimator[eid] = new AnimationMixer(SceneObject[eid])
     }
 
     for (const behaviour of object.behaviour) this.world.addComponent(eid, BEHAVIOUR_TAGS[behaviour])

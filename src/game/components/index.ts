@@ -13,6 +13,9 @@ export const SceneObject: THREE.Object3D[] = []
 // shared per model id — read-only config, never mutate an entity's copy in place
 export const AnimationProfile: AnimationProfileState[] = []
 
+// per entity, unlike AnimationProfile: a mixer holds playback state
+export const ThreeAnimator: THREE.AnimationMixer[] = []
+
 export const NeedsSpawn = {}
 
 export const NeedsDespawn = {}

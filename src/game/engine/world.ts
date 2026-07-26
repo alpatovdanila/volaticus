@@ -1,6 +1,6 @@
 import { Group, PerspectiveCamera, Scene } from 'three'
 import {
-  addComponents as ecsAddComponents,
+  addComponent as ecsAddComponent,
   addEntity as ecsAddEntity,
   createWorld,
   entityExists as ecsEntityExists,
@@ -61,8 +61,14 @@ export class World extends BaseService {
 
   entityComponents = (eid: EntityId): ComponentRef[] => ecsGetEntityComponents(this.ecs, eid)
 
-  addComponent = (eid: EntityId, ...components: Parameters<typeof ecsAddComponents>[2][]): void =>
-    ecsAddComponents(this.ecs, eid, ...components)
+  /*
+  One bitecs addComponent per component, NOT addComponents: that one does
+  `Array.isArray(args[0]) ? args[0] : args`, and our stores ARE arrays, so passing a single
+  store made it read the store as a list of components and register nothing at all — silently.
+  */
+  addComponent = (eid: EntityId, ...components: Parameters<typeof ecsAddComponent>[2][]): void => {
+    for (const component of components) ecsAddComponent(this.ecs, eid, component)
+  }
 
   removeComponent = (eid: EntityId, ...components: ComponentRef[]): void =>
     ecsRemoveComponent(this.ecs, eid, ...components)

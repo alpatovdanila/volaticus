@@ -1,7 +1,15 @@
-import { LoopRepeat } from 'three'
+import { AnimationAction, LoopRepeat } from 'three'
 
 import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-registry'
 import { AnimationTask, AnimatorLocked, ThreeAnimator } from '@components'
+
+/*
+What each entity is currently playing — the action to blend OUT of when the next clip starts.
+
+Private to this system on purpose: it is the only thing allowed to know, and nothing queries on
+it, so a registered component would cost a bitflag and buy nothing.
+*/
+const CurrentAction: AnimationAction[] = []
 
 /*
 Drives every entity's animation mixer: releases finished locks, starts requested clips, and
@@ -41,6 +49,9 @@ export class ThreeAnimatorSync extends BaseService {
       if (action.isRunning()) continue
 
       action.stop()
+      // nothing is playing now: leaving it set would have the next clip crossfade from a
+      // stopped action, which blends from nothing and looks like a cut anyway
+      delete CurrentAction[eid]
       removeComponent(eid, AnimatorLocked)
     }
   }
@@ -68,10 +79,17 @@ export class ThreeAnimatorSync extends BaseService {
       action.clampWhenFinished = !endless // hold the last pose rather than snapping to bind
       action.timeScale = task.rate ?? 1
 
-      // NOTE fade is a fade-IN, not a crossfade: blending out of the outgoing clip needs a
-      // reference to it, and only the locked action is tracked. Switching clips cuts
-      ThreeAnimator[eid].stopAllAction()
-      action.reset().fadeIn(task.fade ?? 0).play()
+      const previous = CurrentAction[eid]
+      const fade = task.fade ?? 0
+
+      action.reset().play() // crossFadeFrom needs both actions playing
+      if (previous && previous !== action) {
+        // warp scales the two playback rates into each other over the blend, so a walk→run
+        // transition steps through rather than skating
+        if (fade > 0) action.crossFadeFrom(previous, fade, true)
+        else previous.stop()
+      }
+      CurrentAction[eid] = action
 
       if (!task.lock) continue
       if (endless) {

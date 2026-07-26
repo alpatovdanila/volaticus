@@ -9,6 +9,7 @@ import {
   Rotation,
   SceneObject,
   ThreeAnimator,
+  Velocity,
   writeVec3Row,
 } from '@components'
 import { LoadedModel } from './loaders/model-loader'
@@ -89,6 +90,13 @@ export class Level extends BaseService {
     SceneObject[eid] = objectFor(object, materials, models)
     writeVec3Row(Position, eid, object.position)
     writeVec3Row(Rotation, eid, object.rotation)
+
+    // models are the things that move; a primitive is scenery. Zeroed, but present, so movement
+    // and locomotion queries match it before anything has pushed it anywhere
+    if (isModel(object)) {
+      this.world.addComponent(eid, Velocity)
+      writeVec3Row(Velocity, eid, [0, 0, 0])
+    }
 
     // conditional: a model without a profile must not match a query for one
     const profile = isModel(object) ? models.get(object.model.inventoryId)?.doc.animationProfile : undefined

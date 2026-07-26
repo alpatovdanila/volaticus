@@ -1,6 +1,7 @@
 import { BufferGeometry, Material, Mesh, Object3D, PlaneGeometry } from 'three'
 
-import { IsPlayer, IsSolid, NeedsSpawn, Position, Rotation, SceneObject, writeVec3Row } from '@components'
+import { AnimationProfile, IsPlayer, IsSolid, NeedsSpawn, Position, Rotation, SceneObject, writeVec3Row } from '@components'
+import { LoadedModel } from './loaders/model-loader'
 import {
   Behaviour,
   LevelDeclaration,
@@ -72,12 +73,19 @@ export class Level extends BaseService {
     scene.backgroundRotation.copy(scene.environmentRotation)
   }
 
-  private spawn(object: LevelObject, materials: Map<string, Material>, models: Map<string, Object3D>) {
+  private spawn(object: LevelObject, materials: Map<string, Material>, models: Map<string, LoadedModel>) {
     const eid = this.world.addEntity(Position, Rotation, SceneObject, NeedsSpawn)
 
     SceneObject[eid] = objectFor(object, materials, models)
     writeVec3Row(Position, eid, object.position)
     writeVec3Row(Rotation, eid, object.rotation)
+
+    // conditional: a model without a profile must not match a query for one
+    const profile = isModel(object) ? models.get(object.model.inventoryId)?.doc.animationProfile : undefined
+    if (profile) {
+      this.world.addComponent(eid, AnimationProfile)
+      AnimationProfile[eid] = profile
+    }
 
     for (const behaviour of object.behaviour) this.world.addComponent(eid, BEHAVIOUR_TAGS[behaviour])
   }
@@ -93,9 +101,9 @@ const resolve = async <T>(ids: string[], load: (id: string) => Promise<T>): Prom
 const objectFor = (
   object: LevelObject,
   materials: Map<string, Material>,
-  models: Map<string, Object3D>,
+  models: Map<string, LoadedModel>,
 ): Object3D => {
-  if (isModel(object)) return models.get(object.model.inventoryId)!
+  if (isModel(object)) return models.get(object.model.inventoryId)!.object
 
   const [width, height] = object.primitive.size
   const geometry = new PlaneGeometry(width, height)

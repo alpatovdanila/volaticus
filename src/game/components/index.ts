@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { AnimationProfileState } from '@inventory/schemas/model.schema'
 import { Vec3Row } from '@lib/type'
 
 export type Vec3Component = { x: number[]; y: number[]; z: number[] }
@@ -8,6 +9,9 @@ export const Velocity: Vec3Component = { x: [], y: [], z: [] }
 export const Rotation: Vec3Component = { x: [], y: [], z: [] }
 
 export const SceneObject: THREE.Object3D[] = []
+
+// shared per model id — read-only config, never mutate an entity's copy in place
+export const AnimationProfile: AnimationProfileState[] = []
 
 export const NeedsSpawn = {}
 

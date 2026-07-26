@@ -1,7 +1,14 @@
-import { BoxGeometry, BufferGeometry, Material, Mesh, MeshNormalMaterial, PlaneGeometry } from 'three'
+import { BufferGeometry, Material, Mesh, Object3D, PlaneGeometry } from 'three'
 
 import { IsPlayer, IsSolid, NeedsSpawn, Position, Rotation, SceneObject, writeVec3Row } from '@components'
-import { Behaviour, LevelDeclaration, LevelObject, PrimitiveObject, parseLevelDeclaration } from '@lib/level.schema'
+import {
+  Behaviour,
+  LevelDeclaration,
+  LevelObject,
+  ModelObject,
+  PrimitiveObject,
+  parseLevelDeclaration,
+} from '@lib/level.schema'
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
 
 const BEHAVIOUR_TAGS: Record<Behaviour, object> = {
@@ -35,15 +42,18 @@ export class Level extends BaseService {
   async load(name: string) {
     const level = parseLevelDeclaration(name, await this.loader.json.load(levelUrl(name)))
 
-    // environment and materials are independent fetches — resolve everything before spawning so
-    // the level appears at once rather than half-built
-    const ids = level.objects.filter(isPrimitive).map((object) => object.primitive.material.inventoryId)
-    const [materials] = await Promise.all([
-      Promise.all([...new Set(ids)].map(async (id) => [id, await this.loader.material.load(id)] as const)),
+    // every asset is an independent fetch — resolve them all before spawning so the level
+    // appears at once rather than half-built
+    const materialIds = level.objects.filter(isPrimitive).map((object) => object.primitive.material.inventoryId)
+    const modelIds = level.objects.filter(isModel).map((object) => object.model.inventoryId)
+
+    const [materials, models] = await Promise.all([
+      resolve(materialIds, (id) => this.loader.material.load(id)),
+      resolve(modelIds, (id) => this.loader.model.load(id)),
       this.applyEnvironment(level.environment),
     ])
 
-    for (const object of level.objects) this.spawn(object, new Map(materials))
+    for (const object of level.objects) this.spawn(object, materials, models)
   }
 
   private async applyEnvironment(environment: LevelDeclaration['environment']) {
@@ -62,10 +72,10 @@ export class Level extends BaseService {
     scene.backgroundRotation.copy(scene.environmentRotation)
   }
 
-  private spawn(object: LevelObject, materials: Map<string, Material>) {
+  private spawn(object: LevelObject, materials: Map<string, Material>, models: Map<string, Object3D>) {
     const eid = this.world.addEntity(Position, Rotation, SceneObject, NeedsSpawn)
 
-    SceneObject[eid] = meshFor(object, materials)
+    SceneObject[eid] = objectFor(object, materials, models)
     writeVec3Row(Position, eid, object.position)
     writeVec3Row(Rotation, eid, object.rotation)
 
@@ -74,9 +84,18 @@ export class Level extends BaseService {
 }
 
 const isPrimitive = (object: LevelObject): object is PrimitiveObject => object.type === 'primitive'
+const isModel = (object: LevelObject): object is ModelObject => object.type === 'model'
 
-const meshFor = (object: LevelObject, materials: Map<string, Material>): Mesh => {
-  if (!isPrimitive(object)) return new Mesh(new BoxGeometry(0.6, 1.8, 0.4), new MeshNormalMaterial())
+// one entry per distinct id, resolved concurrently
+const resolve = async <T>(ids: string[], load: (id: string) => Promise<T>): Promise<Map<string, T>> =>
+  new Map(await Promise.all([...new Set(ids)].map(async (id) => [id, await load(id)] as const)))
+
+const objectFor = (
+  object: LevelObject,
+  materials: Map<string, Material>,
+  models: Map<string, Object3D>,
+): Object3D => {
+  if (isModel(object)) return models.get(object.model.inventoryId)!
 
   const [width, height] = object.primitive.size
   const geometry = new PlaneGeometry(width, height)

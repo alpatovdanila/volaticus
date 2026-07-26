@@ -5,6 +5,7 @@ import { WebGPURenderer } from 'three/webgpu'
 import { HdriLoader } from './loaders/hdri-loader'
 import { JsonLoader } from './loaders/json-loader'
 import { MaterialLoader } from './loaders/material-loader'
+import { ModelLoader } from './loaders/model-loader'
 import { BaseService, IServicesRegistry } from './services-registry'
 
 const TRANSCODER = '/node_modules/three/examples/jsm/libs/basis/'
@@ -26,6 +27,7 @@ export class Loader extends BaseService {
   readonly json = new JsonLoader(this.manager)
   readonly material = new MaterialLoader(this.manager, this.json, this.ktx2, this.gpuReady.promise)
   readonly hdri = new HdriLoader(this.json, this.ktx2, this.gpuReady.promise)
+  readonly model = new ModelLoader(this.manager, this.json, this.ktx2, this.gpuReady.promise)
 
   init(registry: IServicesRegistry) {
     const renderer = registry.get('renderer')

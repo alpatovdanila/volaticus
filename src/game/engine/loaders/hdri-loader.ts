@@ -5,7 +5,7 @@ import { WebGPURenderer } from 'three/webgpu'
 import { parseHdriDeclaration } from '@inventory/schemas/hdri.schema'
 import { JsonLoader } from './json-loader'
 
-const HDRI = '/inventory/items/hdri'
+const HDRI = `${import.meta.env.BASE_URL}inventory/items/hdri`
 
 /*
 Resolves an inventory hdri id to an equirect environment texture. The item doc is a pointer —

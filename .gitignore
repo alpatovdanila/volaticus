@@ -1,11 +1,12 @@
 node_modules/
 dist/
 .dev/
-resources/
 .idea/
 
-# baked item payloads — regenerable from resources/ via inventory/scripts/bake-*.ts
-inventory/items/materials/*/*
-!inventory/items/materials/*/*.json
-inventory/items/hdri/*/*
-!inventory/items/hdri/*/*.json
+# the raw shelf: 3.6GB of source textures and fbx, only the editor reads it, and everything the
+# game needs has already been baked into inventory/items
+resources/
+
+# inventory/items is NOT ignored. The payloads were once treated as regenerable from resources/,
+# but resources/ is not in the repo either — so a fresh checkout could not rebuild them, and a
+# ci deploy would have shipped docs pointing at files that were never there

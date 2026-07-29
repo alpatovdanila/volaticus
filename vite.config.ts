@@ -352,8 +352,43 @@ function scopedReload(): Plugin {
   }
 }
 
-export default defineConfig({
-  publicDir: 'resources', // texture ids map 1:1 to URLs: vanilla/textures/... -> /vanilla/textures/...
+/*
+Everything the built game fetches at runtime rather than imports.
+
+The game reads inventory items by url, and every item directory is self-contained — doc plus its
+glb or ktx2 — so shipping a whole item type is a directory copy and nothing has to be traced. The
+levels come along as loose files for the same reason they are fetched rather than imported: so a
+level can be swapped on the server without a rebuild.
+
+Also renames the html. The build's entry is game.html because index.html is the editor, which is
+dev-only, but a static host wants an index — so the emitted page becomes one. Safe to rename in
+place: `base: './'` means it refers to its assets relatively.
+*/
+function bundleAssets(): Plugin {
+  return {
+    name: 'volaticus-bundle-assets',
+    apply: 'build',
+    closeBundle() {
+      const out = path.join(ROOT, 'dist')
+      const copy = (from: string, to: string) => fs.cpSync(from, path.join(out, to), { recursive: true })
+
+      copy(path.join(INV_DIR, 'items'), 'inventory/items')
+      copy(path.join(ROOT, 'src/game/levels'), 'src/game/levels')
+
+      fs.renameSync(path.join(out, 'game.html'), path.join(out, 'index.html'))
+      // without this github pages runs jekyll over the output and drops anything it dislikes
+      fs.writeFileSync(path.join(out, '.nojekyll'), '')
+    },
+  }
+}
+
+export default defineConfig(({ command }) => ({
+  // relative, so the bundle works from a subpath (github pages serves it under /<repo>/) without
+  // anyone having to write the repo name down. Runtime urls read import.meta.env.BASE_URL
+  base: './',
+  // 3.6GB of raw shelf that only the editor reads — the game's assets are all self-contained
+  // inventory items, copied by bundleAssets instead
+  publicDir: command === 'build' ? false : 'resources',
   // WebGPU migration: alias bare `three` to the WebGPU build (which bundles core +
   // WebGPURenderer + node materials) so the whole app shares ONE THREE instance.
   // Exact-match regex so `three/webgpu`, `three/tsl`, `three/addons/*` resolve normally.
@@ -369,15 +404,15 @@ export default defineConfig({
       { find: '@inventory', replacement: INV_DIR },
     ],
   },
-  plugins: [devApi(), scopedReload()],
+  plugins: [devApi(), scopedReload(), bundleAssets()],
   // don't full-reload the studio when a components file is rewritten (the /__model/tune endpoint
   // saves material tuning into the .glb while the user is dragging sliders)
   server: { port: 5173, strictPort: true, watch: { ignored: ['**/resources/models/**'] } },
   build: {
     rollupOptions: {
-      input: {
-        main: path.join(ROOT, 'index.html'),
-      },
+      // the game, not the editor: index.html is the studio and it needs the dev-only /__inv api,
+      // so there is nothing to gain from building it
+      input: { game: path.join(ROOT, 'game.html') },
     },
   },
-})
+}))

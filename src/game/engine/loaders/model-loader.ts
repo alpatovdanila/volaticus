@@ -6,7 +6,7 @@ import { WebGPURenderer } from 'three/webgpu'
 import { ModelDeclaration, parseModelDeclaration } from '@inventory/schemas/model.schema'
 import { JsonLoader } from './json-loader'
 
-const MODELS = '/inventory/items/models'
+const MODELS = `${import.meta.env.BASE_URL}inventory/items/models`
 
 export type LoadedModel = {
   object: Object3D

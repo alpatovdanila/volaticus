@@ -6,7 +6,7 @@ import { WebGPURenderer } from 'three/webgpu'
 import { parseMaterialDeclaration } from '@inventory/schemas/material.schema'
 import { JsonLoader } from './json-loader'
 
-const MATERIALS = '/inventory/items/materials'
+const MATERIALS = `${import.meta.env.BASE_URL}inventory/items/materials`
 
 /*
 Resolves an inventory material id to a three Material. The item doc is a pointer — the material

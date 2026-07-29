@@ -28,7 +28,9 @@ const BEHAVIOUR_TAGS: Record<Behaviour, object> = {
   solid: IsSolid,
 }
 
-const levelUrl = (name: string) => `/src/game/levels/${name}.json`
+// still loose files on the server rather than bundled modules, so a level can be swapped without
+// a rebuild. The build copies src/game/levels next to the bundle to keep this one path true
+const levelUrl = (name: string) => `${import.meta.env.BASE_URL}src/game/levels/${name}.json`
 
 /*
 Turns a level declaration into entities. WHICH level to load is the caller's call — this

@@ -8,8 +8,6 @@ import { MaterialLoader } from './loaders/material-loader'
 import { ModelLoader } from './loaders/model-loader'
 import { BaseService, IServicesRegistry } from './services-registry'
 
-const TRANSCODER = '/node_modules/three/examples/jsm/libs/basis/'
-
 /*
 One LoadingManager and one KTX2Loader behind every loader: progress and errors are accounted for
 in one place, and there is a single transcoder worker pool no matter how many loaders exist.
@@ -20,7 +18,10 @@ promise so a load arriving before the renderer is up waits instead of racing.
 */
 export class Loader extends BaseService {
   readonly manager = new LoadingManager()
-  readonly ktx2 = new KTX2Loader(this.manager).setTranscoderPath(TRANSCODER)
+  // no setTranscoderPath: KTX2Loader resolves the basis transcoder off its own import.meta.url,
+  // which vite follows in dev and emits into the bundle at build. A path of our own would only be
+  // a second place for the version to drift
+  readonly ktx2 = new KTX2Loader(this.manager)
 
   private readonly gpuReady = Promise.withResolvers<WebGPURenderer>()
 

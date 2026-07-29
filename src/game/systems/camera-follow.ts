@@ -4,7 +4,7 @@ import { IsPlayer, Position } from '@components'
 // world-space offset from the player. Fixed frame (not rotating with the player) so a facing lock
 // leaves the camera behind the character rather than orbiting with them — strafe clips stay
 // visible from a stable angle
-const OFFSET = { x: 0, y: 3, z: 4.5 }
+const OFFSET = { x: 0, y: 5, z: 5 }
 // aimed low on the body rather than at the chest: with the camera up at 3m that tilts the view
 // about 27° down, so the ground around the player — where the horde is — fills the frame
 const LOOK_HEIGHT = 0.7

@@ -16,6 +16,19 @@ Display transform for the hdr scene — edit by hand, swapping the import for an
 const TONE_MAPPING = AgXToneMapping
 const TONE_MAPPING_EXPOSURE = 1
 
+/*
+A ceiling on the drawing buffer, not just on the device ratio.
+
+A phone reports a small css viewport and a large devicePixelRatio, a 4k monitor the reverse, so
+capping the ratio alone leaves one of the two free to blow up. The budget is what actually costs
+memory — every render target is sized from it — so cap that and let the ratio fall out.
+*/
+const MAX_PIXEL_RATIO = 2
+const MAX_PIXELS = 1_500_000 // ~1600x940, past which nobody can see the difference on a phone
+
+const pixelRatio = (width: number, height: number) =>
+  Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO, Math.sqrt(MAX_PIXELS / Math.max(1, width * height)))
+
 export class Renderer extends BaseService {
   // trackTimestamp puts gpu frame time in info.render.timestamp. It obliges us to drain the
   // query pool every frame (see update) — an unresolved pool fills up and stops recording
@@ -25,7 +38,6 @@ export class Renderer extends BaseService {
   public becomeReady = createEvent()
 
   create() {
-    this.webGPURenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.webGPURenderer.toneMapping = TONE_MAPPING
     this.webGPURenderer.toneMappingExposure = TONE_MAPPING_EXPOSURE
     document.body.appendChild(this.webGPURenderer.domElement)
@@ -38,8 +50,10 @@ export class Renderer extends BaseService {
   init(registry: IServicesRegistry) {
     const deviceScreen = registry.get('deviceScreen')
     this.world = registry.get('world')
-    deviceScreen.resolutionChanged.on((resolution) => {
-      this.webGPURenderer.setSize(resolution.width, resolution.height)
+    deviceScreen.resolutionChanged.on(({ width, height }) => {
+      // ratio before size: the budget depends on the new dimensions, and setSize is what applies it
+      this.webGPURenderer.setPixelRatio(pixelRatio(width, height))
+      this.webGPURenderer.setSize(width, height)
     })
   }
 

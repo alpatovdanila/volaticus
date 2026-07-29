@@ -7,7 +7,8 @@ interface Resolution {
 }
 
 export class DeviceScreen extends BaseService {
-  private resolution: Resolution = { width: window.innerWidth, height: window.innerHeight }
+  // zeroed rather than measured, so the first report is never mistaken for a no-op resize
+  private resolution: Resolution = { width: 0, height: 0 }
   private aspectRatio = window.innerWidth / window.innerHeight
 
   resolutionChanged = createEvent<Resolution>()
@@ -23,6 +24,10 @@ export class DeviceScreen extends BaseService {
   }
 
   private reportResize = () => {
+    // mobile browsers fire resize whenever the url bar slides, often with identical dimensions.
+    // Reconfiguring the swap chain for a size that did not change is churn at best
+    if (window.innerWidth === this.resolution.width && window.innerHeight === this.resolution.height) return
+
     this.resolution = { width: window.innerWidth, height: window.innerHeight }
     this.aspectRatio = this.resolution.width / this.resolution.height
 

@@ -101,6 +101,11 @@ export class DevOverlay extends BaseService {
       `cpu   ${ms(this.cpu)}   gpu ${gpuTracked ? ms(this.gpu) : '   n/a'}   engine ${frame > 0 ? Math.round(1000 / frame) : 0} fps`,
       `draws ${info.render.drawCalls}${pad(info.render.drawCalls)}     tris ${count(info.render.triangles)}`,
       `geom  ${info.memory.geometries}${pad(info.memory.geometries)}     tex  ${info.memory.textures}${pad(info.memory.textures)}     vram ${mb(info.memory.total)}`,
+      // which bucket vram is actually in. A total that climbs with no scene change is a leak, and
+      // this says where — textures, geometry buffers, per-material uniforms or render targets
+      // rb is the one to watch: trackTimestamp allocates a readback buffer per resolve, and a
+      // device without timestamp-query support may never hand them back
+      `      tex ${mb(info.memory.texturesSize)}  buf ${mb(buffers(info.memory))}  ubo ${mb(info.memory.uniformBuffersSize)}  rt ${info.memory.renderTargets}  rb ${info.memory.readbackBuffers}`,
       heap(),
       '',
       ...Object.entries(this.registry.timings).map(([name, time]) => ` ${name.padEnd(15)}${ms(time)}`),
@@ -179,6 +184,10 @@ const show = (value: number, step: number) => (step < 1 ? value.toFixed(2) : Str
 const ms = (value: number) => `${value.toFixed(2).padStart(5)} ms`
 const pad = (value: number) => ' '.repeat(Math.max(0, 5 - String(value).length))
 const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
+
+// every kind of vertex data in one number; the split between them never matters, the total does
+const buffers = (memory: { attributesSize: number; indexAttributesSize: number; storageAttributesSize: number }) =>
+  memory.attributesSize + memory.indexAttributesSize + memory.storageAttributesSize
 
 const count = (value: number) => (value < 10000 ? String(value) : `${(value / 1000).toFixed(1)}k`)
 

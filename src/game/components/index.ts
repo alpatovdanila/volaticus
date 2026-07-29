@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { AnimationProfileState, AnimationTask as AnimationTaskDeclaration } from '@inventory/schemas/model.schema'
 import { Vec3Row } from '@lib/type'
+import { ProjectileState, WeaponState } from '@lib/weapon'
 
 export type Vec3Component = { x: number[]; y: number[]; z: number[] }
 
@@ -35,6 +36,11 @@ export const AnimatorLocked: THREE.AnimationAction[] = []
 export const InstanceSlot: number[] = []
 
 export const Health: number[] = []
+
+// live weapon numbers, per entity and MUTABLE — a level-up trait edits this record in place
+export const Weapon: WeaponState[] = []
+
+export const Projectile: ProjectileState[] = []
 
 export const NeedsSpawn = {}
 

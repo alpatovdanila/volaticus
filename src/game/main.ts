@@ -8,6 +8,8 @@ import { InstancedSkinSync } from '@systems/instanced-skin-sync'
 import { LocomotionAnimation } from '@systems/locomotion-animation'
 import { EnemySteering } from '@systems/enemy-steering'
 import { EnemyLifecycle } from '@systems/enemy-lifecycle'
+import { Shooting } from '@systems/shooting'
+import { Projectiles } from '@systems/projectiles'
 import { PlayerControls } from '@systems/player-controls'
 import { CameraFollow } from '@systems/camera-follow'
 import { Input } from '@engine/input'
@@ -37,8 +39,12 @@ engine.register('renderer', new Renderer())
  * systems above wrote this frame, destroy tears down last so everything else saw the entity
  */
 engine.register('playerControls', new PlayerControls())
+// after controls: aiming overrides the facing the stick just wrote
+engine.register('shooting', new Shooting())
 engine.register('enemySteering', new EnemySteering())
 engine.register('movement', new Movement())
+// after movement: collisions test where things are this frame, not where they were
+engine.register('projectiles', new Projectiles())
 engine.register('cameraFollow', new CameraFollow())
 engine.register('locomotionAnimation', new LocomotionAnimation())
 engine.register('threeAnimatorSync', new ThreeAnimatorSync())

@@ -1,5 +1,5 @@
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
-import { IsCorpse, IsEnemy, IsPlayer, ThreeAnimator } from '@components'
+import { IsCorpse, IsEnemy, IsPlayer, Projectile, ThreeAnimator } from '@components'
 
 const REDRAW_INTERVAL = 0.2 // seconds — the dom write is the only part of this with real cost
 const SMOOTHING = 0.1 // ema weight of the newest sample; raw per-frame times are unreadable
@@ -99,7 +99,8 @@ export class DevOverlay extends BaseService {
   // corpses hold an instance slot but cost nothing per frame — worth seeing separately
   private enemies(): string {
     const corpses = this.world.query([IsCorpse]).length
-    return `enemy ${this.world.query([IsEnemy]).length - corpses} live   ${corpses} dead`
+    const enemies = this.world.query([IsEnemy]).length - corpses
+    return `enemy ${enemies} live   ${corpses} dead   bullets ${this.world.query([Projectile]).length}`
   }
 }
 

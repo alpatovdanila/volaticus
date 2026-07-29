@@ -2,7 +2,7 @@ import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-
 import { Dying, IsCorpse, IsEnemy, IsPlayer, Position, Rotation, Velocity } from '@components'
 import { turnToward } from './player-controls'
 
-const SPEED = 1.4 // m/s
+const SPEED = 0.47 // m/s — a shamble; the walk clip's rate follows it, so they animate slower too
 const SEPARATION = 0.8 // m of personal space, and therefore the grid's cell size
 const SEPARATION_WEIGHT = 1.6 // how hard a neighbour pushes relative to the pull of the player
 const TURN_SPEED = 6 // radians/sec

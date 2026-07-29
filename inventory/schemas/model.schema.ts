@@ -63,6 +63,7 @@ export type ActionsSet = {
   readonly hit?: AnimationTask
   readonly sit?: AnimationTask
   readonly jump?: AnimationTask
+  readonly shoot?: AnimationTask
 }
 
 export type AnimationProfileState = {
@@ -114,6 +115,7 @@ const AnimationProfileSchema: z.ZodType<AnimationProfileState> = z.object({
       hit: AnimationTaskSchema.optional(),
       sit: AnimationTaskSchema.optional(),
       jump: AnimationTaskSchema.optional(),
+      shoot: AnimationTaskSchema.optional(),
     })
     .optional(),
 })

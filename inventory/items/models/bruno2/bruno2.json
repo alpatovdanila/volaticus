@@ -36,6 +36,9 @@
         { "above": 0.05, "clip": "Walk Backward Right", "rate": 1.2, "fade": 0.1 },
         { "above": 2.5, "clip": "Run Backward Right", "rate": 0.4, "fade": 0.1 }
       ]
+    },
+    "actions": {
+      "shoot": { "clip": "Firing Rifle", "fade": 0.1 }
     }
   }
 }

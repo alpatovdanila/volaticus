@@ -8,6 +8,8 @@ import { IInstancedSkinSync } from '@systems/instanced-skin-sync'
 import { ILocomotionAnimation } from '@systems/locomotion-animation'
 import { IEnemySteering } from '@systems/enemy-steering'
 import { IEnemyLifecycle } from '@systems/enemy-lifecycle'
+import { IShooting } from '@systems/shooting'
+import { IProjectiles } from '@systems/projectiles'
 import { IPlayerControls } from '@systems/player-controls'
 import { IMovement } from '@systems/movement'
 import { ICameraFollow } from '@systems/camera-follow'
@@ -25,8 +27,10 @@ export interface KnownServices {
   level: ILevel
   world: IWorld
   playerControls: IPlayerControls
+  shooting: IShooting
   enemySteering: IEnemySteering
   movement: IMovement
+  projectiles: IProjectiles
   cameraFollow: ICameraFollow
   locomotionAnimation: ILocomotionAnimation
   threeAnimatorSync: IThreeAnimatorSync

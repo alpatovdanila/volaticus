@@ -4,7 +4,7 @@
   "environment": {
     "hdri": {
       "inventoryId": "concrete_tunnel",
-      "intensity": 1,
+      "intensity": 0.5,
       "rotation": [0, 0, 0]
     },
     "showSky": false

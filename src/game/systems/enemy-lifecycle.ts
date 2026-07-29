@@ -21,8 +21,7 @@ const CAPACITY = 400 // instance slots, shared by the living and the bodies
 const CORPSE_LIMIT = 50
 const SPAWN_INTERVAL = 0.25 // seconds
 const SPAWN_RADIUS = 18 // metres from the player — outside the camera, in front or behind
-const KILL_RADIUS = 1.2
-const HEALTH = 1
+const HEALTH = 3
 
 /*
 Spawns enemies, kills them, and decides how long their bodies stay.
@@ -64,9 +63,8 @@ export class EnemyLifecycle extends BaseService {
     const [player] = query([IsPlayer, Position])
 
     this.settleTheDead()
+    this.reap()
     if (player === undefined) return
-
-    this.reap(player)
 
     this.sinceSpawn += dt
     if (this.sinceSpawn < this.nextSpawn) return
@@ -90,14 +88,14 @@ export class EnemyLifecycle extends BaseService {
     }
   }
 
-  private reap(player: number) {
+  // whoever did the damage only writes Health — what a zero means is decided here, once
+  private reap() {
     const { query, hasComponent } = this.world
 
-    for (const eid of query([IsEnemy, Position])) {
+    for (const eid of query([IsEnemy, Health])) {
+      if (Health[eid] > 0) continue
       if (hasComponent(eid, Dying) || hasComponent(eid, IsCorpse)) continue
-
-      const reach = Math.hypot(Position.x[eid] - Position.x[player], Position.z[eid] - Position.z[player])
-      if (reach <= KILL_RADIUS) this.kill(eid)
+      this.kill(eid)
     }
   }
 

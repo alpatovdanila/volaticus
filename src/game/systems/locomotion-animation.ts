@@ -5,7 +5,7 @@ import { AnimationProfile, AnimationTask, AnimatorLocked, Rotation, Velocity } f
 
 // ponytail: stick jitter deadzone; a real thumbstick reads ~0.02 at rest. Under this the entity
 // counts as idle regardless of what the physics broadcasts.
-const IDLE_SPEED = 0.05
+export const IDLE_SPEED = 0.05
 
 // how much closer a rival direction must be before we switch to it. Digital input parks the stick
 // exactly on a boundary (45° with only the four cardinals authored), where a hair of facing wobble

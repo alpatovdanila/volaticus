@@ -144,6 +144,7 @@ export class Shooting extends BaseService {
 
     Projectile[eid] = {
       damage: weapon.damage,
+      dismemberChance: weapon.dismemberChance,
       bounces: weapon.bounces,
       bounceRange: weapon.bounceRange,
       travelled: 0,

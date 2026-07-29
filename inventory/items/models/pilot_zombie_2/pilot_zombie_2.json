@@ -2,6 +2,10 @@
   "format": 1,
   "id": "pilot_zombie_2",
   "file": "index.baked.glb",
+  "dismember": {
+    "l_hand": { "weight": 1 },
+    "r_hand": { "weight": 1 }
+  },
   "animationProfile": {
     "locomotion": {
       "idle": { "clip": "Zombie Walk", "fade": 0.2 },

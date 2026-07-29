@@ -1,8 +1,31 @@
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
-import { IsCorpse, IsEnemy, IsPlayer, Projectile, ThreeAnimator } from '@components'
+import { IsCorpse, IsEnemy, IsPlayer, Projectile, ThreeAnimator, Weapon } from '@components'
+import { WeaponState } from '@lib/weapon'
 
 const REDRAW_INTERVAL = 0.2 // seconds — the dom write is the only part of this with real cost
 const SMOOTHING = 0.1 // ema weight of the newest sample; raw per-frame times are unreadable
+
+// [min, max, step] per weapon field. Every field is a number, so the whole panel builds from this
+// rather than from a hand-written row each — a new stat gets a slider by appearing here
+const WEAPON_RANGE: Record<keyof WeaponState, [number, number, number]> = {
+  shotsPerMinute: [30, 900, 5],
+  shots: [1, 9, 1],
+  fan: [0, 120, 1],
+  fanOffset: [0, 1, 0.05],
+  bulletsPerShot: [1, 12, 1],
+  spread: [0, 30, 0.5],
+  damage: [1, 20, 1],
+  speed: [4, 60, 0.5],
+  range: [4, 40, 1],
+  bounces: [0, 12, 1],
+  bounceRange: [1, 20, 0.5],
+  dismemberChance: [0, 1, 0.05],
+}
+
+const WEAPON_STYLE = `
+margin-top: 8px; display: grid; gap: 2px 6px; align-items: center;
+grid-template-columns: 96px 108px 40px; pointer-events: auto;
+`
 
 const ROOT_STYLE = `
 position: fixed; top: 0; left: 0; z-index: 10000; pointer-events: none;
@@ -27,9 +50,11 @@ export class DevOverlay extends BaseService {
   private animator!: KnownServices['threeAnimatorSync']
   private locomotion!: KnownServices['locomotionAnimation']
   private perf = this.addPanel('perf')
+  private weapon = this.addPanel('weapon')
   private cpu = 0
   private gpu = 0
   private sinceRedraw = 0
+  private weaponBound = false
 
   create() {
     this.root.id = 'dev-overlay'
@@ -66,6 +91,8 @@ export class DevOverlay extends BaseService {
     if (this.sinceRedraw < REDRAW_INTERVAL) return
     this.sinceRedraw = 0
 
+    this.bindWeapon()
+
     // gpu is 0 when the adapter has no timestamp-query — say so rather than dividing by it
     const gpuTracked = this.gpu > 0
     const frame = Math.max(this.cpu, this.gpu)
@@ -83,6 +110,48 @@ export class DevOverlay extends BaseService {
     ]
       .filter((line) => line !== null)
       .join('\n')
+  }
+
+  /*
+  Sliders straight onto the player's Weapon component — the same record a level-up trait will
+  edit, so tuning here is exactly what an upgrade does and there is nothing to apply or reload.
+
+  Built once, the first redraw after a player carries a weapon.
+  */
+  private bindWeapon() {
+    if (this.weaponBound) return
+
+    const [eid] = this.world.query([IsPlayer, Weapon])
+    if (eid === undefined) return
+    this.weaponBound = true
+
+    this.weapon.style.cssText = WEAPON_STYLE
+
+    for (const field of Object.keys(WEAPON_RANGE) as (keyof WeaponState)[]) {
+      const [min, max, step] = WEAPON_RANGE[field]
+
+      const name = document.createElement('span')
+      name.textContent = field
+
+      const slider = document.createElement('input')
+      slider.type = 'range'
+      slider.min = String(min)
+      slider.max = String(max)
+      slider.step = String(step)
+      slider.value = String(Weapon[eid][field])
+      slider.style.cssText = 'width: 108px; height: 10px; margin: 0;'
+
+      const readout = document.createElement('span')
+      readout.textContent = show(Weapon[eid][field], step)
+
+      slider.addEventListener('input', () => {
+        const value = Number(slider.value)
+        Weapon[eid][field] = value
+        readout.textContent = show(value, step)
+      })
+
+      this.weapon.append(name, slider, readout)
+    }
   }
 
   // current locomotion clip on the player, plus its live playback rate (velocity-tied for
@@ -103,6 +172,9 @@ export class DevOverlay extends BaseService {
     return `enemy ${enemies} live   ${corpses} dead   bullets ${this.world.query([Projectile]).length}`
   }
 }
+
+// as many decimals as the step implies, so an integer stat never reads "4.00"
+const show = (value: number, step: number) => (step < 1 ? value.toFixed(2) : String(value))
 
 const ms = (value: number) => `${value.toFixed(2).padStart(5)} ms`
 const pad = (value: number) => ' '.repeat(Math.max(0, 5 - String(value).length))

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { AnimationProfileState, AnimationTask as AnimationTaskDeclaration } from '@inventory/schemas/model.schema'
 import { Vec3Row } from '@lib/type'
 import { ProjectileState, WeaponState } from '@lib/weapon'
+import { SkinPart } from '@lib/instanced-skin'
 
 export type Vec3Component = { x: number[]; y: number[]; z: number[] }
 
@@ -41,6 +42,23 @@ export const Health: number[] = []
 export const Weapon: WeaponState[] = []
 
 export const Projectile: ProjectileState[] = []
+
+// which parts of this entity can come off, and how likely each is relative to the others.
+// Shared per model id — read-only config, straight from the model doc
+export const Dismember: Record<string, { weight: number }>[] = []
+
+// a part that already came off, mid-flight or lying where it landed
+export type LimbState = {
+  part: SkinPart
+  slot: number
+  offset: THREE.Vector3 // model-space pivot: the part spins about itself, not the body's origin
+  rotation: THREE.Quaternion
+  axis: THREE.Vector3
+  rate: number // radians/sec about that axis
+  settled: boolean
+}
+
+export const Limb: LimbState[] = []
 
 export const NeedsSpawn = {}
 

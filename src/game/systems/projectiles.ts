@@ -1,5 +1,14 @@
 import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-registry'
-import { Health, NeedsDespawn, NeedsDestroy, Position, Projectile, Rotation, Velocity } from '@components'
+import {
+  Dismember,
+  Health,
+  NeedsDespawn,
+  NeedsDestroy,
+  Position,
+  Projectile,
+  Rotation,
+  Velocity,
+} from '@components'
 import { nearestEnemy } from '@lib/nearest-enemy'
 
 // metres — one enemy's body, tested against the projectile's centre.
@@ -17,9 +26,13 @@ last one.
 */
 export class Projectiles extends BaseService {
   private world!: KnownServices['world']
+  private skins!: KnownServices['instancedSkinSync']
+  private limbs!: KnownServices['limbs']
 
   init(registry: IServicesRegistry) {
     this.world = registry.get('world')
+    this.skins = registry.get('instancedSkinSync')
+    this.limbs = registry.get('limbs')
   }
 
   update(dt: number) {
@@ -38,6 +51,8 @@ export class Projectiles extends BaseService {
       }
 
       Health[hit] -= projectile.damage
+      // read before any ricochet turns it: the limb should carry on the way the shot was going
+      this.maybeDismember(hit, projectile.dismemberChance, Velocity.x[eid], Velocity.z[eid])
 
       if (projectile.bounces <= 0) {
         this.despawn(eid)
@@ -69,11 +84,38 @@ export class Projectiles extends BaseService {
     }
   }
 
+  /*
+  Rolled on every hit, killing blow included: a zombie that loses a hand as it drops looks better
+  than one that is spared because the shot happened to finish it.
+  */
+  private maybeDismember(eid: number, chance: number, dirX: number, dirZ: number) {
+    const table = Dismember[eid]
+    if (!table || Math.random() >= chance) return
+
+    const severed = this.skins.sever(eid, pickPart(table))
+    if (severed) this.limbs.throw(severed, dirX, dirZ)
+  }
+
   private despawn(eid: number) {
     // NeedsDespawn takes the mesh out of the scene, NeedsDestroy takes the entity out of the ecs —
     // both are read later this frame, by ThreeSceneSync and Destroy
     this.world.addComponent(eid, NeedsDespawn, NeedsDestroy)
   }
+}
+
+// weighted pick. The table is tiny — two hands — so summing it every time costs nothing
+const pickPart = (table: Record<string, { weight: number }>): string => {
+  const parts = Object.entries(table)
+
+  let total = 0
+  for (const [, part] of parts) total += part.weight
+
+  let roll = Math.random() * total
+  for (const [name, part] of parts) {
+    roll -= part.weight
+    if (roll <= 0) return name
+  }
+  return parts[parts.length - 1][0]
 }
 
 export type IProjectiles = InstanceType<typeof Projectiles>

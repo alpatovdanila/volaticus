@@ -16,6 +16,7 @@ export type WeaponState = {
   range: number // metres before a projectile expires; also how far the auto-aim will look
   bounces: number // ricochets to the next enemy after a hit
   bounceRange: number // how far a ricochet looks for its next target
+  dismemberChance: number // 0–1 per hit that a part comes off, if the target has any to lose
 }
 
 export const BASE_WEAPON: WeaponState = {
@@ -30,11 +31,13 @@ export const BASE_WEAPON: WeaponState = {
   range: 16,
   bounces: 4,
   bounceRange: 6,
+  dismemberChance: 0.1,
 }
 
 // what a projectile carries with it, so a hit can be resolved without asking who fired it
 export type ProjectileState = {
   damage: number
+  dismemberChance: number
   bounces: number // ricochets left
   bounceRange: number
   travelled: number // metres so far

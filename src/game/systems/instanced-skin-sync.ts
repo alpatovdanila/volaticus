@@ -2,7 +2,17 @@ import { Euler, Matrix4, Object3D, Quaternion, Vector3 } from 'three'
 
 import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-registry'
 import { AnimationTask, AnimatorLocked, InstanceSlot, IsCorpse, Position, Rotation } from '@components'
-import { createInstancedSkin, InstancedSkin, PARKED } from '@lib/instanced-skin'
+import { createInstancedSkin, InstancedSkin, partPosition, PARKED, SkinPart } from '@lib/instanced-skin'
+
+// what came off, and everything needed to throw it. The vectors are scratch — read them before
+// calling sever() again
+export type Severed = {
+  skin: InstancedSkin
+  part: SkinPart
+  row: number
+  offset: Vector3 // where the part sits in model space, its own pivot
+  matrix: Matrix4 // the body's transform at the moment it came off
+}
 
 /*
 Per-entity playback state. Private to this system for the same reason ThreeAnimatorSync keeps its
@@ -25,6 +35,14 @@ const scratch = {
   rotation: new Quaternion(),
   euler: new Euler(),
   scale: new Vector3(1, 1, 1),
+}
+
+const severed: Severed = {
+  skin: null as unknown as InstancedSkin,
+  part: null as unknown as SkinPart,
+  row: 0,
+  offset: new Vector3(),
+  matrix: new Matrix4(),
 }
 
 /*
@@ -67,6 +85,13 @@ export class InstancedSkinSync extends BaseService {
     this.world.addComponent(eid, InstanceSlot)
     InstanceSlot[eid] = slot
     Owner[eid] = pool
+
+    // whole again: a recycled slot must not inherit the last body's missing hand
+    for (const part of pool.skin.parts) {
+      if (part.alive.getX(slot) === 1) continue
+      part.alive.setX(slot, 1)
+      part.alive.needsUpdate = true
+    }
     Clip[eid] = ''
     Playhead[eid] = 0
     Rate[eid] = 1
@@ -85,6 +110,33 @@ export class InstancedSkinSync extends BaseService {
 
     delete Owner[eid]
     this.world.removeComponent(eid, InstanceSlot)
+  }
+
+  /*
+  Takes a part off an instance and reports where it was, so the caller can throw the loose one.
+
+  Null when the model has no such part or it is already gone. The returned record is reused —
+  consume it before severing anything else.
+  */
+  sever(eid: number, name: string): Severed | null {
+    const pool = Owner[eid]
+    if (!pool) return null
+
+    const part = pool.skin.parts.find((candidate) => candidate.name === name)
+    if (!part) return null
+
+    const slot = InstanceSlot[eid]
+    if (part.alive.getX(slot) === 0) return null
+
+    part.alive.setX(slot, 0)
+    part.alive.needsUpdate = true
+
+    severed.skin = pool.skin
+    severed.part = part
+    severed.row = pool.skin.frames.getX(slot)
+    partPosition(pool.skin, severed.row, part.bone, severed.offset)
+    severed.matrix.fromArray(pool.skin.matrices.array, slot * 16)
+    return severed
   }
 
   // a one-shot clip that has reached its last frame. Always false while a clip loops

@@ -4,6 +4,7 @@ import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-
 import {
   AnimationProfile,
   AnimationTask,
+  Dismember,
   Dying,
   Health,
   IsCorpse,
@@ -19,9 +20,13 @@ import {
 const MODEL = 'pilot_zombie_2'
 const CAPACITY = 400 // instance slots, shared by the living and the bodies
 const CORPSE_LIMIT = 50
-const SPAWN_INTERVAL = 0.25 // seconds
+const SPAWN_INTERVAL = 0.083 // seconds
 const SPAWN_RADIUS = 18 // metres from the player — outside the camera, in front or behind
 const HEALTH = 3
+const FALL_DELAY = 0.5 // seconds, at most, between the killing hit and the body going down
+
+// seconds left of that wait, per entity. Private to this system — nothing queries it
+const Falling: number[] = []
 
 /*
 Spawns enemies, kills them, and decides how long their bodies stay.
@@ -40,6 +45,7 @@ export class EnemyLifecycle extends BaseService {
   private skins!: KnownServices['instancedSkinSync']
 
   private profile!: AnimationProfileState
+  private dismember?: Record<string, { weight: number }>
   private corpses: number[] = [] // oldest first
   private sinceSpawn = 0
   private nextSpawn = SPAWN_INTERVAL
@@ -55,14 +61,26 @@ export class EnemyLifecycle extends BaseService {
     if (!model.doc.animationProfile) throw new Error(`EnemyLifecycle: '${MODEL}' has no animation profile`)
 
     this.profile = model.doc.animationProfile
-    this.skins.register(MODEL, model.object, CAPACITY)
+    const skin = this.skins.register(MODEL, model.object, CAPACITY)
+
+    // a part name that matches no submesh would simply never come off, silently. The doc is the
+    // source of truth for WHICH parts are losable, so it has to be checked against the model
+    this.dismember = model.doc.dismember
+    for (const name of Object.keys(this.dismember ?? {})) {
+      if (skin.parts.some((part) => part.name === name)) continue
+      throw new Error(
+        `EnemyLifecycle: '${MODEL}' declares dismember part '${name}', which is not one of its meshes (${skin.parts
+          .map((part) => part.name)
+          .join(', ')})`,
+      )
+    }
   }
 
   update(dt: number) {
     const { query } = this.world
     const [player] = query([IsPlayer, Position])
 
-    this.settleTheDead()
+    this.settleTheDead(dt)
     this.reap()
     if (player === undefined) return
 
@@ -75,10 +93,18 @@ export class EnemyLifecycle extends BaseService {
   }
 
   // a death clip that has played out stops being simulated and becomes scenery
-  private settleTheDead() {
+  private settleTheDead(dt: number) {
     const { query, addComponent, removeComponent } = this.world
 
     for (const eid of query([Dying])) {
+      // still staggering: one ricochet can kill several at once, and identical clips starting on
+      // the same frame read as a single puppet with several bodies
+      if (Falling[eid] > 0) {
+        Falling[eid] -= dt
+        if (Falling[eid] <= 0) this.playDeath(eid)
+        continue
+      }
+
       if (!this.skins.finished(eid)) continue
 
       removeComponent(eid, Dying)
@@ -106,12 +132,25 @@ export class EnemyLifecycle extends BaseService {
     Velocity.z[eid] = 0
     addComponent(eid, Dying)
 
+    /*
+    A random stagger before the body goes down. One ricochet can kill several at once, and
+    identical clips starting on the same frame read as a single puppet with several bodies.
+
+    Not a queue: spacing deaths exactly needs a backlog cap, and under sustained fire everything
+    lands on that cap at once — worse than the problem. Random never gets that far off.
+
+    Falling[eid] > 0 is also what settleTheDead uses to tell "not down yet" from "down and done".
+    */
+    Falling[eid] = Math.random() * FALL_DELAY
+  }
+
+  private playDeath(eid: number) {
     // locked, so locomotion's per-frame task cannot cut the death short. Nothing releases it —
     // the entity is a corpse by the time the clip ends
     const death = this.profile.lifecycle?.death
     if (!death) return
 
-    addComponent(eid, AnimationTask)
+    this.world.addComponent(eid, AnimationTask)
     AnimationTask[eid] = { ...death, repeats: 1, lock: true }
   }
 
@@ -128,6 +167,11 @@ export class EnemyLifecycle extends BaseService {
     writeVec3Row(Velocity, eid, [0, 0, 0])
     AnimationProfile[eid] = this.profile
     Health[eid] = HEALTH
+
+    if (this.dismember) {
+      this.world.addComponent(eid, Dismember)
+      Dismember[eid] = this.dismember
+    }
 
     if (this.skins.attach(eid, MODEL)) return
 

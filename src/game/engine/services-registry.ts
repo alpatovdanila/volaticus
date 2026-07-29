@@ -10,6 +10,7 @@ import { IEnemySteering } from '@systems/enemy-steering'
 import { IEnemyLifecycle } from '@systems/enemy-lifecycle'
 import { IShooting } from '@systems/shooting'
 import { IProjectiles } from '@systems/projectiles'
+import { ILimbs } from '@systems/limbs'
 import { IPlayerControls } from '@systems/player-controls'
 import { IMovement } from '@systems/movement'
 import { ICameraFollow } from '@systems/camera-follow'
@@ -31,6 +32,7 @@ export interface KnownServices {
   enemySteering: IEnemySteering
   movement: IMovement
   projectiles: IProjectiles
+  limbs: ILimbs
   cameraFollow: ICameraFollow
   locomotionAnimation: ILocomotionAnimation
   threeAnimatorSync: IThreeAnimatorSync

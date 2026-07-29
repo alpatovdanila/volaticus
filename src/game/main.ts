@@ -10,6 +10,7 @@ import { EnemySteering } from '@systems/enemy-steering'
 import { EnemyLifecycle } from '@systems/enemy-lifecycle'
 import { Shooting } from '@systems/shooting'
 import { Projectiles } from '@systems/projectiles'
+import { Limbs } from '@systems/limbs'
 import { PlayerControls } from '@systems/player-controls'
 import { CameraFollow } from '@systems/camera-follow'
 import { Input } from '@engine/input'
@@ -45,6 +46,8 @@ engine.register('enemySteering', new EnemySteering())
 engine.register('movement', new Movement())
 // after movement: collisions test where things are this frame, not where they were
 engine.register('projectiles', new Projectiles())
+// after the hits that create them, so a limb gets its first transform on the frame it is thrown
+engine.register('limbs', new Limbs())
 engine.register('cameraFollow', new CameraFollow())
 engine.register('locomotionAnimation', new LocomotionAnimation())
 engine.register('threeAnimatorSync', new ThreeAnimatorSync())

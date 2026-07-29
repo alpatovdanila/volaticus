@@ -373,6 +373,7 @@ function bundleAssets(): Plugin {
       const copy = (from: string, to: string) => fs.cpSync(from, path.join(out, to), { recursive: true })
 
       copy(path.join(INV_DIR, 'items'), 'inventory/items')
+      copy(path.join(RES_DIR, 'basis'), 'basis')
       copy(path.join(ROOT, 'src/game/levels'), 'src/game/levels')
 
       fs.renameSync(path.join(out, 'game.html'), path.join(out, 'index.html'))

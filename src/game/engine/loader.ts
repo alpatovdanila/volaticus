@@ -9,6 +9,20 @@ import { ModelLoader } from './loaders/model-loader'
 import { BaseService, IServicesRegistry } from './services-registry'
 
 /*
+Vendored into resources/basis rather than left to KTX2Loader's own default.
+
+Its default resolves `../libs/basis/` off the loader module's import.meta.url, which is correct in
+a build but points inside vite's pre-bundled deps in dev — where the file does not exist and the
+dev server answers with the SPA fallback: a 200 of text/html. The transcoder then never
+initialises and every ktx2 decode hangs forever rather than failing, which reads as a level that
+silently never finishes loading.
+
+publicDir serves this at /basis/ in dev and the build copies the same folder, so one path is
+right in both.
+*/
+const TRANSCODER = `${import.meta.env.BASE_URL}basis/`
+
+/*
 One LoadingManager and one KTX2Loader behind every loader: progress and errors are accounted for
 in one place, and there is a single transcoder worker pool no matter how many loaders exist.
 
@@ -18,10 +32,7 @@ promise so a load arriving before the renderer is up waits instead of racing.
 */
 export class Loader extends BaseService {
   readonly manager = new LoadingManager()
-  // no setTranscoderPath: KTX2Loader resolves the basis transcoder off its own import.meta.url,
-  // which vite follows in dev and emits into the bundle at build. A path of our own would only be
-  // a second place for the version to drift
-  readonly ktx2 = new KTX2Loader(this.manager)
+  readonly ktx2 = new KTX2Loader(this.manager).setTranscoderPath(TRANSCODER)
 
   private readonly gpuReady = Promise.withResolvers<WebGPURenderer>()
 

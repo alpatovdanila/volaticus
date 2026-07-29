@@ -4,8 +4,13 @@ dist/
 .idea/
 
 # the raw shelf: 3.6GB of source textures and fbx, only the editor reads it, and everything the
-# game needs has already been baked into inventory/items
-resources/
+# game needs has already been baked into inventory/items. `resources/*` rather than `resources/`
+# so a subdirectory can be negated — git will not descend into a directory excluded outright
+resources/*
+
+# except the basis transcoder, which is vendored here so publicDir serves it in dev and the build
+# copies it. A checkout without this cannot decode a single ktx2
+!resources/basis/
 
 # inventory/items is NOT ignored. The payloads were once treated as regenerable from resources/,
 # but resources/ is not in the repo either — so a fresh checkout could not rebuild them, and a

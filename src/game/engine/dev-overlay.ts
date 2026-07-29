@@ -1,4 +1,6 @@
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
+import { Texture } from 'three'
+
 import { IsCorpse, IsEnemy, IsPlayer, Projectile, ThreeAnimator, Weapon } from '@components'
 import { WeaponState } from '@lib/weapon'
 
@@ -106,6 +108,7 @@ export class DevOverlay extends BaseService {
       // rb is the one to watch: trackTimestamp allocates a readback buffer per resolve, and a
       // device without timestamp-query support may never hand them back
       `      tex ${mb(info.memory.texturesSize)}  buf ${mb(buffers(info.memory))}  ubo ${mb(info.memory.uniformBuffersSize)}  rt ${info.memory.renderTargets}  rb ${info.memory.readbackBuffers}`,
+      this.textureKinds(),
       heap(),
       '',
       ...Object.entries(this.registry.timings).map(([name, time]) => ` ${name.padEnd(15)}${ms(time)}`),
@@ -115,6 +118,34 @@ export class DevOverlay extends BaseService {
     ]
       .filter((line) => line !== null)
       .join('\n')
+  }
+
+  /*
+  What the live textures actually ARE, most numerous first.
+
+  A count alone says something leaks; this says what. three's Info keeps a map keyed by the
+  objects it is accounting for, so the textures still alive can be grouped by size and type — and
+  a thousand copies of one size names the culprit immediately.
+  */
+  private textureKinds(): string {
+    const tracked = (this.renderer.webGPURenderer.info as { memoryMap?: Map<object, unknown> }).memoryMap
+    if (!tracked) return 'tex   —'
+
+    const counts = new Map<string, number>()
+    for (const key of tracked.keys()) {
+      const texture = key as Texture
+      if (!texture.isTexture) continue
+
+      const image = texture.image as { width?: number; height?: number } | undefined
+      const label = `${texture.name || texture.constructor.name}${image?.width ?? '?'}x${image?.height ?? '?'}`
+      counts.set(label, (counts.get(label) ?? 0) + 1)
+    }
+
+    const top = [...counts]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([label, count]) => `${label} x${count}`)
+    return `      ${top.join('   ') || 'none'}`
   }
 
   /*

@@ -1,0 +1,41 @@
+{
+  "id": "bruno2",
+  "file": "index.baked.glb",
+  "animationProfile": {
+    "locomotion": {
+      "idle": { "clip": "Breathing Idle", "fade": 0.1 },
+      "front": [
+        { "above": 0.05, "clip": "Walk Forward", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Forward", "rate": 0.45, "fade": 0.1 }
+      ],
+      "back": [
+        { "above": 0.05, "clip": "Walk Backward", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Backward", "rate": 0.4, "fade": 0.1 }
+      ],
+      "left": [
+        { "above": 0.05, "clip": "Walk Left", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Left", "rate": 0.4, "fade": 0.1 }
+      ],
+      "right": [
+        { "above": 0.05, "clip": "Walk Right", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Right", "rate": 0.4, "fade": 0.1 }
+      ],
+      "frontLeft": [
+        { "above": 0.05, "clip": "Walk Forward Left", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Forward Left", "rate": 0.4, "fade": 0.1 }
+      ],
+      "frontRight": [
+        { "above": 0.05, "clip": "Walk Forward Right", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Forward Right", "rate": 0.4, "fade": 0.1 }
+      ],
+      "backLeft": [
+        { "above": 0.05, "clip": "Walk Backward Left", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Backward Left", "rate": 0.4, "fade": 0.1 }
+      ],
+      "backRight": [
+        { "above": 0.05, "clip": "Walk Backward Right", "rate": 1.2, "fade": 0.1 },
+        { "above": 2.5, "clip": "Run Backward Right", "rate": 0.4, "fade": 0.1 }
+      ]
+    }
+  }
+}

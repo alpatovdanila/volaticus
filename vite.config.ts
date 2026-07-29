@@ -342,7 +342,10 @@ function scopedReload(): Plugin {
     name: 'volaticus-scoped-reload',
     handleHotUpdate(ctx) {
       const rel = path.relative(ROOT, ctx.file).replace(/\\/g, '/')
-      if (!rel.startsWith('src/') || rel.endsWith('.css')) return // default vite handling
+      // src/**.ts drives the studio; inventory/**.json is runtime data (loaders re-fetch on
+      // reload). Both go through the guarded reload path; everything else uses vite's default.
+      const owned = (rel.startsWith('src/') && !rel.endsWith('.css')) || (rel.startsWith('inventory/') && rel.endsWith('.json'))
+      if (!owned) return
       ctx.server.ws.send({ type: 'custom', event: 'volaticus:src-change', data: { file: rel } })
       return [] // suppress the global full-reload broadcast
     },

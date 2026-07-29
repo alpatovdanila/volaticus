@@ -5,7 +5,10 @@ import { IWorld } from './world'
 import { IThreeSceneSync } from '@systems/three-scene-sync'
 import { IThreeAnimatorSync } from '@systems/three-animator-sync'
 import { ILocomotionAnimation } from '@systems/locomotion-animation'
+import { IPlayerControls } from '@systems/player-controls'
 import { IMovement } from '@systems/movement'
+import { ICameraFollow } from '@systems/camera-follow'
+import { IInput } from './input'
 import { IDestroy } from '@systems/destroy'
 import { ILoader } from './loader'
 import { ILevel } from './level'
@@ -13,11 +16,14 @@ import { IDevOverlay } from './dev-overlay'
 
 export interface KnownServices {
   deviceScreen: IDeviceScreen
+  input: IInput
   renderer: IRenderer
   loader: ILoader
   level: ILevel
   world: IWorld
+  playerControls: IPlayerControls
   movement: IMovement
+  cameraFollow: ICameraFollow
   locomotionAnimation: ILocomotionAnimation
   threeAnimatorSync: IThreeAnimatorSync
   threeSceneSync: IThreeSceneSync

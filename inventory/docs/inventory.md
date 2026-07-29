@@ -29,16 +29,27 @@ Source: `resources/models/<name>/` with `index.glb` (rigged, own textures) + one
 animation (basename = clip name; Mixamo rig). Bake:
 
 ```
-npx tsx inventory/scripts/bake-gltf.ts resources/models/<name> inventory/items/models/<id>/index.baked.glb
+npx tsx inventory/scripts/bake-gltf.ts resources/models/<name> inventory/items/models/<id>/index.baked.glb [--maxtex 1024]
 ```
 
 The baker lifts skinned-mesh nodes to the scene root, bakes Lengyel tangents for
 normal-mapped primitives, **drops every animation authored inside index.glb** (the sibling
 FBX set is exactly the clip vocabulary), merges the FBX clips via rest-delta retarget
 (rotations + hips height only — root motion never leaks), and prunes unused objects.
+`--maxtex <px>` caps every embedded texture's longest side (4K source maps dwarf the mesh —
+a knight goes 31MB → 6.7MB at 1024). Opt-in: it is the one lossy pass, and smaller maps pass
+through untouched.
 Output is validator-clean. Doc extras: `dismember` (per-part weights), `animationProfile`
-(locomotion bands / lifecycle / actions — hand tuning, never invented by the baker).
+(hand tuning, never invented by the baker).
 The full flow is a skill: `skills/new-model/SKILL.md`.
+
+`animationProfile.locomotion` = one `idle` clip + up to eight direction arms
+(`front` required; `back`, `left`, `right`, `frontLeft`, `frontRight`, `backLeft`, `backRight`
+optional). Each arm is a band list `[{above, clip, rate?, fade?}, …]` — `above` is the m/s
+threshold, `rate` is a playback multiplier (tune by eye to kill foot-slip). The resolver
+picks the direction nearest to the entity's local velocity **among arms actually declared**,
+then the highest-`above` band the current speed clears; below ~0.05 m/s it falls to `idle`.
+A rig that ships only forward clips profiles cleanly: everything degrades to `front`.
 
 ## Materials — `schemas/material.schema.ts`, `scripts/bake-material.ts`
 

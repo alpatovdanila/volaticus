@@ -26,6 +26,10 @@ export class ThreeAnimatorSync extends BaseService {
     this.world = registry.get('world')
   }
 
+  currentAction(eid: number): AnimationAction | undefined {
+    return CurrentAction[eid]
+  }
+
   update(dt: number) {
     this.releaseFinishedLocks()
     this.startRequestedClips()
@@ -82,8 +86,17 @@ export class ThreeAnimatorSync extends BaseService {
       const previous = CurrentAction[eid]
       const fade = task.fade ?? 0
 
+      // idempotent when the same clip re-fires: apply the new rate/loop above and leave the
+      // playhead alone. Resetting on every frame would pin an infinitely-looping locomotion
+      // clip at t=0; the dedup in the caller then hides the reset by only re-writing on clip
+      // change — which is the wrong trade because rate needs to update EVERY frame with speed
+      if (previous === action) {
+        if (!action.isRunning()) action.play()
+        continue
+      }
+
       action.reset().play() // crossFadeFrom needs both actions playing
-      if (previous && previous !== action) {
+      if (previous) {
         // warp scales the two playback rates into each other over the blend, so a walk→run
         // transition steps through rather than skating
         if (fade > 0) action.crossFadeFrom(previous, fade, true)

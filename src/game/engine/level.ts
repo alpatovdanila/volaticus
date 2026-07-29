@@ -45,12 +45,6 @@ export class Level extends BaseService {
     this.loader = registry.get('loader')
   }
 
-  async start() {
-    // no camera in the level format yet — a viewpoint that can see a ground plane
-    this.world.camera.position.set(0, 3, 9)
-    this.world.camera.lookAt(0, 1, 0)
-  }
-
   async load(name: string) {
     const level = parseLevelDeclaration(name, await this.loader.json.load(levelUrl(name)))
 

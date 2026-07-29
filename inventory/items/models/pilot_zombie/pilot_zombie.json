@@ -3,39 +3,20 @@
   "id": "pilot_zombie",
   "file": "index.baked.glb",
   "dismember": {
-    "head": {
-      "weight": 1
-    },
-    "lhand": {
-      "weight": 1
-    },
-    "rhand": {
-      "weight": 1
-    }
+    "head":  { "weight": 1 },
+    "lhand": { "weight": 1 },
+    "rhand": { "weight": 1 }
   },
   "animationProfile": {
     "locomotion": {
-      "forward": [
-        {
-          "clip": "Zombie Idle",
-          "fade": 0.3
-        },
-        {
-          "above": 0.05,
-          "clip": "Zombie Walk",
-          "fade": 0.3
-        }
+      "idle": { "clip": "Zombie Idle", "fade": 0.3 },
+      "front": [
+        { "above": 0.05, "clip": "Zombie Walk", "fade": 0.3 }
       ]
     },
     "lifecycle": {
-      "rise": {
-        "clip": "Zombie Stand Up",
-        "fade": 0.1
-      },
-      "death": {
-        "clip": "Zombie Dying",
-        "fade": 0.15
-      }
+      "rise":  { "clip": "Zombie Stand Up", "fade": 0.1 },
+      "death": { "clip": "Zombie Dying",    "fade": 0.15 }
     }
   }
 }

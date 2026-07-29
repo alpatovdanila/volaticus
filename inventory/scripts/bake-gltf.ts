@@ -1,7 +1,7 @@
 /*
  Bake sibling FBX animation clips into a GLB: one components file, one request at runtime.
 
-   npx tsx inventory/scripts/bake-gltf.ts <components-dir> [out.glb]
+   npx tsx inventory/scripts/bake-gltf.ts <components-dir> [out.glb] [--maxtex <px>]
 
  <components-dir> holds index.glb plus any number of .fbx files — every .fbx becomes a clip named
  after its file, and any animation authored inside index.glb is DROPPED: the sibling FBX set
@@ -9,7 +9,8 @@
 
  Besides the merge, the container is NORMALIZED so any viewer renders it the same way:
  per-vertex tangents are baked wherever a normal-mapped primitive ships none, and skinned mesh
- nodes are lifted to the scene root (see the passes below for the why of each).
+ nodes are lifted to the scene root (see the passes below for the why of each). `--maxtex`
+ additionally caps embedded texture size — opt-in, being the one lossy pass here.
 
  Self-sufficient on purpose: the GLB container surgery and the Mixamo retarget live here, with
  no imports from src/. The container is edited IN PLACE rather than round-tripped through
@@ -21,6 +22,7 @@ import * as path from 'node:path'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
+import sharp from 'sharp'
 
 // ───────────────────────────────────────────────────────────────── GLB container
 
@@ -391,6 +393,56 @@ function pruneUnused(glb: Glb, warn: Warn): number {
   return dropped
 }
 
+/*
+ --maxtex N: cap every embedded texture's longest side at N px. Source exports ship 4K maps
+ that dwarf the mesh they wrap (a 4K knight is 29MB of PNG against 2MB of geometry) and no
+ character is ever read at that density in game. Decode → resize → re-encode in the image's
+ own format, then rebuild the binary chunk: a view's CONTENTS change length here, so every
+ later view shifts — accessor byteOffsets are view-relative and stay put, as in the prune above.
+*/
+async function resizeTextures(glb: Glb, limit: number): Promise<number> {
+  const json = glb.json
+  const replaced = new Map<number, Buffer>() // bufferView index → re-encoded bytes
+  for (const image of json.images ?? []) {
+    if (image.bufferView == null || replaced.has(image.bufferView)) continue
+    const view = json.bufferViews[image.bufferView]
+    const bytes = glb.bin.subarray(view.byteOffset ?? 0, (view.byteOffset ?? 0) + view.byteLength)
+    const { width = 0, height = 0 } = await sharp(bytes).metadata()
+    if (Math.max(width, height) <= limit) continue
+
+    const fit = sharp(bytes).resize({ width: limit, height: limit, fit: 'inside' })
+    const encoded =
+      image.mimeType === 'image/jpeg'
+        ? await fit.jpeg({ quality: 90 }).toBuffer()
+        : await fit.png({ compressionLevel: 9 }).toBuffer()
+    replaced.set(image.bufferView, encoded)
+    console.log(
+      `  ${image.name ?? '?'}: ${width}×${height} → ≤${limit}px, ` +
+        `${(view.byteLength / 1e6).toFixed(1)}MB → ${(encoded.length / 1e6).toFixed(1)}MB`,
+    )
+  }
+  if (!replaced.size) return 0
+
+  const parts: Buffer[] = []
+  let offset = 0
+  json.bufferViews.forEach((view: any, i: number) => {
+    const data = replaced.get(i) ?? glb.bin.subarray(view.byteOffset ?? 0, (view.byteOffset ?? 0) + view.byteLength)
+    const padding = (4 - (offset % 4)) % 4
+    if (padding) {
+      parts.push(Buffer.alloc(padding))
+      offset += padding
+    }
+    view.byteOffset = offset
+    view.byteLength = data.length
+    parts.push(data)
+    offset += data.length
+  })
+  glb.bin = Buffer.concat(parts)
+  json.buffers[0].byteLength = glb.bin.length
+
+  return replaced.size
+}
+
 // Lengyel's method: accumulate each triangle's uv-space direction vectors on its vertices,
 // Gram-Schmidt against the normal, and carry handedness in w (glTF: bitangent = cross(n,t)·w)
 function lengyelTangents(pos: number[], nrm: number[], uv: number[], indices: number[]): number[] {
@@ -714,9 +766,19 @@ function premultiplyTrack(track: THREE.QuaternionKeyframeTrack, corr: THREE.Quat
 // ───────────────────────────────────────────────────────────────── bake
 
 async function main() {
-  const [dir, out] = process.argv.slice(2)
-  if (!dir || !fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) {
-    console.error('usage: npx tsx inventory/scripts/bake-gltf.ts <components-dir> [out.glb]')
+  const argv = process.argv.slice(2)
+  const positional: string[] = []
+  let maxTex = 0 // 0 = textures ship as authored
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    if (arg === '--maxtex') maxTex = Number(argv[++i])
+    else if (arg.startsWith('--maxtex=')) maxTex = Number(arg.slice('--maxtex='.length))
+    else positional.push(arg)
+  }
+  const [dir, out] = positional
+  const capOk = maxTex === 0 || (Number.isInteger(maxTex) && maxTex > 0)
+  if (!dir || !fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory() || !capOk) {
+    console.error('usage: npx tsx inventory/scripts/bake-gltf.ts <components-dir> [out.glb] [--maxtex <px>]')
     process.exit(1)
   }
 
@@ -752,6 +814,11 @@ async function main() {
 
   const pruned = pruneUnused(glb, warn)
   if (pruned) console.log(`pruned ${pruned} unused object(s)`)
+
+  if (maxTex) {
+    const resized = await resizeTextures(glb, maxTex)
+    console.log(resized ? `resized ${resized} texture(s) to ≤${maxTex}px` : `textures already ≤${maxTex}px`)
+  }
 
   const outFile = out ?? path.join(dir, 'index.baked.glb')
   fs.mkdirSync(path.dirname(outFile), { recursive: true })

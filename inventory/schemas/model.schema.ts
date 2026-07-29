@@ -22,18 +22,28 @@ const DismemberPartSchema = z.object({
  refuses to compile. Every block is optional — a profile states what its rig actually has.
 */
 export type LocomotionBand = {
-  readonly above?: number // band lower bound, m/s; the first band omits it
+  readonly above: number // band lower bound, m/s; idle covers rest so every band declares one
   readonly clip: string
   readonly rate?: number // playback rate; absent plays as authored (1)
   readonly fade?: number // crossfade in, seconds; absent cuts
 }
 
+// eight canonical strafe directions. front is required; the rest are optional so a rig that ships
+// only forward-facing clips still profiles cleanly, and the resolver picks the nearest present one
+export type LocomotionDirection =
+  | 'front'
+  | 'back'
+  | 'left'
+  | 'right'
+  | 'frontLeft'
+  | 'frontRight'
+  | 'backLeft'
+  | 'backRight'
+
 export type LocomotionSet = {
-  readonly forward: readonly LocomotionBand[]
-  readonly back?: readonly LocomotionBand[]
-  readonly left?: readonly LocomotionBand[]
-  readonly right?: readonly LocomotionBand[]
-}
+  readonly idle: AnimationTask // plays at rest — a single clip, not banded
+  readonly front: readonly LocomotionBand[] // required arm; guarantees the nearest-present search terminates
+} & { readonly [D in Exclude<LocomotionDirection, 'front'>]?: readonly LocomotionBand[] }
 
 // a clip played at someone's command rather than resolved from movement. WHAT the model has —
 // how many passes to play it for, and whether that playback holds the animator, are decided at
@@ -64,24 +74,31 @@ export type AnimationProfileState = {
 // every animation an event can name; whether a PARTICULAR profile has it is that profile's business
 export type AnimationEventName = keyof LifecycleSet | keyof ActionsSet
 
-const LocomotionBandSchema: z.ZodType<LocomotionBand> = z.object({
-  above: z.number().nonnegative().optional(),
-  clip: z.string().min(1),
-  rate: z.number().positive().optional(),
-  fade: z.number().nonnegative().optional(),
-})
-
-const LocomotionSetSchema: z.ZodType<LocomotionSet> = z.object({
-  forward: z.array(LocomotionBandSchema).min(1),
-  back: z.array(LocomotionBandSchema).min(1).optional(),
-  left: z.array(LocomotionBandSchema).min(1).optional(),
-  right: z.array(LocomotionBandSchema).min(1).optional(),
-})
-
 const AnimationTaskSchema: z.ZodType<AnimationTask> = z.object({
   clip: z.string().min(1),
   rate: z.number().positive().optional(),
   fade: z.number().nonnegative().optional(),
+})
+
+const LocomotionBandSchema: z.ZodType<LocomotionBand> = z.object({
+  above: z.number().nonnegative(),
+  clip: z.string().min(1),
+  rate: z.number().positive().optional(),
+  fade: z.number().nonnegative().optional(),
+})
+
+const bandArm = z.array(LocomotionBandSchema).min(1)
+
+const LocomotionSetSchema: z.ZodType<LocomotionSet> = z.object({
+  idle: AnimationTaskSchema,
+  front: bandArm,
+  back: bandArm.optional(),
+  left: bandArm.optional(),
+  right: bandArm.optional(),
+  frontLeft: bandArm.optional(),
+  frontRight: bandArm.optional(),
+  backLeft: bandArm.optional(),
+  backRight: bandArm.optional(),
 })
 
 const AnimationProfileSchema: z.ZodType<AnimationProfileState> = z.object({

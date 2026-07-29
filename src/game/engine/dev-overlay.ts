@@ -1,4 +1,5 @@
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
+import { IsPlayer, ThreeAnimator } from '@components'
 
 const REDRAW_INTERVAL = 0.2 // seconds — the dom write is the only part of this with real cost
 const SMOOTHING = 0.1 // ema weight of the newest sample; raw per-frame times are unreadable
@@ -22,6 +23,9 @@ export class DevOverlay extends BaseService {
 
   private registry!: IServicesRegistry
   private renderer!: KnownServices['renderer']
+  private world!: KnownServices['world']
+  private animator!: KnownServices['threeAnimatorSync']
+  private locomotion!: KnownServices['locomotionAnimation']
   private perf = this.addPanel('perf')
   private cpu = 0
   private gpu = 0
@@ -40,6 +44,9 @@ export class DevOverlay extends BaseService {
   init(registry: IServicesRegistry) {
     this.registry = registry
     this.renderer = registry.get('renderer')
+    this.world = registry.get('world')
+    this.animator = registry.get('threeAnimatorSync')
+    this.locomotion = registry.get('locomotionAnimation')
   }
 
   addPanel(id: string): HTMLElement {
@@ -70,9 +77,22 @@ export class DevOverlay extends BaseService {
       heap(),
       '',
       ...Object.entries(this.registry.timings).map(([name, time]) => ` ${name.padEnd(15)}${ms(time)}`),
+      '',
+      this.playerClip(),
     ]
       .filter((line) => line !== null)
       .join('\n')
+  }
+
+  // current locomotion clip on the player, plus its live playback rate (velocity-tied for
+  // locomotion — reading it here catches walk stuck at run's rate or vice versa)
+  private playerClip(): string {
+    for (const eid of this.world.query([IsPlayer, ThreeAnimator])) {
+      const action = this.animator.currentAction(eid)
+      if (!action) return 'clip  —'
+      return `clip  ${action.getClip().name}   rate ${action.timeScale.toFixed(2)}\nmove  ${this.locomotion.readout(eid)}`
+    }
+    return 'clip  —'
   }
 }
 

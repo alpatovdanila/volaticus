@@ -1,4 +1,4 @@
-import { LoadingManager } from 'three'
+import { CompressedTexture, LinearFilter, LinearMipmapLinearFilter, LoadingManager } from 'three'
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js'
 import { WebGPURenderer } from 'three/webgpu'
 
@@ -22,6 +22,49 @@ right in both.
 */
 const TRANSCODER = `${import.meta.env.BASE_URL}basis/`
 
+// the level array is typed as dense, which is precisely the assumption that breaks below
+type Level = { width: number; height: number }
+type Mipped = Omit<CompressedTexture, 'mipmaps'> & { mipmaps?: (Level | undefined)[] }
+
+/*
+Drops a transcoded mip chain at its first missing level.
+
+Not every device can take every format basis transcodes to, and a level that does not come back
+leaves a hole in texture.mipmaps. three's webgpu backend walks that array unconditionally —
+`_copyCompressedBufferToTexture` reads `.width` off the hole and the tab dies mid-frame, nowhere
+near the loader that produced it.
+
+The levels above a hole are still good, so we keep them and stop there. A hole at level 0 leaves
+nothing to keep: that texture renders wrong, which beats taking the page down.
+*/
+const repairMips = (texture: Mipped): Mipped => {
+  const mipmaps = texture.mipmaps
+  if (!mipmaps?.length) return texture
+
+  const hole = mipmaps.findIndex((level) => level === undefined || level.width === undefined)
+  if (hole === -1) return texture
+
+  console.warn(`ktx2: level ${hole} of ${mipmaps.length} did not transcode on this device — dropping it and below`)
+
+  texture.mipmaps = mipmaps.slice(0, hole)
+  texture.minFilter = texture.mipmaps.length > 1 ? LinearMipmapLinearFilter : LinearFilter
+  texture.generateMipmaps = false
+  texture.needsUpdate = true
+  return texture
+}
+
+/*
+Every ktx2 in the app arrives through this one `load`: GLTFLoader reaches the shared instance for
+glb-embedded textures (loadImageSource calls loader.load) and HdriLoader through loadAsync, which
+wraps the same method. One patch covers both rather than each loader remembering to sanitise.
+*/
+const repairing = (loader: KTX2Loader): KTX2Loader => {
+  const load = loader.load.bind(loader)
+  loader.load = (url, onLoad, onProgress, onError) =>
+    load(url, (texture) => onLoad(repairMips(texture as unknown as Mipped) as unknown as CompressedTexture), onProgress, onError)
+  return loader
+}
+
 /*
 One LoadingManager and one KTX2Loader behind every loader: progress and errors are accounted for
 in one place, and there is a single transcoder worker pool no matter how many loaders exist.
@@ -32,7 +75,7 @@ promise so a load arriving before the renderer is up waits instead of racing.
 */
 export class Loader extends BaseService {
   readonly manager = new LoadingManager()
-  readonly ktx2 = new KTX2Loader(this.manager).setTranscoderPath(TRANSCODER)
+  readonly ktx2 = repairing(new KTX2Loader(this.manager).setTranscoderPath(TRANSCODER))
 
   private readonly gpuReady = Promise.withResolvers<WebGPURenderer>()
 

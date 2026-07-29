@@ -47,7 +47,9 @@ export class ThreeAnimatorSync extends BaseService {
   private releaseFinishedLocks() {
     const { query, removeComponent } = this.world
 
-    for (const eid of query([AnimatorLocked])) {
+    // paired with ThreeAnimator: AnimatorLocked is a shared tag, but only the mixer path stores an
+    // action in it — instanced entities lock the same way and release themselves
+    for (const eid of query([ThreeAnimator, AnimatorLocked])) {
       const action = AnimatorLocked[eid]
       // three sets paused = true on a clamped finish, and isRunning() tests !paused
       if (action.isRunning()) continue
@@ -95,7 +97,19 @@ export class ThreeAnimatorSync extends BaseService {
         continue
       }
 
-      action.reset().play() // crossFadeFrom needs both actions playing
+      // opt-in phase carry-over: walk↔run share a cyclic stride, and resetting the new clip to
+      // t=0 pops the legs to a random point in their cycle. Mapping the previous playhead onto
+      // the new clip's duration keeps stride continuous. Only meaningful between two endless
+      // clips, and only the caller knows whether they are actually the same cycle
+      if (task.carryPhase && endless && previous && previous.repetitions === Infinity) {
+        const from = previous.getClip().duration
+        const to = action.getClip().duration
+        action.enabled = true // a clip we faded out of earlier was disabled when its weight hit 0
+        action.time = from > 0 ? ((previous.time / from) * to) % to : 0
+        action.play()
+      } else {
+        action.reset().play() // crossFadeFrom needs both actions playing
+      }
       if (previous) {
         // warp scales the two playback rates into each other over the blend, so a walk→run
         // transition steps through rather than skating

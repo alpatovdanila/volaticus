@@ -4,7 +4,10 @@ import { IRenderer } from './renderer'
 import { IWorld } from './world'
 import { IThreeSceneSync } from '@systems/three-scene-sync'
 import { IThreeAnimatorSync } from '@systems/three-animator-sync'
+import { IInstancedSkinSync } from '@systems/instanced-skin-sync'
 import { ILocomotionAnimation } from '@systems/locomotion-animation'
+import { IEnemySteering } from '@systems/enemy-steering'
+import { IEnemyLifecycle } from '@systems/enemy-lifecycle'
 import { IPlayerControls } from '@systems/player-controls'
 import { IMovement } from '@systems/movement'
 import { ICameraFollow } from '@systems/camera-follow'
@@ -22,11 +25,14 @@ export interface KnownServices {
   level: ILevel
   world: IWorld
   playerControls: IPlayerControls
+  enemySteering: IEnemySteering
   movement: IMovement
   cameraFollow: ICameraFollow
   locomotionAnimation: ILocomotionAnimation
   threeAnimatorSync: IThreeAnimatorSync
+  instancedSkinSync: IInstancedSkinSync
   threeSceneSync: IThreeSceneSync
+  enemyLifecycle: IEnemyLifecycle
   destroy: IDestroy
   devOverlay: IDevOverlay
 }

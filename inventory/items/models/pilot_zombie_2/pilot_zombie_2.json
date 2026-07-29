@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "pilot_zombie_2",
+  "file": "index.baked.glb",
+  "animationProfile": {
+    "locomotion": {
+      "idle": { "clip": "Zombie Walk", "fade": 0.2 },
+      "front": [{ "above": 0.05, "clip": "Zombie Walk", "rate": 4, "fade": 0.2 }]
+    },
+    "lifecycle": {
+      "rise": { "clip": "Zombie Stand Up", "fade": 0.1 },
+      "death": { "clip": "Zombie Death", "fade": 0.15 }
+    },
+    "actions": {
+      "hit": { "clip": "Zombie Reaction Hit", "fade": 0.15 }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { BaseService, IServicesRegistry, KnownServices } from './services-registry'
-import { IsPlayer, ThreeAnimator } from '@components'
+import { IsCorpse, IsEnemy, IsPlayer, ThreeAnimator } from '@components'
 
 const REDRAW_INTERVAL = 0.2 // seconds — the dom write is the only part of this with real cost
 const SMOOTHING = 0.1 // ema weight of the newest sample; raw per-frame times are unreadable
@@ -79,6 +79,7 @@ export class DevOverlay extends BaseService {
       ...Object.entries(this.registry.timings).map(([name, time]) => ` ${name.padEnd(15)}${ms(time)}`),
       '',
       this.playerClip(),
+      this.enemies(),
     ]
       .filter((line) => line !== null)
       .join('\n')
@@ -93,6 +94,12 @@ export class DevOverlay extends BaseService {
       return `clip  ${action.getClip().name}   rate ${action.timeScale.toFixed(2)}\nmove  ${this.locomotion.readout(eid)}`
     }
     return 'clip  —'
+  }
+
+  // corpses hold an instance slot but cost nothing per frame — worth seeing separately
+  private enemies(): string {
+    const corpses = this.world.query([IsCorpse]).length
+    return `enemy ${this.world.query([IsEnemy]).length - corpses} live   ${corpses} dead`
   }
 }
 

@@ -1,7 +1,7 @@
 import { AnimationTask as AnimationTaskDoc, LocomotionDirection, LocomotionSet } from '@inventory/schemas/model.schema'
 
 import { BaseService, IServicesRegistry, KnownServices } from '@engine/services-registry'
-import { AnimationProfile, AnimationTask, AnimatorLocked, Rotation, ThreeAnimator, Velocity } from '@components'
+import { AnimationProfile, AnimationTask, AnimatorLocked, Rotation, Velocity } from '@components'
 
 // ponytail: stick jitter deadzone; a real thumbstick reads ~0.02 at rest. Under this the entity
 // counts as idle regardless of what the physics broadcasts.
@@ -54,7 +54,9 @@ export class LocomotionAnimation extends BaseService {
   update() {
     const { query, hasComponent, addComponent } = this.world
 
-    for (const eid of query([AnimationProfile, Velocity, ThreeAnimator])) {
+    // no animator in the query: the player's mixer and an enemy's instance slot both consume the
+    // task, and which one an entity has is not this system's business
+    for (const eid of query([AnimationProfile, Velocity])) {
       const locomotion = AnimationProfile[eid].locomotion
       if (!locomotion) continue
 
@@ -62,10 +64,15 @@ export class LocomotionAnimation extends BaseService {
       // until the lock releases
       if (hasComponent(eid, AnimatorLocked)) continue
 
+      // somebody else got there first and their task has not been consumed yet. A commanded clip
+      // is only locked once its animator sees it, and an animator that runs after the commander
+      // sees it a frame later — without this, locomotion overwrites the command in between
+      if (hasComponent(eid, AnimationTask)) continue
+
       // written EVERY frame: rate scales with speed, so the animator must see the new task even
       // when the clip name is unchanged. Same-clip re-issue is idempotent in ThreeAnimatorSync
       // — it just updates timeScale without touching the playhead
-      AnimationTask[eid] = { ...resolve(locomotion, eid), repeats: Infinity }
+      AnimationTask[eid] = { ...resolve(locomotion, eid), repeats: Infinity, carryPhase: true }
       addComponent(eid, AnimationTask)
     }
   }

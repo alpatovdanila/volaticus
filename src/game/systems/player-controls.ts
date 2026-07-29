@@ -80,7 +80,7 @@ const aimTarget = (
 }
 
 // short way around: a raw difference sends a +170° -> -170° turn nearly the whole way round
-const turnToward = (current: number, target: number, maxStep: number): number => {
+export const turnToward = (current: number, target: number, maxStep: number): number => {
   const shortest = Math.atan2(Math.sin(target - current), Math.cos(target - current))
   return Math.abs(shortest) <= maxStep ? target : current + Math.sign(shortest) * maxStep
 }

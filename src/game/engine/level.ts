@@ -1,4 +1,7 @@
 import { AnimationMixer, BufferGeometry, Material, Mesh, Object3D, PlaneGeometry } from 'three'
+// from three/webgpu, not three: the bare export is typed against WebGLRenderer, and this is the
+// same class the renderer's own PMREMNode instantiates
+import { PMREMGenerator } from 'three/webgpu'
 
 import {
   AnimationProfile,
@@ -41,10 +44,12 @@ Models are still placeholders: their inventoryId is validated but not resolved.
 export class Level extends BaseService {
   private world!: KnownServices['world']
   private loader!: KnownServices['loader']
+  private renderer!: KnownServices['renderer']
 
   init(registry: IServicesRegistry) {
     this.world = registry.get('world')
     this.loader = registry.get('loader')
+    this.renderer = registry.get('renderer')
   }
 
   async load(name: string) {
@@ -70,7 +75,20 @@ export class Level extends BaseService {
     const { scene } = this.world
     const texture = await this.loader.hdri.load(environment.hdri.inventoryId)
 
-    scene.environment = texture
+    /*
+    Prefiltered HERE, once, rather than left to the renderer to derive.
+
+    An equirect on scene.environment makes three build a PMREM behind our back, and PMREMNode
+    rebuilds it whenever its version check fails to settle — which on some devices is every single
+    frame, each one a fresh ~6MB texture that is never released. It reached 10GB on a phone and
+    killed the tab.
+
+    A texture that is ALREADY cubeUV takes the branch above that one and is used as-is, so there
+    is nothing left to regenerate on any device.
+    */
+    const prefilter = new PMREMGenerator(this.renderer.webGPURenderer)
+    scene.environment = prefilter.fromEquirectangular(texture).texture
+    prefilter.dispose() // the generator's scratch targets, not the environment it just produced
     scene.environmentIntensity = environment.hdri.intensity
     scene.environmentRotation.set(...environment.hdri.rotation)
 

@@ -26,7 +26,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # enablement: turns Pages on via the api on the first run, so the repo needs no visit to
+      # its settings page. Without it the action 404s until someone flips the switch by hand
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
